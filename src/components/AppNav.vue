@@ -1,0 +1,294 @@
+<script setup>
+  import axios from "axios";
+  import { useUserStore } from "@/stores/UserStore"
+  import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
+  import { MenuIcon, XIcon } from '@heroicons/vue/outline'
+  import { ref, onMounted } from "vue";
+  import ScaleLoader from 'vue-spinner/src/ScaleLoader.vue'
+  import { useToast } from 'vue-toast-notification';
+
+  const user = {
+    imageUrl:
+      'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
+  }
+
+  const toast = useToast();
+  const userStore = useUserStore()
+  const addModal = ref(false)
+  const websites = ref([])
+  const selectedWebsite = ref('')
+  const loading = ref(false)
+  const analytics = ref({})
+
+  function logout(){
+    userStore.$reset()
+    localStorage.removeItem('user')
+    localStorage.removeItem('UserStore')
+    location.reload()
+  }
+
+  async function fetchWebsites() {
+			try {
+        loading.value = true
+				const response = await axios.get('https://wibi.wilbertzgroup.com/get-websites');
+        websites.value = response.data
+        if( websites.value.length ){
+          selectedWebsite.value = response.data[0].value
+          userStore.selectedWebsite(selectedWebsite.value) 
+          fetchWebsiteAnalytics(response.data[0].value);
+        }
+        loading.value = false
+			} catch (error) {
+				console.log(error)
+        toast.error("Error getting website data")
+			}
+  }
+
+  async function fetchWebsiteAnalytics(id) {
+			try {
+        loading.value = true
+				const response = await axios.get('https://wibi.wilbertzgroup.com/get-website-analytics?id='+id);
+        analytics.value = response.data.analytics[0]
+        userStore.updateAnalytics(analytics.value)         
+        loading.value = false
+			} catch (error) {
+				console.log(error)
+        toast.error("Error getting website analytics data")
+			}
+  }
+
+  async function addWebsite(credentials) {
+    try {
+      addModal.value = false
+      loading.value = true
+      await axios.post('https://wibi.wilbertzgroup.com/add-website', { url: credentials.newWebsite });  
+      fetchWebsites(); 
+      toast.success("Website added successfully")  
+      loading.value = false
+    } catch (error) {
+      console.log(error)
+      toast.error('Error Adding website')
+    }
+  }
+
+  onMounted(() => {
+    fetchWebsites();
+  })
+</script>
+
+<template>
+  <scale-loader :loading="loading" color="#23293b" height="50px" class="vld-overlay is-active is-full-page" width="6px"></scale-loader>
+  <Disclosure as="nav" class="bg-custom-gray custom-css-cal" v-slot="{ open }">
+      <div class=" mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between h-16">
+          <div class="flex items-center">
+            <div class="flex-shrink-0">
+              <img class="h-10" src="@/assets/images/wibi-logo.png" alt="Logo" />
+            </div>
+            <div class="hidden md:block">
+              <div class="ml-10 flex items-center space-x-4">
+                  <router-link to="dashboard" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium">                    
+                    <box-icon type='solid' color="white" name='dashboard'></box-icon>
+                    <span class="ml-2">Dashboard</span>
+                  </router-link>
+                  <router-link to="settings" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium">
+                    <box-icon color="white" type='solid' name='cog'></box-icon>
+                    <span class="ml-2">Settings</span>               
+                  </router-link>
+                  <router-link to="apps" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium">
+                    <box-icon color="white" type="solid" name='help-circle' ></box-icon>
+                    <span class="ml-2">Help center</span>                    
+                  </router-link>
+              </div>
+            </div>
+          </div>
+          <div class="hidden md:block">
+            <div class="ml-4 flex items-center md:ml-6">
+              <box-icon @click="addModal = true" type='solid' name='plus-circle' class="text-white cursor-pointer mx-2 h-6 w-6 rounded-full bg-white"></box-icon>
+              <div class="relative">
+                <FormKit
+                  type="select"
+                  name="website"
+                  placeholder="select website"
+                  inner-class="selectClass"
+                  v-model="selectedWebsite"
+                  :options="websites"
+                >
+              </FormKit>
+                <font-awesome-icon icon="far fa-arrow-alt-circle-down" class="downarrow absolute" />
+              </div>
+              <p class="text-white text-sm">Hello, {{ userStore.user.firstName }} {{ userStore.user.lastName }}.</p>
+
+              <!-- Profile dropdown -->
+              <Menu as="div" class="ml-3 relative">
+                <div>
+                  <MenuButton class="max-w-xs bg-gray-800 rounded-full flex items-center text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white">
+                    <span class="sr-only">Open user menu</span>
+                    <div class="overflow-hidden relative w-10 h-10 bg-gray-100 rounded-full dark:bg-gray-600">
+                        <svg class="absolute -left-1 w-12 h-12 text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path></svg>
+                    </div>
+                  </MenuButton>
+                </div>
+                <transition enter-active-class="transition ease-out duration-100" enter-from-class="transform opacity-0 scale-95" enter-to-class="transform opacity-100 scale-100" leave-active-class="transition ease-in duration-75" leave-from-class="transform opacity-100 scale-100" leave-to-class="transform opacity-0 scale-95">
+                  <MenuItems class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none">
+                    <div aria-labelledby="headlessui-menu-button-3" id="headlessui-menu-items-4" role="menu" tabindex="0" class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none">
+                      <router-link to="profile" class="block px-4 py-2 text-sm text-gray-700" disabled="false" id="headlessui-menu-item-20" role="menuitem" tabindex="-1">Your Profile</router-link>
+                      <router-link to="billing" class="block px-4 py-2 text-sm text-gray-700" disabled="false" id="headlessui-menu-item-20" role="menuitem" tabindex="-1">Billing & Usage</router-link>
+                      <router-link to="snippet" class="block px-4 py-2 text-sm text-gray-700" disabled="false" id="headlessui-menu-item-20" role="menuitem" tabindex="-1">Snippet</router-link>
+                      <a href="#" @click="logout" class="block px-4 py-2 text-sm text-gray-700" disabled="false" id="headlessui-menu-item-22" role="menuitem" tabindex="-1">Sign out</a>
+                    </div>
+                  </MenuItems>
+                </transition>
+              </Menu>
+            </div>
+          </div>
+          <div class="-mr-2 flex md:hidden">
+            <!-- Mobile menu button -->
+            <DisclosureButton class="bg-gray-800 inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white">
+              <span class="sr-only">Open main menu</span>
+              <MenuIcon v-if="!open" class="block h-6 w-6" aria-hidden="true" />
+              <XIcon v-else class="block h-6 w-6" aria-hidden="true" />
+            </DisclosureButton>
+          </div>
+        </div>
+      </div>
+
+      <DisclosurePanel class="md:hidden">
+        <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">          
+          <router-link to="dashboard" disabled="false" class="text-white block px-3 py-2 rounded-md text-base font-medium"> Dashboard </router-link>
+          <router-link to="settings" disabled="false" class="text-white block px-3 py-2 rounded-md text-base font-medium"> Settings </router-link>
+          <a disabled="false" href="#" class="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Help center</a>
+        </div>
+
+        <div class="pt-4 pb-3 border-t border-gray-700">
+          <box-icon @click="addModal = true" type='solid' name='plus-circle' class="text-white cursor-pointer mx-2 h-6 w-6 rounded-full bg-white"></box-icon>
+          <div class="relative flex items-center px-5 pb-6">
+            <FormKit
+                type="select"
+                name="website"
+                placeholder="select website"
+                inner-class="selectClass"
+                v-model="selectedWebsite"
+                :options="websites"
+              >
+              <optgroup v-if="websites.length" label="Select Website">
+                <option v-for="w in websites" :value="w.id" :key="w.id">{{w.url}}</option>
+              </optgroup>
+            </FormKit>
+            <font-awesome-icon icon="far fa-arrow-alt-circle-down" class="downarrow absolute" />
+          </div>
+          <div class="flex items-center px-5">
+            <div class="flex-shrink-0">
+              <div class="overflow-hidden relative w-10 h-10 bg-gray-100 rounded-full dark:bg-gray-600">
+                  <svg class="absolute -left-1 w-12 h-12 text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path></svg>
+              </div>
+            </div>
+            <div class="ml-3">
+              <div class="text-base font-medium leading-none text-white">{{ userStore.user.firstName }}</div>
+              <div class="text-sm font-medium leading-none text-gray-400">{{ userStore.user.email }}</div>
+            </div>
+          </div>
+          <div class="mt-3 px-2 space-y-1">
+            <div class="mt-3 px-2 space-y-1">
+              <router-link to="profile" disabled="false" class="block px-3 py-2 rounded-md text-base font-medium text-gray-400 hover:text-white hover:bg-gray-700">Your Profile</router-link>
+              <router-link to="billing" disabled="false" class="block px-3 py-2 rounded-md text-base font-medium text-gray-400 hover:text-white hover:bg-gray-700">Billing & Usage</router-link>
+              <router-link to="snippet" disabled="false" class="block px-3 py-2 rounded-md text-base font-medium text-gray-400 hover:text-white hover:bg-gray-700">Snippet</router-link>
+              <a disabled="false" @click="logout" href="#" class="block px-3 py-2 rounded-md text-base font-medium text-gray-400 hover:text-white hover:bg-gray-700">Sign out</a>
+            </div>
+          </div>
+        </div>
+      </DisclosurePanel>
+    </Disclosure>
+
+    <!-- Add Website modal -->
+    <div id="addModal" tabindex="-1" :class="{flex: addModal, hidden: !addModal}" class="overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 w-full md:inset-0 h-modal md:h-full justify-center items-center" >
+        <div class="relative p-4 w-full max-w-2xl h-full md:h-auto">
+            <!-- Modal content -->
+            <div class="relative bg-white rounded-lg shadow dark:bg-gray-700">
+                <!-- Modal header -->
+                <div class="flex justify-between items-start p-4 rounded-t border-b dark:border-gray-600">
+                    <h3 class="text-xl font-semibold text-gray-900 dark:text-white">
+                        Add a new website
+                    </h3>
+                    <button ref="closeDefaultModal" type="button" class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center dark:hover:bg-gray-600 dark:hover:text-white" @click="addModal = false">
+                        <svg aria-hidden="true" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+                        <span class="sr-only">Close modal</span>
+                    </button>
+                </div>
+                <!-- Modal body -->
+                <div class="p-6 space-y-6">
+                    <FormKit
+                      type="form"
+                      id="profile"
+                      :form-class="submitted ? 'hide' : 'show'"
+                      submit-label="Create"
+                      @submit="addWebsite"
+                      :actions="false"
+                      #default="{ value }"
+                    >
+                    <div class="px-4 py-5 bg-white space-y-6 sm:p-6">                  
+                      <div class="w-full">
+                        <div class="">
+                          <FormKit
+                            type="url"
+                            name="newWebsite"
+                            label="Website URL"
+                            label-class="text-left"
+                            validation="required|url"
+                            help="Which website do you want to add?"
+                            placeholder="https://www.google.com"
+                          />
+                        </div>
+                      </div>
+
+                    </div>
+                    <div class="text-right">
+                      <FormKit
+                        type="submit"
+                        label="Add"
+                      />
+                    </div>
+                  </FormKit>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div v-if="addModal" class="bg-gray-900 bg-opacity-50 dark:bg-opacity-80 fixed inset-0 z-40"></div>
+
+</template>
+
+<style>
+  .bg-custom-gray {
+    --tw-bg-opacity: 1;
+    background-color: #11101d;
+  }
+  .custom-css-cal .selectClass select.formkit-input {
+    color: white;
+    background: #11101e;
+    min-width: 20vw;
+  }
+  .custom-css-cal .formkit-outer {
+    margin: 0 15px 0 0;
+  }
+  .custom-css-cal svg.downarrow {
+    right: 20px;
+    top: 14px;
+    color: white;
+  }
+  .custom-css-cal select.formkit-input option {
+    box-sizing: border-box;
+    color: white !important;
+    font-size: 16px;
+    font-weight: 600;
+  }
+  @media (max-width: 450px) {
+    .custom-css-cal .formkit-outer {
+        margin: 0;
+        width: 100%;
+    }
+    .custom-css-cal svg.downarrow {
+        right: 32px;
+    }
+  }
+</style>
