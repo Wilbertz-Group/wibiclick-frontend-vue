@@ -3,22 +3,19 @@
   import { useUserStore } from "@/stores/UserStore"
   import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
   import { MenuIcon, XIcon } from '@heroicons/vue/outline'
-  import { ref, onMounted } from "vue";
+  import { ref, onMounted, watchEffect } from "vue";
   import ScaleLoader from 'vue-spinner/src/ScaleLoader.vue'
   import { useToast } from 'vue-toast-notification';
-
-  const user = {
-    imageUrl:
-      'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
-  }
 
   const toast = useToast();
   const userStore = useUserStore()
   const addModal = ref(false)
-  const websites = ref([])
-  const selectedWebsite = ref('')
+  const selectedWebsite = ref([userStore.currentWebsite])
   const loading = ref(false)
   const analytics = ref({})
+  const opt = ref([
+    { label: 'Select Website', value: 'default', attrs: { disabled: true } },
+  ])
 
   function logout(){
     userStore.$reset()
@@ -27,15 +24,15 @@
     location.reload()
   }
 
-  async function fetchWebsites() {
-			try {
+  async function fetchWebsites(n) {
+			try {        
         loading.value = true
 				const response = await axios.get('https://wibi.wilbertzgroup.com/get-websites');
-        websites.value = response.data
-        if( websites.value.length ){
-          selectedWebsite.value = response.data[0].value
-          userStore.selectedWebsite(selectedWebsite.value) 
-          fetchWebsiteAnalytics(response.data[0].value);
+        opt.value = [{ label: 'Select Website', value: 'default', attrs: { disabled: true } }].concat(response.data)
+        if( response.data.length && selectedWebsite.value != 'default' ){
+          userStore.updateWebsite(selectedWebsite.value) 
+          fetchWebsiteAnalytics(selectedWebsite.value);          
+          fetchSettings(selectedWebsite.value);
         }
         loading.value = false
 			} catch (error) {
@@ -57,6 +54,18 @@
 			}
   }
 
+  async function fetchSettings(id) {
+    try {
+      loading.value = true
+      const response = await axios.get('https://wibi.wilbertzgroup.com/get-website?id='+ id);
+      userStore.updateSettings(response.data.setting)
+      loading.value = false
+    } catch (error) {
+      console.log(error)
+      toast.error("Error getting website settings")
+    }
+  }
+
   async function addWebsite(credentials) {
     try {
       addModal.value = false
@@ -73,6 +82,10 @@
 
   onMounted(() => {
     fetchWebsites();
+  }),
+
+  watchEffect(() => {    
+    fetchWebsites(selectedWebsite.value) 
   })
 </script>
 
@@ -112,7 +125,7 @@
                   placeholder="select website"
                   inner-class="selectClass"
                   v-model="selectedWebsite"
-                  :options="websites"
+                  :options="opt"
                 >
               </FormKit>
                 <font-awesome-icon icon="far fa-arrow-alt-circle-down" class="downarrow absolute" />
@@ -164,17 +177,14 @@
           <box-icon @click="addModal = true" type='solid' name='plus-circle' class="text-white cursor-pointer mx-2 h-6 w-6 rounded-full bg-white"></box-icon>
           <div class="relative flex items-center px-5 pb-6">
             <FormKit
-                type="select"
-                name="website"
-                placeholder="select website"
-                inner-class="selectClass"
-                v-model="selectedWebsite"
-                :options="websites"
-              >
-              <optgroup v-if="websites.length" label="Select Website">
-                <option v-for="w in websites" :value="w.id" :key="w.id">{{w.url}}</option>
-              </optgroup>
-            </FormKit>
+                  type="select"
+                  name="website"
+                  placeholder="select website"
+                  inner-class="selectClass"
+                  v-model="selectedWebsite"
+                  :options="opt"
+                >
+              </FormKit>
             <font-awesome-icon icon="far fa-arrow-alt-circle-down" class="downarrow absolute" />
           </div>
           <div class="flex items-center px-5">

@@ -18,8 +18,7 @@
         <div class="">
           <div class="md:col-span-1">
             <div class="px-4 sm:px-0">
-              <h3 class="text-lg font-medium leading-6 text-gray-900">Snippet</h3>
-              <p class="mt-1 text-sm text-gray-600">Use this snippet on your website. Place it between the [head] tag</p>
+              <h3 class="text-lg font-medium leading-6 text-gray-900">Use this snippet on your website. Place it between the [head] tag</h3>
             </div>
           </div>
           <div class="mt-3 md:col-span-2">
@@ -30,7 +29,7 @@
                         <span v-else>Copied!</span>
                       </button>
 
-                      <pre v-highlightjs><code ref="source" class="language-javascript hljs">&lt;!-- WibiClick --&gt; &lt;script&gt; var url = 'https://cdn.jsdelivr.net/gh/wmuza/wibiclick/wibi-v3.min.js'; var s = document.createElement('script'); s.type = 'text/javascript'; s.async = true; s.src = url; s.onload = function () { createWidget("{{ userStore.user.token }}"); }; var x = document.getElementsByTagName('script')[0]; x.parentNode.insertBefore(s, x);&lt;/script&gt;</code></pre>
+                      <pre v-highlightjs><code ref="source" class="language-javascript hljs">&lt;!-- WibiClick --&gt; &lt;script&gt; var url = 'https://cdn.jsdelivr.net/gh/wmuza/wibiclick/wibi-v3.min.js'; var s = document.createElement('script'); s.type = 'text/javascript'; s.async = true; s.src = url; s.onload = function () { createWidget("{{ userStore.currentWebsite }}"); }; var x = document.getElementsByTagName('script')[0]; x.parentNode.insertBefore(s, x);&lt;/script&gt;</code></pre>
                   </div>
               </div>
           </div>

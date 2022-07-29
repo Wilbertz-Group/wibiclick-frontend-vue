@@ -11,7 +11,8 @@ export const useUserStore = defineStore('UserStore', {
 			events: null,
 			newUser: true,
 			analytics: {},
-			currentWebsite: ''
+			currentWebsite: 'default',
+			settings: {}
 		}
 	},
 	getters: {
@@ -32,7 +33,7 @@ export const useUserStore = defineStore('UserStore', {
     async login (credentials) {
 			try {
 				const response = await axios.post('https://wibi.wilbertzgroup.com/login', credentials);
-				localStorage.setItem('user', JSON.stringify(response.data))
+				localStorage.setItem('user', JSON.stringify(response.data))				
 				axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`
 				this.user = response.data
 				toast.success("You are successfully logged in")
@@ -73,10 +74,13 @@ export const useUserStore = defineStore('UserStore', {
 		updateUser(newUser) {
       this.user = newUser
     },
+		updateSettings(settings) {
+      this.settings = settings
+    },
 		updateAnalytics(a) {
       this.analytics = a
     },
-		selectedWebsite(a) {
+		updateWebsite(a) {
       this.currentWebsite = a
     },
 	},

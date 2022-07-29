@@ -154,8 +154,10 @@ async function fetchViews() {
 }
 
 onMounted(() => {
-  fetchClicks()
-  fetchViews()
+  if(userStore.currentWebsite){
+    fetchClicks()
+    fetchViews()
+  }
 });
 </script>
 
@@ -363,14 +365,14 @@ onMounted(() => {
               <span class="ml-2">Skype</span>
             </button>
           </div>
-          <div class="rounded-lg text-center pt-1 pb-6 border border-gray-200 shadow-md divide-y divide-gray-300/50">
+          <!-- <div class="rounded-lg text-center pt-1 pb-6 border border-gray-200 shadow-md divide-y divide-gray-300/50">
             <h4 class="text-4xl py-4 text-center">{{ userStore?.analytics?.line || 0 }}</h4>
             <button type="button"
               class="btn-air-light text-white bg-green-400 hover:bg-green-500 focus:outline-none focus:ring-4 focus:ring-green-300 font-medium rounded-full text-base px-10 pt-2 pb-2.5 text-center mr-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800">
               <font-awesome-icon icon="fab fa-line" />
               <span class="ml-2">Line</span>
             </button>
-          </div>
+          </div> -->
         </div>
 
         <div class="w-full rounded-lg text-center mt-10 pt-5 pb-6 pr-3 border border-gray-200 shadow-md divide-y divide-gray-300/50">

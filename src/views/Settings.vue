@@ -9,24 +9,15 @@ import { useToast } from 'vue-toast-notification';
 
 const toast = useToast();
 const userStore = useUserStore()
+const loading = ref(false)
+
+//Tabs
 const numbers = ref(true)
 const usernames = ref(false)
 const messages = ref(false)
 const visibility = ref(false)
-const settings = ref({})
-const loading = ref(false)
 
-async function fetchSettings() {
-  try {
-    loading.value = true
-    const response = await axios.get('https://wibi.wilbertzgroup.com/get-website?id='+ userStore.currentWebsite);
-    settings.value = response.data.setting
-    loading.value = false
-  } catch (error) {
-    console.log(error)
-    toast.error("Error getting website settings")
-  }
-}
+
 
 async function settingsUpdate(credentials) {
   try {
@@ -47,9 +38,7 @@ function toggleMenu() {
   visibility.value = false
 }
 
-onMounted(() => {
-  fetchSettings()
-})
+
 </script>
 
 <template>
@@ -107,22 +96,22 @@ onMounted(() => {
             <h3 class="text-2xl font-semibold text-gray-700">Edit Phone numbers</h3>
             <div class="w-full">
                 <FormKit type="text" name="pnumber" label="Phone Number" label-class="text-left" 
-                  v-model="settings.pnumber" />
+                  v-model="userStore.settings.pnumber" />
 
                 <FormKit type="text" name="pnumber_sms" label="Text Message Phone Number" label-class="text-left" 
-                  v-model="settings.pnumber_sms" />
+                  v-model="userStore.settings.pnumber_sms" />
 
                 <FormKit type="text" name="wnumber" label="Whatsapp Phone Number" label-class="text-left" 
-                  v-model="settings.wnumber" />
+                  v-model="userStore.settings.wnumber" />
 
                 <FormKit type="text" name="telegram_num" label="Telegram Phone Number" label-class="text-left" 
-                  v-model="settings.telegram_num" />
+                  v-model="userStore.settings.telegram_num" />
 
                 <FormKit type="text" name="viber_num" label="Viber Phone Number" label-class="text-left" 
-                  v-model="settings.viber_num" />
+                  v-model="userStore.settings.viber_num" />
 
-                <FormKit type="text" name="line" label="Line Phone Number" label-class="text-left" 
-                  v-model="settings.line" />
+                <!-- <FormKit type="text" name="line" label="Line Phone Number" label-class="text-left" 
+                  v-model="userStore.settings.line" /> -->
             </div>
 
           </div>
@@ -138,13 +127,13 @@ onMounted(() => {
             <h3 class="text-2xl font-semibold text-gray-700">Edit Usernames</h3>
             <div class="w-full">
                 <FormKit type="email" name="email" label="Email (send email)" label-class="text-left" validation="email"
-                  v-model="settings.email" />
+                  v-model="userStore.settings.email" />
 
                 <FormKit type="text" name="skype_nameemail" label="Skype (email or username)" label-class="text-left" 
-                  v-model="settings.skype_nameemail" />
+                  v-model="userStore.settings.skype_nameemail" />
 
                 <FormKit type="url" name="messenger_url" label="Messenger (Fb Username)" label-class="text-left" validation="url"
-                  v-model="settings.messenger_url" />
+                  v-model="userStore.settings.messenger_url" />
             </div>
 
           </div>
@@ -159,13 +148,13 @@ onMounted(() => {
           <div class="px-4 py-5 bg-white space-y-6 sm:p-6">
             <h3 class="text-2xl font-semibold text-gray-700">Edit Messages</h3>
             <div class="w-full">
-                <FormKit type="text" name="sms_body" label="Message" label-class="text-left"  v-model="settings.sms_body" />
+                <FormKit type="text" name="sms_body" label="Message" label-class="text-left"  v-model="userStore.settings.sms_body" />
 
-                <FormKit type="text" name="whatsapp_message" label="Whatsapp Message" label-class="text-left"  v-model="settings.whatsapp_message" />
+                <FormKit type="text" name="whatsapp_message" label="Whatsapp Message" label-class="text-left"  v-model="userStore.settings.whatsapp_message" />
 
-                <FormKit type="text" name="subject" label="Email Subject" label-class="text-left"  v-model="settings.subject" />
+                <FormKit type="text" name="subject" label="Email Subject" label-class="text-left"  v-model="userStore.settings.subject" />
 
-                <FormKit type="textarea" name="body" label="Email Body" label-class="text-left"  v-model="settings.body" />
+                <FormKit type="textarea" name="body" label="Email Body" label-class="text-left"  v-model="userStore.settings.body" />
             </div>
 
           </div>
@@ -180,23 +169,23 @@ onMounted(() => {
           <div class="px-4 py-5 bg-white space-y-6 sm:p-6">
             <h3 class="text-2xl font-semibold text-gray-700">Select buttons to show</h3>
             <div class="w-full grid md:grid-cols-4 sm:grid-cols-2 gap-3">
-                <FormKit v-model="settings.phone_show" type="checkbox" label="Normal Call" name="phone_show" />
+                <FormKit v-model="userStore.settings.phone_show" type="checkbox" label="Normal Call" name="phone_show" />
 
-                <FormKit v-model="settings.text_show" type="checkbox" label="Send a Text Message" name="text_show" />
+                <FormKit v-model="userStore.settings.text_show" type="checkbox" label="Send a Text Message" name="text_show" />
 
-                <FormKit v-model="settings.whatsapp_show" type="checkbox" label="Whatsapp" name="whatsapp_show" />
+                <FormKit v-model="userStore.settings.whatsapp_show" type="checkbox" label="Whatsapp" name="whatsapp_show" />
 
-                <FormKit v-model="settings.messenger_show" type="checkbox" label="Facebook Messenger" name="messenger_show" />
+                <FormKit v-model="userStore.settings.messenger_show" type="checkbox" label="Facebook Messenger" name="messenger_show" />
 
-                <FormKit v-model="settings.telegram_show" type="checkbox" label="Telegram" name="telegram_show" />
+                <FormKit v-model="userStore.settings.telegram_show" type="checkbox" label="Telegram" name="telegram_show" />
 
-                <FormKit v-model="settings.viber_show" type="checkbox" label="Viber" name="viber_show" />
+                <FormKit v-model="userStore.settings.viber_show" type="checkbox" label="Viber" name="viber_show" />
 
-                <FormKit v-model="settings.skype_show" type="checkbox" label="Skype" name="skype_show" />
+                <FormKit v-model="userStore.settings.skype_show" type="checkbox" label="Skype" name="skype_show" />
 
-                <FormKit v-model="settings.line_show" type="checkbox" label="Line" name="line_show" />
+                <!-- <FormKit v-model="userStore.settings.line_show" type="checkbox" label="Line" name="line_show" /> -->
 
-                <FormKit v-model="settings.email_show" type="checkbox" label="Email Us" name="email_show" />
+                <FormKit v-model="userStore.settings.email_show" type="checkbox" label="Email Us" name="email_show" />
             </div>
 
           </div>
