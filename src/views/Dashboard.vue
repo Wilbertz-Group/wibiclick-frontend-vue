@@ -251,7 +251,7 @@ onMounted(() => {
             <div class="space-y-6 pt-8 pb-16 text-center leading-7 text-black-600 relative">
               <div class="grid px-4 md:grid-cols-2 gap-3">
                 <span class="text-left text-sm tracking-tight font-bold">CTR Clickthrough Rate <br>
-                  <span class="text-4xl grid md:grid-cols-2 ">{{ parseInt( (userStore?.analytics?.clicks/userStore?.analytics?.clicks) * 100 || 0 ) }} <i data-v-4d521fc4="" data-name="trending-up"
+                  <span class="text-4xl grid md:grid-cols-2 ">{{ parseInt( (userStore?.analytics?.views/userStore?.analytics?.clicks) * 100 || 0 ) }} <i data-v-4d521fc4="" data-name="trending-up"
                       data-tags="" data-type="trending-up" class="text-blue-600 font-bold"><svg data-v-4d521fc4=""
                         xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
