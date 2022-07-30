@@ -91,7 +91,7 @@ async function fetchClicks() {
   try {
     loading.value = true;
     const response = await axios.get(
-      "http://localhost:3000/get-website-clicks?id="+ userStore.currentWebsite
+      "https://wibi.wilbertzgroup.com/get-website-clicks?id="+ userStore.currentWebsite
     );
 
     const data = _.sortBy(response.data.clicks, 'x')
@@ -143,7 +143,7 @@ async function fetchViews() {
   try {
     loading.value = true;
     const response = await axios.get(
-      "http://localhost:3000/get-website-views?id="+ userStore.currentWebsite
+      "https://wibi.wilbertzgroup.com/get-website-views?id="+ userStore.currentWebsite
     );
 
     const data = _.sortBy(response.data.views, 'x')
