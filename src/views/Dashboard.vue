@@ -1,5 +1,7 @@
 <script setup>
 import axios from "axios";
+import _ from 'lodash';
+import moment from 'moment'
 import { ref, onMounted } from "vue";
 import ScaleLoader from "vue-spinner/src/ScaleLoader.vue";
 import { useUserStore } from "@/stores/UserStore"
@@ -67,13 +69,37 @@ vseries.value = [{
     data: ['12']
 }]
 
+const groups = (() => {
+    const byDay = (item) => moment(item.x).format('MMM DD YYYY'),
+        byHour = (item) => moment(byDay(item) + ' ' + moment(item.x).format('hh a'), "MMM DD YYYY hh a").toISOString(),
+        by6Hour = (item) => {
+            const m = moment(item.x);
+            return byDay(item) + ' ' + ['first', 'second', 'third', 'fourth'][Number(m.format('k')) % 6] + ' 6 hours';
+        },
+        byMonth = (item) => moment(item.x).format('MMM YYYY'),
+        byWeek = (item) => byMonth(item) + ' ' + moment(item.x).format('ww');
+    return {
+        byDay,
+        byHour,
+        by6Hour,
+        byMonth,
+        byWeek,
+    };
+})();
+
 async function fetchClicks() {
   try {
     loading.value = true;
     const response = await axios.get(
-      "https://wibi.wilbertzgroup.com/get-website-clicks?id="+ userStore.currentWebsite
+      "http://localhost:3000/get-website-clicks?id="+ userStore.currentWebsite
     );
-    let clicksData = response.data.clicks;
+
+    const data = _.sortBy(response.data.clicks, 'x')
+
+    const currentGroup = 'byDay';
+    const grouped = _.groupBy(data, groups[currentGroup])
+    const seriesData = Object.values(grouped).map( a => a.length )
+    const optionsData = Object.keys(grouped)
         
     options.value = {
         chart: {
@@ -88,7 +114,10 @@ async function fetchClicks() {
         },
         xaxis: {
           type: 'datetime',
-          categories: Object.keys(clicksData)
+          categories: optionsData
+        },
+        yaxis: {
+          min: 0,
         },
         tooltip: {
           x: {
@@ -98,7 +127,7 @@ async function fetchClicks() {
     }
     series.value = [{
       name: 'clicks',
-      data: Object.values(clicksData)
+      data: seriesData
     }]
 
     loading.value = false;
@@ -114,9 +143,15 @@ async function fetchViews() {
   try {
     loading.value = true;
     const response = await axios.get(
-      "https://wibi.wilbertzgroup.com/get-website-views?id="+ userStore.currentWebsite
+      "http://localhost:3000/get-website-views?id="+ userStore.currentWebsite
     );
-    let viewsData = response.data.views;
+
+    const data = _.sortBy(response.data.views, 'x')
+    
+    const currentGroup = 'byDay';
+    const grouped = _.groupBy(data, groups[currentGroup])
+    const seriesData = Object.values(grouped).map( a => a.length )
+    const optionsData = Object.keys(grouped)
         
     voptions.value = {
         chart: {
@@ -131,7 +166,10 @@ async function fetchViews() {
         },
         xaxis: {
           type: 'datetime',
-          categories: Object.keys(viewsData)
+          categories: optionsData
+        },
+        yaxis: {
+          min: 0,
         },
         tooltip: {
           x: {
@@ -141,7 +179,7 @@ async function fetchViews() {
     }
     vseries.value = [{
       name: 'views',
-      data: Object.values(viewsData)
+      data: seriesData
     }]
 
     loading.value = false;
