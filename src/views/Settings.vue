@@ -1,21 +1,25 @@
 <script setup>
 import axios from "axios";
-import { onMounted, ref, computed } from "vue";
+import { ref } from "vue";
 import Header from "@/components/Header.vue";
-import Alert from "@/components/Alert.vue";
 import { useUserStore } from "@/stores/UserStore"
 import ScaleLoader from 'vue-spinner/src/ScaleLoader.vue'
 import { useToast } from 'vue-toast-notification';
+import Buttonwidget from "@/components/button_widget.vue";
 
 const toast = useToast();
 const userStore = useUserStore()
 const loading = ref(false)
 
 //Tabs
-const numbers = ref(true)
-const usernames = ref(false)
-const messages = ref(false)
-const visibility = ref(false)
+const whatsapp = ref(false)
+const phone = ref(true)
+const text = ref(false)
+const messenger = ref(false)
+const email = ref(false)
+const telegram = ref(false)
+const viber = ref(false)
+const skype = ref(false)
 
 
 
@@ -32,10 +36,14 @@ async function settingsUpdate(credentials) {
 }
 
 function toggleMenu() {
-  numbers.value = false
-  usernames.value = false
-  messages.value = false
-  visibility.value = false
+  whatsapp.value = false
+  phone.value = false
+  text.value = false
+  messenger.value = false
+  email.value = false
+  telegram.value = false
+  viber.value = false
+  skype.value = false
 }
 
 
@@ -46,153 +54,243 @@ function toggleMenu() {
   </scale-loader>
   <Header title="Widget Settings" />
   <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-    <div class="px-4 py-6 sm:px-0">
+    <div class="px-4 py-6 sm:px-0 grid grid-cols-4 gap-3">
 
-      <ul class="grid md:grid-cols-4 sm:grid-cols-1 gap-3">
-        <li class="w-full">
+      <ul class="col-span-1">
+        <li class="w-full mb-2 mt-2">
           <a href="#"
-            @click="toggleMenu(); numbers=!numbers"
-            :class="!numbers ? 'bg-white' : 'bg-sky-100 text-sky-600 rounded-t-lg border-b-2 border-sky-600'"
+            @click="toggleMenu(); phone=!phone"
+            :class="!phone ? 'bg-white' : 'bg-sky-100 text-sky-600 rounded-t-lg border-b-2 border-sky-600'"
             class="btn-air-light text-center font-semibold inline-block p-4 w-full text-gray-900 rounded-lg focus:ring-4 focus:ring-blue-300 active focus:outline-none dark:bg-gray-700 dark:text-white"
             aria-current="page">
             <font-awesome-icon icon="fas fa-phone" />
-            Numbers
+            Phone
+          </a>
+        </li>             
+        <li class="w-full mb-2 mt-2">
+          <a href="#"
+            @click="toggleMenu(); email=!email"
+            :class="!email ? 'bg-white' : 'bg-sky-100 text-sky-600 rounded-t-lg border-b-2 border-sky-600'"
+            class="btn-air-light text-center font-semibold inline-block p-4 w-full text-gray-900 rounded-lg focus:ring-4 focus:ring-blue-300 active focus:outline-none dark:bg-gray-700 dark:text-white"
+            aria-current="page">
+            <font-awesome-icon icon="fas fa-envelope" />
+            Email
           </a>
         </li>
-        <li class="w-full">
+        <li class="w-full mb-2 mt-2">
           <a href="#"
-            @click="toggleMenu(usernames); usernames=!usernames"
-            :class="!usernames ? 'bg-white' : 'bg-sky-100 text-sky-600 rounded-t-lg border-b-2 border-sky-600'"
-            class="btn-air-light text-center font-semibold inline-block p-4 w-full hover:text-gray-700 rounded-lg hover:bg-gray-50 focus:ring-4 focus:ring-blue-300 focus:outline-none dark:hover:text-white dark:bg-gray-800 dark:hover:bg-gray-700">
-            <font-awesome-icon icon="fas fa-user" />
-            Usernames
+            @click="toggleMenu(); viber=!viber"
+            :class="!viber ? 'bg-white' : 'bg-sky-100 text-sky-600 rounded-t-lg border-b-2 border-sky-600'"
+            class="btn-air-light text-center font-semibold inline-block p-4 w-full text-gray-900 rounded-lg focus:ring-4 focus:ring-blue-300 active focus:outline-none dark:bg-gray-700 dark:text-white"
+            aria-current="page">
+            <font-awesome-icon icon="fab fa-viber" />
+            Viber
           </a>
         </li>
-        <li class="w-full">
+        <li class="w-full mb-2 mt-2">
           <a href="#"
-            @click="toggleMenu(messages); messages=!messages"
-            :class="!messages ? 'bg-white' : 'bg-sky-100 text-sky-600 rounded-t-lg border-b-2 border-sky-600'"
-            class="btn-air-light text-center font-semibold inline-block p-4 w-full bg-white hover:text-gray-700 rounded-lg hover:bg-gray-50 focus:ring-4 focus:ring-blue-300 focus:outline-none dark:hover:text-white dark:bg-gray-800 dark:hover:bg-gray-700">
+            @click="toggleMenu(); skype=!skype"
+            :class="!skype ? 'bg-white' : 'bg-sky-100 text-sky-600 rounded-t-lg border-b-2 border-sky-600'"
+            class="btn-air-light text-center font-semibold inline-block p-4 w-full text-gray-900 rounded-lg focus:ring-4 focus:ring-blue-300 active focus:outline-none dark:bg-gray-700 dark:text-white"
+            aria-current="page">
+            <font-awesome-icon icon="fab fa-skype" />
+            Skype
+          </a>
+        </li>
+        <li class="w-full mb-2 mt-2">
+          <a href="#"
+            @click="toggleMenu(); telegram=!telegram"
+            :class="!telegram ? 'bg-white' : 'bg-sky-100 text-sky-600 rounded-t-lg border-b-2 border-sky-600'"
+            class="btn-air-light text-center font-semibold inline-block p-4 w-full text-gray-900 rounded-lg focus:ring-4 focus:ring-blue-300 active focus:outline-none dark:bg-gray-700 dark:text-white"
+            aria-current="page">
+            <font-awesome-icon icon="fab fa-telegram" />
+            Telegram
+          </a>
+        </li>        
+         <li class="w-full mb-2 mt-2">
+          <a href="#"
+            @click="toggleMenu(); whatsapp=!whatsapp"
+            :class="!whatsapp ? 'bg-white' : 'bg-sky-100 text-sky-600 rounded-t-lg border-b-2 border-sky-600'"
+            class="btn-air-light text-center font-semibold inline-block p-4 w-full text-gray-900 rounded-lg focus:ring-4 focus:ring-blue-300 active focus:outline-none dark:bg-gray-700 dark:text-white"
+            aria-current="page">
+            <font-awesome-icon icon="fab fa-whatsapp" />
+            Whatsapp
+          </a>
+        </li>  
+        <li class="w-full mb-2 mt-2">
+          <a href="#"
+            @click="toggleMenu(); text=!text"
+            :class="!text ? 'bg-white' : 'bg-sky-100 text-sky-600 rounded-t-lg border-b-2 border-sky-600'"
+            class="btn-air-light text-center font-semibold inline-block p-4 w-full text-gray-900 rounded-lg focus:ring-4 focus:ring-blue-300 active focus:outline-none dark:bg-gray-700 dark:text-white"
+            aria-current="page">
             <font-awesome-icon icon="fas fa-comment" />
-            Messages
+            Text Message
           </a>
         </li>
-        <li class="w-full">
+        <li class="w-full mb-2 mt-2">
           <a href="#"
-            @click="toggleMenu(visibility); visibility=!visibility"
-            :class="!visibility ? 'bg-white' : 'bg-sky-100 text-sky-600 rounded-t-lg border-b-2 border-sky-600'"
-            class="btn-air-light text-center font-semibold inline-block p-4 w-full bg-white rounded-lg hover:text-gray-700 hover:bg-gray-50 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:hover:text-white dark:bg-gray-800 dark:hover:bg-gray-700">
-            <font-awesome-icon icon="fas fa-low-vision" />
-            Visibility
+            @click="toggleMenu(); messenger=!messenger"
+            :class="!messenger ? 'bg-white' : 'bg-sky-100 text-sky-600 rounded-t-lg border-b-2 border-sky-600'"
+            class="btn-air-light text-center font-semibold inline-block p-4 w-full text-gray-900 rounded-lg focus:ring-4 focus:ring-blue-300 active focus:outline-none dark:bg-gray-700 dark:text-white"
+            aria-current="page">
+            <font-awesome-icon icon="fab fa-facebook-messenger" />
+            Facebook Messenger
           </a>
         </li>
+        
       </ul>
 
-      <div class="shadow sm:rounded-md sm:overflow-hidden mt-2 btn-air-light">
-        <!-- Numbers Tab -->
-        <FormKit type="form" id="settings-numbers" v-if="numbers" :form-class="numbers ? 'hide w-full' : 'show w-full'"  submit-label="Update"
+      <div class="col-span-2 shadow sm:rounded-md sm:overflow-hidden mt-2 btn-air-light">
+
+        <!-- Phone Tab -->
+        <FormKit type="form" v-if="phone" :form-class="phone ? 'w-full' : 'show w-full'"  submit-label="Update"
           @submit="settingsUpdate" :actions="false" #default="{ value }">
           <div class="px-4 py-5 bg-white space-y-6 sm:p-6">
-            <h3 class="text-2xl font-semibold text-gray-700">Edit Phone numbers</h3>
+            <h3 class="text-2xl font-semibold text-gray-700">Edit Phone Call</h3>
             <div class="w-full">
-                <FormKit type="text" name="pnumber" label="Phone Number" label-class="text-left" 
-                  v-model="userStore.settings.pnumber" />
+                <FormKit v-model="userStore.settings.phone_show" type="checkbox" label="Phone Call Visibility" name="phone_show" />
+                
+                <FormKit type="text" name="pnumber" label="Phone Number" :validation="userStore.settings.phone_show ? 'required|phone' : ''" label-class="text-left" v-model="userStore.settings.pnumber" />
 
-                <FormKit type="text" name="pnumber_sms" label="Text Message Phone Number" label-class="text-left" 
-                  v-model="userStore.settings.pnumber_sms" />
-
-                <FormKit type="text" name="wnumber" label="Whatsapp Phone Number" label-class="text-left" 
-                  v-model="userStore.settings.wnumber" />
-
-                <FormKit type="text" name="telegram_num" label="Telegram Phone Number" label-class="text-left" 
-                  v-model="userStore.settings.telegram_num" />
-
-                <FormKit type="text" name="viber_num" label="Viber Phone Number" label-class="text-left" 
-                  v-model="userStore.settings.viber_num" />
-
-                <!-- <FormKit type="text" name="line" label="Line Phone Number" label-class="text-left" 
-                  v-model="userStore.settings.line" /> -->
+                <FormKit type="text" name="phoneText" label="Phone Call Button Label" :validation="userStore.settings.phone_show ? 'required' : ''" label-class="text-left"  v-model="userStore.settings.phoneText" />
             </div>
 
           </div>
-          <div class="px-4 py-3 bg-gray-50 text-right sm:px-6">
+          <div class="px-4 py-3 text-right sm:px-6">
             <FormKit type="submit" label="Update" />
           </div>
         </FormKit>
 
-        <!-- Usernames Tab -->
-        <FormKit type="form" id="settings-usernames" v-if="usernames" :form-class="usernames ? 'hide w-full' : 'show w-full'"  submit-label="Update"
+        <!-- Whatsapp Tab -->
+        <FormKit type="form" v-if="whatsapp" :form-class="whatsapp ? 'w-full' : 'show w-full'"  submit-label="Update"
           @submit="settingsUpdate" :actions="false" #default="{ value }">
           <div class="px-4 py-5 bg-white space-y-6 sm:p-6">
-            <h3 class="text-2xl font-semibold text-gray-700">Edit Usernames</h3>
+            <h3 class="text-2xl font-semibold text-gray-700">Edit Whatsapp Settings</h3>
             <div class="w-full">
-                <FormKit type="email" name="email" label="Email (send email)" label-class="text-left" validation="email"
-                  v-model="userStore.settings.email" />
+                <FormKit v-model="userStore.settings.whatsapp_show" type="checkbox" label="Whatsapp Visibility" name="whatsapp_show" />
 
-                <FormKit type="text" name="skype_nameemail" label="Skype (email or username)" label-class="text-left" 
-                  v-model="userStore.settings.skype_nameemail" />
+                <FormKit type="text" name="wnumber" label="Whatsapp Phone Number" :validation="userStore.settings.whatsapp_show ? 'required' : ''" label-class="text-left" v-model="userStore.settings.wnumber" />
 
-                <FormKit type="url" name="messenger_url" label="Messenger (Fb Username)" label-class="text-left" validation="url"
-                  v-model="userStore.settings.messenger_url" />
+                <FormKit type="text" name="whatsapp_message" label="Whatsapp Message" :validation="userStore.settings.whatsapp_show ? 'required' : ''" label-class="text-left"  v-model="userStore.settings.whatsapp_message" />
             </div>
 
           </div>
-          <div class="px-4 py-3 bg-gray-50 text-right sm:px-6">
+          <div class="px-4 py-3 text-right sm:px-6">
             <FormKit type="submit" label="Update" />
           </div>
         </FormKit>
 
-        <!-- Messages Tab -->
-        <FormKit type="form" id="settings-messages" v-if="messages" :form-class="messages ? 'hide w-full' : 'show w-full'"  submit-label="Update"
+        <!-- Text Message Tab -->
+        <FormKit type="form" v-if="text" :form-class="text ? 'w-full' : 'show w-full'"  submit-label="Update"
           @submit="settingsUpdate" :actions="false" #default="{ value }">
           <div class="px-4 py-5 bg-white space-y-6 sm:p-6">
-            <h3 class="text-2xl font-semibold text-gray-700">Edit Messages</h3>
+            <h3 class="text-2xl font-semibold text-gray-700">Edit Text Message Settings</h3>
             <div class="w-full">
-                <FormKit type="text" name="sms_body" label="Message" label-class="text-left"  v-model="userStore.settings.sms_body" />
-
-                <FormKit type="text" name="whatsapp_message" label="Whatsapp Message" label-class="text-left"  v-model="userStore.settings.whatsapp_message" />
-
-                <FormKit type="text" name="subject" label="Email Subject" label-class="text-left"  v-model="userStore.settings.subject" />
-
-                <FormKit type="textarea" name="body" label="Email Body" label-class="text-left"  v-model="userStore.settings.body" />
-            </div>
-
-          </div>
-          <div class="px-4 py-3 bg-gray-50 text-right sm:px-6">
-            <FormKit type="submit" label="Update" />
-          </div>
-        </FormKit>
-
-        <!-- Visibility Tab -->
-        <FormKit type="form" id="settings-visibility" v-if="visibility" :form-class="visibility ? 'hide w-full' : 'show w-full'"  submit-label="Update"
-          @submit="settingsUpdate" :actions="false" #default="{ value }">
-          <div class="px-4 py-5 bg-white space-y-6 sm:p-6">
-            <h3 class="text-2xl font-semibold text-gray-700">Select buttons to show</h3>
-            <div class="w-full grid md:grid-cols-4 sm:grid-cols-2 gap-3">
-                <FormKit v-model="userStore.settings.phone_show" type="checkbox" label="Normal Call" name="phone_show" />
-
                 <FormKit v-model="userStore.settings.text_show" type="checkbox" label="Send a Text Message" name="text_show" />
 
-                <FormKit v-model="userStore.settings.whatsapp_show" type="checkbox" label="Whatsapp" name="whatsapp_show" />
+                <FormKit type="text" name="pnumber_sms" label="Text Message Phone Number" :validation="userStore.settings.text_show ? 'required|phone' : ''" label-class="text-left" v-model="userStore.settings.pnumber_sms" />
 
-                <FormKit v-model="userStore.settings.messenger_show" type="checkbox" label="Facebook Messenger" name="messenger_show" />
-
-                <FormKit v-model="userStore.settings.telegram_show" type="checkbox" label="Telegram" name="telegram_show" />
-
-                <FormKit v-model="userStore.settings.viber_show" type="checkbox" label="Viber" name="viber_show" />
-
-                <FormKit v-model="userStore.settings.skype_show" type="checkbox" label="Skype" name="skype_show" />
-
-                <!-- <FormKit v-model="userStore.settings.line_show" type="checkbox" label="Line" name="line_show" /> -->
-
-                <FormKit v-model="userStore.settings.email_show" type="checkbox" label="Email Us" name="email_show" />
+                <FormKit type="text" name="sms_body" label="Message" label-class="text-left" :validation="userStore.settings.text_show ? 'required' : ''"  v-model="userStore.settings.sms_body" />
             </div>
 
           </div>
-          <div class="px-4 py-3 bg-gray-50 text-right sm:px-6">
+          <div class="px-4 py-3 text-right sm:px-6">
             <FormKit type="submit" label="Update" />
           </div>
         </FormKit>
+
+        <!-- Facebook Messenger Tab -->
+        <FormKit type="form" v-if="messenger" :form-class="messenger ? 'w-full' : 'show w-full'"  submit-label="Update"
+          @submit="settingsUpdate" :actions="false" #default="{ value }">
+          <div class="px-4 py-5 bg-white space-y-6 sm:p-6">
+            <h3 class="text-2xl font-semibold text-gray-700">Edit Facebook Messenger Settings</h3>
+            <div class="w-full">
+                <FormKit v-model="userStore.settings.messenger_show" type="checkbox" label="Facebook Messenger" name="messenger_show" />
+
+                <FormKit type="url" name="messenger_url" label="Messenger (https://m.me/yourid)" label-class="text-left" :validation="userStore.settings.messenger_show ? 'required|url' : ''" v-model="userStore.settings.messenger_url" />
+            </div>
+
+          </div>
+          <div class="px-4 py-3 text-right sm:px-6">
+            <FormKit type="submit" label="Update" />
+          </div>
+        </FormKit>
+
+        <!-- Email Tab -->
+        <FormKit type="form" v-if="email" :form-class="email ? 'w-full' : 'show w-full'"  submit-label="Update"
+          @submit="settingsUpdate" :actions="false" #default="{ value }">
+          <div class="px-4 py-5 bg-white space-y-6 sm:p-6">
+            <h3 class="text-2xl font-semibold text-gray-700">Edit Email Settings</h3>
+            <div class="w-full">
+                <FormKit v-model="userStore.settings.email_show" type="checkbox" label="Email Us" name="email_show" />
+
+                <FormKit type="email" name="email" label="Email (send email)" label-class="text-left" :validation="userStore.settings.email ? 'required|email' : ''" v-model="userStore.settings.email" />
+
+                <FormKit type="text" name="subject" label="Email Subject" label-class="text-left" :validation="userStore.settings.email ? 'required|email' : ''" v-model="userStore.settings.subject" />
+
+                <FormKit type="textarea" name="body" label="Email Body" label-class="text-left" :validation="userStore.settings.email ? 'required|email' : ''" v-model="userStore.settings.body" />
+            </div>
+
+          </div>
+          <div class="px-4 py-3 text-right sm:px-6">
+            <FormKit type="submit" label="Update" />
+          </div>
+        </FormKit>
+
+        <!-- Telegram Tab -->
+        <FormKit type="form" v-if="telegram" :form-class="telegram ? 'w-full' : 'show w-full'"  submit-label="Update"
+          @submit="settingsUpdate" :actions="false" #default="{ value }">
+          <div class="px-4 py-5 bg-white space-y-6 sm:p-6">
+            <h3 class="text-2xl font-semibold text-gray-700">Edit Telegram Settings</h3>
+            <div class="w-full">
+                <FormKit v-model="userStore.settings.telegram_show" type="checkbox" label="Telegram" name="telegram_show" />
+
+                <FormKit type="text" name="telegram_num" label="Telegram Phone Number" :validation="userStore.settings.telegram_show ? 'required|phone' : ''" label-class="text-left" v-model="userStore.settings.telegram_num" />
+            </div>
+
+          </div>
+          <div class="px-4 py-3 text-right sm:px-6">
+            <FormKit type="submit" label="Update" />
+          </div>
+        </FormKit>
+
+        <!-- Viber Tab -->
+        <FormKit type="form" v-if="viber" :form-class="viber ? 'w-full' : 'show w-full'"  submit-label="Update"
+          @submit="settingsUpdate" :actions="false" #default="{ value }">
+          <div class="px-4 py-5 bg-white space-y-6 sm:p-6">
+            <h3 class="text-2xl font-semibold text-gray-700">Edit Viber Settings</h3>
+            <div class="w-full">
+                <FormKit v-model="userStore.settings.viber_show" type="checkbox" label="Viber" name="viber_show" />
+
+                <FormKit type="text" name="viber_num" label="Viber Phone Number" :validation="userStore.settings.viber_show ? 'required|phone' : ''" label-class="text-left" v-model="userStore.settings.viber_num" />
+            </div>
+
+          </div>
+          <div class="px-4 py-3 text-right sm:px-6">
+            <FormKit type="submit" label="Update" />
+          </div>
+        </FormKit>
+
+        <!-- Skype Tab -->
+        <FormKit type="form" v-if="skype" :form-class="skype ? 'w-full' : 'show w-full'"  submit-label="Update"
+          @submit="settingsUpdate" :actions="false" #default="{ value }">
+          <div class="px-4 py-5 bg-white space-y-6 sm:p-6">
+            <h3 class="text-2xl font-semibold text-gray-700">Edit Skype Settings</h3>
+            <div class="w-full">
+                <FormKit v-model="userStore.settings.skype_show" type="checkbox" label="Skype" name="skype_show" />
+
+                <FormKit type="text" name="skype_nameemail" label="Skype (email or username)" :validation="userStore.settings.skype_show ? 'required' : ''" label-class="text-left" v-model="userStore.settings.skype_nameemail" />
+            </div>
+
+          </div>
+          <div class="px-4 py-3 text-right sm:px-6">
+            <FormKit type="submit" label="Update" />
+          </div>
+        </FormKit>
+      </div>
+
+      <div>
+        <Buttonwidget/>
       </div>
 
     </div>

@@ -32,7 +32,7 @@ options.value = {
   },
   tooltip: {
     x: {
-      format: 'dd/MM/yy HH:mm'
+      format: 'dd MMM yyyy hh tt'
     },
   },
 },
@@ -59,7 +59,7 @@ voptions.value = {
   },
   tooltip: {
     x: {
-      format: 'dd/MM/yy HH:mm'
+      format: 'dd MMM yyyy hh tt'
     },
   },
 },
@@ -71,7 +71,7 @@ vseries.value = [{
 
 const groups = (() => {
     const byDay = (item) => moment(item.x).format('MMM DD YYYY'),
-        byHour = (item) => moment(byDay(item) + ' ' + moment(item.x).format('hh a'), "MMM DD YYYY hh a").toISOString(),
+        byHour = (item) => moment(byDay(item) + ' ' + moment(item.x).format('hh a'), "dd MMM yyyy hh tt").toISOString(),
         by6Hour = (item) => {
             const m = moment(item.x);
             return byDay(item) + ' ' + ['first', 'second', 'third', 'fourth'][Number(m.format('k')) % 6] + ' 6 hours';
@@ -104,7 +104,11 @@ async function fetchClicks() {
     options.value = {
         chart: {
           height: 350,
-          type: 'area'
+          type: 'area',
+          toolbar: {
+            autoSelected: "pan",
+            show: false
+          } 
         },
         dataLabels: {
           enabled: false
@@ -118,10 +122,34 @@ async function fetchClicks() {
         },
         yaxis: {
           min: 0,
+          tickAmount: 4
+        },
+        fill: {
+          gradient: {
+            enabled: true,
+            opacityFrom: 0.55,
+            opacityTo: 0
+          }
+        },
+        grid: {
+          borderColor: "#555",
+          clipMarkers: false,
+          yaxis: {
+            lines: {
+              show: false
+            }
+          }
+        },
+        markers: {
+          size: 5,
+          colors: ["#ffffff"],
+          strokeColor: "#00BAEC",
+          strokeWidth: 3
         },
         tooltip: {
+          theme: "dark",
           x: {
-            format: 'dd/MM/yy HH:mm'
+            format: 'dd MMM yyyy hh tt'
           },
         },
     }
@@ -156,7 +184,11 @@ async function fetchViews() {
     voptions.value = {
         chart: {
           height: 350,
-          type: 'area'
+          type: 'area',
+          toolbar: {
+            autoSelected: "pan",
+            show: false
+          }          
         },
         dataLabels: {
           enabled: false
@@ -170,10 +202,34 @@ async function fetchViews() {
         },
         yaxis: {
           min: 0,
+          tickAmount: 4
+        },
+        fill: {
+          gradient: {
+            enabled: true,
+            opacityFrom: 0.55,
+            opacityTo: 0
+          }
+        },
+        grid: {
+          borderColor: "#555",
+          clipMarkers: false,
+          yaxis: {
+            lines: {
+              show: false
+            }
+          }
+        },
+        markers: {
+          size: 5,
+          colors: ["#ffffff"],
+          strokeColor: "#00BAEC",
+          strokeWidth: 3
         },
         tooltip: {
+          theme: "dark",
           x: {
-            format: 'dd/MM/yy HH:mm'
+            format: 'dd MMM yyyy hh tt'
           },
         },
     }
@@ -406,29 +462,21 @@ watchEffect(() => {
             <h4 class="text-4xl py-4 text-center">{{ userStore?.analytics?.skype || 0 }}</h4>
             <button type="button"
               class="btn-air-light text-white bg-sky-500 hover:bg-sky-600 focus:outline-none focus:ring-4 focus:ring-green-300 font-medium rounded-full text-base px-10 pt-2 pb-2.5 text-center mr-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800">
-              <font-awesome-icon icon="fas fa-comment" />
+              <font-awesome-icon icon="fab fa-skype" />
               <span class="ml-2">Skype</span>
             </button>
           </div>
-          <!-- <div class="rounded-lg text-center pt-1 pb-6 border border-gray-200 shadow-md divide-y divide-gray-300/50">
-            <h4 class="text-4xl py-4 text-center">{{ userStore?.analytics?.line || 0 }}</h4>
-            <button type="button"
-              class="btn-air-light text-white bg-green-400 hover:bg-green-500 focus:outline-none focus:ring-4 focus:ring-green-300 font-medium rounded-full text-base px-10 pt-2 pb-2.5 text-center mr-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800">
-              <font-awesome-icon icon="fab fa-line" />
-              <span class="ml-2">Line</span>
-            </button>
-          </div> -->
-        </div>
-
-        <div class="w-full rounded-lg text-center mt-10 pt-5 pb-6 pr-3 border border-gray-200 shadow-md divide-y divide-gray-300/50">
-          <h4 class="text-4xl py-4 text-center">Clicks Analytics</h4>
-          <apexchart type="area" height="450" :options="options" :series="series"></apexchart>
         </div>
 
         <div class="w-full rounded-lg text-center mt-10 pt-5 pb-6 pr-3 border border-gray-200 shadow-md divide-y divide-gray-300/50">
           <h4 class="text-4xl py-4 text-center">Views Analytics</h4>
           <apexchart type="area" height="450" :options="voptions" :series="vseries"></apexchart>
         </div>
+
+        <div class="w-full rounded-lg text-center mt-10 pt-5 pb-6 pr-3 border border-gray-200 shadow-md divide-y divide-gray-300/50">
+          <h4 class="text-4xl py-4 text-center">Clicks Analytics</h4>
+          <apexchart type="area" height="450" :options="options" :series="series"></apexchart>
+        </div>       
 
       </div>
     </div>
