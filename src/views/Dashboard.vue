@@ -2,7 +2,7 @@
 import axios from "axios";
 import _ from 'lodash';
 import moment from 'moment'
-import { ref, onMounted } from "vue";
+import { ref, onMounted, watchEffect } from "vue";
 import ScaleLoader from "vue-spinner/src/ScaleLoader.vue";
 import { useUserStore } from "@/stores/UserStore"
 import { useToast } from 'vue-toast-notification';
@@ -196,7 +196,14 @@ onMounted(() => {
     fetchClicks()
     fetchViews()
   }
-});
+})
+
+watchEffect(() => {    
+  if(userStore.currentWebsite){
+    fetchClicks()
+    fetchViews()
+  }
+})
 </script>
 
 <template>
