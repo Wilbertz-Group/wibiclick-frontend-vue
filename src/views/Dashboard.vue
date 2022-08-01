@@ -468,15 +468,16 @@ watchEffect(() => {
           </div>
         </div>
 
-        <div class="w-full rounded-lg text-center mt-10 pt-5 pb-6 pr-3 border border-gray-200 shadow-md divide-y divide-gray-300/50">
-          <h4 class="text-4xl py-4 text-center">Views Analytics</h4>
-          <apexchart type="area" height="450" :options="voptions" :series="vseries"></apexchart>
-        </div>
-
-        <div class="w-full rounded-lg text-center mt-10 pt-5 pb-6 pr-3 border border-gray-200 shadow-md divide-y divide-gray-300/50">
-          <h4 class="text-4xl py-4 text-center">Clicks Analytics</h4>
-          <apexchart type="area" height="450" :options="options" :series="series"></apexchart>
-        </div>       
+        <div class="grid grid-cols-2 gap-3 ">
+          <div class="rounded-lg text-center mt-10 pb-6 pr-3 border border-gray-200 shadow-md divide-y divide-gray-300/50">
+            <h4 class="text-2xl py-2 text-center">Views Analytics</h4>
+            <apexchart type="area" height="450" :options="voptions" :series="vseries"></apexchart>
+          </div>
+          <div class="rounded-lg text-center mt-10 pb-6 pr-3 border border-gray-200 shadow-md divide-y divide-gray-300/50">
+            <h4 class="text-2xl py-2 text-center">Clicks Analytics</h4>
+            <apexchart type="area" height="450" :options="options" :series="series"></apexchart>
+          </div>
+        </div>     
 
       </div>
     </div>
