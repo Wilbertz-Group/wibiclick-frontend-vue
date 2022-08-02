@@ -18,19 +18,20 @@
         <div class="">
           <div class="md:col-span-1">
             <div class="px-4 sm:px-0">
-              <h3 class="text-lg font-medium leading-6 text-gray-900">Use this snippet on your website. Place it between the [head] tag</h3>
+              <h3 class="text-lg font-medium leading-6 text-gray-900" v-if="userStore.currentWebsite != 'default'">Use this snippet on your website. Place it between the [head] tag</h3>
             </div>
           </div>
           <div class="mt-3 md:col-span-2">
               <div class="shadow sm:rounded-md sm:overflow-hidden">
-                  <div class="clipboaard-container">
+                  <div class="clipboaard-container" v-if="userStore.currentWebsite != 'default'">
                       <button @click='source= source.innerText; copy()'>
                         <span v-if='!copied'>Copy</span>
                         <span v-else>Copied!</span>
                       </button>
 
-                      <pre v-highlightjs><code ref="source" class="language-javascript hljs">&lt;!-- WibiClick --&gt; &lt;script&gt; var url = 'https://cdn.jsdelivr.net/gh/wmuza/wibiclick/wibi-v3.min.js'; var s = document.createElement('script'); s.type = 'text/javascript'; s.async = true; s.src = url; s.onload = function () { createWidget("{{ userStore.currentWebsite }}"); }; var x = document.getElementsByTagName('script')[0]; x.parentNode.insertBefore(s, x);&lt;/script&gt;</code></pre>
+                      <pre v-highlightjs><code ref="source" class="language-javascript hljs">&lt;!-- WibiClick --&gt; &lt;script&gt; var url = 'https://cdn.jsdelivr.net/gh/wmuza/wibiclick/wibi-v3.min.js'; var s = document.createElement('script'); s.type = 'text/javascript'; s.async = true; s.src = url; s.onload = function () { createWidget("{{ Array.isArray(userStore.currentWebsite) ? userStore.currentWebsite[0] : userStore.currentWebsite }}"); }; var x = document.getElementsByTagName('script')[0]; x.parentNode.insertBefore(s, x);&lt;/script&gt;</code></pre>
                   </div>
+                  <h3 class="text-lg font-medium leading-6 text-red-600 m-6 text-center" v-else>You need to select or add a website on the top header to get the snippet!!!</h3>
               </div>
           </div>
         </div>

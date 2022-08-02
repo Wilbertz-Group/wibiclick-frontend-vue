@@ -285,7 +285,7 @@ watchEffect(() => {
 </script>
 
 <template>
-  <scale-loader :loading="loading" color="#23293b" height="50px" class="vld-overlay is-active is-full-page" width="6px">
+  <scale-loader :loading="loading" color="#ffffff" height="50px" class="vld-overlay is-active is-full-page" width="6px">
   </scale-loader>
   <div>
     <div class="relative flex min-h-screen flex-col justify-center overflow-hidden bg-gray-50">
@@ -520,5 +520,6 @@ watchEffect(() => {
         </div>
       </div>
     </div>
+    <div v-if="loading" class="bg-gray-900 bg-opacity-50 dark:bg-opacity-80 fixed inset-0 z-40"></div>
   </div>
 </template>

@@ -272,7 +272,7 @@
 </script>
 
 <template>
-  <scale-loader :loading="loading" color="#23293b" height="50px" class="vld-overlay is-active is-full-page" width="6px"></scale-loader>
+  <scale-loader :loading="loading" color="#ffffff" height="50px" class="vld-overlay is-active is-full-page" width="6px"></scale-loader>
   <div>
     <FormKit
       type="form"
@@ -390,6 +390,7 @@
     </FormKit>
       
   </div>
+  <div v-if="loading" class="bg-gray-900 bg-opacity-50 dark:bg-opacity-80 fixed inset-0 z-40"></div>
 </template>
 
 
