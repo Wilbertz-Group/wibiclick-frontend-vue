@@ -91,7 +91,7 @@
 
 <template>
   <scale-loader :loading="loading" color="#23293b" height="50px" class="vld-overlay is-active is-full-page" width="6px"></scale-loader>
-  <Disclosure as="nav" class="bg-custom-gray custom-css-cal" v-slot="{ open }">
+  <Disclosure as="nav" class="bg-blueGray-800 custom-css-cal" v-slot="{ open }">
       <div class=" mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between h-16">
           <div class="flex items-center">
@@ -269,13 +269,14 @@
 </template>
 
 <style>
-  .bg-custom-gray {
+  .bg-blueGray-800 {
     --tw-bg-opacity: 1;
-    background-color: #11101d;
+    background-color: rgba(30, 41, 59, var(--tw-bg-opacity));
   }
   .custom-css-cal .selectClass select.formkit-input {
     color: white;
-    background: #11101e;
+    --tw-bg-opacity: 1;
+    background-color: rgba(30, 41, 59, var(--tw-bg-opacity));
     min-width: 20vw;
   }
   .custom-css-cal .formkit-outer {

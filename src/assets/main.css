@@ -12,6 +12,15 @@ div#headlessui-menu-items-4 {
   z-index: 9;
 }
 
+.bg-blueGray-800 {
+  --tw-bg-opacity: 1;
+  background-color: rgba(30, 41, 59, var(--tw-bg-opacity));
+}
+.text-blueGray-200 {
+    --tw-text-opacity: 1;
+    color: rgba(226,232,240,var(--tw-text-opacity));
+}
+
 .shadow-md {
   /* --tw-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); */
   /* --tw-shadow-colored: 0 4px 6px -1px var(--tw-shadow-color), 0 2px 4px -2px var(--tw-shadow-color); */
@@ -148,7 +157,7 @@ pre {
   height: 40px;
   background-color: #158df7;
   border-top-left-radius: 69px;
-  border-bottom-right-radius: 20px;
+  border-bottom-right-radius: 10px;
   cursor: pointer;
 }
 
@@ -175,7 +184,7 @@ pre {
   height: 40px;
   background-color: #fb2e63;
   border-top-left-radius: 69px;
-  border-bottom-right-radius: 20px;
+  border-bottom-right-radius: 10px;
   cursor: pointer;
 }
 
@@ -202,7 +211,7 @@ pre {
   height: 40px;
   background-color: #51bb25;
   border-top-left-radius: 69px;
-  border-bottom-right-radius: 20px;
+  border-bottom-right-radius: 10px;
   cursor: pointer;
 }
 
@@ -229,7 +238,7 @@ pre {
   height: 40px;
   background-color: #ff3f70;
   border-top-left-radius: 69px;
-  border-bottom-right-radius: 20px;
+  border-bottom-right-radius: 10px;
   cursor: pointer;
 }
 
@@ -256,7 +265,7 @@ pre {
   height: 40px;
   background-color: #544fff;
   border-top-left-radius: 69px;
-  border-bottom-right-radius: 20px;
+  border-bottom-right-radius: 10px;
   cursor: pointer;
 }
 
@@ -283,7 +292,7 @@ pre {
   height: 40px;
   background-color: #e8f4fe;
   border-top-left-radius: 69px;
-  border-bottom-right-radius: 20px;
+  border-bottom-right-radius: 10px;
   cursor: pointer;
 }
 
@@ -310,7 +319,7 @@ pre {
   height: 40px;
   background-color: #2c323f;
   border-top-left-radius: 69px;
-  border-bottom-right-radius: 20px;
+  border-bottom-right-radius: 10px;
   cursor: pointer;
 }
 
@@ -337,7 +346,7 @@ pre {
   height: 40px;
   background-color: #fb740d;
   border-top-left-radius: 69px;
-  border-bottom-right-radius: 20px;
+  border-bottom-right-radius: 10px;
   cursor: pointer;
 }
 
