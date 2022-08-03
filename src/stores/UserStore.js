@@ -69,8 +69,7 @@ export const useUserStore = defineStore('UserStore', {
 								localStorage.setItem('user', JSON.stringify(response.data))				
 								axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.details.token}`
 								Thiss.user = response.data.details
-								toast.success("You are successfully logged in")	
-								router.push({ name: 'dashboard' })
+								toast.success("We are now redirecting you to the Dashboard")
 							}
 						}
 					});
