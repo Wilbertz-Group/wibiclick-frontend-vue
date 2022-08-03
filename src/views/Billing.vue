@@ -112,7 +112,7 @@
 										
 										<div class="flex items-baseline text-gray-900 dark:text-white">
 												<span class="text-3xl font-semibold">{{ billing_data.currency_code }}</span>
-												<span class="text-5xl font-extrabold tracking-tight">12</span>
+												<span class="text-5xl font-extrabold tracking-tight">4.99</span>
 												<span class="ml-1 text-xl font-normal text-gray-500 dark:text-gray-400">/month</span>
 										</div>
 										<!-- Campaign -->
@@ -159,7 +159,7 @@
 
 										<div class="flex items-baseline text-gray-900 dark:text-white">
 												<span class="text-3xl font-semibold">{{ billing_data.currency_code }}</span>
-												<span class="text-5xl font-extrabold tracking-tight">120</span>
+												<span class="text-5xl font-extrabold tracking-tight">49.90</span>
 												<span class="ml-1 text-xl font-normal text-gray-500 dark:text-gray-400">/year</span>
 										</div>
 										<!-- Campaign -->
