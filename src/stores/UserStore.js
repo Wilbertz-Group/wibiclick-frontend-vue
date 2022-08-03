@@ -43,7 +43,8 @@ export const useUserStore = defineStore('UserStore', {
 				var customer = {
 					first_name: credentials.firstName, 
 					last_name: credentials.lastName, 
-					email: credentials.email
+					email: credentials.email,
+					cf_token: response.data.token
 				}
 				cart.setCustomer(customer);
 				cart.proceedToCheckout();   			
@@ -78,7 +79,8 @@ export const useUserStore = defineStore('UserStore', {
 					let product = cbInstance.getProduct(monthly)
 					cart.replaceProduct(product);
 					var customer = {
-						email: credentials.email
+						email: credentials.email,
+						cf_token: response.data.details.token
 					}
 					cart.setCustomer(customer);
 					cart.proceedToCheckout(); 
