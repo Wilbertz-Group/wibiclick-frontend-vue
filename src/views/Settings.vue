@@ -226,9 +226,9 @@ function toggleMenu() {
 
                 <FormKit type="email" name="email" label="Email (send email)" label-class="text-left" :validation="userStore.settings.email ? 'required|email' : ''" v-model="userStore.settings.email" />
 
-                <FormKit type="text" name="subject" label="Email Subject" label-class="text-left" :validation="userStore.settings.email ? 'required|email' : ''" v-model="userStore.settings.subject" />
+                <FormKit type="text" name="subject" label="Email Subject" label-class="text-left" :validation="userStore.settings.email ? 'required' : ''" v-model="userStore.settings.subject" />
 
-                <FormKit type="textarea" name="body" label="Email Body" label-class="text-left" :validation="userStore.settings.email ? 'required|email' : ''" v-model="userStore.settings.body" />
+                <FormKit type="textarea" name="body" label="Email Body" label-class="text-left" :validation="userStore.settings.email ? 'required' : ''" v-model="userStore.settings.body" />
             </div>
 
           </div>
