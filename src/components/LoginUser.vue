@@ -17,10 +17,14 @@
       source: "api",
       ...credentials
     })
-    .then(() => { loading.value = false; router.push({ name: 'dashboard' }) })
+    .then((data) => { 
+      loading.value = false;
+      router.push({ name: 'dashboard' }) 
+    })
     .catch(err => { 
       loading.value = false; 
-      toast.error( err.message);
+      toast.error(err.message);
+      console.log(err)
     })
   }
 </script>

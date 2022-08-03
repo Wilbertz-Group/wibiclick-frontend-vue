@@ -25,6 +25,9 @@
         </div>
       </div>
     </div>
+    <a href="javascript:void(0)" data-cb-type="checkout" data-cb-item-0="Monthly-Subscription-USD-Monthly" data-cb-item-0-quantity="1" class="hidden">Choose Plan</a>
+    <a href="javascript:void(0)" data-cb-type="checkout" data-cb-item-0="Yearly-Subscription-USD-Yearly" data-cb-item-0-quantity="1" class="hidden">Choose Plan</a>
+      
   </div>
 </template>
 

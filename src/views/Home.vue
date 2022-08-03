@@ -32,9 +32,9 @@
               Login
             </router-link>
             <span class="px-3">or</span>            
-            <router-link to="authenticate" class="bg-sky-500 hover:bg-sky-700 px-5 pt-2 pb-3 text-sm leading-5 rounded-full font-semibold text-white" @click.native="isNew(true)">
+            <a href="./authenticate" class="bg-sky-500 hover:bg-sky-700 px-5 pt-2 pb-3 text-sm leading-5 rounded-full font-semibold text-white" @click.native="isNew(true)">
               Register
-            </router-link>
+            </a>
             </p>
           </div>
         </div>

@@ -280,7 +280,7 @@
   async function fetchProfileInfo() {
 			try {
         loading.value = true
-				const response = await axios.get('https://wibi.wilbertzgroup.com/profile');
+				const response = await axios.get('profile');
         profile.value = response.data
         loading.value = false
 			} catch (error) {
@@ -303,7 +303,7 @@
   async function companyUpdate(credentials) {
     try {
       loading.value = true
-      const response = await axios.post('https://wibi.wilbertzgroup.com/organisation', credentials);
+      const response = await axios.post('organisation', credentials);
       loading.value = false
       toast.success(response.data.message)
     } catch (error) {

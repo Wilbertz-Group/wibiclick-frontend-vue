@@ -4,6 +4,7 @@ import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
 import { plugin, defaultConfig } from '@formkit/vue'
 import '@formkit/themes/genesis'
 import App from './App.vue'
+import axios from "axios";
 import router from './router'
 import './assets/main.css'
 import VueApexCharts from "vue3-apexcharts";
@@ -19,6 +20,8 @@ import { fas } from '@fortawesome/free-solid-svg-icons'
 import { far } from '@fortawesome/free-regular-svg-icons'
 import { fab } from '@fortawesome/free-brands-svg-icons'
 library.add(fas, far, fab)
+
+axios.defaults.baseURL = "https://wibi.wilbertzgroup.com/";
 
 const app = createApp(App)
 const pinia = createPinia()

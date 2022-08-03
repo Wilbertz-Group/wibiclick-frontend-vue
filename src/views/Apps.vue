@@ -22,7 +22,7 @@
   async function fetchApps() {
 			try {
         loading.value = true
-				// const response = await axios.get('https://cat-apis.azurewebsites.net/apps');
+				// const response = await axios.get('apps');
         // apikey.value = response.data.apps
         loading.value = false
 			} catch (error) {

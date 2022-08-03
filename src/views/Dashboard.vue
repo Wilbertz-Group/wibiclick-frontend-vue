@@ -6,7 +6,10 @@ import { ref, onMounted, watchEffect } from "vue";
 import ScaleLoader from "vue-spinner/src/ScaleLoader.vue";
 import { useUserStore } from "@/stores/UserStore"
 import { useToast } from 'vue-toast-notification';
+import { useRoute } from "vue-router";
 
+
+const route = useRoute()
 const options = ref();
 const series = ref();
 const voptions = ref();
@@ -91,7 +94,7 @@ async function fetchClicks() {
   try {
     loading.value = true;
     const response = await axios.get(
-      "https://wibi.wilbertzgroup.com/get-website-clicks?id="+ userStore.currentWebsite
+      "get-website-clicks?id="+ userStore.currentWebsite
     );
 
     const data = _.sortBy(response.data.clicks, 'x')
@@ -182,7 +185,7 @@ async function fetchViews() {
   try {
     loading.value = true;
     const response = await axios.get(
-      "https://wibi.wilbertzgroup.com/get-website-views?id="+ userStore.currentWebsite
+      "get-website-views?id="+ userStore.currentWebsite
     );
 
     const data = _.sortBy(response.data.views, 'x')
@@ -269,10 +272,40 @@ async function fetchViews() {
   }
 }
 
-onMounted(() => {
-  if(userStore.currentWebsite){
+async function checkParams() {
+  if( route.query.state == "succeeded" ){    
+    try {
+      loading.value = true;
+      const response = await axios.post("associate-user-to-subscription", {
+        sub_id: route.query.sub_id, 
+        invoice_id: route.query.invoice_id, 
+        id: route.query.id,
+        state: route.query.state
+      })
+
+      loading.value = false;
+
+      toast.success("You have successfully registered and automatically logged in..")
+
+    } catch (error) {
+      loading.value = false;
+      toast.error("Error in registering your subscription")
+    }
+  }
+}
+
+onMounted(async () => { 
+  checkParams();
+  if(userStore.currentWebsite && userStore.user){
     fetchClicks()
     fetchViews()
+  }
+  if(!userStore.user){
+    toast.error("Please add billing information")
+    userStore.$reset()
+    localStorage.removeItem('user')
+    localStorage.removeItem('UserStore')
+    location.reload()
   }
 })
 
@@ -287,7 +320,7 @@ watchEffect(() => {
 <template>
   <scale-loader :loading="loading" color="#ffffff" height="50px" class="vld-overlay is-active is-full-page" width="6px">
   </scale-loader>
-  <div>
+  <div v-if="userStore.user">
     <div class="relative flex min-h-screen flex-col justify-center overflow-hidden bg-gray-50">
       <div
         class="w-full min-h-screen relative bg-white px-6 pb-8 shadow-xl ring-1 ring-gray-900/5 sm:rounded-lg sm:px-10">

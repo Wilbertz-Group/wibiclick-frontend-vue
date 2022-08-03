@@ -26,7 +26,7 @@ const skype = ref(false)
 async function settingsUpdate(credentials) {
   try {
     loading.value = true
-    await axios.post('https://wibi.wilbertzgroup.com/update-settings?id='+ userStore.currentWebsite, credentials);
+    await axios.post('update-settings?id='+ userStore.currentWebsite, credentials);
     loading.value = false
     toast.success("Successfully updated the website settings")
   } catch (error) {
@@ -54,7 +54,7 @@ function toggleMenu() {
   </scale-loader>
   <Header title="Widget Settings" />
   <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-    <div class="px-4 py-6 sm:px-0 grid grid-cols-4 gap-3">
+    <div v-if="userStore.currentWebsite != 'default'" class="px-4 py-6 sm:px-0 grid grid-cols-4 gap-3">
 
       <ul class="col-span-1">
         <li class="w-full mb-2 mt-2">
@@ -294,7 +294,7 @@ function toggleMenu() {
       </div>
 
     </div>
-    <div v-if="loading" class="bg-gray-900 bg-opacity-50 dark:bg-opacity-80 fixed inset-0 z-40"></div>
+    <h3 class="text-lg font-medium leading-6 text-red-600 m-6 text-center" v-else>You need to select or add a website on the top header to change widget settings!!!</h3>
   </div>
   <div v-if="loading" class="bg-gray-900 bg-opacity-50 dark:bg-opacity-80 fixed inset-0 z-40"></div>
 </template>

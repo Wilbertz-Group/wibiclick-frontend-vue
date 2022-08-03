@@ -6,6 +6,7 @@ import Snippet from '@/views/Snippet.vue'
 import Billing from '@/views/Billing.vue'
 import Settings from '@/views/Settings.vue'
 import Authenticate from '@/views/Authenticate.vue'
+import { useUserStore } from "@/stores/UserStore" 
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -55,6 +56,9 @@ router.beforeEach((to, from, next) => {
   const loggedIn = localStorage.getItem('user')
 
   if (authRequired && !loggedIn) {
+    useUserStore().$reset()
+    localStorage.removeItem('user')
+    localStorage.removeItem('UserStore')
     return next('/authenticate')
   }
 

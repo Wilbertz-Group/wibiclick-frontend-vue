@@ -27,7 +27,7 @@
   async function fetchWebsites(n) {
 			try {        
         loading.value = true
-				const response = await axios.get('https://wibi.wilbertzgroup.com/get-websites');
+				const response = await axios.get('get-websites');
         opt.value = [{ label: 'Select Website', value: 'default', attrs: { disabled: true } }].concat(response.data)
         if( response.data.length && selectedWebsite.value != 'default' ){
           userStore.updateWebsite(selectedWebsite.value) 
@@ -44,7 +44,7 @@
   async function fetchWebsiteAnalytics(id) {
 			try {
         loading.value = true
-				const response = await axios.get('https://wibi.wilbertzgroup.com/get-website-analytics?id='+id);
+				const response = await axios.get('get-website-analytics?id='+id);
         analytics.value = response.data.analytics[0]
         userStore.updateAnalytics(analytics.value)         
         loading.value = false
@@ -57,7 +57,7 @@
   async function fetchSettings(id) {
     try {
       loading.value = true
-      const response = await axios.get('https://wibi.wilbertzgroup.com/get-website?id='+ id);
+      const response = await axios.get('get-website?id='+ id);
       userStore.updateSettings(response.data.setting)
       loading.value = false
     } catch (error) {
@@ -70,7 +70,7 @@
     try {
       addModal.value = false
       loading.value = true
-      await axios.post('https://wibi.wilbertzgroup.com/add-website', { url: credentials.newWebsite });  
+      await axios.post('add-website', { url: credentials.newWebsite });  
       fetchWebsites(); 
       toast.success("Website added successfully")  
       loading.value = false
@@ -81,7 +81,11 @@
   }
 
   onMounted(() => {
-    fetchWebsites();
+    if(!userStore.user){
+      logout()
+    } else {
+      fetchWebsites();
+    }
   }),
 
   watchEffect(() => {    
@@ -146,7 +150,7 @@
                   <MenuItems class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none">
                     <div aria-labelledby="headlessui-menu-button-3" id="headlessui-menu-items-4" role="menu" tabindex="0" class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none">
                       <router-link to="profile" class="block px-4 py-2 text-sm text-gray-700" disabled="false" id="headlessui-menu-item-20" role="menuitem" tabindex="-1">Your Profile</router-link>
-                      <router-link to="billing" class="block px-4 py-2 text-sm text-gray-700" disabled="false" id="headlessui-menu-item-20" role="menuitem" tabindex="-1">Billing & Usage</router-link>
+                      <a href="billing" class="block px-4 py-2 text-sm text-gray-700" disabled="false" id="headlessui-menu-item-20" role="menuitem" tabindex="-1">Billing & Usage</a>
                       <router-link to="snippet" class="block px-4 py-2 text-sm text-gray-700" disabled="false" id="headlessui-menu-item-20" role="menuitem" tabindex="-1">Snippet</router-link>
                       <a href="#" @click="logout" class="block px-4 py-2 text-sm text-gray-700" disabled="false" id="headlessui-menu-item-22" role="menuitem" tabindex="-1">Sign out</a>
                     </div>
@@ -201,7 +205,7 @@
           <div class="mt-3 px-2 space-y-1">
             <div class="mt-3 px-2 space-y-1">
               <router-link to="profile" disabled="false" class="block px-3 py-2 rounded-md text-base font-medium text-gray-400 hover:text-white hover:bg-gray-700">Your Profile</router-link>
-              <router-link to="billing" disabled="false" class="block px-3 py-2 rounded-md text-base font-medium text-gray-400 hover:text-white hover:bg-gray-700">Billing & Usage</router-link>
+              <a href="billing" disabled="false" class="block px-3 py-2 rounded-md text-base font-medium text-gray-400 hover:text-white hover:bg-gray-700">Billing & Usage</a>
               <router-link to="snippet" disabled="false" class="block px-3 py-2 rounded-md text-base font-medium text-gray-400 hover:text-white hover:bg-gray-700">Snippet</router-link>
               <a disabled="false" @click="logout" href="#" class="block px-3 py-2 rounded-md text-base font-medium text-gray-400 hover:text-white hover:bg-gray-700">Sign out</a>
             </div>
