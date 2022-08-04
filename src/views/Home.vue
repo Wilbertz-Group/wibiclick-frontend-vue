@@ -56,7 +56,7 @@ userStore.user ? router.push({ name: "dashboard" }) : "";
                     </a>
                   </li>
                   <li>
-                    <a href="#" class="block md:px-4 transition hover:text-sky-700">
+                    <a href="#services" class="block md:px-4 transition hover:text-sky-700">
                       <span>Services</span>
                     </a>
                   </li>
@@ -462,7 +462,7 @@ userStore.user ? router.push({ name: "dashboard" }) : "";
     </div>
   </div>
 
-  <div class="py-16 bg-white">
+  <div id="services" class="py-16 bg-white">
     <div class="container m-auto px-6 text-gray-600 md:px-12 xl:px-6">
       <div class="space-y-6 md:space-y-0 md:flex md:gap-6 lg:items-center lg:gap-12">
         <div class="md:5/12 lg:w-5/12">
