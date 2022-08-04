@@ -11,7 +11,7 @@
               <div class="rounded-xl border bg-opacity-50 backdrop-blur-2xl bg-white shadow-xl">
                   <div class="lg:grid lg:grid-cols-2">
                       <div class="rounded-lg lg:block" hidden>
-                          <img src="@/assets/images/smiling.webp" class="rounded-l-xl object-cover" loading="lazy" height="" width="" alt="music mood">
+                          <img src="@/assets/images/login-office.jpeg" class="object-cover w-full h-full dark:hidden" loading="lazy" height="" width="" alt="music mood">
                       </div>
                       <div class="px-4 py-0 sm:p-10">                          
                           <div class="">
