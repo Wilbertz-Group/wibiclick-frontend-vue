@@ -37,7 +37,7 @@
       :actions="false"
       #default="{ value }"
     >
-      <h2 class="text-3xl tracking-tight sm:text-3xl md:text-3xl">Start your 7 day free trial. <span class="text-base block">We won't bill your credit card in the trial period.</span></h2>
+      <h2 class="mb-4 text-2xl text-cyan-900 font-bold">Start your 7 day free trial. <span class="text-base block">We won't bill your credit card in the trial period.</span></h2>
       <hr />
 
       <div class="double">

@@ -40,7 +40,7 @@
       :actions="false"
       #default="{ value }"
     >
-      <h2 class="text-3xl tracking-tight sm:text-3xl md:text-3xl">Login!</h2>
+      <h2 class="mb-4 text-2xl text-cyan-900 font-bold">Sign in to your account</h2>
       <hr />
       <FormKit
         type="text"

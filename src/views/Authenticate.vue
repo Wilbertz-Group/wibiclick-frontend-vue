@@ -1,34 +1,48 @@
 <template>
-  <div class="relative flex min-h-screen flex-col justify-center overflow-hidden bg-gray-50 py-6 sm:py-12">
-    <img src="@/assets/images/beams.jpg" alt="" class="absolute top-1/2 left-1/2 max-w-none -translate-x-1/2 -translate-y-1/2" width="1308" />
-    <div class="absolute inset-0 bg-[url(@/assets/images/grid.svg)] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))]"></div>
-    <div class="relative bg-white px-6 pt-10 pb-8 shadow-xl ring-1 ring-gray-900/5 sm:mx-auto sm:max-w-lg sm:rounded-lg sm:px-10">
-      <div class="mx-auto max-w-md">
-        <div class="divide-y divide-gray-300/50">
-          <div class="space-y-6 py-1 text-center leading-7 text-black-600">            
-            <component :is="tabs[loginOrRegister]" />
+  
+  <div class="relative py-16
+                  before:absolute before:inset-0 before:w-full before:h-[50%] before:bg-gray-200">
+      <div class="relative container m-auto px-6 text-gray-500 md:px-12 xl:px-40">
+
+          <div class="m-auto space-y-8 md:w-8/12 lg:w-full">
+              <router-link to="/">
+                <img src="@/assets/images/wibi-logo.png" loading="lazy" class="w-36 ml-4" alt="tailus logo"> 
+              </router-link>
+              <div class="rounded-xl border bg-opacity-50 backdrop-blur-2xl bg-white shadow-xl">
+                  <div class="lg:grid lg:grid-cols-2">
+                      <div class="rounded-lg lg:block" hidden>
+                          <img src="@/assets/images/smiling.webp" class="rounded-l-xl object-cover" loading="lazy" height="" width="" alt="music mood">
+                      </div>
+                      <div class="px-4 py-0 sm:p-10">                          
+                          <div class="">
+                              <component :is="tabs[loginOrRegister]" />                             
+
+                              <p class="border-t pt-6 text-sm text-center">
+                                  
+                                  <a
+                                    v-show="userStore.newUser"
+                                    class="cursor-pointer"
+                                    @click="toggleComponent"
+                                  > Don't have an account ? <span class="text-sky-500">Try free for 7 Days</span></a>
+                                  <a
+                                    v-show="!userStore.newUser"
+                                    class="cursor-pointer"
+                                    @click="toggleComponent"
+                                  >Already have an account? <span class="text-sky-500">Login</span></a>
+                              </p>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+              <div class="text-center space-x-4 hidden">
+                  <span>&copy; Wibiclick</span>
+                  <a href="#" class="text-sm hover:text-sky-900">Contact</a>
+                  <a href="#" class="text-sm hover:text-sky-900">Privacy & Terms</a>
+              </div>
           </div>
-          <div class="pt-4 font-semibold leading-7 text-center">            
-            <p class="formkit-form">
-              <a
-                v-show="userStore.newUser"
-                class="auth-link"
-                @click="toggleComponent"
-              >Don't have an account? Create one.</a>
-              <a
-                v-show="!userStore.newUser"
-                class="auth-link"
-                @click="toggleComponent"
-              >Already have an account? Login.</a>
-            </p>
-          </div>
-        </div>
       </div>
-    </div>
-    <a href="javascript:void(0)" data-cb-type="checkout" data-cb-item-0="Monthly-Subscription-USD-Monthly" data-cb-item-0-quantity="1" class="hidden">Choose Plan</a>
-    <a href="javascript:void(0)" data-cb-type="checkout" data-cb-item-0="Yearly-Subscription-USD-Yearly" data-cb-item-0-quantity="1" class="hidden">Choose Plan</a>
-      
   </div>
+                                
 </template>
 
 <script setup>
