@@ -378,11 +378,11 @@ userStore.user ? router.push({ name: "dashboard" }) : "";
                 </li>
                 <li class="space-x-2">
                     <span class="text-cyan-500 font-semibold">&check;</span>
-                    <span>Invocations Included 8 000/month</span>
+                    <span>Unlimited Page Views</span>
                 </li>
                 <li class="space-x-2">
                     <span class="text-cyan-500 font-semibold">&check;</span>
-                    <span>Extra Invocations $0.0005 each/month</span>
+                    <span>Unlimited Page Clicks</span>
                 </li>
                 <li class="space-x-2">
                     <span class="text-cyan-500 font-semibold">&check;</span>
@@ -434,11 +434,11 @@ userStore.user ? router.push({ name: "dashboard" }) : "";
                 </li>
                 <li class="space-x-2">
                     <span class="text-cyan-500 font-semibold">&check;</span>
-                    <span>Invocations Included 100 000/year</span>
+                    <span>Unlimited Page Views</span>
                 </li>
                 <li class="space-x-2">
                     <span class="text-cyan-500 font-semibold">&check;</span>
-                    <span>Extra Invocations $0.02 each/year</span>
+                    <span>Unlimited Page Clicks</span>
                 </li>
                 <li class="space-x-2">
                     <span class="text-cyan-500 font-semibold">&check;</span>

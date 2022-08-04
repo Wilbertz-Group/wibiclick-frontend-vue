@@ -76,16 +76,6 @@
 								</div>
 
               </div>
-							<div class="p-4 shadow sm:rounded-md sm:overflow-hidden">                  
-								<div class="flex justify-between mb-1">
-									<span class="text-base font-medium text-black-700 dark:text-white">Invocations</span>
-									<span class="text-sm font-medium text-black-700 dark:text-white">450 / 8000</span>
-								</div>
-								<div class="w-full bg-gray-200 rounded-full dark:bg-gray-700">
-									<div class="bg-blue-600 text-xs font-medium text-blue-100 text-center p-0.5 leading-none rounded-full" style="width: 45%"> 45%</div>
-								</div>
-
-              </div>
           </div>
         </div>
       </div>
@@ -107,45 +97,40 @@
           <div class="mt-5 md:mt-0 md:col-span-2">							
               <div class="p-4 grid grid-cols-1 gap-3  shadow sm:rounded-md sm:overflow-hidden">								
                   
-								<div v-if="monthly" class="p-4 max-w-sm bg-white rounded-lg border shadow-md sm:p-8 dark:bg-gray-800 dark:border-gray-700">
-										<h5 class="mb-4 text-xl font-medium text-black-500 dark:text-gray-400">Monthly Subscription</h5>
+								<div v-if="monthly" class="p-4 max-w-lg bg-white rounded-lg border shadow-md sm:p-8 dark:bg-gray-800 dark:border-gray-700">
 										
-										<div class="flex items-baseline text-gray-900 dark:text-white">
-												<span class="text-3xl font-semibold">{{ billing_data.currency_code }}</span>
-												<span class="text-5xl font-extrabold tracking-tight">4.99</span>
-												<span class="ml-1 text-xl font-normal text-gray-500 dark:text-gray-400">/month</span>
+										<h3 class="text-3xl text-gray-700 font-semibold text-center">Monthly</h3>
+										<div class="relative flex justify-around max-w-md m-auto">
+												<div class="flex">
+														<span class="-ml-6 mt-2 text-3xl text-cyan-500 font-bold">$</span>
+														<span class="text-8xl text-gray-800 font-bold leading-0">4.99</span>
+												</div>
+												<span class="absolute right-9 bottom-2 text-xl text-cyan-500 font-bold">/ Month</span>
 										</div>
-										<!-- Campaign -->
-										<ul role="campaign" class="my-7 space-y-5">
-												<li class="flex space-x-3">
-														<!-- Icon -->
-														<svg aria-hidden="true" class="flex-shrink-0 w-5 h-5 text-blue-600 dark:text-blue-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><title>Check icon</title><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
-														<span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400">3 websites included </span>
+										<ul role="list" class="w-max space-y-4 pb-6 pt-4 m-auto text-gray-600">
+												<li class="space-x-2">
+														<span class="text-cyan-500 font-semibold">&check;</span>
+														<span>3 websites included</span>
 												</li>
-												<li class="flex space-x-3">
-														<!-- Icon -->
-														<svg aria-hidden="true" class="flex-shrink-0 w-5 h-5 text-blue-600 dark:text-blue-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><title>Check icon</title><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
-														<span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400">Invocations Included 8000/month</span>
+												<li class="space-x-2">
+														<span class="text-cyan-500 font-semibold">&check;</span>
+														<span>Unlimited Page Views</span>
 												</li>
-												<li class="flex space-x-3">
-														<!-- Icon -->
-														<svg aria-hidden="true" class="flex-shrink-0 w-5 h-5 text-blue-600 dark:text-blue-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><title>Check icon</title><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
-														<span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400">Extra Invocations $0.0005 each</span>
+												<li class="space-x-2">
+														<span class="text-cyan-500 font-semibold">&check;</span>
+														<span>Unlimited Page Clicks</span>
 												</li>
-												<li class="flex space-x-3">
-														<!-- Icon -->
-														<svg aria-hidden="true" class="flex-shrink-0 w-5 h-5 text-blue-600 dark:text-blue-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><title>Check icon</title><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
-														<span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400">Extra Website $2.05 each/month</span>
+												<li class="space-x-2">
+														<span class="text-cyan-500 font-semibold">&check;</span>
+														<span>Extra Website $2.05 each/month</span>
 												</li>
-												<li class="flex space-x-3">
-														<!-- Icon -->
-														<svg aria-hidden="true" class="flex-shrink-0 w-5 h-5 text-blue-600 dark:text-blue-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><title>Check icon</title><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
-														<span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400">Integration help</span>
-												</li>											
-												<li class="flex space-x-3">
-														<!-- Icon -->
-														<svg aria-hidden="true" class="flex-shrink-0 w-5 h-5 text-blue-600 dark:text-blue-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><title>Check icon</title><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
-														<span class="text-base font-normal leading-tight text-gray-500">Prioritized email support</span>
+												<li class="space-x-2">
+														<span class="text-cyan-500 font-semibold">&check;</span>
+														<span>Integration help</span>
+												</li>
+												<li class="space-x-2">
+														<span class="text-cyan-500 font-semibold">&check;</span>
+														<span>Prioritized email support</span>
 												</li>
 										</ul>
 										
@@ -154,45 +139,51 @@
 										<span v-if="monthly && billing_data.status != 'active'" class="mt-2 text-xs text-green-600 text-center w-full block">ends on {{ moment(billing_data.current_term_end).format('DD, MMMM YYYY') }} </span>
 								</div>
 
-								<div v-if="yearly" class="p-4 max-w-sm bg-white rounded-lg border shadow-md sm:p-8 dark:bg-gray-800 dark:border-gray-700">
-										<h5 class="mb-4 text-xl font-medium text-black-500 dark:text-gray-400">Yearly Subscription</h5>
-
-										<div class="flex items-baseline text-gray-900 dark:text-white">
-												<span class="text-3xl font-semibold">{{ billing_data.currency_code }}</span>
-												<span class="text-5xl font-extrabold tracking-tight">49.90</span>
-												<span class="ml-1 text-xl font-normal text-gray-500 dark:text-gray-400">/year</span>
+								<div v-if="yearly" class="p-4 max-w-lg bg-white rounded-lg border shadow-md sm:p-8 dark:bg-gray-800 dark:border-gray-700">
+										<h3 class="text-3xl text-gray-700 font-semibold text-center">Annual</h3>
+										<div class="overflow-hidden">
+												<div class="-mr-20 flex items-end justify-center max-w-md">
+														<div class="flex">
+																<span class="-ml-6 mt-2 text-3xl text-cyan-500 font-bold">$</span>
+																<span class="text-8xl text-gray-800 font-bold leading-0">4</span>
+														</div>
+														<div class="mb-2">
+																<span class="block text-xl font-bold">.15</span>
+																<span class="block text-xl text-cyan-500 font-bold">/ Month</span>
+														</div>
+												</div>
+												<div class="text-center text-2xl font-medium">
+														<span class="text-gray-400 line-through">$59.88</span>
+														<span class="text-gray-700 font-semibold">$49.90</span>
+												</div>
+												<span class="block uppercase text-xs text-cyan-500 text-center">BILLED YEARLY</span>
+												<span class="hidden w-max mt-4 m-auto px-4 py-1 rounded-full bg-gradient-to-r from-yellow-300 to-pink-300 text-sm font-medium text-yellow-900">1 Discount applied</span>
 										</div>
-										<!-- Campaign -->
-										<ul role="campaign" class="my-7 space-y-5">
-												<li class="flex space-x-3">
-														<!-- Icon -->
-														<svg aria-hidden="true" class="flex-shrink-0 w-5 h-5 text-blue-600 dark:text-blue-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><title>Check icon</title><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
-														<span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400">3 websites included </span>
+
+										<ul role="list" class="w-max space-y-4 pb-6 pt-4 m-auto text-gray-600">
+												<li class="space-x-2">
+														<span class="text-cyan-500 font-semibold">&check;</span>
+														<span>3 websites included</span>
 												</li>
-												<li class="flex space-x-3">
-														<!-- Icon -->
-														<svg aria-hidden="true" class="flex-shrink-0 w-5 h-5 text-blue-600 dark:text-blue-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><title>Check icon</title><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
-														<span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400">Invocations Included 100 000/year</span>
+												<li class="space-x-2">
+														<span class="text-cyan-500 font-semibold">&check;</span>
+														<span>Unlimited Page Views</span>
 												</li>
-												<li class="flex space-x-3">
-														<!-- Icon -->
-														<svg aria-hidden="true" class="flex-shrink-0 w-5 h-5 text-blue-600 dark:text-blue-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><title>Check icon</title><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
-														<span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400">Extra Invocations $0.02 each/year</span>
+												<li class="space-x-2">
+														<span class="text-cyan-500 font-semibold">&check;</span>
+														<span>Unlimited Page Clicks</span>
 												</li>
-												<li class="flex space-x-3">
-														<!-- Icon -->
-														<svg aria-hidden="true" class="flex-shrink-0 w-5 h-5 text-blue-600 dark:text-blue-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><title>Check icon</title><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
-														<span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400">Extra Website $20 each/year</span>
+												<li class="space-x-2">
+														<span class="text-cyan-500 font-semibold">&check;</span>
+														<span>Extra Website $20 each/year</span>
 												</li>
-												<li class="flex space-x-3">
-														<!-- Icon -->
-														<svg aria-hidden="true" class="flex-shrink-0 w-5 h-5 text-blue-600 dark:text-blue-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><title>Check icon</title><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
-														<span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400">Integration help</span>
-												</li>											
-												<li class="flex space-x-3">
-														<!-- Icon -->
-														<svg aria-hidden="true" class="flex-shrink-0 w-5 h-5 text-blue-600 dark:text-blue-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><title>Check icon</title><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
-														<span class="text-base font-normal leading-tight text-gray-500">Prioritized email support</span>
+												<li class="space-x-2">
+														<span class="text-cyan-500 font-semibold">&check;</span>
+														<span>Integration help</span>
+												</li>
+												<li class="space-x-2">
+														<span class="text-cyan-500 font-semibold">&check;</span>
+														<span>Prioritized email support</span>
 												</li>
 										</ul>
 																			
