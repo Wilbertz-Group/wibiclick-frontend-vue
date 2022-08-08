@@ -318,18 +318,18 @@ watchEffect(() => {
 </script>
 
 <template>
-  <scale-loader :loading="loading" color="#ffffff" height="50px" class="vld-overlay is-active is-full-page" width="6px">
+  <scale-loader :loading="loading" color="#23293b" height="50px" class="vld-overlay is-active is-full-page" width="6px">
   </scale-loader>
-  <div v-if="userStore.user">
+  <div>
     <div class="relative flex min-h-screen flex-col justify-center overflow-hidden bg-gray-50">
       <div
         class="w-full min-h-screen relative bg-white px-6 pb-8 shadow-xl ring-1 ring-gray-900/5 sm:rounded-lg sm:px-10">
         <div class="w-full grid py-8 md:grid-cols-3 sm:grid-cols-1 gap-3">
-          <div class="rounded-lg border shadow-lg bg-blueGray-800">
+          <div class="rounded-lg border border-gray-200 shadow-md divide-y divide-gray-300/50">
             <div class="space-y-6 pt-8 pb-16 text-center leading-7 text-black-600 relative">
               <div class="grid px-4 md:grid-cols-2 gap-3">
-                <span class="text-left text-sm tracking-tight font-bold text-white">Total Views <br>
-                  <span class="text-4xl grid md:grid-cols-2 text-white">{{ userStore?.analytics?.views || 0 }} <i data-v-4d521fc4="" data-name="trending-up"
+                <span class="text-left text-sm tracking-tight font-bold">Total Views <br>
+                  <span class="text-4xl grid md:grid-cols-2 ">{{ userStore?.analytics?.views || 0 }} <i data-v-4d521fc4="" data-name="trending-up"
                       data-tags="" data-type="trending-up" class="text-green-600 font-bold"><svg data-v-4d521fc4=""
                         xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
@@ -364,11 +364,11 @@ watchEffect(() => {
             </div>
           </div>
 
-          <div class="rounded-lg border shadow-lg bg-blueGray-800">
+          <div class="rounded-lg border border-gray-200 shadow-md divide-y divide-gray-300/50">
             <div class="space-y-6 pt-8 pb-16 text-center leading-7 text-black-600 relative">
               <div class="grid px-4 md:grid-cols-2 gap-3">
-                <span class="text-left text-sm tracking-tight font-bold text-white">Total Clicks <br>
-                  <span class="text-4xl grid md:grid-cols-2 text-white">{{ userStore?.analytics?.clicks || 0 }} <i data-v-4d521fc4="" data-name="trending-up"
+                <span class="text-left text-sm tracking-tight font-bold">Total Clicks <br>
+                  <span class="text-4xl grid md:grid-cols-2 ">{{ userStore?.analytics?.clicks || 0 }} <i data-v-4d521fc4="" data-name="trending-up"
                       data-tags="" data-type="trending-up" class="text-red-600 font-bold"><svg data-v-4d521fc4=""
                         xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
@@ -403,11 +403,11 @@ watchEffect(() => {
             </div>
           </div>
 
-          <div class="rounded-lg border shadow-lg bg-blueGray-800">
+          <div class="rounded-lg border border-gray-200 shadow-md divide-y divide-gray-300/50">
             <div class="space-y-6 pt-8 pb-16 text-center leading-7 text-black-600 relative">
               <div class="grid px-4 md:grid-cols-2 gap-3">
-                <span class="text-left text-sm tracking-tight font-bold text-white">CTR Clickthrough Rate <br>
-                  <span class="text-4xl grid md:grid-cols-2 text-white">{{ parseInt( (userStore?.analytics?.clicks/userStore?.analytics?.views) * 100 || 0 ) }}% <i data-v-4d521fc4="" data-name="trending-up"
+                <span class="text-left text-sm tracking-tight font-bold">CTR Clickthrough Rate <br>
+                  <span class="text-4xl grid md:grid-cols-2 ">{{ parseInt( (userStore?.analytics?.clicks/userStore?.analytics?.views) * 100 || 0 ) }}% <i data-v-4d521fc4="" data-name="trending-up"
                       data-tags="" data-type="trending-up" class="text-blue-600 font-bold"><svg data-v-4d521fc4=""
                         xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
@@ -444,81 +444,81 @@ watchEffect(() => {
         </div>
 
         <div class="w-full grid lg:grid-cols-4 md:grid-cols-3 sm:grid-cols-1 gap-8">
-          <div class="rounded-lg text-center pt-1 pb-6 border shadow-lg bg-blueGray-800">
-            <h4 class="text-4xl py-4 text-center text-white">{{ userStore?.analytics?.whatsapp || 0 }}</h4>
+          <div class="rounded-lg text-center pt-1 pb-6 border border-gray-200 shadow-md divide-y divide-gray-300/50">
+            <h4 class="text-4xl py-4 text-center">{{ userStore?.analytics?.whatsapp || 0 }}</h4>
             <button type="button"
               class="bg-gradient-to-r btn-air-light text-white bg-green-500 hover:bg-green-600 focus:outline-none focus:ring-4 focus:ring-green-300 font-medium rounded-full text-base px-10 pt-2 pb-2.5 text-center mr-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800">
               <span>
                 <font-awesome-icon icon="fab fa-whatsapp" />
               </span>
-              <span class="ml-2 text-white">Whatsapp</span>
+              <span class="ml-2">Whatsapp</span>
             </button>
           </div>
-          <div class="rounded-lg text-center pt-1 pb-6 border shadow-lg bg-blueGray-800">
-            <h4 class="text-4xl py-4 text-center text-white">{{ userStore?.analytics?.messenger || 0 }}</h4>
+          <div class="rounded-lg text-center pt-1 pb-6 border border-gray-200 shadow-md divide-y divide-gray-300/50">
+            <h4 class="text-4xl py-4 text-center">{{ userStore?.analytics?.messenger || 0 }}</h4>
             <button type="button"
               class="btn-air-light text-white bg-blue-500 hover:bg-blue-600 focus:outline-none focus:ring-4 focus:ring-green-300 font-medium rounded-full text-base px-10 pt-2 pb-2.5 text-center mr-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800">
               <span>
                 <font-awesome-icon icon="fab fa-facebook-messenger" />
               </span>
-              <span class="ml-2 text-white">Messenger</span>
+              <span class="ml-2">Messenger</span>
             </button>
           </div>
-          <div class="rounded-lg text-center pt-1 pb-6 border shadow-lg bg-blueGray-800">
-            <h4 class="text-4xl py-4 text-center text-white">{{ userStore?.analytics?.mail || 0 }}</h4>
+          <div class="rounded-lg text-center pt-1 pb-6 border border-gray-200 shadow-md divide-y divide-gray-300/50">
+            <h4 class="text-4xl py-4 text-center">{{ userStore?.analytics?.mail || 0 }}</h4>
             <button type="button"
               class="btn-air-light text-white bg-red-500 hover:bg-red-600 focus:outline-none focus:ring-4 focus:ring-green-300 font-medium rounded-full text-base px-10 pt-2 pb-2.5 text-center mr-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800">
               <span>
                 <font-awesome-icon icon="fas fa-envelope" />
               </span>
-              <span class="ml-2 text-white">Mail</span>
+              <span class="ml-2">Mail</span>
             </button>
           </div>
-          <div class="rounded-lg text-center pt-1 pb-6 border shadow-lg bg-blueGray-800">
-            <h4 class="text-4xl py-4 text-center text-white">{{ userStore?.analytics?.message || 0 }}</h4>
+          <div class="rounded-lg text-center pt-1 pb-6 border border-gray-200 shadow-md divide-y divide-gray-300/50">
+            <h4 class="text-4xl py-4 text-center">{{ userStore?.analytics?.message || 0 }}</h4>
             <button type="button"
               class="btn-air-light text-white bg-amber-500 hover:bg-amber-600 focus:outline-none focus:ring-4 focus:ring-green-300 font-medium rounded-full text-base px-10 pt-2 pb-2.5 text-center mr-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800">
               <font-awesome-icon icon="fas fa-comment" />
-              <span class="ml-2 text-white">Send a message</span>
+              <span class="ml-2">Send a message</span>
             </button>
           </div>
 
-          <div class="rounded-lg text-center pt-1 pb-6 border shadow-lg bg-blueGray-800">
-            <h4 class="text-4xl py-4 text-center text-white">{{ userStore?.analytics?.call || 0 }}</h4>
+          <div class="rounded-lg text-center pt-1 pb-6 border border-gray-200 shadow-md divide-y divide-gray-300/50">
+            <h4 class="text-4xl py-4 text-center">{{ userStore?.analytics?.call || 0 }}</h4>
             <button type="button"
               class="btn-air-light text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-4 focus:ring-green-300 font-medium rounded-full text-base px-10 pt-2 pb-2.5 text-center mr-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800">
               <span>
                 <font-awesome-icon icon="fas fa-phone" />
               </span>
-              <span class="ml-2 text-white">Calls</span>
+              <span class="ml-2">Calls</span>
             </button>
           </div>
-          <div class="rounded-lg text-center pt-1 pb-6 border shadow-lg bg-blueGray-800">
-            <h4 class="text-4xl py-4 text-center text-white">{{ userStore?.analytics?.telegram || 0 }}</h4>
+          <div class="rounded-lg text-center pt-1 pb-6 border border-gray-200 shadow-md divide-y divide-gray-300/50">
+            <h4 class="text-4xl py-4 text-center">{{ userStore?.analytics?.telegram || 0 }}</h4>
             <button type="button"
               class="btn-air-light text-white bg-sky-600 hover:bg-sky-700 focus:outline-none focus:ring-4 focus:ring-green-300 font-medium rounded-full text-base px-10 pt-2 pb-2.5 text-center mr-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800">
               <span>
                 <font-awesome-icon icon="fab fa-telegram" />
               </span>
-              <span class="ml-2 text-white">Telegram</span>
+              <span class="ml-2">Telegram</span>
             </button>
           </div>
-          <div class="rounded-lg text-center pt-1 pb-6 border shadow-lg bg-blueGray-800">
-            <h4 class="text-4xl py-4 text-center text-white">{{ userStore?.analytics?.viber || 0 }}</h4>
+          <div class="rounded-lg text-center pt-1 pb-6 border border-gray-200 shadow-md divide-y divide-gray-300/50">
+            <h4 class="text-4xl py-4 text-center">{{ userStore?.analytics?.viber || 0 }}</h4>
             <button type="button"
               class="btn-air-light text-white bg-purple-500 hover:bg-purple-600 focus:outline-none focus:ring-4 focus:ring-green-300 font-medium rounded-full text-base px-10 pt-2 pb-2.5 text-center mr-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800">
               <span>
                 <font-awesome-icon icon="fab fa-viber" />
               </span>
-              <span class="ml-2 text-white">Viber</span>
+              <span class="ml-2">Viber</span>
             </button>
           </div>
-          <div class="rounded-lg text-center pt-1 pb-6 border shadow-lg bg-blueGray-800">
-            <h4 class="text-4xl py-4 text-center text-white">{{ userStore?.analytics?.skype || 0 }}</h4>
+          <div class="rounded-lg text-center pt-1 pb-6 border border-gray-200 shadow-md divide-y divide-gray-300/50">
+            <h4 class="text-4xl py-4 text-center">{{ userStore?.analytics?.skype || 0 }}</h4>
             <button type="button"
               class="btn-air-light text-white bg-sky-500 hover:bg-sky-600 focus:outline-none focus:ring-4 focus:ring-green-300 font-medium rounded-full text-base px-10 pt-2 pb-2.5 text-center mr-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800">
               <font-awesome-icon icon="fab fa-skype" />
-              <span class="ml-2 text-white">Skype</span>
+              <span class="ml-2">Skype</span>
             </button>
           </div>
         </div>
@@ -551,8 +551,8 @@ watchEffect(() => {
             <apexchart type="area" height="450" :options="options" :series="series"></apexchart>
           </div>
         </div>
+
       </div>
     </div>
-    <div v-if="loading" class="bg-gray-900 bg-opacity-50 dark:bg-opacity-80 fixed inset-0 z-40"></div>
   </div>
 </template>
