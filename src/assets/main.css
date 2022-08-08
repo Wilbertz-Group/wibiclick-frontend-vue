@@ -23,7 +23,10 @@
 div#headlessui-menu-items-4 {
   z-index: 9;
 }
-
+.bg-custom-gray {
+  --tw-bg-opacity: 1;
+  background-color: #11101d;
+}
 .bg-blueGray-800 {
   --tw-bg-opacity: 1;
   background-color: rgba(30, 41, 59, var(--tw-bg-opacity));
