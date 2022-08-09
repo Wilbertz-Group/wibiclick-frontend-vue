@@ -26,7 +26,7 @@ userStore.user ? router.push({ name: "dashboard" }) : "";
     <header>
       <nav
         class="fixed z-10 w-full border-b bg-white bg-opacity-70 backdrop-blur navbar peer-checked:navbar-active md:absolute md:bg-transparent">
-        <div class="container m-auto px-2 md:px-12 lg:px-7">
+        <div class="m-auto px-2 md:px-12 lg:px-7">
           <div class="flex flex-wrap items-center justify-between gap-6 md:py-3 md:gap-0">
             <div class="w-full px-6 flex justify-between lg:w-max md:px-0">
               <a href="#" aria-label="logo" class="flex space-x-2 items-center">
@@ -65,7 +65,7 @@ userStore.user ? router.push({ name: "dashboard" }) : "";
 
               <div
                 class="w-full space-y-2 border-sky-200 flex flex-col -ml-1 sm:flex-row lg:space-y-0 md:w-max lg:border-l">
-                <a href="./authenticate" title="Sign up" @click.native="isNew(true)"
+                <a href="./authenticate" title="Sign up" @click="isNew(true)"
                   class="w-full py-2.5 px-5 text-center rounded-full transition active:from-sky-300 focus:from-cyan-400 sm:w-max">
                   <span class="block text-white font-semibold lg:text-sm">
                     Sign up
@@ -89,7 +89,7 @@ userStore.user ? router.push({ name: "dashboard" }) : "";
 
   <div class="w-full">
     <div
-      class="relative hero-bg container mx-auto flex flex-col items-center pt-12 sm:pt-24 pb-24 sm:pb-32 md:pb-48 lg:pb-56 xl:pb-64">
+      class="relative hero-bg mx-auto flex flex-col items-center pt-12 sm:pt-24 pb-24 sm:pb-32 md:pb-48 lg:pb-56 xl:pb-64">
       <svg class="mr-2 lg:mr-12 mt-2 lg:mt-12 absolute right-0 top-0" width="104px" height="95px" viewBox="0 0 104 95"
         version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
         <g id="Work-in-Progress" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" opacity="0.122837612">
@@ -332,17 +332,18 @@ userStore.user ? router.push({ name: "dashboard" }) : "";
           class="pt-24 text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl text-center text-white font-bold leading-tight">
           An easy way for a website visitor to contact you
         </h1>
-        <h3 class="pt-5 text-lg md:text-lg text-center text-white leading-tight">Increase inbound leads for your business, help visitors connect with you with a single tap</h3>
+        <h3 class="pt-5 text-lg md:text-lg text-center text-white leading-tight">Increase inbound leads for your
+          business, help visitors connect with you with a single tap</h3>
       </div>
       <div class="flex justify-center items-center mb-10 sm:mb-20">
         <a href="./authenticate"
           class="hover:text-white hover:bg-transparent hover:border-white border bg-white transition duration-150 ease-in-out focus:outline-none rounded font-semibold text-black px-4 sm:px-8 py-1 sm:py-3 text-sm"
-          @click.native="isNew(true)">
+          @click="isNew(true)">
           Try free for 7 Days
         </a>
         <router-link to="authenticate"
           class="hover:bg-white hover:text-sky-400 hover:border-indigo-600 ml-3 sm:ml-6 bg-transparent transition duration-150 ease-in-out focus:outline-none hover:bg-indigo-700-800 rounded border border-white text-white px-4 sm:px-8 py-1 sm:py-3 text-sm"
-          @click.native="isNew(false)">
+          @click="isNew(false)">
           Login
         </router-link>
       </div>
@@ -365,40 +366,40 @@ userStore.user ? router.push({ name: "dashboard" }) : "";
 
             <h3 class="text-3xl text-gray-700 font-semibold text-center">Monthly</h3>
             <div class="relative flex justify-around">
-                <div class="flex">
-                    <span class="-ml-6 mt-2 text-3xl text-cyan-500 font-bold">$</span>
-                    <span class="text-8xl text-gray-800 font-bold leading-0">4.99</span>
-                </div>
-                <span class="absolute right-9 bottom-2 text-xl text-cyan-500 font-bold">/ Month</span>
+              <div class="flex">
+                <span class="-ml-6 mt-2 text-3xl text-cyan-500 font-bold">$</span>
+                <span class="text-8xl text-gray-800 font-bold leading-0">4.99</span>
+              </div>
+              <span class="absolute right-9 bottom-2 text-xl text-cyan-500 font-bold">/ Month</span>
             </div>
             <ul role="list" class="w-max space-y-4 pb-6 pt-4 m-auto text-gray-600">
-                <li class="space-x-2">
-                    <span class="text-cyan-500 font-semibold">&check;</span>
-                    <span>3 websites included</span>
-                </li>
-                <li class="space-x-2">
-                    <span class="text-cyan-500 font-semibold">&check;</span>
-                    <span>Unlimited Page Views</span>
-                </li>
-                <li class="space-x-2">
-                    <span class="text-cyan-500 font-semibold">&check;</span>
-                    <span>Unlimited Page Clicks</span>
-                </li>
-                <li class="space-x-2">
-                    <span class="text-cyan-500 font-semibold">&check;</span>
-                    <span>Extra Website $2.05 each/month</span>
-                </li>
-                <li class="space-x-2">
-                    <span class="text-cyan-500 font-semibold">&check;</span>
-                    <span>Integration help</span>
-                </li>
-                <li class="space-x-2">
-                    <span class="text-cyan-500 font-semibold">&check;</span>
-                    <span>Prioritized email support</span>
-                </li>
+              <li class="space-x-2">
+                <span class="text-cyan-500 font-semibold">&check;</span>
+                <span>3 websites included</span>
+              </li>
+              <li class="space-x-2">
+                <span class="text-cyan-500 font-semibold">&check;</span>
+                <span>Unlimited Page Views</span>
+              </li>
+              <li class="space-x-2">
+                <span class="text-cyan-500 font-semibold">&check;</span>
+                <span>Unlimited Page Clicks</span>
+              </li>
+              <li class="space-x-2">
+                <span class="text-cyan-500 font-semibold">&check;</span>
+                <span>Extra Website $2.05 each/month</span>
+              </li>
+              <li class="space-x-2">
+                <span class="text-cyan-500 font-semibold">&check;</span>
+                <span>Integration help</span>
+              </li>
+              <li class="space-x-2">
+                <span class="text-cyan-500 font-semibold">&check;</span>
+                <span>Prioritized email support</span>
+              </li>
             </ul>
 
-            <a href="./authenticate" @click.native="isNew(true)"
+            <a href="./authenticate" @click="isNew(true)"
               class="text-white bg-gray-800 hover:bg-gray-700 focus:ring-4 focus:outline-none focus:ring-blue-200 dark:focus:ring-blue-900 font-medium rounded-lg text-sm px-5 py-2.5 inline-flex justify-center w-full text-center ">
               Start plan</a>
           </div>
@@ -409,53 +410,56 @@ userStore.user ? router.push({ name: "dashboard" }) : "";
 
             <h3 class="text-3xl text-gray-700 font-semibold text-center">Annual</h3>
             <div class="overflow-hidden">
-                <div class="-mr-20 flex items-end justify-center">
-                    <div class="flex">
-                        <span class="-ml-6 mt-2 text-3xl text-cyan-500 font-bold">$</span>
-                        <span class="text-8xl text-gray-800 font-bold leading-0">4</span>
-                    </div>
-                    <div class="mb-2">
-                        <span class="block text-xl font-bold">.15</span>
-                        <span class="block text-xl text-cyan-500 font-bold">/ Month</span>
-                    </div>
+              <div class="-mr-20 flex items-end justify-center">
+                <div class="flex">
+                  <span class="-ml-6 mt-2 text-3xl text-cyan-500 font-bold">$</span>
+                  <span class="text-8xl text-gray-800 font-bold leading-0">4</span>
                 </div>
-                <div class="text-center text-2xl font-medium">
-                    <span class="text-gray-400 line-through">$59.88</span>
-                    <span class="text-gray-700 font-semibold">$49.90</span>
+                <div class="mb-2">
+                  <span class="block text-xl font-bold">.15</span>
+                  <span class="block text-xl text-cyan-500 font-bold">/ Month</span>
                 </div>
-                <span class="block uppercase text-xs text-cyan-500 text-center">BILLED YEARLY</span>
-                <span class="hidden w-max mt-4 m-auto px-4 py-1 rounded-full bg-gradient-to-r from-yellow-300 to-pink-300 text-sm font-medium text-yellow-900">1 Discount applied</span>
+              </div>
+              <div class="text-center text-2xl font-medium">
+                <span class="text-gray-400 line-through">$59.88</span>
+                <span class="text-gray-700 font-semibold">$49.90</span>
+              </div>
+              <span class="block uppercase text-xs text-cyan-500 text-center">BILLED YEARLY</span>
+              <span
+                class="hidden w-max mt-4 m-auto px-4 py-1 rounded-full bg-gradient-to-r from-yellow-300 to-pink-300 text-sm font-medium text-yellow-900">1
+                Discount applied</span>
             </div>
 
             <ul role="list" class="w-max space-y-4 pb-6 pt-4 m-auto text-gray-600">
-                <li class="space-x-2">
-                    <span class="text-cyan-500 font-semibold">&check;</span>
-                    <span>3 websites included</span>
-                </li>
-                <li class="space-x-2">
-                    <span class="text-cyan-500 font-semibold">&check;</span>
-                    <span>Unlimited Page Views</span>
-                </li>
-                <li class="space-x-2">
-                    <span class="text-cyan-500 font-semibold">&check;</span>
-                    <span>Unlimited Page Clicks</span>
-                </li>
-                <li class="space-x-2">
-                    <span class="text-cyan-500 font-semibold">&check;</span>
-                    <span>Extra Website $20 each/year</span>
-                </li>
-                <li class="space-x-2">
-                    <span class="text-cyan-500 font-semibold">&check;</span>
-                    <span>Integration help</span>
-                </li>
-                <li class="space-x-2">
-                    <span class="text-cyan-500 font-semibold">&check;</span>
-                    <span>Prioritized email support</span>
-                </li>
+              <li class="space-x-2">
+                <span class="text-cyan-500 font-semibold">&check;</span>
+                <span>3 websites included</span>
+              </li>
+              <li class="space-x-2">
+                <span class="text-cyan-500 font-semibold">&check;</span>
+                <span>Unlimited Page Views</span>
+              </li>
+              <li class="space-x-2">
+                <span class="text-cyan-500 font-semibold">&check;</span>
+                <span>Unlimited Page Clicks</span>
+              </li>
+              <li class="space-x-2">
+                <span class="text-cyan-500 font-semibold">&check;</span>
+                <span>Extra Website $20 each/year</span>
+              </li>
+              <li class="space-x-2">
+                <span class="text-cyan-500 font-semibold">&check;</span>
+                <span>Integration help</span>
+              </li>
+              <li class="space-x-2">
+                <span class="text-cyan-500 font-semibold">&check;</span>
+                <span>Prioritized email support</span>
+              </li>
             </ul>
 
-            <a href="./authenticate" @click.native="isNew(true)"
-              class="text-white bg-gray-800 hover:bg-gray-700 focus:ring-4 focus:outline-none focus:ring-blue-200 dark:focus:ring-blue-900 font-medium rounded-lg text-sm px-5 py-2.5 inline-flex justify-center w-full text-center">Start plan</a>
+            <a href="./authenticate" @click="isNew(true)"
+              class="text-white bg-gray-800 hover:bg-gray-700 focus:ring-4 focus:outline-none focus:ring-blue-200 dark:focus:ring-blue-900 font-medium rounded-lg text-sm px-5 py-2.5 inline-flex justify-center w-full text-center">Start
+              plan</a>
           </div>
         </div>
       </div>
@@ -469,64 +473,74 @@ userStore.user ? router.push({ name: "dashboard" }) : "";
           <img src="@/assets/images/startup.png" alt="image" loading="lazy" width="" height="">
         </div>
         <div class="md:7/12 lg:w-6/12">
-          <h2 class="text-2xl text-gray-900 font-bold md:text-4xl">Help website visitors to contact you immediately and without effort.</h2>
-          <p class="mt-6 text-gray-600">Do you lose customers just because they were not able to understand whether you are the right fit for them via a website?</p>
-          <p class="mt-4 text-gray-600">Most successful business begins with a conversation, hence making it easy to contact gives them the opportunity to reach out on channels they already use.</p>
-          <p class="mt-4 text-gray-600">This also helps in increasing trust, open rate & conversation rate when you reach out.</p>
+          <h2 class="text-2xl text-gray-900 font-bold md:text-4xl">Help website visitors to contact you immediately and
+            without effort.</h2>
+          <p class="mt-6 text-gray-600">Do you lose customers just because they were not able to understand whether you
+            are the right fit for them via a website?</p>
+          <p class="mt-4 text-gray-600">Most successful business begins with a conversation, hence making it easy to
+            contact gives them the opportunity to reach out on channels they already use.</p>
+          <p class="mt-4 text-gray-600">This also helps in increasing trust, open rate & conversation rate when you
+            reach out.</p>
         </div>
       </div>
     </div>
   </div>
 
-  
+
   <div class="relative py-20 flex flex-col items-center bg-cyan-900 overflow-hidden md:py-40">
-      <div class="relative z-[1] container m-auto px-6 md:px-12">
-          <div class="m-auto text-center md:w-8/12 lg:w-6/12">
-              <h2 class="text-2xl text-white font-bold md:text-4xl">Convert visitor to <span class="text-sky-400">customers</span> increase inbound leads for your business.</h2>
-          </div>
+    <div class="relative z-[1] container m-auto px-6 md:px-12">
+      <div class="m-auto text-center md:w-8/12 lg:w-6/12">
+        <h2 class="text-2xl text-white font-bold md:text-4xl">Convert visitor to <span
+            class="text-sky-400">customers</span> increase inbound leads for your business.</h2>
       </div>
-      <div aria-hidden="true" class="absolute h-full inset-0 flex items-center">
-          <div aria-hidden="true" class="bg-layers bg-scale w-56 h-56 m-auto blur-xl bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 rounded-full md:w-[30rem] md:h-[30rem] md:blur-3xl"></div>
+    </div>
+    <div aria-hidden="true" class="absolute h-full inset-0 flex items-center">
+      <div aria-hidden="true"
+        class="bg-layers bg-scale w-56 h-56 m-auto blur-xl bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 rounded-full md:w-[30rem] md:h-[30rem] md:blur-3xl">
       </div>
-      <div aria-hidden="true" class="absolute inset-0 w-full h-full bg-[#020314] opacity-90"></div>
+    </div>
+    <div aria-hidden="true" class="absolute inset-0 w-full h-full bg-[#020314] opacity-90"></div>
   </div>
-           
-  
-  <footer class="px-3 py-8 bg-white dark:bg-gray-800 text-2 text-gray-500 dark:text-gray-200 transition-colors duration-200">
-      <div class="flex flex-col">
-          <div class="md:hidden mt-7 mx-auto w-11 h-px rounded-full">
-          </div>
-          <div class="mt-4 md:mt-0 flex flex-col md:flex-row">
-              <nav class="flex-1 flex flex-col items-center justify-center md:items-end md:border-r border-gray-100 md:pr-5">
-                  <a href="./authenticate" @click.native="isNew(true)" aria-current="page" class="hover:text-gray-700 dark:hover:text-white">
-                      Sign up
-                  </a>
-                  <a aria-current="page" href="./authenticate" @click.native="isNew(false)" class="hover:text-gray-700 dark:hover:text-white">
-                      Login
-                  </a>
-              </nav>
-              <div class="md:hidden mt-4 mx-auto w-11 h-px rounded-full">
-              </div>
-              <div class="mt-4 md:mt-0 flex-1 flex items-center justify-center md:border-r border-gray-100">
-                  <a class="ml-4 hover:text-primary-gray-20" href="./authenticate" @click.native="isNew(true)">
-                      <span class="sr-only">
-                          Sign up
-                      </span>
-                      <img src="@/assets/images/wibi-mini-logo.png" alt="" class="w-10 h-10" />
-                  </a>
-              </div>
-              <div class="md:hidden mt-4 mx-auto w-11 h-px rounded-full ">
-              </div>
-              <div class="mt-7 md:mt-0 flex-1 flex flex-col items-center justify-center md:items-start md:pl-5">
-                  <span class="">
-                      © 2022
-                  </span>
-                  <span class="mt-7 md:mt-1">
-                      Wibi Click
-                  </span>
-              </div>
-          </div>
+
+
+  <footer
+    class="px-3 py-8 bg-white dark:bg-gray-800 text-2 text-gray-500 dark:text-gray-200 transition-colors duration-200">
+    <div class="flex flex-col">
+      <div class="md:hidden mt-7 mx-auto w-11 h-px rounded-full">
       </div>
+      <div class="mt-4 md:mt-0 flex flex-col md:flex-row">
+        <nav class="flex-1 flex flex-col items-center justify-center md:items-end md:border-r border-gray-100 md:pr-5">
+          <a href="./authenticate" @click="isNew(true)" aria-current="page"
+            class="hover:text-gray-700 dark:hover:text-white">
+            Sign up
+          </a>
+          <a aria-current="page" href="./authenticate" @click="isNew(false)"
+            class="hover:text-gray-700 dark:hover:text-white">
+            Login
+          </a>
+        </nav>
+        <div class="md:hidden mt-4 mx-auto w-11 h-px rounded-full">
+        </div>
+        <div class="mt-4 md:mt-0 flex-1 flex items-center justify-center md:border-r border-gray-100">
+          <a class="ml-4 hover:text-primary-gray-20" href="./authenticate" @click="isNew(true)">
+            <span class="sr-only">
+              Sign up
+            </span>
+            <img src="@/assets/images/wibi-mini-logo.png" alt="" class="w-10 h-10" />
+          </a>
+        </div>
+        <div class="md:hidden mt-4 mx-auto w-11 h-px rounded-full ">
+        </div>
+        <div class="mt-7 md:mt-0 flex-1 flex flex-col items-center justify-center md:items-start md:pl-5">
+          <span class="">
+            © 2022
+          </span>
+          <span class="mt-7 md:mt-1">
+            Wibi Click
+          </span>
+        </div>
+      </div>
+    </div>
   </footer>
 
 
@@ -536,50 +550,56 @@ userStore.user ? router.push({ name: "dashboard" }) : "";
 .hero-bg {
   background-color: #101d2d;
 }
+
 .bg-layers {
-    -webkit-animation: filter-animation 4s infinite;
-    animation: filter-animation 4s infinite;
+  -webkit-animation: filter-animation 4s infinite;
+  animation: filter-animation 4s infinite;
 }
 
 .bg-scale {
-    -webkit-animation: filter-animation 8s infinite;
-    animation: filter-scale 8s infinite;
+  -webkit-animation: filter-animation 8s infinite;
+  animation: filter-scale 8s infinite;
 }
-  
+
 @-webkit-keyframes filter-animation {
-    0% {
-      -webkit-filter: hue-rotate(0deg);
-    }
-    50% {
-      -webkit-filter: hue-rotate(45deg);
-    }
-    
-    100% {
-      -webkit-filter: hue-rotate(0deg);
-    }
+  0% {
+    -webkit-filter: hue-rotate(0deg);
+  }
+
+  50% {
+    -webkit-filter: hue-rotate(45deg);
+  }
+
+  100% {
+    -webkit-filter: hue-rotate(0deg);
+  }
 }
-  
+
 @keyframes filter-animation {
-    0% {
-      filter: hue-rotate(0deg);
-    }
-    50% {
-      filter: hue-rotate(45deg);
-    }
-    100% {
-      filter: hue-rotate(0deg);
-    }
+  0% {
+    filter: hue-rotate(0deg);
+  }
+
+  50% {
+    filter: hue-rotate(45deg);
+  }
+
+  100% {
+    filter: hue-rotate(0deg);
+  }
 }
 
 @keyframes filter-scale {
-    0% {
-      transform:scale(1);
-    }
-    50% {
-      transform:scale(1.4);
-    }
-    100% {
-        transform:scale(.8);
-    }
+  0% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.4);
+  }
+
+  100% {
+    transform: scale(.8);
+  }
 }
 </style>
