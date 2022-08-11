@@ -1,6 +1,7 @@
 <script setup>
 import { useRouter } from "vue-router";
 import { useUserStore } from "@/stores/UserStore";
+import { onMounted } from "vue";
 
 const userStore = useUserStore();
 const router = useRouter();
@@ -19,6 +20,20 @@ function toggleMenu(flag) {
 }
 
 userStore.user ? router.push({ name: "dashboard" }) : "";
+
+onMounted(() => {
+  var url = 'https://cdn.jsdelivr.net/gh/wmuza/wibiclick/wibi-v3.min.js'; 
+  var s = document.createElement('script'); 
+  s.type = 'text/javascript'; 
+  s.async = true; 
+  s.src = url; 
+  s.onload = function () { 
+    createWidget("bfb10f7a-d939-49f2-883b-32187705d5ce")
+  }
+
+  var x = document.getElementsByTagName('script')[0]
+  x.parentNode.insertBefore(s, x);
+})
 </script>
 
 <template>
@@ -542,8 +557,6 @@ userStore.user ? router.push({ name: "dashboard" }) : "";
       </div>
     </div>
   </footer>
-
-
 </template>
 
 <style>
