@@ -22,12 +22,12 @@ function toggleMenu(flag) {
 userStore.user ? router.push({ name: "dashboard" }) : "";
 
 onMounted(() => {
-  var url = 'https://cdn.jsdelivr.net/gh/wmuza/wibiclick/wibi-v3.min.js'; 
-  var s = document.createElement('script'); 
-  s.type = 'text/javascript'; 
-  s.async = true; 
-  s.src = url; 
-  s.onload = function () { 
+  var url = 'https://cdn.jsdelivr.net/gh/wmuza/wibiclick/wibi-v3.min.js';
+  var s = document.createElement('script');
+  s.type = 'text/javascript';
+  s.async = true;
+  s.src = url;
+  s.onload = function () {
     createWidget("bfb10f7a-d939-49f2-883b-32187705d5ce")
   }
 
@@ -354,7 +354,7 @@ onMounted(() => {
         <a href="./authenticate"
           class="hover:text-white hover:bg-transparent hover:border-white border bg-white transition duration-150 ease-in-out focus:outline-none rounded font-semibold text-black px-4 sm:px-8 py-1 sm:py-3 text-sm"
           @click="isNew(true)">
-          Try free for 7 Days
+          Try free with 1000 credits
         </a>
         <router-link to="authenticate"
           class="hover:bg-white hover:text-sky-400 hover:border-indigo-600 ml-3 sm:ml-6 bg-transparent transition duration-150 ease-in-out focus:outline-none hover:bg-indigo-700-800 rounded border border-white text-white px-4 sm:px-8 py-1 sm:py-3 text-sm"
@@ -379,30 +379,27 @@ onMounted(() => {
         <div class="relative z-10 group mx-auto sm:w-7/12 lg:w-5/12">
           <div class="m-auto bg-white rounded-lg border shadow-md sm:p-8 dark:bg-gray-800 dark:border-gray-700">
 
-            <h3 class="text-3xl text-gray-700 font-semibold text-center">Monthly</h3>
-            <div class="relative flex justify-around">
+            <h3 class="text-3xl text-gray-700 font-semibold text-center">Professional Plan</h3>
+            <div class="relative flex justify-around max-w-md m-auto">
               <div class="flex">
-                <span class="-ml-6 mt-2 text-3xl text-cyan-500 font-bold">$</span>
-                <span class="text-8xl text-gray-800 font-bold leading-0">4.99</span>
+                <span class="-ml-6 mt-2 text-3xl text-cyan-500 font-bold">$0.005
+                  <span class="text-xl">/ credit</span>
+                </span>
               </div>
-              <span class="absolute right-9 bottom-2 text-xl text-cyan-500 font-bold">/ Month</span>
+
             </div>
             <ul role="list" class="w-max space-y-4 pb-6 pt-4 m-auto text-gray-600">
               <li class="space-x-2">
                 <span class="text-cyan-500 font-semibold">&check;</span>
-                <span>3 websites included</span>
+                <span>Unlimited websites</span>
               </li>
               <li class="space-x-2">
                 <span class="text-cyan-500 font-semibold">&check;</span>
-                <span>Unlimited Page Views</span>
+                <span>1 credit per page View</span>
               </li>
               <li class="space-x-2">
                 <span class="text-cyan-500 font-semibold">&check;</span>
-                <span>Unlimited Page Clicks</span>
-              </li>
-              <li class="space-x-2">
-                <span class="text-cyan-500 font-semibold">&check;</span>
-                <span>Extra Website $2.05 each/month</span>
+                <span>1 credit per page Click</span>
               </li>
               <li class="space-x-2">
                 <span class="text-cyan-500 font-semibold">&check;</span>
@@ -416,65 +413,7 @@ onMounted(() => {
 
             <a href="./authenticate" @click="isNew(true)"
               class="text-white bg-gray-800 hover:bg-gray-700 focus:ring-4 focus:outline-none focus:ring-blue-200 dark:focus:ring-blue-900 font-medium rounded-lg text-sm px-5 py-2.5 inline-flex justify-center w-full text-center ">
-              Start plan</a>
-          </div>
-        </div>
-
-        <div class="relative group m-auto md:w-5/12">
-          <div class="m-auto bg-white rounded-lg border shadow-md sm:p-8 dark:bg-gray-800 dark:border-gray-700">
-
-            <h3 class="text-3xl text-gray-700 font-semibold text-center">Annual</h3>
-            <div class="overflow-hidden">
-              <div class="-mr-20 flex items-end justify-center">
-                <div class="flex">
-                  <span class="-ml-6 mt-2 text-3xl text-cyan-500 font-bold">$</span>
-                  <span class="text-8xl text-gray-800 font-bold leading-0">4</span>
-                </div>
-                <div class="mb-2">
-                  <span class="block text-xl font-bold">.15</span>
-                  <span class="block text-xl text-cyan-500 font-bold">/ Month</span>
-                </div>
-              </div>
-              <div class="text-center text-2xl font-medium">
-                <span class="text-gray-400 line-through">$59.88</span>
-                <span class="text-gray-700 font-semibold">$49.90</span>
-              </div>
-              <span class="block uppercase text-xs text-cyan-500 text-center">BILLED YEARLY</span>
-              <span
-                class="hidden w-max mt-4 m-auto px-4 py-1 rounded-full bg-gradient-to-r from-yellow-300 to-pink-300 text-sm font-medium text-yellow-900">1
-                Discount applied</span>
-            </div>
-
-            <ul role="list" class="w-max space-y-4 pb-6 pt-4 m-auto text-gray-600">
-              <li class="space-x-2">
-                <span class="text-cyan-500 font-semibold">&check;</span>
-                <span>3 websites included</span>
-              </li>
-              <li class="space-x-2">
-                <span class="text-cyan-500 font-semibold">&check;</span>
-                <span>Unlimited Page Views</span>
-              </li>
-              <li class="space-x-2">
-                <span class="text-cyan-500 font-semibold">&check;</span>
-                <span>Unlimited Page Clicks</span>
-              </li>
-              <li class="space-x-2">
-                <span class="text-cyan-500 font-semibold">&check;</span>
-                <span>Extra Website $20 each/year</span>
-              </li>
-              <li class="space-x-2">
-                <span class="text-cyan-500 font-semibold">&check;</span>
-                <span>Integration help</span>
-              </li>
-              <li class="space-x-2">
-                <span class="text-cyan-500 font-semibold">&check;</span>
-                <span>Prioritized email support</span>
-              </li>
-            </ul>
-
-            <a href="./authenticate" @click="isNew(true)"
-              class="text-white bg-gray-800 hover:bg-gray-700 focus:ring-4 focus:outline-none focus:ring-blue-200 dark:focus:ring-blue-900 font-medium rounded-lg text-sm px-5 py-2.5 inline-flex justify-center w-full text-center">Start
-              plan</a>
+              Start plan (1000 credits free)</a>
           </div>
         </div>
       </div>
