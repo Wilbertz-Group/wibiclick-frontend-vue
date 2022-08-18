@@ -916,3 +916,173 @@ pre {
 /**=====================
   49. Badge CSS Ends
 ==========================**/
+
+/* Timeline */
+#timeline-header {
+  font-size: 26px;
+}
+
+.cancelled {
+  text-decoration: line-through;
+}
+
+.timeline-panel.today {
+  height: 5px !important;
+  padding-top: 0px !important;
+  padding-bottom: 0px !important;
+  margin-top: 0px;
+  margin-bottom: 10px;
+  background: #000;
+}
+.timeline-panel.today:before {
+  visibility: hidden !important;
+  display: none !important;
+}
+.timeline-panel.today:after {
+  visibility: hidden !important;
+  display: none !important;
+}
+
+.timeline-badge.warning {
+  top: -20px !important;
+}
+
+.timeline-panel.past {
+  background: #eee;
+}
+.timeline-panel.past:after {
+  border-right: 14px solid #eee !important;
+}
+
+.timeline-panel.main_element {
+  font-weight: bolder;
+  color: #ffffff !important;
+  background: #0196a3;
+  border-color: #0196a3 !important;
+}
+.timeline-panel.main_element:after {
+  border-right: 14px solid #0196a3 !important;
+}
+
+.timeline-panel.selected_past {
+  font-weight: bolder;
+  color: #ffffff !important;
+  background: #333;
+  border-color: #333 !important;
+}
+.timeline-panel.selected_past:after {
+  border-right: 14px solid #333 !important;
+}
+
+.timeline {
+  list-style: none;
+  padding: 10px 0 10px;
+  position: relative;
+  width: 420px;
+}
+.timeline:before {
+  bottom: 0;
+  content: " ";
+  left: 50px;
+  margin-left: -1.5px;
+  position: absolute;
+  top: 0;
+  width: 3px;
+  border-style: dashed;
+  border-left-width: 2px;
+}
+.timeline > li {
+  margin-bottom: 10px;
+  position: relative;
+}
+.timeline > li:before, .timeline > li:after {
+  content: " ";
+  display: table;
+}
+.timeline > li:after {
+  clear: both;
+}
+.timeline > li > .timeline-panel {
+  border-radius: 2px;
+  margin-left: 5.7em;
+  padding: 10px;
+  position: relative;
+}
+.timeline > li > .timeline-panel .timeline-heading .timeline-panel-controls {
+  position: absolute;
+  right: 8px;
+  top: 5px;
+}
+.timeline > li > .timeline-panel .timeline-heading .timeline-panel-controls .timestamp {
+  display: inline-block;
+}
+.timeline > li .timeline-badge {
+  border-radius: 50%;
+    color: #fff;
+    font-size: 2em;
+    height: 50px;
+    left: 50px;
+    line-height: 48px;
+    margin-left: -25px;
+    position: absolute;
+    text-align: center;
+    top: 12px;
+    width: 50px;
+    z-index: 100;
+}
+
+.timeline-title {
+  margin-top: 0;
+  color: inherit;
+}
+
+.timeline-body > p,
+.timeline-body > ul {
+  margin-bottom: 0;
+}
+.timeline-body > p + p {
+  margin-top: 5px;
+}
+
+.copy {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  color: #aaa;
+  font-size: 11px;
+}
+.copy > * {
+  color: #444;
+}
+
+/*============================
+				ANIMATIONS
+=============================*/
+.pulse_wrap {
+  -webkit-animation: pulse 1.5s ease-in-out alternate infinite;
+          animation: pulse 1.5s ease-in-out alternate infinite;
+}
+
+@-webkit-keyframes pulse {
+  0% {
+    opacity: 0.8;
+    transform: scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 0.8;
+    transform: scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* End Timeline */

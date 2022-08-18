@@ -7,6 +7,7 @@ import ScaleLoader from "vue-spinner/src/ScaleLoader.vue";
 import { useUserStore } from "@/stores/UserStore"
 import { useToast } from 'vue-toast-notification';
 import { useRoute } from "vue-router";
+import timeline from "@/components/timeline.vue";
 
 
 const route = useRoute()
@@ -17,6 +18,50 @@ const vseries = ref();
 const loading = ref(false);
 const userStore = useUserStore()
 const toast = useToast();
+const items = ref([])
+
+const buttons = {
+  whatsapp: {
+    name: "Whatsapp",
+    icon: "fab fa-whatsapp",
+    color: "bg-green-500 hover:bg-green-600"
+  },
+  messenger: {
+    name: "Messenger",
+    icon: "fab fa-facebook-messenger",
+    color: "bg-blue-500 hover:bg-blue-600"
+  },
+  mail: {
+    name: "Mail",
+    icon: "fas fa-envelope",
+    color: "bg-red-500 hover:bg-red-600"
+  },
+  text: {
+    name: "Text message",
+    icon: "fas fa-comment",
+    color: "bg-amber-500 hover:bg-amber-600"
+  },
+  call: {
+    name: "Calls",
+    icon: "fas fa-phone",
+    color: "bg-black hover:bg-gray-800"
+  },
+  telegram: {
+    name: "Telegram",
+    icon: "fab fa-telegram",
+    color: "bg-sky-600 hover:bg-sky-700"
+  },
+  viber: {
+    name: "Viber",
+    icon: "fab fa-viber",
+    color: "bg-purple-500 hover:bg-purple-600"
+  },
+  skype: {
+    name: "Skype",
+    icon: "fab fa-skype",
+    color: "bg-sky-500 hover:bg-sky-600"
+  }
+}
 
 options.value = {
   chart: {
@@ -173,6 +218,24 @@ async function fetchClicks() {
     }]
 
     loading.value = false;
+    fetchViews()    
+  } catch (error) {
+    console.log(error);
+    loading.value = false;
+    toast.error("Error getting website clicks data")
+  }
+}
+
+async function fetchRecentClicks() {
+  try {
+    loading.value = true;
+    const response = await axios.get(
+      "get-recent-clicks?id="+ userStore.currentWebsite
+    );
+
+    items.value = response.data.clicks
+
+    loading.value = false;
 
   } catch (error) {
     console.log(error);
@@ -264,7 +327,7 @@ async function fetchViews() {
     }]
 
     loading.value = false;
-
+    
   } catch (error) {
     console.log(error);
     loading.value = false;
@@ -292,13 +355,13 @@ async function checkParams() {
       toast.error("Error in registering your subscription")
     }
   }
-}
+} 
 
 onMounted(async () => { 
   checkParams();
   if(userStore.currentWebsite && userStore.user){
-    fetchClicks()
-    fetchViews()
+    fetchClicks()  
+    fetchRecentClicks()  
   }
   if(!userStore.user){
     toast.error("Please add billing information")
@@ -315,6 +378,7 @@ watchEffect(() => {
     fetchViews()
   }
 })
+
 </script>
 
 <template>
@@ -443,84 +507,101 @@ watchEffect(() => {
           </div>
         </div>
 
-        <div class="w-full grid lg:grid-cols-4 md:grid-cols-3 sm:grid-cols-1 gap-8">
-          <div class="rounded-lg text-center pt-1 pb-6 border border-gray-200 shadow-md divide-y divide-gray-300/50">
-            <h4 class="text-4xl py-4 text-center">{{ userStore?.analytics?.whatsapp || 0 }}</h4>
-            <button type="button"
-              class="bg-gradient-to-r btn-air-light text-white bg-green-500 hover:bg-green-600 focus:outline-none focus:ring-4 focus:ring-green-300 font-medium rounded-full text-base px-10 pt-2 pb-2.5 text-center mr-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800">
-              <span>
-                <font-awesome-icon icon="fab fa-whatsapp" />
-              </span>
-              <span class="ml-2">Whatsapp</span>
-            </button>
-          </div>
-          <div class="rounded-lg text-center pt-1 pb-6 border border-gray-200 shadow-md divide-y divide-gray-300/50">
-            <h4 class="text-4xl py-4 text-center">{{ userStore?.analytics?.messenger || 0 }}</h4>
-            <button type="button"
-              class="btn-air-light text-white bg-blue-500 hover:bg-blue-600 focus:outline-none focus:ring-4 focus:ring-green-300 font-medium rounded-full text-base px-10 pt-2 pb-2.5 text-center mr-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800">
-              <span>
-                <font-awesome-icon icon="fab fa-facebook-messenger" />
-              </span>
-              <span class="ml-2">Messenger</span>
-            </button>
-          </div>
-          <div class="rounded-lg text-center pt-1 pb-6 border border-gray-200 shadow-md divide-y divide-gray-300/50">
-            <h4 class="text-4xl py-4 text-center">{{ userStore?.analytics?.mail || 0 }}</h4>
-            <button type="button"
-              class="btn-air-light text-white bg-red-500 hover:bg-red-600 focus:outline-none focus:ring-4 focus:ring-green-300 font-medium rounded-full text-base px-10 pt-2 pb-2.5 text-center mr-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800">
-              <span>
-                <font-awesome-icon icon="fas fa-envelope" />
-              </span>
-              <span class="ml-2">Mail</span>
-            </button>
-          </div>
-          <div class="rounded-lg text-center pt-1 pb-6 border border-gray-200 shadow-md divide-y divide-gray-300/50">
-            <h4 class="text-4xl py-4 text-center">{{ userStore?.analytics?.message || 0 }}</h4>
-            <button type="button"
-              class="btn-air-light text-white bg-amber-500 hover:bg-amber-600 focus:outline-none focus:ring-4 focus:ring-green-300 font-medium rounded-full text-base px-10 pt-2 pb-2.5 text-center mr-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800">
-              <font-awesome-icon icon="fas fa-comment" />
-              <span class="ml-2">Send a message</span>
-            </button>
-          </div>
+        <div class="w-full grid md:grid-cols-3 sm:grid-cols-1 gap-8">          
+          <div class="col-span-2">
+            <div class="w-full grid md:grid-cols-3 sm:grid-cols-1 gap-8">
+              <div class="rounded-lg text-center pt-1 pb-6 border border-gray-200 shadow-md divide-y divide-gray-300/50">
+                <h4 class="text-4xl py-4 text-center">{{ userStore?.analytics?.whatsapp || 0 }}</h4>
+                <button type="button" :class="buttons.whatsapp.color"
+                  class="bg-gradient-to-r btn-air-light text-white focus:outline-none focus:ring-4 focus:ring-green-300 font-medium rounded-full text-base px-10 pt-2 pb-2.5 text-center mr-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800">
+                  <span>
+                    <font-awesome-icon :icon="buttons.whatsapp.icon" />
+                  </span>
+                  <span class="ml-2">{{ buttons.whatsapp.name }}</span>
+                </button>
+              </div>
+              <div class="rounded-lg text-center pt-1 pb-6 border border-gray-200 shadow-md divide-y divide-gray-300/50">
+                <h4 class="text-4xl py-4 text-center">{{ userStore?.analytics?.messenger || 0 }}</h4>
+                <button type="button" :class="buttons.messenger.color"
+                  class="btn-air-light text-white focus:outline-none focus:ring-4 focus:ring-green-300 font-medium rounded-full text-base px-10 pt-2 pb-2.5 text-center mr-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800">
+                  <span>
+                    <font-awesome-icon :icon="buttons.messenger.icon" />
+                  </span>
+                  <span class="ml-2">{{ buttons.messenger.name }}</span>
+                </button>
+              </div>
+              <div class="rounded-lg text-center pt-1 pb-6 border border-gray-200 shadow-md divide-y divide-gray-300/50">
+                <h4 class="text-4xl py-4 text-center">{{ userStore?.analytics?.mail || 0 }}</h4>
+                <button type="button" :class="buttons.mail.color"
+                  class="btn-air-light text-white focus:outline-none focus:ring-4 focus:ring-green-300 font-medium rounded-full text-base px-10 pt-2 pb-2.5 text-center mr-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800">
+                  <span>
+                    <font-awesome-icon :icon="buttons.mail.icon" />
+                  </span>
+                  <span class="ml-2">{{ buttons.mail.name }}</span>
+                </button>
+              </div>
+              <div class="rounded-lg text-center pt-1 pb-6 border border-gray-200 shadow-md divide-y divide-gray-300/50">
+                <h4 class="text-4xl py-4 text-center">{{ userStore?.analytics?.message || 0 }}</h4>
+                <button type="button" :class="buttons.text.color"
+                  class="btn-air-light text-white focus:outline-none focus:ring-4 focus:ring-green-300 font-medium rounded-full text-base px-10 pt-2 pb-2.5 text-center mr-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800">
+                  <span>
+                    <font-awesome-icon :icon="buttons.text.icon" />
+                  </span>
+                  <span class="ml-2">{{ buttons.text.name }}</span>
+                </button>
+              </div>
 
-          <div class="rounded-lg text-center pt-1 pb-6 border border-gray-200 shadow-md divide-y divide-gray-300/50">
-            <h4 class="text-4xl py-4 text-center">{{ userStore?.analytics?.call || 0 }}</h4>
-            <button type="button"
-              class="btn-air-light text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-4 focus:ring-green-300 font-medium rounded-full text-base px-10 pt-2 pb-2.5 text-center mr-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800">
-              <span>
-                <font-awesome-icon icon="fas fa-phone" />
-              </span>
-              <span class="ml-2">Calls</span>
-            </button>
+              <div class="rounded-lg text-center pt-1 pb-6 border border-gray-200 shadow-md divide-y divide-gray-300/50">
+                <h4 class="text-4xl py-4 text-center">{{ userStore?.analytics?.call || 0 }}</h4>
+                <button type="button" :class="buttons.call.color"
+                  class="btn-air-light text-white focus:outline-none focus:ring-4 focus:ring-green-300 font-medium rounded-full text-base px-10 pt-2 pb-2.5 text-center mr-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800">
+                  <span>
+                    <font-awesome-icon :icon="buttons.call.icon" />
+                  </span>
+                  <span class="ml-2">{{ buttons.call.name }}</span>
+                </button>
+              </div>
+              <div class="rounded-lg text-center pt-1 pb-6 border border-gray-200 shadow-md divide-y divide-gray-300/50">
+                <h4 class="text-4xl py-4 text-center">{{ userStore?.analytics?.telegram || 0 }}</h4>
+                <button type="button" :class="buttons.telegram.color"
+                  class="btn-air-light text-white focus:outline-none focus:ring-4 focus:ring-green-300 font-medium rounded-full text-base px-10 pt-2 pb-2.5 text-center mr-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800">
+                  <span>
+                    <font-awesome-icon :icon="buttons.telegram.icon" />
+                  </span>
+                  <span class="ml-2">{{ buttons.telegram.name }}</span>
+                </button>
+              </div>
+              <div class="rounded-lg text-center pt-1 pb-6 border border-gray-200 shadow-md divide-y divide-gray-300/50">
+                <h4 class="text-4xl py-4 text-center">{{ userStore?.analytics?.viber || 0 }}</h4>
+                <button type="button" :class="buttons.viber.color"
+                  class="btn-air-light text-white focus:outline-none focus:ring-4 focus:ring-green-300 font-medium rounded-full text-base px-10 pt-2 pb-2.5 text-center mr-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800">
+                  <span>
+                    <font-awesome-icon :icon="buttons.viber.icon" />
+                  </span>
+                  <span class="ml-2">{{ buttons.viber.name }}</span>
+                </button>
+              </div>
+              <div class="rounded-lg text-center pt-1 pb-6 border border-gray-200 shadow-md divide-y divide-gray-300/50">
+                <h4 class="text-4xl py-4 text-center">{{ userStore?.analytics?.skype || 0 }}</h4>
+                <button type="button" :class="buttons.skype.color"
+                  class="btn-air-light text-white focus:outline-none focus:ring-4 focus:ring-green-300 font-medium rounded-full text-base px-10 pt-2 pb-2.5 text-center mr-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800">
+                  <span>
+                    <font-awesome-icon :icon="buttons.skype.icon" />
+                  </span>
+                  <span class="ml-2">{{ buttons.skype.name }}</span>
+                </button>
+              </div>
+            </div>
           </div>
-          <div class="rounded-lg text-center pt-1 pb-6 border border-gray-200 shadow-md divide-y divide-gray-300/50">
-            <h4 class="text-4xl py-4 text-center">{{ userStore?.analytics?.telegram || 0 }}</h4>
-            <button type="button"
-              class="btn-air-light text-white bg-sky-600 hover:bg-sky-700 focus:outline-none focus:ring-4 focus:ring-green-300 font-medium rounded-full text-base px-10 pt-2 pb-2.5 text-center mr-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800">
-              <span>
-                <font-awesome-icon icon="fab fa-telegram" />
-              </span>
-              <span class="ml-2">Telegram</span>
-            </button>
-          </div>
-          <div class="rounded-lg text-center pt-1 pb-6 border border-gray-200 shadow-md divide-y divide-gray-300/50">
-            <h4 class="text-4xl py-4 text-center">{{ userStore?.analytics?.viber || 0 }}</h4>
-            <button type="button"
-              class="btn-air-light text-white bg-purple-500 hover:bg-purple-600 focus:outline-none focus:ring-4 focus:ring-green-300 font-medium rounded-full text-base px-10 pt-2 pb-2.5 text-center mr-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800">
-              <span>
-                <font-awesome-icon icon="fab fa-viber" />
-              </span>
-              <span class="ml-2">Viber</span>
-            </button>
-          </div>
-          <div class="rounded-lg text-center pt-1 pb-6 border border-gray-200 shadow-md divide-y divide-gray-300/50">
-            <h4 class="text-4xl py-4 text-center">{{ userStore?.analytics?.skype || 0 }}</h4>
-            <button type="button"
-              class="btn-air-light text-white bg-sky-500 hover:bg-sky-600 focus:outline-none focus:ring-4 focus:ring-green-300 font-medium rounded-full text-base px-10 pt-2 pb-2.5 text-center mr-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800">
-              <font-awesome-icon icon="fab fa-skype" />
-              <span class="ml-2">Skype</span>
-            </button>
-          </div>
+          <div class="rounded-lg text-center border border-gray-200 shadow-md">
+              <h4 class="text-sm tracking-tight font-bold py-4">Recent Activity</h4>
+              <div class="h-96 overflow-auto">
+                <timeline :items="items" :buttons="buttons"></timeline>
+                <div v-if="!items.length">
+                    No activity recorded yet
+                </div>
+              </div>
+          </div> 
         </div>
 
         <div class="grid grid-cols-2 gap-3">
