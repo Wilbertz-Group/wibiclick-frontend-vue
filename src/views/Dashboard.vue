@@ -76,11 +76,14 @@ options.value = {
   },
   xaxis: {
     type: 'datetime',
+    labels: {
+    datetimeUTC: false
+  },
     categories: ['2022-07-28T13:56:36.947Z']
   },
   tooltip: {
     x: {
-      format: 'dd MMM yyyy hh tt'
+      format: 'dd MMM yyyy'
     },
   },
 },
@@ -103,11 +106,14 @@ voptions.value = {
   },
   xaxis: {
     type: 'datetime',
+    labels: {
+    datetimeUTC: false
+  },
     categories: ['2022-07-28T13:56:36.947Z']
   },
   tooltip: {
     x: {
-      format: 'dd MMM yyyy hh tt'
+      format: 'dd MMM yyyy'
     },
   },
 },
@@ -119,7 +125,7 @@ vseries.value = [{
 
 const groups = (() => {
     const byDay = (item) => moment(item.x).format('MMM DD YYYY'),
-        byHour = (item) => moment(byDay(item) + ' ' + moment(item.x).format('hh a'), "dd MMM yyyy hh tt").toISOString(),
+        byHour = (item) => moment(byDay(item) + ' ' + moment(item.x).format('hh a'), "dd MMM yyyy").toISOString(),
         by6Hour = (item) => {
             const m = moment(item.x);
             return byDay(item) + ' ' + ['first', 'second', 'third', 'fourth'][Number(m.format('k')) % 6] + ' 6 hours';
@@ -166,6 +172,9 @@ async function fetchClicks() {
         },
         xaxis: {
           type: 'datetime',
+          labels: {
+    datetimeUTC: false
+  },
           categories: optionsData,
           labels: {
             style: {
@@ -208,7 +217,7 @@ async function fetchClicks() {
         tooltip: {
           theme: "dark",
           x: {
-            format: 'dd MMM yyyy hh tt'
+            format: 'dd MMM yyyy'
           },
         },
     }
@@ -275,6 +284,9 @@ async function fetchViews() {
         },
         xaxis: {
           type: 'datetime',
+          labels: {
+    datetimeUTC: false
+  },
           categories: optionsData,
           labels: {
             style: {
@@ -317,7 +329,7 @@ async function fetchViews() {
         tooltip: {
           theme: "dark",
           x: {
-            format: 'dd MMM yyyy hh tt'
+            format: 'dd MMM yyyy'
           },
         },
     }
@@ -595,7 +607,7 @@ watchEffect(() => {
             </div>
           </div>
           <div class="rounded-lg text-center border border-gray-200 shadow-md mt-5">
-              <h4 class="text-sm tracking-tight font-bold py-6">Recent Activity</h4>
+              <h4 class="text-sm tracking-tight font-bold py-6">Recent Click Activity</h4>
               <div class="h-96 overflow-y-auto">
                 <timeline :items="items" :buttons="buttons"></timeline>
                 <div v-if="!items.length">
