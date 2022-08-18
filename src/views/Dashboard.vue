@@ -376,6 +376,7 @@ watchEffect(() => {
   if(userStore.currentWebsite){
     fetchClicks()
     fetchViews()
+    fetchRecentClicks()
   }
 })
 
