@@ -978,7 +978,6 @@ pre {
   list-style: none;
   padding: 10px 0 10px;
   position: relative;
-  width: 420px;
 }
 .timeline:before {
   bottom: 0;

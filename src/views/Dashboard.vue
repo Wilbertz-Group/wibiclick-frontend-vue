@@ -508,8 +508,8 @@ watchEffect(() => {
           </div>
         </div>
 
-        <div class="w-full grid md:grid-cols-3 sm:grid-cols-1 gap-8">          
-          <div class="col-span-2">
+        <div class="w-full md:grid md:grid-cols-3 gap-8">          
+          <div class="md:col-span-2 sm:grid-cols-none">
             <div class="w-full grid md:grid-cols-3 sm:grid-cols-1 gap-8">
               <div class="rounded-lg text-center pt-1 pb-6 border border-gray-200 shadow-md divide-y divide-gray-300/50">
                 <h4 class="text-4xl py-4 text-center">{{ userStore?.analytics?.whatsapp || 0 }}</h4>
@@ -594,9 +594,9 @@ watchEffect(() => {
               </div>
             </div>
           </div>
-          <div class="rounded-lg text-center border border-gray-200 shadow-md">
-              <h4 class="text-sm tracking-tight font-bold py-4">Recent Activity</h4>
-              <div class="h-96 overflow-auto">
+          <div class="rounded-lg text-center border border-gray-200 shadow-md mt-5">
+              <h4 class="text-sm tracking-tight font-bold py-6">Recent Activity</h4>
+              <div class="h-96 overflow-y-auto">
                 <timeline :items="items" :buttons="buttons"></timeline>
                 <div v-if="!items.length">
                     No activity recorded yet
@@ -605,7 +605,7 @@ watchEffect(() => {
           </div> 
         </div>
 
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-none md:grid-cols-2 gap-3">
           <div class="text-center mt-10 pb-6 pr-3 shadow-lg rounded-lg bg-blueGray-800">
             <div class="rounded-t mb-0 px-4 py-3 bg-transparent">
               <div class="flex flex-wrap items-center">

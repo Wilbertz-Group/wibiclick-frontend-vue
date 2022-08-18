@@ -54,9 +54,9 @@ function toggleMenu() {
   </scale-loader>
   <Header title="Widget Settings" />
   <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-    <div v-if="userStore.currentWebsite != 'default'" class="px-4 py-6 sm:px-0 grid grid-cols-4 gap-3">
+    <div v-if="userStore.currentWebsite != 'default'" class="px-4 py-6 sm:px-0 grid md:grid-cols-4 sm:grid-cols-2 gap-3">
 
-      <ul class="col-span-1">
+      <ul class="col-span-1 md:col-span-1">
         <li class="w-full mb-2 mt-2">
           <a href="#"
             @click="toggleMenu(); phone=!phone"
@@ -140,7 +140,7 @@ function toggleMenu() {
         
       </ul>
 
-      <div class="col-span-2 shadow sm:rounded-md sm:overflow-hidden mt-2 btn-air-light">
+      <div class="col-span-1 md:col-span-2 shadow sm:rounded-md sm:overflow-hidden mt-2 btn-air-light">
 
         <!-- Phone Tab -->
         <FormKit type="form" v-if="phone" :form-class="phone ? 'w-full' : 'show w-full'"  submit-label="Update"
