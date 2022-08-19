@@ -3,36 +3,59 @@ import axios from "axios";
 import moment from 'moment'
 import { onMounted, ref } from "vue";
 import Header from "@/components/Header.vue";
-import { useUserStore } from "@/stores/UserStore"
+import { useToast } from 'vue-toast-notification';
 import ScaleLoader from "vue-spinner/src/ScaleLoader.vue";
 
 const credits = ref(1000)
+const used = ref(0)
+const total = ref(0)
+const lifetime = ref(false)
 const price = ref(0)
-const loading = ref(false);
-const billing_data = ref({})
-const userStore = useUserStore()
+const loading = ref(false)
+const toast = useToast();
 
-price.value = 0.005;
+price.value = 0.1;
 
-const yoco = new window.YocoSDK({ publicKey: "pk_test_ed3c54a6gOol69qa7f45" })
+const yoco = new window.YocoSDK({ publicKey: "pk_test_d2cb8a47bZEq7Glbc524" })
 
-onMounted(() => {
+async function fetchCredits() {
+		try {
+			loading.value = true
+			const response = await axios.get('get-credits');
+			console.log(response.data)
+			used.value = response.data.used
+			total.value = response.data.total
+			lifetime.value = response.data.lifetime
+			loading.value = false
+		} catch (error) {
+			console.log(error)
+		}
+}
+
+onMounted(async () => {
+	fetchCredits()
 	var checkoutButton = document.querySelector('#checkout-button');
+
 	checkoutButton.addEventListener('click', function () {
 		yoco.showPopup({
 			amountInCents: credits.value * price.value * 100,
-			currency: 'USD',
-			name: `Buy $${credits.value * price.value } Credits`,
-			callback: function (result) {
-				// This function returns a token that your server can use to capture a payment
+			currency: 'ZAR',
+			name: `Buy R${credits.value * price.value } Credits`,
+			callback: async (result)=>{
 				if (result.error) {
 					const errorMessage = result.error.message;
-					alert("error occured: " + errorMessage);
+					toast.error("error occured: " + errorMessage);
 				} else {
-					alert("card successfully tokenised: " + result.id);
+					if (result.status == "charge_ready" && result?.id) {
+						let { data } = await axios.post('yoco-charge-api', {
+							id: result?.id,
+							amountInCents: credits.value * price.value * 100
+						})
+						toast.success("Credits successfully bought")
+					} else {
+						toast.error("Error in making payment, please contact the administrator")
+					}					
 				}
-				// In a real integration - you would now pass this chargeToken back to your
-				// server along with the order/basket that the customer has purchased.
 			}
 		})
 	});
@@ -58,11 +81,11 @@ onMounted(() => {
 						<div class="p-4 shadow sm:rounded-md sm:overflow-hidden">
 							<div class="flex justify-between mb-1">
 								<span class="text-base font-medium text-black-700 dark:text-white">Credits</span>
-								<span class="text-sm font-medium text-black-700 dark:text-white">1 / 1000</span>
+								<span class="text-sm font-medium text-black-700 dark:text-white">{{used}} / {{total}}</span>
 							</div>
 							<div class="w-full bg-gray-200 rounded-full dark:bg-gray-700">
 								<div class="bg-blue-600 text-xs font-medium text-blue-100 text-center p-0.5 leading-none rounded-full"
-									style="width: 33%"> 33%</div>
+									:style="'width: '+ parseInt((used/total)*100) +'%'"> {{ parseInt((used/total)*100) }}%</div>
 							</div>
 
 						</div>
@@ -93,7 +116,7 @@ onMounted(() => {
 								<h3 class="text-3xl text-gray-700 font-semibold text-center">Professional Plan</h3>
 								<div class="relative flex justify-around max-w-md m-auto">
 									<div class="flex">
-										<span class="-ml-6 mt-2 text-3xl text-cyan-500 font-bold">${{ price }}
+										<span class="-ml-6 mt-2 text-3xl text-cyan-500 font-bold">R{{ price }}
 											<span class="text-xl">/ credit</span>
 										</span>
 									</div>
@@ -124,11 +147,11 @@ onMounted(() => {
 
 								<FormKit type="number" label="Credits" :value="credits" v-model="credits" step="500"
 									min="1000" validation="required|number|between:1000,100000"
-									help="Enter the number of credits you want to purchase" />
+									help="our billing amount is in South African Rand" />
 
 								<a href="javascript:void(0)" id="checkout-button"
 									class="text-white bg-gray-800 hover:bg-gray-700 focus:ring-4 focus:outline-none focus:ring-blue-200 dark:focus:ring-blue-900 font-medium rounded-lg text-sm px-5 py-2.5 inline-flex justify-center w-full text-center">
-									Buy {{ credits }} Credits (${{ credits * price }})</a>
+									Buy {{ credits }} Credits (R{{ credits * price }})</a> 
 							</div>
 						</div>
 					</div>
