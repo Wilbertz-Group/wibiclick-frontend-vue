@@ -37,27 +37,31 @@ onMounted(async () => {
 	var checkoutButton = document.querySelector('#checkout-button');
 
 	checkoutButton.addEventListener('click', function () {
-		yoco.showPopup({
-			amountInCents: credits.value * price.value * 100,
-			currency: 'ZAR',
-			name: `Buy R${credits.value * price.value } Credits`,
-			callback: async (result)=>{
-				if (result.error) {
-					const errorMessage = result.error.message;
-					toast.error("error occured: " + errorMessage);
-				} else {
-					if (result.status == "charge_ready" && result?.id) {
-						let { data } = await axios.post('yoco-charge-api', {
-							id: result?.id,
-							amountInCents: credits.value * price.value * 100
-						})
-						toast.success("Credits successfully bought")
+		if( credits.value >= 1000){
+			yoco.showPopup({
+				amountInCents: credits.value * price.value * 100,
+				currency: 'ZAR',
+				name: `Buy R${credits.value * price.value } Credits`,
+				callback: async (result)=>{
+					if (result.error) {
+						const errorMessage = result.error.message;
+						toast.error("error occured: " + errorMessage);
 					} else {
-						toast.error("Error in making payment, please contact the administrator")
-					}					
+						if (result.status == "charge_ready" && result?.id) {
+							let { data } = await axios.post('yoco-charge-api', {
+								id: result?.id,
+								amountInCents: credits.value * price.value * 100
+							})
+							toast.success("Credits successfully bought")
+						} else {
+							toast.error("Error in making payment, please contact the administrator")
+						}					
+					}
 				}
-			}
-		})
+			})
+		} else {
+			toast.error("Only a minimum of 1000 credits is allowed")
+		}
 	});
 })
 </script>
