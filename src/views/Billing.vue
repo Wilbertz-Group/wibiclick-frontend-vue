@@ -22,7 +22,6 @@ async function fetchCredits() {
 		try {
 			loading.value = true
 			const response = await axios.get('get-credits');
-			console.log(response.data)
 			used.value = response.data.used
 			total.value = response.data.total
 			lifetime.value = response.data.lifetime

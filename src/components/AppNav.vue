@@ -158,8 +158,8 @@ onMounted(() => {
                     class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none">
                     <router-link to="profile" class="block px-4 py-2 text-sm text-gray-700" disabled="false"
                       id="headlessui-menu-item-20" role="menuitem" tabindex="-1">Your Profile</router-link>
-                    <a href="billing" class="block px-4 py-2 text-sm text-gray-700" disabled="false"
-                      id="headlessui-menu-item-20" role="menuitem" tabindex="-1">Billing & Usage</a>
+                    <router-link to="billing" class="block px-4 py-2 text-sm text-gray-700" disabled="false"
+                      id="headlessui-menu-item-20" role="menuitem" tabindex="-1">Billing & Usage</router-link>
                     <router-link to="snippet" class="block px-4 py-2 text-sm text-gray-700" disabled="false"
                       id="headlessui-menu-item-20" role="menuitem" tabindex="-1">Snippet</router-link>
                     <a href="#" @click="logout" class="block px-4 py-2 text-sm text-gray-700" disabled="false"
@@ -222,9 +222,9 @@ onMounted(() => {
             <router-link to="profile" disabled="false"
               class="block px-3 py-2 rounded-md text-base font-medium text-gray-400 hover:text-white hover:bg-gray-700">
               Your Profile</router-link>
-            <a href="billing" disabled="false"
+            <router-link to="billing" disabled="false"
               class="block px-3 py-2 rounded-md text-base font-medium text-gray-400 hover:text-white hover:bg-gray-700">Billing
-              & Usage</a>
+              & Usage</router-link>
             <router-link to="snippet" disabled="false"
               class="block px-3 py-2 rounded-md text-base font-medium text-gray-400 hover:text-white hover:bg-gray-700">
               Snippet</router-link>
