@@ -349,23 +349,7 @@ async function fetchViews() {
 
 async function checkParams() {
   if( route.query.state == "succeeded" ){    
-    try {
-      loading.value = true;
-      const response = await axios.post("associate-user-to-subscription", {
-        sub_id: route.query.sub_id, 
-        invoice_id: route.query.invoice_id, 
-        id: route.query.id,
-        state: route.query.state
-      })
-
-      loading.value = false;
-
-      toast.success("You have successfully registered and automatically logged in..")
-
-    } catch (error) {
-      loading.value = false;
-      toast.error("Error in registering your subscription")
-    }
+    toast.success("You have successfully registered and automatically logged in..")
   }
 } 
 

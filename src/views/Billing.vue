@@ -16,19 +16,7 @@ price.value = 0.005;
 
 const yoco = new window.YocoSDK({ publicKey: "pk_test_ed3c54a6gOol69qa7f45" })
 
-async function fetchSubscriptionStatus() {
-	try {
-		loading.value = true
-		const response = await axios.get('subscription-status');
-		billing_data.value = response.data
-		loading.value = false
-	} catch (error) {
-		console.log(error)
-	}
-}
-
 onMounted(() => {
-	fetchSubscriptionStatus()
 	var checkoutButton = document.querySelector('#checkout-button');
 	checkoutButton.addEventListener('click', function () {
 		yoco.showPopup({
