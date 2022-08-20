@@ -16,7 +16,7 @@ const toast = useToast();
 
 price.value = 0.1;
 
-const yoco = new window.YocoSDK({ publicKey: "pk_test_d2cb8a47bZEq7Glbc524" })
+const yoco = new window.YocoSDK({ publicKey: "pk_live_1e607eaebZEq7Gl96164" })
 
 async function fetchCredits() {
 		try {
@@ -150,7 +150,7 @@ onMounted(async () => {
 
 								<FormKit type="number" label="Credits" :value="credits" v-model="credits" step="500"
 									min="1000" validation="required|number|between:1000,100000"
-									help="our billing amount is in South African Rand" />
+									help="our billing is in South African Rand" />
 
 								<a href="javascript:void(0)" id="checkout-button"
 									class="text-white bg-gray-800 hover:bg-gray-700 focus:ring-4 focus:outline-none focus:ring-blue-200 dark:focus:ring-blue-900 font-medium rounded-lg text-sm px-5 py-2.5 inline-flex justify-center w-full text-center">

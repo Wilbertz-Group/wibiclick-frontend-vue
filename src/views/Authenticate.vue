@@ -1,17 +1,19 @@
 <template>
 
-  <div class="relative py-16
-                  before:absolute before:inset-0 before:w-full before:h-[50%] before:bg-gray-200">
+  <div class="relative py-16 before:absolute before:inset-0 before:w-full before:h-[50%] before:bg-[#101d2d]">
     <div class="relative container m-auto px-6 text-gray-500 md:px-12 xl:px-40">
 
       <div class="m-auto space-y-8 md:w-8/12 lg:w-full">
-        <router-link to="/">
-          <img src="@/assets/images/wibi-logo.png" loading="lazy" class="w-36 ml-4" alt="tailus logo">
+        <router-link to="/" aria-label="logo" class="flex space-x-2 items-center">
+            <div aria-hidden="true" class="flex space-x-1">
+              <div class="h-6 w-2 bg-sky-500"></div>
+            </div>
+            <span class="text-base font-bold text-white">Wibi Click</span>
         </router-link>
-        <div class="rounded-xl border bg-opacity-50 backdrop-blur-2xl bg-white shadow-xl">
+        <div class="rounded-xl border backdrop-blur-2xl bg-white shadow-xl">
           <div class="lg:grid lg:grid-cols-2">
             <div class="rounded-lg lg:block" hidden>
-              <img src="@/assets/images/login-office.jpeg" class="object-cover w-full h-full dark:hidden" loading="lazy"
+              <img src="@/assets/images/login-office.jpeg" class="object-cover w-full h-full dark:hidden rounded-l-lg" loading="lazy"
                 height="" width="" alt="music mood">
             </div>
             <div class="px-4 py-0 sm:p-10">

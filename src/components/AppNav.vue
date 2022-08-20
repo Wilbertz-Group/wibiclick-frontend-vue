@@ -11,7 +11,7 @@ const toast = useToast();
 const userStore = useUserStore()
 const addModal = ref(false)
 const submitted = ref(false)
-const selectedWebsite = ref([userStore.currentWebsite])
+const selectedWebsite = ref(userStore.currentWebsite)
 const loading = ref(false)
 const analytics = ref({})
 const opt = ref([
@@ -102,7 +102,12 @@ onMounted(() => {
       <div class="flex items-center justify-between h-16">
         <div class="flex items-center">
           <div class="flex-shrink-0">
-            <img class="h-10" src="@/assets/images/wibi-logo.png" alt="Logo" />
+            <a href="#" aria-label="logo" class="flex space-x-2 items-center">
+              <div aria-hidden="true" class="flex space-x-1">
+                <div class="h-6 w-2 bg-sky-500"></div>
+              </div>
+              <span class="text-base font-bold text-white">Wibi Click</span>
+            </a>
           </div>
           <div class="hidden md:block">
             <div class="ml-10 flex items-center space-x-4">
@@ -114,10 +119,10 @@ onMounted(() => {
                 <box-icon color="white" type='solid' name='cog'></box-icon>
                 <span class="ml-2">Settings</span>
               </router-link>
-              <router-link to="" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium">
+              <!-- <router-link to="" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium">
                 <box-icon color="white" type="solid" name='help-circle'></box-icon>
-                <span class="ml-2">Help center</span>
-              </router-link>
+                <span class="ml-2">FAQ</span>
+              </router-link> -->
             </div>
           </div>
         </div>
@@ -188,9 +193,7 @@ onMounted(() => {
           class="text-white block px-3 py-2 rounded-md text-base font-medium"> Dashboard </router-link>
         <router-link to="settings" disabled="false" class="text-white block px-3 py-2 rounded-md text-base font-medium">
           Settings </router-link>
-        <a disabled="false" href="#"
-          class="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Help
-          center</a>
+        <!-- <a disabled="false" href="#" class="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium">FAQ</a> -->
       </div>
 
       <div class="pt-4 pb-3 border-t border-gray-700">

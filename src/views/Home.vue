@@ -2,6 +2,8 @@
 import { useRouter } from "vue-router";
 import { useUserStore } from "@/stores/UserStore";
 import { onMounted } from "vue";
+import Header from "@/components/public/header.vue";
+import Footer from "@/components/public/footer.vue";
 
 const userStore = useUserStore();
 const router = useRouter();
@@ -33,73 +35,13 @@ onMounted(() => {
 
   var x = document.getElementsByTagName('script')[0]
   x.parentNode.insertBefore(s, x);
+
 })
 </script>
 
 <template>
   <div class="relative w-full">
-    <header>
-      <nav
-        class="fixed z-10 w-full border-b bg-white bg-opacity-70 backdrop-blur navbar peer-checked:navbar-active md:absolute md:bg-transparent">
-        <div class="m-auto px-2 md:px-12 lg:px-7">
-          <div class="flex flex-wrap items-center justify-between gap-6 md:py-3 md:gap-0">
-            <div class="w-full px-6 flex justify-between lg:w-max md:px-0">
-              <a href="#" aria-label="logo" class="flex space-x-2 items-center">
-                <div aria-hidden="true" class="flex space-x-1">
-                  <div class="h-4 w-4 rounded-full bg-gray-900"></div>
-                  <div class="h-6 w-2 bg-sky-500"></div>
-                </div>
-                <span class="text-base font-bold text-white">Wibi Click</span>
-              </a>
-              <label for="hbr" class="peer-checked:hamburger block relative z-20 p-6 -mr-6 cursor-pointer lg:hidden">
-                <div aria-hidden="true" class="m-auto h-0.5 w-6 rounded bg-sky-900 transition duration-300"></div>
-                <div aria-hidden="true" class="m-auto mt-2 h-0.5 w-6 rounded bg-sky-900 transition duration-300"></div>
-              </label>
-            </div>
-            <div
-              class="navmenu hidden w-full flex-wrap justify-end items-center mb-16 mx-6 space-y-20 p-6 rounded-xl shadow-lg bg-white lg:space-y-0 lg:p-0 lg:m-0 lg:flex md:flex-nowrap lg:bg-transparent lg:w-7/12 lg:shadow-none">
-              <div class="text-white lg:pr-4">
-                <ul class="space-y-6 tracking-wide font-medium text-lg lg:text-sm lg:flex lg:space-y-0">
-                  <li>
-                    <a href="#" class="block md:px-4 transition hover:text-sky-700">
-                      <span>Home</span>
-                    </a>
-                  </li>
-                  <li>
-                    <a href="#pricing" class="block md:px-4 transition hover:text-sky-700">
-                      <span>Pricing</span>
-                    </a>
-                  </li>
-                  <li>
-                    <a href="#services" class="block md:px-4 transition hover:text-sky-700">
-                      <span>Services</span>
-                    </a>
-                  </li>
-                </ul>
-              </div>
-
-              <div
-                class="w-full space-y-2 border-sky-200 flex flex-col -ml-1 sm:flex-row lg:space-y-0 md:w-max lg:border-l">
-                <a href="./authenticate" title="Sign up" @click="isNew(true)"
-                  class="w-full py-2.5 px-5 text-center rounded-full transition active:from-sky-300 focus:from-cyan-400 sm:w-max">
-                  <span class="block text-white font-semibold lg:text-sm">
-                    Sign up
-                  </span>
-                </a>
-                <router-link to="authenticate">
-                  <button type="button" title="Login"
-                    class="w-full py-2.5 px-5 text-center rounded-full transition bg-gradient-to-b from-sky-400 to-cyan-300 active:from-sky-300 focus:from-cyan-400 sm:w-max">
-                    <span class="block text-white font-semibold lg:text-sm">
-                      Login
-                    </span>
-                  </button>
-                </router-link>
-              </div>
-            </div>
-          </div>
-        </div>
-      </nav>
-    </header>
+    <Header/>
   </div>
 
   <div class="w-full">
@@ -348,7 +290,7 @@ onMounted(() => {
           An easy way for a website visitor to contact you
         </h1>
         <h3 class="pt-5 text-lg md:text-lg text-center text-white leading-tight">Increase inbound leads for your
-          business, help visitors connect with you with a single tap</h3>
+          business, help visitors connect with you with a single tap. <br>Get started for free. No credit card needed.</h3>
       </div>
       <div class="flex justify-center items-center mb-10 sm:mb-20">
         <a href="./authenticate"
@@ -382,7 +324,7 @@ onMounted(() => {
             <h3 class="text-3xl text-gray-700 font-semibold text-center">Professional Plan</h3>
             <div class="relative flex justify-around max-w-md m-auto">
               <div class="flex">
-                <span class="-ml-6 mt-2 text-3xl text-cyan-500 font-bold">$0.005
+                <span class="-ml-6 mt-2 text-3xl text-cyan-500 font-bold">R0.1
                   <span class="text-xl">/ credit</span>
                 </span>
               </div>
@@ -414,6 +356,7 @@ onMounted(() => {
             <a href="./authenticate" @click="isNew(true)"
               class="text-white bg-gray-800 hover:bg-gray-700 focus:ring-4 focus:outline-none focus:ring-blue-200 dark:focus:ring-blue-900 font-medium rounded-lg text-sm px-5 py-2.5 inline-flex justify-center w-full text-center ">
               Start plan (1000 credits free)</a>
+              <span class="text-xs px-5 py-2.5 inline-flex justify-center w-full text-center ">Our billing is in South African Rand**</span>
           </div>
         </div>
       </div>
@@ -456,46 +399,37 @@ onMounted(() => {
     <div aria-hidden="true" class="absolute inset-0 w-full h-full bg-[#020314] opacity-90"></div>
   </div>
 
-
-  <footer
-    class="px-3 py-8 bg-white dark:bg-gray-800 text-2 text-gray-500 dark:text-gray-200 transition-colors duration-200">
-    <div class="flex flex-col">
-      <div class="md:hidden mt-7 mx-auto w-11 h-px rounded-full">
+  
+<div class="py-16 bg-gray-50">  
+  <div class="container m-auto text-gray-600 md:px-12 xl:px-6">
+      <div class="mb-12 space-y-4 px-6 md:px-0">
+        <h2 class="text-center text-2xl text-gray-900 font-bold md:text-4xl">Testimonials</h2>
+        <p class="text-center">We don't like to brag, but we don't mind letting our customers do it for us. <br>
+          Here are a few nice things folks have said about Wibi Click over the years.</p>
       </div>
-      <div class="mt-4 md:mt-0 flex flex-col md:flex-row">
-        <nav class="flex-1 flex flex-col items-center justify-center md:items-end md:border-r border-gray-100 md:pr-5">
-          <a href="./authenticate" @click="isNew(true)" aria-current="page"
-            class="hover:text-gray-700 dark:hover:text-white">
-            Sign up
-          </a>
-          <a aria-current="page" href="./authenticate" @click="isNew(false)"
-            class="hover:text-gray-700 dark:hover:text-white">
-            Login
-          </a>
-        </nav>
-        <div class="md:hidden mt-4 mx-auto w-11 h-px rounded-full">
-        </div>
-        <div class="mt-4 md:mt-0 flex-1 flex items-center justify-center md:border-r border-gray-100">
-          <a class="ml-4 hover:text-primary-gray-20" href="./authenticate" @click="isNew(true)">
-            <span class="sr-only">
-              Sign up
-            </span>
-            <img src="@/assets/images/wibi-mini-logo.png" alt="" class="w-10 h-10" />
-          </a>
-        </div>
-        <div class="md:hidden mt-4 mx-auto w-11 h-px rounded-full ">
-        </div>
-        <div class="mt-7 md:mt-0 flex-1 flex flex-col items-center justify-center md:items-start md:pl-5">
-          <span class="">
-            © 2022
-          </span>
-          <span class="mt-7 md:mt-1">
-            Wibi Click
-          </span>
-        </div>
+      
+      <div class="swiper mySwiper">
+          <div class="swiper-wrapper pb-8">
+            <div class="swiper-slide !bg-transparent px-6 md:px-0">
+              <div class="rounded-xl bg-white shadow-xl md:mx-auto lg:w-9/12 xl:w-7/12">
+                <div class="grid md:grid-cols-2">
+                  <img src="@/assets/images/card.webp" class="rounded-t-xl h-full w-full object-cover md:rounded-l-xl md:rounded-tr-none" alt="image" width="640" height="422" loading="lazy">
+                  <div class="mx-auto space-y-6 p-6 text-center sm:p-8">
+                      <div class="w-24 mx-auto">
+                        <img src="@/assets/images/client-4.png" alt="company logo" height="400" width="142" loading="lazy">
+                      </div>
+                      <p class="text-gray-600"> <span class="font-serif">"</span> I had it set up on my main website in a few minutes. Within a few hours started to received leads. Well worth the investment and a great contact widget. <span class="font-serif">"</span></p>
+                      <h6 class="text-lg font-semibold leading-none">Works Perfectly</h6>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>      
       </div>
-    </div>
-  </footer>
+  </div>
+</div>
+                            
+<Footer/>
 </template>
 
 <style>
