@@ -29,7 +29,7 @@
                         <span v-else>Copied!</span>
                       </button>
 
-                      <pre v-highlightjs><code ref="source" class="language-javascript hljs">&lt;!-- WibiClick --&gt; &lt;script&gt; var url = 'https://cdn.jsdelivr.net/gh/wmuza/wibiclick/wibi-v3.min.js'; var s = document.createElement('script'); s.type = 'text/javascript'; s.async = true; s.src = url; s.onload = function () { createWidget("{{ Array.isArray(userStore.currentWebsite) ? userStore.currentWebsite[0] : userStore.currentWebsite }}"); }; var x = document.getElementsByTagName('script')[0]; x.parentNode.insertBefore(s, x);&lt;/script&gt;</code></pre>
+                      <pre v-highlightjs><code ref="source" class="language-javascript hljs">&lt;!-- WibiClick --&gt; &lt;script&gt; async function wibi(){var Q = await fetch(`https://us-central1-hubspot-api-developer.cloudfunctions.net/wibi-click-cdn-url`); Y = await Q.json(); var url = Y.url; var s = document.createElement('script'); s.type = 'text/javascript'; s.async = true; s.src = url; s.onload = function () { createWidget("{{ Array.isArray(userStore.currentWebsite) ? userStore.currentWebsite[0] : userStore.currentWebsite }}"); }; var x = document.getElementsByTagName('script')[0]; x.parentNode.insertBefore(s, x);} wibi(); &lt;/script&gt;</code></pre>
                   </div>
                   <h3 class="text-lg font-medium leading-6 text-red-600 m-6 text-center" v-else>You need to select or add a website on the top header to get the snippet!!!</h3>
               </div>

@@ -4,6 +4,7 @@ import Dashboard from '@/views/Dashboard.vue'
 import Profile from '@/views/Profile.vue'
 import Snippet from '@/views/Snippet.vue'
 import Terms from '@/views/Terms.vue'
+import Users from '@/views/Users.vue'
 import Privacy from '@/views/Privacy.vue'
 import Billing from '@/views/Billing.vue'
 import Settings from '@/views/Settings.vue'
@@ -58,7 +59,11 @@ const router = createRouter({
       name: 'privacy',
       component: Privacy
     },
-    
+    {
+      path: '/users',
+      name: 'users',
+      component: Users
+    },
   ]
 })
 
