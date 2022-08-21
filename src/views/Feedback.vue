@@ -1,6 +1,5 @@
 <script setup>
   import Header from "@/components/Header.vue";  
-  import HubspotForm from '@jagaad/vue-hubspot-form';
   import { useUserStore } from "@/stores/UserStore"
   import { onMounted, ref } from "vue";
 
