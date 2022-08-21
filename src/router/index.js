@@ -6,6 +6,7 @@ import Snippet from '@/views/Snippet.vue'
 import Terms from '@/views/Terms.vue'
 import Users from '@/views/Users.vue'
 import Privacy from '@/views/Privacy.vue'
+import Feedback from '@/views/Feedback.vue'
 import Billing from '@/views/Billing.vue'
 import Settings from '@/views/Settings.vue'
 import Authenticate from '@/views/Authenticate.vue'
@@ -63,6 +64,11 @@ const router = createRouter({
       path: '/users',
       name: 'users',
       component: Users
+    },
+    {
+      path: '/feedback',
+      name: 'feedback',
+      component: Feedback
     },
   ]
 })
