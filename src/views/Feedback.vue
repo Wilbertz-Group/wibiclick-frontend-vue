@@ -19,8 +19,7 @@
           target: "#hubspotForm"
         })
       }
-    })
-
+    }) 
   })
 
 </script>
