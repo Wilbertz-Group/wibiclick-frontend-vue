@@ -6,6 +6,7 @@ import Snippet from '@/views/Snippet.vue'
 import Terms from '@/views/Terms.vue'
 import Users from '@/views/Users.vue'
 import Privacy from '@/views/Privacy.vue'
+import Technicians from '@/views/Technicians.vue'
 import Feedback from '@/views/Feedback.vue'
 import Billing from '@/views/Billing.vue'
 import Settings from '@/views/Settings.vue'
@@ -69,6 +70,11 @@ const router = createRouter({
       path: '/feedback',
       name: 'feedback',
       component: Feedback
+    },
+    {
+      path: '/tech-portal',
+      name: 'tech-portal',
+      component: Technicians
     },
   ]
 })

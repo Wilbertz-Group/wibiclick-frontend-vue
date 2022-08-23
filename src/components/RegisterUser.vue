@@ -49,9 +49,6 @@ async function register(credentials) {
           validation="required" />
       </div>
 
-      <FormKit type="radio" label="Trial Plan" name="trial_plan" outer-class="text-left" placeholder="Choose a plan"
-        validation="required" :options="['Monthly', 'Yearly']" />
-
       <div class="double">
         <FormKit type="password" name="password" label="Password" placeholder="********" outer-class="text-left"
           validation="required|length:6|matches:/[^a-zA-Z]/" :validation-messages="{

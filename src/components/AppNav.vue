@@ -119,9 +119,9 @@ onMounted(() => {
                 <box-icon color="white" type='solid' name='cog'></box-icon>
                 <span class="ml-2">Settings</span>
               </router-link>
-              <router-link to="feedback" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium">
+              <router-link to="tech-portal" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium">
                 <box-icon color="white" type='solid' name='help-circle'></box-icon>
-                <span class="ml-2">Feedback</span>
+                <span class="ml-2">Tech Portal</span>
               </router-link>
               <router-link to="users" v-if="userStore.user.role == 'admin'" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium">
                 <box-icon color="white" type="solid" name='user-circle'></box-icon>
@@ -171,6 +171,8 @@ onMounted(() => {
                       id="headlessui-menu-item-20" role="menuitem" tabindex="-1">Billing & Usage</router-link>
                     <router-link to="snippet" class="block px-4 py-2 text-sm text-gray-700" disabled="false"
                       id="headlessui-menu-item-20" role="menuitem" tabindex="-1">Snippet</router-link>
+                    <router-link to="feedback" class="block px-4 py-2 text-sm text-gray-700" disabled="false"
+                      id="headlessui-menu-item-20" role="menuitem" tabindex="-1">Feedback</router-link>
                     <a href="#" @click="logout" class="block px-4 py-2 text-sm text-gray-700" disabled="false"
                       id="headlessui-menu-item-22" role="menuitem" tabindex="-1">Sign out</a>
                   </div>
@@ -197,8 +199,8 @@ onMounted(() => {
           class="text-white block px-3 py-2 rounded-md text-base font-medium"> Dashboard </router-link>
         <router-link to="settings" disabled="false" class="text-white block px-3 py-2 rounded-md text-base font-medium">
           Settings </router-link>
-        <router-link to="feedback" disabled="false" class="text-white block px-3 py-2 rounded-md text-base font-medium">
-          Feedback </router-link>
+        <router-link to="tech-portal" disabled="false" class="text-white block px-3 py-2 rounded-md text-base font-medium">
+          Tech Portal </router-link>
         <router-link to="users" v-if="userStore.user.role == 'admin'" disabled="false" class="text-white block px-3 py-2 rounded-md text-base font-medium">
           Users </router-link>
         <!-- <a disabled="false" href="#" class="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium">FAQ</a> -->
@@ -239,6 +241,9 @@ onMounted(() => {
             <router-link to="snippet" disabled="false"
               class="block px-3 py-2 rounded-md text-base font-medium text-gray-400 hover:text-white hover:bg-gray-700">
               Snippet</router-link>
+            <router-link to="feedback" disabled="false"
+              class="block px-3 py-2 rounded-md text-base font-medium text-gray-400 hover:text-white hover:bg-gray-700">
+              Feedback</router-link>
             <a disabled="false" @click="logout" href="#"
               class="block px-3 py-2 rounded-md text-base font-medium text-gray-400 hover:text-white hover:bg-gray-700">Sign
               out</a>
