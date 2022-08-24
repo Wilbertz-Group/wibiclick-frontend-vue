@@ -29,7 +29,7 @@
                         <span v-else>Copied!</span>
                       </button>
 
-                      <pre v-highlightjs><code ref="source" class="language-javascript hljs">&lt;script async src='https://www.wibi.co.za/wibi.js' data-id='{{ Array.isArray(userStore.currentWebsite) ? userStore.currentWebsite[0] : userStore.currentWebsite }}'> &lt;/script&gt;</code></pre>
+                      <pre v-highlightjs><code ref="source" class="language-javascript hljs">&lt;script src='https://www.wibi.co.za/wibi.js' data-id='{{ Array.isArray(userStore.currentWebsite) ? userStore.currentWebsite[0] : userStore.currentWebsite }}'> &lt;/script&gt;</code></pre>
                   </div>
                   <h3 class="text-lg font-medium leading-6 text-red-600 m-6 text-center" v-else>You need to select or add a website on the top header to get the snippet!!!</h3>
               </div>

@@ -6,7 +6,15 @@ import Snippet from '@/views/Snippet.vue'
 import Terms from '@/views/Terms.vue'
 import Users from '@/views/Users.vue'
 import Privacy from '@/views/Privacy.vue'
-import Technicians from '@/views/Technicians.vue'
+import Employees from '@/views/Employees/Employees.vue'
+import EmployeesAdd from '@/views/Employees/Add.vue'
+import Jobs from '@/views/Jobs/Jobs.vue'
+import AddJobs from '@/views/Jobs/Add.vue'
+import Customers from '@/views/Customers/Customers.vue'
+import Invoices from '@/views/Invoices/Invoices.vue'
+import Visitors from '@/views/Visitors/Visitors.vue'
+import Forms from '@/views/Forms/Forms.vue'
+import Pages from '@/views/Pages/Pages.vue'
 import Feedback from '@/views/Feedback.vue'
 import Billing from '@/views/Billing.vue'
 import Settings from '@/views/Settings.vue'
@@ -72,9 +80,49 @@ const router = createRouter({
       component: Feedback
     },
     {
-      path: '/tech-portal',
-      name: 'tech-portal',
-      component: Technicians
+      path: '/employees',
+      name: 'employees',
+      component: Employees
+    },
+    {
+      path: '/add-employee',
+      name: 'add-employee',
+      component: EmployeesAdd
+    },
+    {
+      path: '/jobs',
+      name: 'jobs',
+      component: Jobs
+    },
+    {
+      path: '/add-job',
+      name: 'add-job',
+      component: AddJobs
+    },
+    {
+      path: '/customers',
+      name: 'customers',
+      component: Customers
+    },
+    {
+      path: '/invoices',
+      name: 'invoices',
+      component: Invoices
+    },
+    {
+      path: '/visitors',
+      name: 'visitors',
+      component: Visitors
+    },
+    {
+      path: '/pages',
+      name: 'pages',
+      component: Pages
+    },
+    {
+      path: '/forms',
+      name: 'forms',
+      component: Forms
     },
   ]
 })

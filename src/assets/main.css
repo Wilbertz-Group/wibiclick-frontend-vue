@@ -79,10 +79,10 @@ pre {
 }
 
 @media (min-width: 400px){
-  form#registration .double > .formkit-outer {
+  form .double > .formkit-outer {
     width: calc(50% - 0.5em);
   }
-  form#registration .double {
+  form .double {
     display: flex;
     justify-content: space-between;
   }
