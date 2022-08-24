@@ -2,25 +2,21 @@
   import Header from "@/components/Header.vue";  
   import { useUserStore } from "@/stores/UserStore"
   import { onMounted, ref } from "vue";
-  import { useRouter, useRoute } from "vue-router";
   import { Grid, h } from "gridjs";
   import moment from 'moment'
   import "gridjs/dist/theme/mermaid.css";
   import ScaleLoader from 'vue-spinner/src/ScaleLoader.vue'
 
-  const route = useRoute()
-  const router = useRouter()
-  const dropdownExport = ref(false)
   const userStore = useUserStore()
   const jobsNode = ref(null)
 
   const grid = new Grid().updateConfig({
-    columns: ['Name', 'Email', 'Phone', 'Location', 'Jobs', 'Customers'],
+    columns: ['Name', 'Callout', 'Date', 'Location', 'Issue', 'Employee'],
     pagination: {
       enabled: true,
       limit: 10,
       server: {
-        url: (prev, page, limit) => `${prev}?limit=${limit}&offset=${page * limit}`
+        url: (prev, page, limit) => `${prev}?limit=${limit}&offset=${page * limit}&id=${userStore.currentWebsite}`
       }
     },
     search: true,
@@ -33,23 +29,10 @@
       headers: {'Authorization': `Bearer ${userStore.user.token}`},
       url: `http://localhost:3000/jobs/`,
       then: data => data.jobs.map(c => 
-        [c.firstName + ' ' +c.lastName, c.email, c.phone, c.location, c.jobs, c.customers]
+        [c.name, c.callout, moment(c.slotStart).format('ddd DD MMM, h:mm a'), c.location, c.issue, c.employee.firstName + ' ' + c.employee.lastName]
       ),
       total: data => data.total
     },
-    rowClick: function(args) {
-      console.log(args)
-      var getData = args.item;
-      var keys = Object.keys(getData);
-      var text = [];
-
-      keys.forEach(value => {
-        text.push(value + " : " + getData[value])
-      });
-
-      document.querySelector("#label").innerHTML(text.join(", "))
-
-    }
   })
 
   onMounted(() => {
@@ -61,7 +44,7 @@
 <template>
   <Header title="Jobs" /> 
   <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-    <div class="px-4 py-6 sm:px-0">
+    <div class="px-2 py-6 sm:px-0">
       <div>
         <div class="">
           <div class="md:col-span-1">
@@ -75,7 +58,7 @@
             </div>   
           </div>
           <div class="mt-3 md:col-span-2">
-              <div v-if="userStore.currentWebsite" class="shadow p-10 sm:rounded-md sm:overflow-hidden">
+              <div v-if="userStore.currentWebsite" class="sm:overflow-hidden">
                   <div id="label"></div>
                   <div ref="jobsNode">
                       

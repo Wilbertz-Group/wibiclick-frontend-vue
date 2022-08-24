@@ -122,7 +122,7 @@ onMounted(() => {
               </router-link>
               
               
-              <div class="relative">
+              <div class="relative" v-if="userStore.user.role == 'admin'">
                 <button @click="dropdownExport = !dropdownExport" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium relative" type="button">
                   <box-icon color="white" class="mr-2" type="solid" name='user-circle'></box-icon>
                   Service 

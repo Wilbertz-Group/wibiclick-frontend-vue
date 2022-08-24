@@ -21,7 +21,7 @@ import { far } from '@fortawesome/free-regular-svg-icons'
 import { fab } from '@fortawesome/free-brands-svg-icons'
 library.add(fas, far, fab)
 
-axios.defaults.baseURL = "https://wibi.wilbertzgroup.com/";
+axios.defaults.baseURL = "http://localhost:3000/";
 
 const app = createApp(App)
 const pinia = createPinia()

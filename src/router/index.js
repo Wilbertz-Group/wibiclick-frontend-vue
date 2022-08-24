@@ -11,6 +11,7 @@ import EmployeesAdd from '@/views/Employees/Add.vue'
 import Jobs from '@/views/Jobs/Jobs.vue'
 import AddJobs from '@/views/Jobs/Add.vue'
 import Customers from '@/views/Customers/Customers.vue'
+import CustomersAdd from '@/views/Customers/Add.vue'
 import Invoices from '@/views/Invoices/Invoices.vue'
 import Visitors from '@/views/Visitors/Visitors.vue'
 import Forms from '@/views/Forms/Forms.vue'
@@ -103,6 +104,11 @@ const router = createRouter({
       path: '/customers',
       name: 'customers',
       component: Customers
+    },
+    {
+      path: '/add-customer',
+      name: 'add-customer',
+      component: CustomersAdd
     },
     {
       path: '/invoices',

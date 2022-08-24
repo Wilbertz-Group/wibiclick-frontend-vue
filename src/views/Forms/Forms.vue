@@ -31,7 +31,7 @@
     selecting: true,
     server: {
       headers: {'Authorization': `Bearer ${userStore.user.token}`},
-      url: `http://localhost:3000/employees/`,
+      url: `http://localhost:3000/forms/`,
       then: data => data.employees.map(c => 
         [c.firstName + ' ' +c.lastName, c.email, c.phone, c.location, c.jobs, c.customers]
       ),

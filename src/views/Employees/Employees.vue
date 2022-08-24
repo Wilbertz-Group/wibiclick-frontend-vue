@@ -20,7 +20,7 @@
       enabled: true,
       limit: 10,
       server: {
-        url: (prev, page, limit) => `${prev}?limit=${limit}&offset=${page * limit}`
+        url: (prev, page, limit) => `${prev}?limit=${limit}&offset=${page * limit}&id=${userStore.currentWebsite}`
       }
     },
     search: true,

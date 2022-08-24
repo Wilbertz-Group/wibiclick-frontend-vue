@@ -2,9 +2,10 @@
   import axios from "axios";
   import Header from "@/components/Header.vue";  
   import { useUserStore } from "@/stores/UserStore"
-  import { onMounted, ref } from "vue";
+  import { onMounted, ref, watchEffect } from "vue";
   import { useToast } from 'vue-toast-notification';
   import { useRouter, useRoute } from "vue-router";
+import { computed } from "@vue/reactivity";
 
   const loading = ref(false)
   const modalOpen = ref(false)
@@ -12,6 +13,11 @@
   const router = useRouter()  
   const employees = ref({})
   const customers = ref({})
+  const dbCustomers = ref()
+  const phone = ref('phone')
+  const address = ref('address')
+  const name = ref('name')
+  const customer = ref('Select Customer')
   const userStore = useUserStore()
 
   async function add(credentials) {
@@ -46,8 +52,9 @@
       loading.value = true
       const response = await axios.get('customers?id='+ userStore.currentWebsite);
       let b = {}
-      response.data.customers ? response.data.customers.map(e => { b[e.id] = e.firstName + ' ' + e.lastName }) : ''
+      response.data.customers ? response.data.customers.map(e => { b[e.id] = e.name}) : ''
       customers.value = b
+      dbCustomers.value = response.data.customers
       loading.value = false
     } catch (error) {
       console.log(error)
@@ -59,6 +66,16 @@
     modalOpen.value = !modalOpen.value
   }
 
+  function autofillForm(customer) {
+    if (selectedCustomer.value) {
+      phone.value = selectedCustomer.value.phone
+      name.value = selectedCustomer.value.name
+      address.value = selectedCustomer.value.address
+    }
+  }
+
+  const selectedCustomer = computed(() => dbCustomers.value ? dbCustomers.value.filter(e => { return e.id == customer.value })[0] : '')
+
   onMounted(()=>{
     if(userStore.currentWebsite){
       getEmployees()
@@ -66,7 +83,9 @@
     }
   })
 
-
+  watchEffect(() => {
+    autofillForm(selectedCustomer)
+  })
 </script>
 
 <template>
@@ -85,18 +104,18 @@
                     <hr />
 
                     <div class="double mt-8">
-                      <FormKit type="text" name="name" label="Job Name" placeholder="Job Name" outer-class="text-left" validation="required" />
-                      <FormKit type="text" name="location" label="Location" placeholder="Location" outer-class="text-left" validation="required" />
+                      <FormKit type="select" v-model="customer" name="customerId" label="Customer" :options="customers" />   
+                      <FormKit type="text" v-model="name" :value="name" name="name" label="Customer Name" placeholder="Customer Name" outer-class="text-left" validation="required" />                     
                     </div>
 
                     <div class="double">
                       <FormKit type="text" name="callout" label="Callout Fee" placeholder="Callout Fee" value="R300" outer-class="text-left" validation="required" />
-                      <FormKit type="select" name="customerId" label="Customer" :options="customers" />                      
+                       <FormKit type="text" name="location" label="Location" placeholder="Location" outer-class="text-left" validation="required" />            
                     </div>
 
                     <div class="double">
-                      <FormKit type="text" name="address" label="Customer address" placeholder="Customer address" outer-class="text-left" validation="required" />
-                      <FormKit type="tel" name="phone" label="Customer Phone" placeholder="021 000 0000" outer-class="text-left" validation="required|phone" />
+                      <FormKit type="text" v-model="address" :value="address" name="address" label="Customer address" placeholder="Customer address" outer-class="text-left" validation="required" />
+                      <FormKit type="tel" v-model="phone" :value="phone" name="phone" label="Customer Phone" placeholder="021 000 0000" outer-class="text-left" validation="required|phone" />
                     </div>                    
 
                     <div class="double">
