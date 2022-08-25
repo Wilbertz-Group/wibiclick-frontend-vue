@@ -2,25 +2,21 @@
   import Header from "@/components/Header.vue";  
   import { useUserStore } from "@/stores/UserStore"
   import { onMounted, ref } from "vue";
-  import { useRouter, useRoute } from "vue-router";
   import { Grid, h } from "gridjs";
   import moment from 'moment'
   import "gridjs/dist/theme/mermaid.css";
   import ScaleLoader from 'vue-spinner/src/ScaleLoader.vue'
 
-  const route = useRoute()
-  const router = useRouter()
-  const dropdownExport = ref(false)
   const userStore = useUserStore()
-  const employeesNode = ref(null)
+  const pagesNode = ref(null)
 
   const grid = new Grid().updateConfig({
-    columns: ['Name', 'Email', 'Phone', 'Location', 'Jobs', 'Customers'],
+    columns: ['Title', 'Url', 'Visitors', 'Views', 'Clicks', 'Updated'],
     pagination: {
       enabled: true,
-      limit: 10,
+      limit: 20,
       server: {
-        url: (prev, page, limit) => `${prev}?limit=${limit}&offset=${page * limit}`
+        url: (prev, page, limit) => `${prev}?limit=${limit}&offset=${page * limit}&id=${userStore.currentWebsite}`
       }
     },
     search: true,
@@ -32,55 +28,36 @@
     server: {
       headers: {'Authorization': `Bearer ${userStore.user.token}`},
       url: `http://localhost:3000/pages/`,
-      then: data => data.employees.map(c => 
-        [c.firstName + ' ' +c.lastName, c.email, c.phone, c.location, c.jobs, c.customers]
+      then: data => data.pages.map(c => 
+        [ c.title, c.url, c.visitors, c.views, c.clicks, moment(c.updatedAt).format('ddd DD MMM, h:mm a') ]
       ),
       total: data => data.total
     },
-    rowClick: function(args) {
-      console.log(args)
-      var getData = args.item;
-      var keys = Object.keys(getData);
-      var text = [];
-
-      keys.forEach(value => {
-        text.push(value + " : " + getData[value])
-      });
-
-      document.querySelector("#label").innerHTML(text.join(", "))
-
-    }
   })
 
   onMounted(() => {
-    grid.render(employeesNode.value)
+    grid.render(pagesNode.value)
   })
 
 </script>
 
 <template>
-  <Header title="Employees" /> 
+  <Header title="Pages" /> 
   <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-    <div class="px-4 py-6 sm:px-0">
+    <div class="px-2 py-6 sm:px-0">
       <div>
         <div class="">
           <div class="md:col-span-1">
-            <div class="grid gap-3 text-right lg:grid-cols-3 md:grid-cols-2 sm:grid-cols-1">
-              <div></div>
-              <div class="relative text-right"></div>
-              <div class="relative text-right">
-                 <router-link :to="{name: 'add-employee'}" class="text-white bg-gray-800 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-gray-300 dark:focus:ring-gray-800 shadow-lg shadow-gray-500/50 dark:shadow-lg dark:shadow-gray-800/80 font-medium rounded-lg text-sm px-5 py-2.5 text-center mb-5">Add Employee</router-link>                
-              </div>                   
-
-            </div>   
+  
           </div>
           <div class="mt-3 md:col-span-2">
-              <div class="shadow p-10 sm:rounded-md sm:overflow-hidden">
+              <div v-if="userStore.currentWebsite" class="sm:overflow-hidden">
                   <div id="label"></div>
-                  <div ref="employeesNode">
+                  <div ref="pagesNode">
                       
                  </div>
               </div>
+              <div v-else class="shadow p-10 sm:rounded-md sm:overflow-hidden">Please select website on the navigation first</div>
           </div>
         </div>
       </div>
