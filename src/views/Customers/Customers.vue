@@ -45,7 +45,7 @@
       headers: {'Authorization': `Bearer ${userStore.user.token}`},
       url: `https://wibi.wilbertzgroup.com/customers/`,
       then: data => data.customers.map(c => 
-        [c.name, c.message, c.channel, c.hubspotLink, c.createdAt ? moment().isSame(c.createdAt, 'day') ? moment(c.createdAt).format('h:mm a') : moment(c.createdAt).format('MMM DD, YYYY h:mm a') : '-']
+        [c.name, c.message, c.channel, c.hubspotLink, c.createdAt ? moment().isSame(c.createdAt, 'day') ? moment(c.createdAt).format('h:mm a') : moment(c.createdAt).format('DD MMM @ h:mm a') : '-']
       ),
       total: data => data.total
     },
@@ -68,8 +68,11 @@
 
   watchEffect(() => {    
     if(userStore.currentWebsite){
-      grid.render(customersNode.value)
-      grid.forceRender()
+      if(grid.callbacks == undefined){
+        grid.render(customersNode.value)
+      } else {
+        grid.forceRender()
+      }
     }
   })
 

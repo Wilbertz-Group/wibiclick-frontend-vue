@@ -52,8 +52,11 @@
 
   watchEffect(() => {    
     if(userStore.currentWebsite){
-      grid.render(customersNode.value)
-      grid.forceRender()
+      if(grid.callbacks == undefined){
+        grid.render(customersNode.value)
+      } else {
+        grid.forceRender()
+      }
     }
   })
 

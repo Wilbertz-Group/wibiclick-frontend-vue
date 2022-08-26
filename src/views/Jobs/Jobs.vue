@@ -15,13 +15,13 @@
   const toast = useToast();
 
   const grid = new Grid().updateConfig({
-    columns: ['Name', 'Callout', 'Date', 'Location', 'Issue', 'Employee', { 
-        name: 'Actions',
+    columns: ['Name', 'Issue', 'Location', 'Technician', { 
+        name: 'Send To',
         formatter: (cell, row) => {
           return h('button', {
             className: 'font-medium text-red-600 dark:text-green-600 hover:underline',
             onClick: async () => {
-              let job = jobs.value.filter(a => a.id == row.cells[6].data)[0]
+              let job = jobs.value.filter(a => a.id == row.cells[5].data)[0]
               let data = {}
 
               data.name = job.name
@@ -40,7 +40,7 @@
             }
           }, 'Whatsapp');
         }
-      },],
+      }, 'Date'],
     pagination: {
       enabled: true,
       limit: 10,
@@ -59,8 +59,9 @@
       url: `https://wibi.wilbertzgroup.com/jobs/`,
       then: data => {
         jobs.value = data.jobs;
-        return data.jobs.map(c => 
-        [c.name, c.callout, moment(c.slotStart).format('ddd DD MMM, h:mm a'), c.location, c.issue, c.employee.firstName + ' ' + c.employee.lastName, c.id]
+        let jobsData = data.jobs.sort((a, b) => new Date(a.slotStart) - new Date(b.slotStart)).reverse();
+        return jobsData.map(c => 
+        [c.name, c.issue, c.location, c.employee.firstName + ' ' + c.employee.lastName, c.id, c.slotStart ? moment().isSame(c.slotStart, 'day') ? moment(c.slotStart).format('h:mm a') : moment(c.slotStart).format('DD MMM @ h:mm a') : '-']
       )},
       total: data => data.total
     },
@@ -83,8 +84,11 @@
 
   watchEffect(() => {    
     if(userStore.currentWebsite){
-      grid.render(customersNode.value)
-      grid.forceRender()
+      if(grid.callbacks == undefined){
+        grid.render(customersNode.value)
+      } else {
+        grid.forceRender()
+      }
     }
   })
 
