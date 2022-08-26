@@ -54,13 +54,13 @@
                             <h6 class="text-lg font-medium text-white">Legal</h6>
                             <ul class="list-inside mt-4 space-y-4">
                                 <li>
-                                    <router-link to="./terms-of-service" class="hover:text-cyan-400 transition">Terms and Conditions </router-link>
+                                    <router-link :to="{name: 'terms'}" class="hover:text-cyan-400 transition">Terms and Conditions </router-link>
                                 </li>
                                 <li>
-                                    <router-link to="./privacy-policy" class="hover:text-cyan-400 transition">Privacy Policy</router-link>
+                                    <router-link :to="{name: 'privacy'}" class="hover:text-cyan-400 transition">Privacy Policy</router-link>
                                 </li>
                                 <li>
-                                    <router-link to="./#" class="hover:text-cyan-400 transition">FAQ</router-link>
+                                    <router-link :to="{name: 'home'}" class="hover:text-cyan-400 transition">FAQ</router-link>
                                 </li>
                             </ul>
                         </div>

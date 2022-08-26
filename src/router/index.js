@@ -8,6 +8,7 @@ import Users from '@/views/Users.vue'
 import Privacy from '@/views/Privacy.vue'
 import Employees from '@/views/Employees/Employees.vue'
 import EmployeesAdd from '@/views/Employees/Add.vue'
+import EmployeesView from '@/views/Employees/View.vue'
 import Jobs from '@/views/Jobs/Jobs.vue'
 import AddJobs from '@/views/Jobs/Add.vue'
 import Customers from '@/views/Customers/Customers.vue'
@@ -84,6 +85,11 @@ const router = createRouter({
       path: '/employees',
       name: 'employees',
       component: Employees
+    },
+    {
+      path: '/employee',
+      name: 'employee',
+      component: EmployeesView
     },
     {
       path: '/add-employee',

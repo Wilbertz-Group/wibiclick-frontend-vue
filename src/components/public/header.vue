@@ -57,7 +57,7 @@
                     Sign up
                   </span>
                 </a>
-                <router-link to="authenticate">
+                <router-link :to="{name: 'authenticate'}">
                   <button type="button" title="Login"
                     class="w-full py-2.5 px-5 text-center rounded-full transition bg-gradient-to-b from-sky-400 to-cyan-300 active:from-sky-300 focus:from-cyan-400 sm:w-max">
                     <span class="block text-white font-semibold lg:text-sm">

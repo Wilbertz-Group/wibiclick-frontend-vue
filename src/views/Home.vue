@@ -296,7 +296,7 @@ onMounted(() => {
           @click="isNew(true)">
           Try free with 1000 credits
         </a>
-        <router-link to="authenticate"
+        <router-link :to="{name: 'authenticate'}"
           class="hover:bg-white hover:text-sky-400 hover:border-indigo-600 ml-3 sm:ml-6 bg-transparent transition duration-150 ease-in-out focus:outline-none hover:bg-indigo-700-800 rounded border border-white text-white px-4 sm:px-8 py-1 sm:py-3 text-sm"
           @click="isNew(false)">
           Login

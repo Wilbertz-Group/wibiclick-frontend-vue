@@ -17,7 +17,7 @@
   const grid = new Grid().updateConfig({
     columns: ['Name', 'Message', 'Channel', 
       { 
-        name: 'Hubspot',
+        name: 'View in',
         formatter: (cell, row) => {
           return h('a', {
             className: 'font-medium text-red-600 dark:text-red-500 hover:underline',

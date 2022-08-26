@@ -112,11 +112,11 @@ onMounted(() => {
           </div>
           <div class="hidden md:block">
             <div class="ml-10 flex items-center space-x-4">
-              <router-link to="dashboard" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium">
+              <router-link :to="{name: 'dashboard'}" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium">
                 <box-icon type='solid' color="white" name='dashboard'></box-icon>
                 <span class="ml-2">Dashboard</span>
               </router-link>
-              <router-link to="settings" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium">
+              <router-link :to="{name: 'settings'}" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium">
                 <box-icon color="white" type='solid' name='cog'></box-icon>
                 <span class="ml-2">Widget</span>
               </router-link>
@@ -206,13 +206,13 @@ onMounted(() => {
                   class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none">
                   <div aria-labelledby="headlessui-menu-button-3" id="headlessui-menu-items-4" role="menu" tabindex="0"
                     class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none">
-                    <router-link to="profile" class="block px-4 py-2 text-sm text-gray-700" disabled="false"
+                    <router-link :to="{name: 'profile'}" class="block px-4 py-2 text-sm text-gray-700" disabled="false"
                       id="headlessui-menu-item-20" role="menuitem" tabindex="-1">Your Profile</router-link>
-                    <router-link to="billing" class="block px-4 py-2 text-sm text-gray-700" disabled="false"
+                    <router-link :to="{name: 'billing'}" class="block px-4 py-2 text-sm text-gray-700" disabled="false"
                       id="headlessui-menu-item-20" role="menuitem" tabindex="-1">Billing & Usage</router-link>
-                    <router-link to="snippet" class="block px-4 py-2 text-sm text-gray-700" disabled="false"
+                    <router-link :to="{name: 'snippet'}" class="block px-4 py-2 text-sm text-gray-700" disabled="false"
                       id="headlessui-menu-item-20" role="menuitem" tabindex="-1">Snippet</router-link>
-                    <router-link to="feedback" class="block px-4 py-2 text-sm text-gray-700" disabled="false"
+                    <router-link :to="{name: 'feedback'}" class="block px-4 py-2 text-sm text-gray-700" disabled="false"
                       id="headlessui-menu-item-20" role="menuitem" tabindex="-1">Feedback</router-link>
                     <a href="#" @click="logout" class="block px-4 py-2 text-sm text-gray-700" disabled="false"
                       id="headlessui-menu-item-22" role="menuitem" tabindex="-1">Sign out</a>
@@ -236,13 +236,13 @@ onMounted(() => {
 
     <DisclosurePanel class="md:hidden">
       <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-        <router-link to="dashboard" disabled="false"
+        <router-link :to="{name: 'dashboard'}" disabled="false"
           class="text-white block px-3 py-2 rounded-md text-base font-medium"> Dashboard </router-link>
-        <router-link to="settings" disabled="false" class="text-white block px-3 py-2 rounded-md text-base font-medium">
+        <router-link :to="{name: 'settings'}" disabled="false" class="text-white block px-3 py-2 rounded-md text-base font-medium">
           Settings </router-link>
-        <router-link to="employees" disabled="false" class="text-white block px-3 py-2 rounded-md text-base font-medium">
+        <router-link :to="{name: 'employees'}" disabled="false" class="text-white block px-3 py-2 rounded-md text-base font-medium">
           Employees </router-link>
-        <router-link to="users" v-if="userStore.user.role == 'admin'" disabled="false" class="text-white block px-3 py-2 rounded-md text-base font-medium">
+        <router-link :to="{name: 'users'}" v-if="userStore.user.role == 'admin'" disabled="false" class="text-white block px-3 py-2 rounded-md text-base font-medium">
           Users </router-link>
         <div>
           <button @click="dropdownExport = !dropdownExport" class="float-right w-44 flex text-white bg-gray-800 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-gray-300 dark:focus:ring-gray-800 shadow-lg shadow-gray-500/50 dark:shadow-lg dark:shadow-gray-800/80 font-medium rounded-lg text-sm px-2 py-2.5 text-center" type="button">Manage Employees<svg :class="dropdownExport ? 'rotate-180': ''" class="ml-2 w-4 h-4" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></button>
@@ -284,16 +284,16 @@ onMounted(() => {
         </div>
         <div class="mt-3 px-2 space-y-1">
           <div class="mt-3 px-2 space-y-1">
-            <router-link to="profile" disabled="false"
+            <router-link :to="{name: 'profile'}" disabled="false"
               class="block px-3 py-2 rounded-md text-base font-medium text-gray-400 hover:text-white hover:bg-gray-700">
               Your Profile</router-link>
-            <router-link to="billing" disabled="false"
+            <router-link :to="{name: 'billing'}" disabled="false"
               class="block px-3 py-2 rounded-md text-base font-medium text-gray-400 hover:text-white hover:bg-gray-700">Billing
               & Usage</router-link>
-            <router-link to="snippet" disabled="false"
+            <router-link :to="{name: 'snippet'}" disabled="false"
               class="block px-3 py-2 rounded-md text-base font-medium text-gray-400 hover:text-white hover:bg-gray-700">
               Snippet</router-link>
-            <router-link to="feedback" disabled="false"
+            <router-link :to="{name: 'feedback'}" disabled="false"
               class="block px-3 py-2 rounded-md text-base font-medium text-gray-400 hover:text-white hover:bg-gray-700">
               Feedback</router-link>
             <a disabled="false" @click="logout" href="#"

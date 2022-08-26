@@ -4,7 +4,7 @@
     <div class="relative container m-auto px-6 text-gray-500 md:px-12 xl:px-40">
 
       <div class="m-auto space-y-8 md:w-8/12 lg:w-full">
-        <router-link to="/" aria-label="logo" class="flex space-x-2 items-center">
+        <router-link :to="{name: 'home'}" aria-label="logo" class="flex space-x-2 items-center">
             <div aria-hidden="true" class="flex space-x-1">
               <div class="h-6 w-2 bg-sky-500"></div>
             </div>

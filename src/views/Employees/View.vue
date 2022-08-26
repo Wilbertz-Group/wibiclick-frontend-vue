@@ -6,31 +6,48 @@
   import { Grid, h } from "gridjs";
   import moment from 'moment'
   import "gridjs/dist/theme/mermaid.css";
-  import ScaleLoader from 'vue-spinner/src/ScaleLoader.vue'
+  import { useToast } from 'vue-toast-notification';
 
   const route = useRoute()
   const router = useRouter()
   const dropdownExport = ref(false)
   const userStore = useUserStore()
-  const employeesNode = ref(null)
+  const jobsNode = ref(null)
+  const jobs = ref()
+  const toast = useToast();
 
   const grid = new Grid().updateConfig({
-    columns: [{ 
-        name: 'Name',
+    columns: ['Name', 'Issue', 'Location', 'Technician', 'Date', { 
+        name: 'Send To',
         formatter: (cell, row) => {
           return h('button', {
-            className: 'font-medium text-blue-600 dark:text-blue-600 hover:underline',
+            className: 'font-medium text-green-600 dark:text-green-600 hover:underline',
             onClick: async () => {
-              router.push({name: 'employee', query: { employeeID: row.cells[6].data, employeeName: row.cells[0].data }})
+              let job = jobs.value.filter(a => a.id == row.cells[5].data)[0]
+              let data = {}
+
+              data.name = job.name
+              data.callout = job.callout
+              data.slotStart = job.slotStart
+              data.address = job.address
+              data.issue = job.issue
+              data.employeeId = job.employee.id
+              data.employeePhone = job.employee.phone
+              data.location = job.location
+              data.phone = job.phone
+              data.slotTime = job.slotTime
+
+              let b = await axios.post('send-whatsapp', data);
+              toast.success(b.data)
             }
-          }, row.cells[0].data);
+          }, 'Whatsapp');
         }
-      }, 'Email', 'Phone', 'Location', 'Jobs', 'Customers', { name: 'id', hidden: true}],
+      }],
     pagination: {
       enabled: true,
       limit: 10,
       server: {
-        url: (prev, page, limit) => `${prev}?limit=${limit}&offset=${page * limit}&id=${userStore.currentWebsite}`
+        url: (prev, page, limit) => `${prev}?limit=${limit}&offset=${page * limit}&id=${userStore.currentWebsite}&employeeID=${route.query.employeeID}`
       }
     },
     search: true,
@@ -41,27 +58,30 @@
     selecting: true,
     server: {
       headers: {'Authorization': `Bearer ${userStore.user.token}`},
-      url: `https://wibi.wilbertzgroup.com/employees/`,
-      then: data => data.employees.map(c => 
-      [c.firstName + ' ' +c.lastName, c.email, c.phone, c.location, c.jobs, c.customers, c.id]
-    ),
+      url: `http://localhost:3000/jobs/`,
+      then: data => {
+        jobs.value = data.jobs;
+        let jobsData = data.jobs.sort((a, b) => new Date(a.slotStart) - new Date(b.slotStart)).reverse();
+        return jobsData.map(c => 
+        [c.name, c.issue, c.location, c.employee.firstName + ' ' + c.employee.lastName, c.slotStart ? moment().isSame(c.slotStart, 'day') ? moment(c.slotStart).format('h:mm a') : moment(c.slotStart).format('DD MMM @ h:mm a') : '-', c.id]
+      )},
       total: data => data.total
     },
     language: {
       'search': {
-        'placeholder': '🔍 Search name, email...'
+        'placeholder': '🔍 Search name, location...'
       },
       'pagination': {
         'previous': '⬅️',
         'next': '➡️',
         'showing': 'Displaying',
-        'results': () => 'Employees'
+        'results': () => 'Jobs'
       }
     }
   })
 
   onMounted(() => {
-    grid.render(employeesNode.value)
+    grid.render(jobsNode.value)
   })
 
   watchEffect(() => {    
@@ -77,7 +97,7 @@
 </script>
 
 <template>
-  <Header title="Employees" /> 
+  <Header :title="route.query.employeeName" /> 
   <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
     <div class="px-4 py-6 sm:px-0">
       <div>
@@ -87,7 +107,7 @@
               <div></div>
               <div class="relative text-right"></div>
               <div class="relative text-right">
-                 <router-link :to="{name: 'add-employee'}" class="text-white bg-gray-800 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-gray-300 dark:focus:ring-gray-800 shadow-lg shadow-gray-500/50 dark:shadow-lg dark:shadow-gray-800/80 font-medium rounded-lg text-sm px-5 py-2.5 text-center mb-5">Add Employee</router-link>                
+                 
               </div>                   
 
             </div>   
@@ -95,7 +115,7 @@
           <div class="mt-3 md:col-span-2">
               <div class="shadow p-10 sm:rounded-md sm:overflow-hidden">
                   <div id="label"></div>
-                  <div ref="employeesNode">
+                  <div ref="jobsNode">
                       
                  </div>
               </div>
