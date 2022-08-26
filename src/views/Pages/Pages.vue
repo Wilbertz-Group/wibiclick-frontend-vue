@@ -27,7 +27,7 @@
     selecting: true,
     server: {
       headers: {'Authorization': `Bearer ${userStore.user.token}`},
-      url: `http://localhost:3000/pages/`,
+      url: `https://wibi.wilbertzgroup.com/pages/`,
       then: data => data.pages.map(c => 
         [ c.url, c.visitors, c.views, c.clicks, c.updatedAt ? moment().isSame(c.updatedAt, 'day') ? moment(c.updatedAt).format('h:mm a') : moment(c.updatedAt).format('MMM DD, YYYY h:mm a') : '-' ]
       ),
@@ -52,6 +52,7 @@
 
   watchEffect(() => {    
     if(userStore.currentWebsite){
+      grid.render(customersNode.value)
       grid.forceRender()
     }
   })

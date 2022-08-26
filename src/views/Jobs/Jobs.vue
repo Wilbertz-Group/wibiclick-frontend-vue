@@ -56,7 +56,7 @@
     selecting: true,
     server: {
       headers: {'Authorization': `Bearer ${userStore.user.token}`},
-      url: `http://localhost:3000/jobs/`,
+      url: `https://wibi.wilbertzgroup.com/jobs/`,
       then: data => {
         jobs.value = data.jobs;
         return data.jobs.map(c => 
@@ -83,6 +83,7 @@
 
   watchEffect(() => {    
     if(userStore.currentWebsite){
+      grid.render(customersNode.value)
       grid.forceRender()
     }
   })

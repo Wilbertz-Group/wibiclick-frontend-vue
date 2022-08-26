@@ -43,7 +43,7 @@
     selecting: true,
     server: {
       headers: {'Authorization': `Bearer ${userStore.user.token}`},
-      url: `http://localhost:3000/customers/`,
+      url: `https://wibi.wilbertzgroup.com/customers/`,
       then: data => data.customers.map(c => 
         [c.name, c.message, c.channel, c.hubspotLink, c.createdAt ? moment().isSame(c.createdAt, 'day') ? moment(c.createdAt).format('h:mm a') : moment(c.createdAt).format('MMM DD, YYYY h:mm a') : '-']
       ),
@@ -68,6 +68,7 @@
 
   watchEffect(() => {    
     if(userStore.currentWebsite){
+      grid.render(customersNode.value)
       grid.forceRender()
     }
   })

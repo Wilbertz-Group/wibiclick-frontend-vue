@@ -42,7 +42,7 @@ Sentry.init({
   integrations: [
     new BrowserTracing({
       routingInstrumentation: Sentry.vueRouterInstrumentation(router),
-      tracingOrigins: ["localhost", "my-site-url.com", /^\//],
+      tracingOrigins: ["localhost", "wibi.co.za", /^\//],
     }),
   ],
   tracesSampleRate: 1.0,

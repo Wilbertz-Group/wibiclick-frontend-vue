@@ -31,7 +31,7 @@
     selecting: true,
     server: {
       headers: {'Authorization': `Bearer ${userStore.user.token}`},
-      url: `http://localhost:3000/forms/`,
+      url: `https://wibi.wilbertzgroup.com/forms/`,
       then: data => data.employees.map(c => 
         [c.firstName + ' ' +c.lastName, c.email, c.phone, c.location, c.jobs, c.customers]
       ),
@@ -56,6 +56,7 @@
 
   watchEffect(() => {    
     if(userStore.currentWebsite){
+      grid.render(customersNode.value)
       grid.forceRender()
     }
   })
