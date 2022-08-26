@@ -1,7 +1,7 @@
 <script setup>
   import Header from "@/components/Header.vue";  
   import { useUserStore } from "@/stores/UserStore"
-  import { onMounted, ref } from "vue";
+  import { onMounted, ref, watchEffect } from "vue";
   import { Grid, h } from "gridjs";
   import moment from 'moment'
   import "gridjs/dist/theme/mermaid.css";
@@ -11,7 +11,7 @@
   const pagesNode = ref(null)
 
   const grid = new Grid().updateConfig({
-    columns: ['Title', 'Url', 'Visitors', 'Views', 'Clicks', 'Updated'],
+    columns: ['Url', 'Visitors', 'Views', 'Clicks', 'Updated'],
     pagination: {
       enabled: true,
       limit: 20,
@@ -29,15 +29,33 @@
       headers: {'Authorization': `Bearer ${userStore.user.token}`},
       url: `http://localhost:3000/pages/`,
       then: data => data.pages.map(c => 
-        [ c.title, c.url, c.visitors, c.views, c.clicks, moment(c.updatedAt).format('ddd DD MMM, h:mm a') ]
+        [ c.url, c.visitors, c.views, c.clicks, c.updatedAt ? moment().isSame(c.updatedAt, 'day') ? moment(c.updatedAt).format('h:mm a') : moment(c.updatedAt).format('MMM DD, YYYY h:mm a') : '-' ]
       ),
       total: data => data.total
     },
+    language: {
+      'search': {
+        'placeholder': '🔍 Search name, url...'
+      },
+      'pagination': {
+        'previous': '⬅️',
+        'next': '➡️',
+        'showing': 'Displaying',
+        'results': () => 'Pages'
+      }
+    }
   })
 
   onMounted(() => {
     grid.render(pagesNode.value)
   })
+
+  watchEffect(() => {    
+    if(userStore.currentWebsite){
+      grid.forceRender()
+    }
+  })
+
 
 </script>
 

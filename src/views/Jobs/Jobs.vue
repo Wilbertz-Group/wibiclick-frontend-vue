@@ -1,17 +1,46 @@
 <script setup>
+  import axios from "axios";
   import Header from "@/components/Header.vue";  
   import { useUserStore } from "@/stores/UserStore"
-  import { onMounted, ref } from "vue";
+  import { onMounted, ref, watchEffect } from "vue";
   import { Grid, h } from "gridjs";
   import moment from 'moment'
   import "gridjs/dist/theme/mermaid.css";
+  import { useToast } from 'vue-toast-notification';
   import ScaleLoader from 'vue-spinner/src/ScaleLoader.vue'
 
   const userStore = useUserStore()
   const jobsNode = ref(null)
+  const jobs = ref()
+  const toast = useToast();
 
   const grid = new Grid().updateConfig({
-    columns: ['Name', 'Callout', 'Date', 'Location', 'Issue', 'Employee'],
+    columns: ['Name', 'Callout', 'Date', 'Location', 'Issue', 'Employee', { 
+        name: 'Actions',
+        formatter: (cell, row) => {
+          return h('button', {
+            className: 'font-medium text-red-600 dark:text-green-600 hover:underline',
+            onClick: async () => {
+              let job = jobs.value.filter(a => a.id == row.cells[6].data)[0]
+              let data = {}
+
+              data.name = job.name
+              data.callout = job.callout
+              data.slotStart = job.slotStart
+              data.address = job.address
+              data.issue = job.issue
+              data.employeeId = job.employee.id
+              data.employeePhone = job.employee.phone
+              data.location = job.location
+              data.phone = job.phone
+              data.slotTime = job.slotTime
+
+              let b = await axios.post('send-whatsapp', data);
+              toast.success(b.data)
+            }
+          }, 'Whatsapp');
+        }
+      },],
     pagination: {
       enabled: true,
       limit: 10,
@@ -28,15 +57,34 @@
     server: {
       headers: {'Authorization': `Bearer ${userStore.user.token}`},
       url: `http://localhost:3000/jobs/`,
-      then: data => data.jobs.map(c => 
-        [c.name, c.callout, moment(c.slotStart).format('ddd DD MMM, h:mm a'), c.location, c.issue, c.employee.firstName + ' ' + c.employee.lastName]
-      ),
+      then: data => {
+        jobs.value = data.jobs;
+        return data.jobs.map(c => 
+        [c.name, c.callout, moment(c.slotStart).format('ddd DD MMM, h:mm a'), c.location, c.issue, c.employee.firstName + ' ' + c.employee.lastName, c.id]
+      )},
       total: data => data.total
     },
+    language: {
+      'search': {
+        'placeholder': '🔍 Search name, location...'
+      },
+      'pagination': {
+        'previous': '⬅️',
+        'next': '➡️',
+        'showing': 'Displaying',
+        'results': () => 'Jobs'
+      }
+    }
   })
 
   onMounted(() => {
     grid.render(jobsNode.value)
+  })
+
+  watchEffect(() => {    
+    if(userStore.currentWebsite){
+      grid.forceRender()
+    }
   })
 
 </script>

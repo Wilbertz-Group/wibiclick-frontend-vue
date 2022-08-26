@@ -1,7 +1,7 @@
 <script setup>
   import Header from "@/components/Header.vue";  
   import { useUserStore } from "@/stores/UserStore"
-  import { onMounted, ref } from "vue";
+  import { onMounted, ref, watchEffect } from "vue";
   import { useRouter, useRoute } from "vue-router";
   import { Grid, h } from "gridjs";
   import moment from 'moment'
@@ -37,23 +37,27 @@
       ),
       total: data => data.total
     },
-    rowClick: function(args) {
-      console.log(args)
-      var getData = args.item;
-      var keys = Object.keys(getData);
-      var text = [];
-
-      keys.forEach(value => {
-        text.push(value + " : " + getData[value])
-      });
-
-      document.querySelector("#label").innerHTML(text.join(", "))
-
+    language: {
+      'search': {
+        'placeholder': '🔍 Search name, amount...'
+      },
+      'pagination': {
+        'previous': '⬅️',
+        'next': '➡️',
+        'showing': 'Displaying',
+        'results': () => 'Invoices'
+      }
     }
   })
 
   onMounted(() => {
     grid.render(employeesNode.value)
+  })
+
+  watchEffect(() => {    
+    if(userStore.currentWebsite){
+      grid.forceRender()
+    }
   })
 
 </script>

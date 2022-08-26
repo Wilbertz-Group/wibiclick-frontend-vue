@@ -1,7 +1,7 @@
 <script setup>
   import Header from "@/components/Header.vue";  
   import { useUserStore } from "@/stores/UserStore"
-  import { onMounted, ref } from "vue";
+  import { onMounted, ref, watchEffect } from "vue";
   import { useRouter, useRoute } from "vue-router";
   import { Grid, h } from "gridjs";
   import moment from 'moment'
@@ -49,10 +49,27 @@
       ),
       total: data => data.total
     },
+    language: {
+      'search': {
+        'placeholder': '🔍 Search name, channel...'
+      },
+      'pagination': {
+        'previous': '⬅️',
+        'next': '➡️',
+        'showing': 'Displaying',
+        'results': () => 'Customers'
+      }
+    }
   })
 
   onMounted(() => {
     grid.render(customersNode.value)
+  })
+
+  watchEffect(() => {    
+    if(userStore.currentWebsite){
+      grid.forceRender()
+    }
   })
 
 </script>

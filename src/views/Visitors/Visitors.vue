@@ -1,7 +1,7 @@
 <script setup>
   import Header from "@/components/Header.vue";  
   import { useUserStore } from "@/stores/UserStore"
-  import { onMounted, ref } from "vue";
+  import { onMounted, ref, watchEffect } from "vue";
   import { useRouter, useRoute } from "vue-router";
   import { Grid, h } from "gridjs";
   import moment from 'moment'
@@ -12,15 +12,15 @@
   const router = useRouter()
   const dropdownExport = ref(false)
   const userStore = useUserStore()
-  const employeesNode = ref(null)
+  const visitorsNode = ref(null)
 
   const grid = new Grid().updateConfig({
-    columns: ['Name', 'Email', 'Phone', 'Location', 'Jobs', 'Customers'],
+    columns: ['Page', 'Views', 'Clicks', 'Customer', 'Updated'],
     pagination: {
       enabled: true,
-      limit: 10,
+      limit: 20,
       server: {
-        url: (prev, page, limit) => `${prev}?limit=${limit}&offset=${page * limit}`
+        url: (prev, page, limit) => `${prev}?limit=${limit}&offset=${page * limit}&id=${userStore.currentWebsite}`
       }
     },
     search: true,
@@ -32,34 +32,38 @@
     server: {
       headers: {'Authorization': `Bearer ${userStore.user.token}`},
       url: `http://localhost:3000/visitors/`,
-      then: data => data.employees.map(c => 
-        [c.firstName + ' ' +c.lastName, c.email, c.phone, c.location, c.jobs, c.customers]
+      then: data => data.visitors.map(c => 
+        [ c.page.url, c.views, c.clicks, c.customer ? c.customer.name : '', c.updatedAt ? moment().isSame(c.updatedAt, 'day') ? moment(c.updatedAt).format('h:mm a') : moment(c.updatedAt).format('MMM DD, YYYY h:mm a') : '-']
       ),
       total: data => data.total
     },
-    rowClick: function(args) {
-      console.log(args)
-      var getData = args.item;
-      var keys = Object.keys(getData);
-      var text = [];
-
-      keys.forEach(value => {
-        text.push(value + " : " + getData[value])
-      });
-
-      document.querySelector("#label").innerHTML(text.join(", "))
-
+    language: {
+      'search': {
+        'placeholder': '🔍 Search page...'
+      },
+      'pagination': {
+        'previous': '⬅️',
+        'next': '➡️',
+        'showing': 'Displaying',
+        'results': () => 'Visitors'
+      }
     }
   })
 
   onMounted(() => {
-    grid.render(employeesNode.value)
+    grid.render(visitorsNode.value)
+  })
+
+  watchEffect(() => {    
+    if(userStore.currentWebsite){
+      grid.forceRender()
+    }
   })
 
 </script>
 
 <template>
-  <Header title="Employees" /> 
+  <Header title="Visitors" /> 
   <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
     <div class="px-4 py-6 sm:px-0">
       <div>
@@ -69,7 +73,7 @@
               <div></div>
               <div class="relative text-right"></div>
               <div class="relative text-right">
-                 <router-link :to="{name: 'add-employee'}" class="text-white bg-gray-800 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-gray-300 dark:focus:ring-gray-800 shadow-lg shadow-gray-500/50 dark:shadow-lg dark:shadow-gray-800/80 font-medium rounded-lg text-sm px-5 py-2.5 text-center mb-5">Add Employee</router-link>                
+                 <router-link :to="{name: 'add-visitor'}" class="text-white bg-gray-800 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-gray-300 dark:focus:ring-gray-800 shadow-lg shadow-gray-500/50 dark:shadow-lg dark:shadow-gray-800/80 font-medium rounded-lg text-sm px-5 py-2.5 text-center mb-5">Add Visitor</router-link>                
               </div>                   
 
             </div>   
@@ -77,7 +81,7 @@
           <div class="mt-3 md:col-span-2">
               <div class="shadow p-10 sm:rounded-md sm:overflow-hidden">
                   <div id="label"></div>
-                  <div ref="employeesNode">
+                  <div ref="visitorsNode">
                       
                  </div>
               </div>
