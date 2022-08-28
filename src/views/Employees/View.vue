@@ -59,7 +59,7 @@
     selecting: true,
     server: {
       headers: {'Authorization': `Bearer ${userStore.user.token}`},
-      url: `http://localhost:3000/jobs/`,
+      url: `https://wibi.wilbertzgroup.com/jobs/`,
       then: data => {
         jobs.value = data.jobs;
         let jobsData = data.jobs.sort((a, b) => new Date(a.slotStart) - new Date(b.slotStart)).reverse();
