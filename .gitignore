@@ -2,4 +2,3 @@
 node_modules/.bin/acorn
 node_modules
 package-lock.json
-src/main.js
