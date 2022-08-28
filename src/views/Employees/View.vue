@@ -1,4 +1,5 @@
 <script setup>
+  import axios from "axios";
   import Header from "@/components/Header.vue";  
   import { useUserStore } from "@/stores/UserStore"
   import { onMounted, ref, watchEffect } from "vue";
@@ -37,8 +38,11 @@
               data.phone = job.phone
               data.slotTime = job.slotTime
 
-              let b = await axios.post('send-whatsapp', data);
-              toast.success(b.data)
+              let b = await axios.post('/sendtextmessage/', { 
+                to: '27810072528',
+                msg: `--------------------\nName: ${data?.name}\nPhone: ${data?.phone}\nCallout: ${data?.callout}\nDate: ${moment(data?.slotStart).format('dddd DD MMMM YYYY h:mm a')}\nAddress: ${data?.address}\nIssue: ${data?.issue}\n--------------------`
+              });
+              toast.success("Job resent to whatsapp sucessfully")
             }
           }, 'Whatsapp');
         }
