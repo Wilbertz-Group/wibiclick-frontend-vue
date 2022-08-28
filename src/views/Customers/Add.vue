@@ -4,16 +4,18 @@
   import { onMounted, ref } from "vue";
   import { useToast } from 'vue-toast-notification';
   import { useRouter, useRoute } from "vue-router";
+  import { useUserStore } from "@/stores/UserStore"
 
   const loading = ref(false)
   const modalOpen = ref(false)
   const toast = useToast();
   const router = useRouter()  
+  const userStore = useUserStore()
 
   async function add(credentials) {
     try {
       loading.value = true
-      const response = await axios.post('add-customer', credentials);
+      const response = await axios.post('add-customer?id='+ userStore.currentWebsite, credentials);
       loading.value = false
       toast.success(response.data.message)
       router.push({ name: 'customers' })
@@ -49,21 +51,21 @@
                     <hr />
 
                     <div class="double mt-8">
-                      <FormKit type="text" name="firstName" label="First Name" placeholder="Jane" outer-class="text-left" validation="required" />
-                      <FormKit type="text" name="lastName" label="Last Name" placeholder="Doe" outer-class="text-left" validation="required" />
+                      <FormKit type="text" name="name" label="Full Name" placeholder="Jane" outer-class="text-left"  />
+                      <FormKit type="select" name="Reply" label="Reply" :options="[ 'Reply me by Email', 'Send me a message on Whatsapp', 'Use any of the above' ]"  />   
                     </div>
 
                     <div class="double">
-                      <FormKit type="email" name="email" label="Email" placeholder="jane@company.com" outer-class="text-left" validation="required|email" />
-                      <FormKit type="tel" name="phone" label="Phone" placeholder="0210002314" outer-class="text-left" validation="required|phone" />
+                      <FormKit type="email" name="Email" label="Email" placeholder="jane@company.com" outer-class="text-left" />
+                      <FormKit type="tel" name="Phone" label="Phone" placeholder="0210002314" outer-class="text-left" validation="required|phone" />
                     </div>
 
                     <div class="double">
-                      <FormKit type="text" name="location" label="Location" placeholder="Cape Town" outer-class="text-left" validation="required" />
-                      
+                      <FormKit type="text" name="portal" label="Portal" placeholder="Cape Town" outer-class="text-left"  />
+                      <FormKit type="text" name="vid" label="Hubspot ID" placeholder="Cape Town" outer-class="text-left"  />
                     </div>
 
-                    <FormKit type="textarea" name="description" label="Job Description" placeholder="HVAC & Appliance Technician" outer-class="text-left" validation="required" />
+                    <FormKit type="textarea" name="Message" label="Issue" placeholder="HVAC & Appliance Technician" outer-class="text-left"  />
 
                     <FormKit type="submit" label="Add Customer" />
 

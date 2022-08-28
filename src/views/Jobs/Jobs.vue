@@ -15,13 +15,13 @@
   const toast = useToast();
 
   const grid = new Grid().updateConfig({
-    columns: ['Name', 'Issue', 'Location', 'Technician', { 
+    columns: ['Name', 'Issue', 'Location', 'Technician', 'Job Status', { 
         name: 'Send To',
         formatter: (cell, row) => {
           return h('button', {
             className: 'font-medium text-red-600 dark:text-green-600 hover:underline',
             onClick: async () => {
-              let job = jobs.value.filter(a => a.id == row.cells[5].data)[0]
+              let job = jobs.value.filter(a => a.id == row.cells[6].data)[0]
               let data = {}
 
               data.name = job.name
@@ -49,11 +49,6 @@
       }
     },
     search: true,
-    sort: true,
-    resizable: true,
-    fixedHeader: true,
-    theme: 'mermaid',
-    selecting: true,
     server: {
       headers: {'Authorization': `Bearer ${userStore.user.token}`},
       url: `https://wibi.wilbertzgroup.com/jobs/`,
@@ -61,7 +56,7 @@
         jobs.value = data.jobs;
         let jobsData = data.jobs.sort((a, b) => new Date(a.slotStart) - new Date(b.slotStart)).reverse();
         return jobsData.map(c => 
-        [c.name, c.issue, c.location, c.employee.firstName + ' ' + c.employee.lastName, c.id, c.slotStart ? moment().isSame(c.slotStart, 'day') ? moment(c.slotStart).format('h:mm a') : moment(c.slotStart).format('DD MMM @ h:mm a') : '-']
+        [c.name, c.issue, c.location, c.employee.firstName + ' ' + c.employee.lastName, c.jobStatus, c.id, c.slotStart ? moment().isSame(c.slotStart, 'day') ? moment(c.slotStart).format('h:mm a') : moment(c.slotStart).format('DD MMM @ h:mm a') : '-']
       )},
       total: data => data.total
     },

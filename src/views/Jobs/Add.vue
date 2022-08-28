@@ -17,6 +17,7 @@ import { computed } from "@vue/reactivity";
   const phone = ref('phone')
   const address = ref('address')
   const name = ref('name')
+  const issue = ref('issue')
   const customer = ref('Select Customer')
   const userStore = useUserStore()
 
@@ -71,6 +72,7 @@ import { computed } from "@vue/reactivity";
       phone.value = selectedCustomer.value.phone
       name.value = selectedCustomer.value.name
       address.value = selectedCustomer.value.address
+      issue.value = selectedCustomer.value.message
     }
   }
 
@@ -125,7 +127,7 @@ import { computed } from "@vue/reactivity";
 
                     <FormKit type="radio" name="employeeId" label="Employee" :options="employees" />
 
-                    <FormKit type="textarea" name="issue" label="Issue" placeholder="Issue" outer-class="text-left" validation="required" />
+                    <FormKit type="textarea" v-model="issue" :value="issue" name="issue" label="Issue" placeholder="Issue" outer-class="text-left" validation="required" />
 
                     <FormKit type="submit" label="Add job" />
 

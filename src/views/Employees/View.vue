@@ -51,10 +51,7 @@
       }
     },
     search: true,
-    sort: true,
-    resizable: true,
     fixedHeader: true,
-    theme: 'mermaid',
     selecting: true,
     server: {
       headers: {'Authorization': `Bearer ${userStore.user.token}`},
@@ -77,6 +74,13 @@
         'showing': 'Displaying',
         'results': () => 'Jobs'
       }
+    },
+    className: {
+      td: 'py-4 px-6',
+      table: 'w-full text-sm text-left text-gray-500 dark:text-gray-400',
+      tr: 'bg-white border-b dark:bg-gray-800 dark:border-gray-700',
+      thead: 'text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400',
+      th: 'py-0 px-0',
     }
   })
 
