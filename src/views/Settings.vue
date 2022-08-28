@@ -6,13 +6,16 @@ import { useUserStore } from "@/stores/UserStore"
 import ScaleLoader from 'vue-spinner/src/ScaleLoader.vue'
 import { useToast } from 'vue-toast-notification';
 import Buttonwidget from "@/components/button_widget.vue";
+import * as Ably from 'ably';
 
 const toast = useToast();
 const userStore = useUserStore()
 const loading = ref(false)
+const imgsrc = ref()
 
 //Tabs
 const whatsapp = ref(false)
+const whatsappweb = ref(false)
 const phone = ref(true)
 const text = ref(false)
 const messenger = ref(false)
@@ -21,7 +24,14 @@ const telegram = ref(false)
 const viber = ref(false)
 const skype = ref(false)
 
+let options = { key: 'rSP4cA.1NFKaQ:tVDlfYABKtG3vcm3' };
+let client = new Ably.Realtime(options); 
+let channel = client.channels.get('feed');
 
+// Subscribe to messages on channel
+channel.subscribe('wibiclick', function(message) {
+  imgsrc.value = message.data
+});
 
 async function settingsUpdate(credentials) {
   try {
@@ -37,6 +47,7 @@ async function settingsUpdate(credentials) {
 
 function toggleMenu() {
   whatsapp.value = false
+  whatsappweb.value = false
   phone.value = false
   text.value = false
   messenger.value = false
@@ -107,7 +118,7 @@ function toggleMenu() {
             Telegram
           </a>
         </li>        
-         <li class="w-full mb-2 mt-2">
+        <li class="w-full mb-2 mt-2">
           <a href="#"
             @click="toggleMenu(); whatsapp=!whatsapp"
             :class="!whatsapp ? 'bg-white' : 'bg-sky-100 text-sky-600 rounded-t-lg border-b-2 border-sky-600'"
@@ -137,7 +148,16 @@ function toggleMenu() {
             Facebook Messenger
           </a>
         </li>
-        
+        <li class="w-full mb-2 mt-2">
+          <a href="#"
+            @click="toggleMenu(); whatsappweb=!whatsappweb"
+            :class="!whatsappweb ? 'bg-white' : 'bg-sky-100 text-sky-600 rounded-t-lg border-b-2 border-sky-600'"
+            class="btn-air-light text-center font-semibold inline-block p-4 w-full text-gray-900 rounded-lg focus:ring-4 focus:ring-blue-300 active focus:outline-none dark:bg-gray-700 dark:text-white"
+            aria-current="page">
+            <font-awesome-icon icon="fab fa-whatsapp" />
+            Connect Whatsapp Web
+          </a>
+        </li>  
       </ul>
 
       <div class="col-span-1 md:col-span-2 shadow sm:rounded-md sm:overflow-hidden mt-2 btn-air-light">
@@ -287,6 +307,19 @@ function toggleMenu() {
             <FormKit type="submit" label="Update" />
           </div>
         </FormKit>
+
+        <!-- Whatsapp Tab -->
+        <FormKit type="form" v-if="whatsappweb" :form-class="whatsappweb ? 'w-full' : 'show w-full'"  submit-label="Update"
+          :actions="false" #default="{ value }">
+          <div class="px-4 py-5 bg-white space-y-6 sm:p-6">
+            <h3 class="text-2xl font-semibold text-gray-700">Scan Whatsapp QR Code</h3>
+            <div class="w-full">
+              <img v-if="imgsrc" :src="imgsrc" />
+              <p v-else class="text-xs font-medium leading-6 m-6 text-center" >We will display the QR Code once received</p>
+            </div>
+
+          </div>
+        </FormKit>
       </div>
 
       <div>
@@ -295,6 +328,7 @@ function toggleMenu() {
 
     </div>
     <h3 class="text-lg font-medium leading-6 text-red-600 m-6 text-center" v-else>You need to select or add a website on the top header to change widget settings!!!</h3>
+    
   </div>
   <div v-if="loading" class="bg-gray-900 bg-opacity-50 dark:bg-opacity-80 fixed inset-0 z-40"></div>
 </template>
