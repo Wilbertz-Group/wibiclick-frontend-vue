@@ -140,7 +140,7 @@
   }
 
   .gridjs-thead tr.gridjs-tr {
-    background-color: #009879;
+    background-color: #212939;
     color: #ffffff;
     text-align: left;
   }
@@ -170,7 +170,7 @@
   }
 
   th.gridjs-th-sort:hover {
-    background-color: #212939;
+    background-color: #0e1c37;
   }
 
   .gridjs-tr:nth-of-type(even) {
@@ -178,11 +178,11 @@
   }
 
   .gridjs-tbody .gridjs-tr:last-of-type {
-    border-bottom: 2px solid #009879;
+    border-bottom: 3px solid #212939;
   }
 
   .gridjs-tbody .gridjs-tr.active-row {
     font-weight: bold;
-    color: #009879;
+    color: #212939;
   }
 </style>
