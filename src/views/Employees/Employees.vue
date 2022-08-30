@@ -19,7 +19,7 @@
         name: 'Name',
         formatter: (cell, row) => {
           return h('button', {
-            className: 'font-medium text-blue-600 dark:text-blue-600 hover:underline',
+            className: 'font-bold text-blue-800 dark:text-blue-800 hover:underline',
             onClick: async () => {
               router.push({name: 'employee', query: { employeeID: row.cells[6].data, employeeName: row.cells[0].data }})
             }

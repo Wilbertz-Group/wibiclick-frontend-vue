@@ -22,7 +22,7 @@ const grid = new Grid().updateConfig({
     name: 'Send To',
     formatter: (cell, row) => {
       return h('button', {
-        className: 'font-medium text-green-600 dark:text-green-600 hover:underline',
+        className: 'font-bold text-green-600 dark:text-green-800 hover:underline',
         onClick: async () => {
           let job = jobs.value.filter(a => a.id == row.cells[5].data)[0]
           let data = {}
