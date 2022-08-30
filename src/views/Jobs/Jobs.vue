@@ -91,7 +91,7 @@
 
 <template>
   <Header title="Jobs" /> 
-  <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+  <div class="mx-auto py-6 sm:px-6 lg:px-8">
     <div class="px-2 py-6 sm:px-0">
       <div>
         <div class="">
@@ -105,7 +105,7 @@
 
             </div>   
           </div>
-          <div class="mt-3 md:col-span-2">
+          <div class="mt-3 md:col-span-2 px-5">
               <div v-if="userStore.currentWebsite" class="sm:overflow-hidden">
                   <div id="label"></div>
                   <div ref="jobsNode">
@@ -127,3 +127,62 @@
   </div>
 
 </template>
+
+
+<style>
+  table.gridjs-table {
+    border-collapse: collapse;
+    margin: 25px 2%;
+    max-width: 96%;
+    font-size: 0.9em;
+    font-family: sans-serif;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+  }
+
+  .gridjs-thead tr.gridjs-tr {
+    background-color: #009879;
+    color: #ffffff;
+    text-align: left;
+  }
+
+  th,
+  td.gridjs-td {
+      padding: 12px 15px;
+  }
+
+  .gridjs-tbody .gridjs-tr {
+    border-bottom: none;
+  }
+
+  td.gridjs-td {
+    background-color: initial;
+  }
+
+  button.gridjs-sort-neutral {
+    opacity: 1;
+    filter: invert(100%);
+    -webkit-filter: invert(100%);
+  }
+
+  th.gridjs-th {
+    color: white;
+    background-color: initial;
+  }
+
+  th.gridjs-th-sort:hover {
+    background-color: #212939;
+  }
+
+  .gridjs-tr:nth-of-type(even) {
+    background-color: #f3f3f3;
+  }
+
+  .gridjs-tbody .gridjs-tr:last-of-type {
+    border-bottom: 2px solid #009879;
+  }
+
+  .gridjs-tbody .gridjs-tr.active-row {
+    font-weight: bold;
+    color: #009879;
+  }
+</style>
