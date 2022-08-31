@@ -129,6 +129,8 @@ import { computed } from "@vue/reactivity";
 
                     <FormKit type="textarea" v-model="issue" :value="issue" name="issue" label="Issue" placeholder="Issue" outer-class="text-left" validation="required" />
 
+                    <FormKit type="checkbox" label="Notify Employee" name="notify" outer-class="text-left" />
+
                     <FormKit type="submit" label="Add job" />
 
                   </FormKit>

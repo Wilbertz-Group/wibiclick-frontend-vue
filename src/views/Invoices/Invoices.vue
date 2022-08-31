@@ -1,94 +1,115 @@
 <script setup>
-  import Header from "@/components/Header.vue";  
-  import { useUserStore } from "@/stores/UserStore"
-  import { onMounted, ref, watchEffect } from "vue";
-  import { useRouter, useRoute } from "vue-router";
-  import { Grid, h } from "gridjs";
-  import moment from 'moment'
-  import "gridjs/dist/theme/mermaid.css";
-  import ScaleLoader from 'vue-spinner/src/ScaleLoader.vue'
+import Header from "@/components/Header.vue";
+import { useUserStore } from "@/stores/UserStore";
+import { onMounted, ref, reactive, watchEffect } from "vue";
+import { useRouter, useRoute } from "vue-router";
+import moment from "moment";
 
-  const route = useRoute()
-  const router = useRouter()
-  const dropdownExport = ref(false)
-  const userStore = useUserStore()
-  const employeesNode = ref(null)
+import { AgGridVue } from "ag-grid-vue3";
+import "ag-grid-community/styles/ag-grid.css"; // Core grid CSS, always needed
+import "ag-grid-community/styles/ag-theme-alpine.css"; // Optional theme CSS
+import Actions from "@/components/Actions.vue";
 
-  const grid = new Grid().updateConfig({
-    columns: ['Name', 'Email', 'Phone', 'Location', 'Jobs', 'Customers'],
-    pagination: {
-      enabled: true,
-      limit: 10,
-      server: {
-        url: (prev, page, limit) => `${prev}?limit=${limit}&offset=${page * limit}`
-      }
+const route = useRoute();
+const router = useRouter();
+const dropdownExport = ref(false);
+const userStore = useUserStore();
+const employeesNode = ref(null);
+
+const gridApi = ref(null); // Optional - for accessing Grid's API
+
+// Obtain API from grid's onGridReady event
+const onGridReady = (params) => {
+  gridApi.value = params.api;
+};
+
+const rowData = reactive({}); // Set rowData to Array of Objects, one Object per Row
+
+// Each Column Definition results in one Column.
+const columnDefs = reactive({
+  value: [
+    { field: "make" }, 
+    { field: "model" }, 
+    { 
+      field: "price",
+      cellRendererSelector: (p) => {
+            if (p.value === 320200) {
+              return {
+                component: Actions,
+                params: {},
+              };
+            }
+          },
     },
-    search: true,
-    sort: true,
-    resizable: true,
-    fixedHeader: true,
-    theme: 'mermaid',
-    selecting: true,
-    server: {
-      headers: {'Authorization': `Bearer ${userStore.user.token}`},
-      url: `https://wibi.wilbertzgroup.com/invoices/`,
-      then: data => data.employees.map(c => 
-        [c.firstName + ' ' +c.lastName, c.email, c.phone, c.location, c.jobs, c.customers]
-      ),
-      total: data => data.total
-    },
-    language: {
-      'search': {
-        'placeholder': '🔍 Search name, amount...'
-      },
-      'pagination': {
-        'previous': '⬅️',
-        'next': '➡️',
-        'showing': 'Displaying',
-        'results': () => 'Invoices'
-      }
+    { field: "actions", cellRenderer: Actions }, 
+  ],
+});
+
+// DefaultColDef sets props common to all Columns
+const defaultColDef = {
+  sortable: true,
+  filter: true,
+  flex: 1,
+};
+
+const cellWasClicked = (event) => {
+  console.log("cell was clicked", event);
+};
+const deselectRows = () => {
+  gridApi.value.deselectAll();
+};
+
+// Example load data from sever
+onMounted(() => {
+  fetch("https://www.ag-grid.com/example-assets/row-data.json")
+    .then((result) => result.json())
+    .then((remoteRowData) => (rowData.value = remoteRowData));
+});
+
+watchEffect(() => {
+  if (userStore.currentWebsite) {
+    if (grid.callbacks == undefined) {
+      grid.render(customersNode.value);
+    } else {
+      grid.forceRender();
     }
-  })
-
-  onMounted(() => {
-    grid.render(employeesNode.value)
-  })
-
-  watchEffect(() => {    
-    if(userStore.currentWebsite){
-      if(grid.callbacks == undefined){
-        grid.render(customersNode.value)
-      } else {
-        grid.forceRender()
-      }
-    }
-  })
-
+  }
+});
 </script>
 
 <template>
-  <Header title="Employees" /> 
-  <div class=" mx-auto py-6 sm:px-6 lg:px-8">
+  <Header title="Invoices" />
+  <div class="mx-auto py-6 sm:px-6 lg:px-8">
     <div class="px-4 py-6 sm:px-0">
       <div>
         <div class="">
           <div class="md:col-span-1">
-            <div class="grid gap-3 text-right lg:grid-cols-3 md:grid-cols-2 sm:grid-cols-1">
+            <div
+              class="grid gap-3 text-right lg:grid-cols-3 md:grid-cols-2 sm:grid-cols-1"
+            >
               <div></div>
               <div class="relative text-right"></div>
               <div class="relative text-right">
-                 <router-link :to="{name: 'add-employee'}" class="text-white bg-gray-800 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-gray-300 dark:focus:ring-gray-800 shadow-lg shadow-gray-500/50 dark:shadow-lg dark:shadow-gray-800/80 font-medium rounded-lg text-sm px-5 py-2.5 text-center mb-5">Add Employee</router-link>                
-              </div>                   
-
-            </div>   
+                
+              </div>
+            </div>
           </div>
           <div class="mt-3 md:col-span-2">
-              <div class="shadow p-10 sm:rounded-md sm:overflow-hidden">
-                  <div id="label"></div>
-                  <div ref="employeesNode">
-                      
-                 </div>
-              </div>
+            <div class="shadow p-10 sm:rounded-md sm:overflow-hidden">
+              <button @click="deselectRows">deselect rows</button>
+              <ag-grid-vue
+                class="ag-theme-alpine"
+                style="height: 500px"
+                :columnDefs="columnDefs.value"
+                :rowData="rowData.value"
+                :defaultColDef="defaultColDef"
+                rowSelection="multiple"
+                animateRows="true"
+                @cell-clicked="cellWasClicked"
+                @grid-ready="onGridReady"
+              >
+              </ag-grid-vue>
+            </div>
           </div>
         </div>
       </div>
@@ -98,8 +119,6 @@
           <div class="border-t border-gray-200" />
         </div>
       </div>
-
     </div>
   </div>
-
 </template>
