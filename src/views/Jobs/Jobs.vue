@@ -197,7 +197,7 @@
       }, 'Scheduled Date'],
     pagination: {
       enabled: true,
-      limit: 10,
+      limit: 5,
       server: {
         url: (prev, page, limit) => `${prev}?limit=${limit}&offset=${page * limit}&id=${userStore.currentWebsite}`
       }
@@ -267,6 +267,8 @@
           </div>
           <div class="mt-3 md:col-span-2 px-5">
               <div v-if="userStore.currentWebsite" class="sm:overflow-hidden">
+                <div id="label"></div>
+                <div ref="jobsNode"></div>
                 <div class="text-center mt-10 mb-10 pb-6 pr-3 shadow-lg rounded-lg bg-blueGray-800">
                   <div class="rounded-t mb-0 px-4 py-3 bg-transparent">
                     <div class="flex flex-wrap items-center">
@@ -279,12 +281,7 @@
                     </div>
                   </div>
                   <apexchart type="bar" height="450" :options="options" :series="series"></apexchart>
-                </div>
-
-                <div id="label"></div>
-                <div ref="jobsNode">
-                    
-                </div>
+                </div>                
               </div>
               <div v-else class="shadow p-10 sm:rounded-md sm:overflow-hidden">Please select website on the navigation first</div>
           </div>

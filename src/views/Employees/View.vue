@@ -201,7 +201,7 @@ const grid = new Grid().updateConfig({
   }],
   pagination: {
     enabled: true,
-    limit: 10,
+    limit: 5,
     server: {
       url: (prev, page, limit) => `${prev}?limit=${limit}&offset=${page * limit}&id=${userStore.currentWebsite}&employeeID=${route.query.employeeID}`
     }
@@ -281,6 +281,9 @@ watchEffect(() => {
           </div>
           <div class="mt-3 md:col-span-2">
             <div class="shadow p-10 sm:rounded-md sm:overflow-hidden">
+              <h2 class="text-xl font-semibold">Detailed jobs</h2>
+              <div id="label"></div>
+              <div ref="jobsNode"></div>
               <div class="text-center mt-10 mb-10 pb-6 pr-3 shadow-lg rounded-lg bg-blueGray-800">
                 <div class="rounded-t mb-0 px-4 py-3 bg-transparent">
                   <div class="flex flex-wrap items-center">
@@ -294,12 +297,7 @@ watchEffect(() => {
                 </div>
                 <apexchart type="bar" height="450" :options="options" :series="series"></apexchart>
               </div>
-
-              <h2 class="text-xl font-semibold">Detailed jobs</h2>
-              <div id="label"></div>
-              <div ref="jobsNode">
-
-              </div>
+              
             </div>
           </div>
         </div>

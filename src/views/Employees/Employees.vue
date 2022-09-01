@@ -183,7 +183,7 @@
       }, 'Email', 'Phone', 'Location', 'Jobs', 'Customers', { name: 'id', hidden: true}],
     pagination: {
       enabled: true,
-      limit: 10,
+      limit: 5,
       server: {
         url: (prev, page, limit) => `${prev}?limit=${limit}&offset=${page * limit}&id=${userStore.currentWebsite}`
       }
@@ -239,7 +239,7 @@
   <Header title="Employees" /> 
   <scale-loader :loading="loading" color="#23293b" height="50px" class="vld-overlay is-active is-full-page" width="6px">
   </scale-loader>
-  <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+  <div class="mx-auto py-6 sm:px-6 lg:px-8">
     <div class="px-4 py-6 sm:px-0">
       <div>
         <div class="">
@@ -255,6 +255,8 @@
           </div>
           <div class="mt-3 md:col-span-2">
               <div class="shadow p-10 sm:rounded-md sm:overflow-hidden">
+                <div id="label"></div>
+                  <div ref="employeesNode"></div>
                 <div class="text-center mt-10 mb-10 pb-6 pr-3 shadow-lg rounded-lg bg-blueGray-800">
                   <div class="rounded-t mb-0 px-4 py-3 bg-transparent">
                     <div class="flex flex-wrap items-center">
@@ -268,11 +270,7 @@
                   </div>
                   <apexchart type="area" height="450" :options="options" :series="series"></apexchart>
                 </div>
-
-                  <div id="label"></div>
-                  <div ref="employeesNode">
-                      
-                 </div>
+                 
               </div>
           </div>
         </div>
