@@ -15,7 +15,7 @@
   const customersNode = ref(null)
 
   const grid = new Grid().updateConfig({
-    columns: ['Name', 'Message', 'Channel', 
+    columns: ['Name', 'Message', 'Address', 'Channel', 
       { 
         name: 'View in',
         formatter: (cell, row) => {
@@ -45,7 +45,7 @@
       headers: {'Authorization': `Bearer ${userStore.user.token}`},
       url: `https://wibi.wilbertzgroup.com/customers/`,
       then: data => data.customers.map(c => 
-        [c.name, c.message, c.channel, c.hubspotLink, c.createdAt ? moment().isSame(c.createdAt, 'day') ? moment(c.createdAt).format('h:mm a') : moment(c.createdAt).format('DD MMM @ h:mm a') : '-']
+        [c.name, c.message, c.address, c.channel, c.hubspotLink, c.createdAt ? moment().isSame(c.createdAt, 'day') ? moment(c.createdAt).format('h:mm a') : moment(c.createdAt).format('DD MMM @ h:mm a') : '-']
       ),
       total: data => data.total
     },

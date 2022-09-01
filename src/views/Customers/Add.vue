@@ -15,7 +15,7 @@
   async function add(credentials) {
     try {
       loading.value = true
-      const response = await axios.post('add-customer?id='+ userStore.currentWebsite, credentials);
+      const response = await axios.post('add-customer?id='+ userStore.currentWebsite, {data: credentials});
       loading.value = false
       toast.success("Customer added successfully")
       router.push({ name: 'customers' })
