@@ -30,7 +30,7 @@
     ],
     pagination: {
       enabled: true,
-      limit: 10,
+      limit: 20,
       server: {
         url: (prev, page, limit) => `${prev}?limit=${limit}&offset=${page * limit}&id=${userStore.currentWebsite}`
       }

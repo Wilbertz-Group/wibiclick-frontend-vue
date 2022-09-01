@@ -40,7 +40,7 @@
             }
           }, 'Whatsapp');
         }
-      }, 'Date'],
+      }, 'Scheduled Date'],
     pagination: {
       enabled: true,
       limit: 10,
@@ -56,7 +56,7 @@
         jobs.value = data.jobs;
         let jobsData = data.jobs.sort((a, b) => new Date(a.slotStart) - new Date(b.slotStart)).reverse();
         return jobsData.map(c => 
-        [c.name, c.issue, c.location, c.employee.firstName + ' ' + c.employee.lastName, c.jobStatus, c.id, c.slotStart ? moment().isSame(c.slotStart, 'day') ? moment(c.slotStart).format('h:mm a') : moment(c.slotStart).format('DD MMM @ h:mm a') : '-']
+        [c.name, c.issue, c.location, c.employee.firstName + ' ' + c.employee.lastName, c.jobStatus, c.id, c.slotStart ? moment().isSame(c.slotStart, 'day') ? moment(c.slotStart).format('h:mm a') : moment(c.slotStart).format('DD MMM: h:mma') : '-']
       )},
       total: data => data.total
     },

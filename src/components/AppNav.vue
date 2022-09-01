@@ -14,7 +14,9 @@ const submitted = ref(false)
 const selectedWebsite = ref(userStore.currentWebsite)
 const loading = ref(false)
 const analytics = ref({})
-const dropdownExport = ref(false)
+const dropdownContacts = ref(false)
+const dropdownMarketing = ref(false)
+const dropdownSales = ref(false)
 const opt = ref([
   { label: 'Select Website', value: 'default', attrs: { disabled: true } },
 ])
@@ -114,60 +116,91 @@ onMounted(() => {
             <div class="ml-10 flex items-center space-x-4">
               <router-link :to="{name: 'dashboard'}" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium">
                 <box-icon type='solid' color="white" name='dashboard'></box-icon>
-                <span class="ml-2">Dashboard</span>
+                <span class="ml-2">Analytics</span>
               </router-link>
-              <router-link :to="{name: 'settings'}" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium">
-                <box-icon color="white" type='solid' name='cog'></box-icon>
-                <span class="ml-2">Widget</span>
-              </router-link>
-              
               
               <div class="relative" v-if="userStore.user.role == 'admin'">
-                <button @click="dropdownExport = !dropdownExport" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium relative" type="button">
+                <button @click="dropdownContacts = !dropdownContacts" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium relative" type="button">
                   <box-icon color="white" class="mr-2" type="solid" name='user-circle'></box-icon>
-                  Service 
-                  <svg :class="dropdownExport ? 'rotate-180': ''" class="ml-2 w-4 h-4 float-right right-0 relative" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                  Contacts 
+                  <svg :class="dropdownContacts ? 'rotate-180': ''" class="ml-2 w-4 h-4 float-right right-0 relative" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                 </button>
                 <!-- Dropdown menu -->
-                <div id="dropdown" v-show="dropdownExport" class="absolute right-0 text-left ml-4 mt-3 z-10 bg-custom-gray divide-y divide-gray-100 shadow dark:bg-gray-700 block" data-popper-reference-hidden="" data-popper-escaped="" data-popper-placement="bottom" >
+                <div id="dropdown" v-show="dropdownContacts" @click="dropdownContacts = !dropdownContacts" class="absolute right-0 text-left ml-4 mt-3 z-10 bg-custom-gray divide-y divide-gray-100 shadow dark:bg-gray-700 block" data-popper-reference-hidden="" data-popper-escaped="" data-popper-placement="bottom" >
                     <ul class="py-1 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDefault">
                       <li>
                         <router-link :to="{name: 'employees'}" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium">
-                          <box-icon color="white" type='solid' name='help-circle'></box-icon>
+                          <box-icon color="white" type='solid' name='user'></box-icon>
                           <span class="ml-2">Employees</span>
                         </router-link>
-                        <router-link :to="{name: 'jobs'}" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium">
-                          <box-icon color="white" type='solid' name='help-circle'></box-icon>
-                          <span class="ml-2">Jobs</span>
-                        </router-link>
                         <router-link :to="{name: 'customers'}" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium">
-                          <box-icon color="white" type='solid' name='help-circle'></box-icon>
+                          <box-icon color="white" type='solid' name='user-detail'></box-icon>
                           <span class="ml-2">Customers</span>
-                        </router-link>
-                        <router-link :to="{name: 'invoices'}" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium">
-                          <box-icon color="white" type='solid' name='help-circle'></box-icon>
-                          <span class="ml-2">Invoices</span>
-                        </router-link>
-                        <router-link :to="{name: 'visitors'}" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium">
-                          <box-icon color="white" type='solid' name='help-circle'></box-icon>
-                          <span class="ml-2">Visitors</span>
-                        </router-link>
-                        <router-link :to="{name: 'pages'}" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium">
-                          <box-icon color="white" type='solid' name='help-circle'></box-icon>
-                          <span class="ml-2">Pages</span>
-                        </router-link>
-                        <router-link :to="{name: 'forms'}" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium">
-                          <box-icon color="white" type='solid' name='help-circle'></box-icon>
-                          <span class="ml-2">Forms</span>
-                        </router-link>
+                        </router-link>                        
                         <router-link :to="{name: 'users'}" v-if="userStore.user.role == 'admin'" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium">
-                          <box-icon color="white" type="solid" name='user-circle'></box-icon>
+                          <box-icon color="white" type="solid" name='user-account'></box-icon>
                           <span class="ml-2">Users</span>
                         </router-link>
                       </li>
                     </ul>
                 </div>
               </div>
+
+              <div class="relative" v-if="userStore.user.role == 'admin'">
+                <button @click="dropdownMarketing = !dropdownMarketing" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium relative" type="button">
+                  <box-icon color="white" class="mr-2" type="solid" name='store'></box-icon>
+                  Marketing 
+                  <svg :class="dropdownMarketing ? 'rotate-180': ''" class="ml-2 w-4 h-4 float-right right-0 relative" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                </button>
+                <!-- Dropdown menu -->
+                <div id="dropdown" v-show="dropdownMarketing" @click="dropdownMarketing = !dropdownMarketing" class="absolute right-0 text-left ml-4 mt-3 z-10 bg-custom-gray divide-y divide-gray-100 shadow dark:bg-gray-700 block" data-popper-reference-hidden="" data-popper-escaped="" data-popper-placement="bottom" >
+                    <ul class="py-1 min-w-[110px] text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDefault">
+                      <li> 
+                        <router-link :to="{name: 'visitors'}" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium">
+                          <box-icon color="white" type='solid' name='user-check'></box-icon>
+                          <span class="ml-2">Visitors</span>
+                        </router-link>
+                        <router-link :to="{name: 'pages'}" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium">
+                          <box-icon color="white" type='solid' name='book-content'></box-icon>
+                          <span class="ml-2">Pages</span>
+                        </router-link>
+                        <router-link :to="{name: 'forms'}" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium">
+                          <box-icon color="white" type='solid' name='book'></box-icon>
+                          <span class="ml-2">Forms</span>
+                        </router-link>
+                      </li>
+                    </ul>
+                </div>
+              </div>
+
+              <div class="relative" v-if="userStore.user.role == 'admin'">
+                <button @click="dropdownSales = !dropdownSales" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium relative" type="button">
+                  <box-icon color="white" class="mr-2" type="solid" name='cart-download'></box-icon>
+                  Sales
+                  <svg :class="dropdownSales ? 'rotate-180': ''" class="ml-2 w-4 h-4 float-right right-0 relative" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                </button>
+                <!-- Dropdown menu -->
+                <div id="dropdown" v-show="dropdownSales" @click="dropdownSales = !dropdownSales" class="absolute right-0 text-left ml-4 mt-3 z-10 bg-custom-gray divide-y divide-gray-100 shadow dark:bg-gray-700 block" data-popper-reference-hidden="" data-popper-escaped="" data-popper-placement="bottom" >
+                    <ul class="py-1 min-w-[110px] text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDefault">
+                      <li>
+                        <router-link :to="{name: 'jobs'}" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium">
+                          <box-icon color="white" type='solid' name='business'></box-icon>
+                          <span class="ml-2">Jobs</span>
+                        </router-link>
+                        <router-link :to="{name: 'invoices'}" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium">
+                          <box-icon color="white" type='solid' name='receipt'></box-icon>
+                          <span class="ml-2">Invoices</span>
+                        </router-link>
+                      </li>
+                    </ul>
+                </div>
+              </div>
+
+              <router-link :to="{name: 'settings'}" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium">
+                <box-icon color="white" type='solid' name='cog'></box-icon>
+                <span class="ml-2">Settings</span>
+              </router-link>
+
             </div>
           </div>
         </div>
@@ -244,17 +277,6 @@ onMounted(() => {
           Employees </router-link>
         <router-link :to="{name: 'users'}" v-if="userStore.user.role == 'admin'" disabled="false" class="text-white block px-3 py-2 rounded-md text-base font-medium">
           Users </router-link>
-        <div>
-          <button @click="dropdownExport = !dropdownExport" class="float-right w-44 flex text-white bg-gray-800 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-gray-300 dark:focus:ring-gray-800 shadow-lg shadow-gray-500/50 dark:shadow-lg dark:shadow-gray-800/80 font-medium rounded-lg text-sm px-2 py-2.5 text-center" type="button">Manage Employees<svg :class="dropdownExport ? 'rotate-180': ''" class="ml-2 w-4 h-4" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></button>
-          <!-- Dropdown menu -->
-          <div id="dropdown" v-show="dropdownExport" class="absolute right-0 text-left ml-4 mt-12 z-10 w-44 bg-white rounded divide-y divide-gray-100 shadow dark:bg-gray-700 block" data-popper-reference-hidden="" data-popper-escaped="" data-popper-placement="bottom" >
-              <ul class="py-1 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDefault">
-                <li>
-                  <router-link :to="{name: 'add-employee'}" class="block py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Add Employee</router-link>
-                </li>
-              </ul>
-          </div>
-        </div>
         <!-- <a disabled="false" href="#" class="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium">FAQ</a> -->
       </div>
 
