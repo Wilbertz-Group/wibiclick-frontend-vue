@@ -113,11 +113,7 @@ onMounted(() => {
             </a>
           </div>
           <div class="hidden md:block">
-            <div class="ml-10 flex items-center space-x-4">
-              <router-link :to="{name: 'dashboard'}" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium">
-                <box-icon type='solid' color="white" name='dashboard'></box-icon>
-                <span class="ml-2">Analytics</span>
-              </router-link>
+            <div class="ml-10 flex items-center space-x-4">              
               
               <div class="relative" v-if="userStore.user.role == 'admin'">
                 <button @click="dropdownContacts = !dropdownContacts" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium relative" type="button">
@@ -196,11 +192,10 @@ onMounted(() => {
                 </div>
               </div>
 
-              <router-link :to="{name: 'settings'}" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium">
-                <box-icon color="white" type='solid' name='cog'></box-icon>
-                <span class="ml-2">Settings</span>
+              <router-link :to="{name: 'dashboard'}" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium">
+                <box-icon type='solid' color="white" name='dashboard'></box-icon>
+                <span class="ml-2">Analytics</span>
               </router-link>
-
             </div>
           </div>
         </div>
@@ -214,7 +209,12 @@ onMounted(() => {
               </FormKit>
               <font-awesome-icon icon="far fa-arrow-alt-circle-down" class="downarrow absolute" />
             </div>
-            <p class="text-white text-sm">Hello, {{ userStore.user.firstName }} {{ userStore.user.lastName }}.</p>
+
+            <router-link :to="{name: 'settings'}" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium">
+              <box-icon color="white" type='solid' name='cog'></box-icon>
+            </router-link>
+
+            <!-- <p class="text-white text-sm">Hello, {{ userStore.user.firstName }} {{ userStore.user.lastName }}.</p> -->
 
             <!-- Profile dropdown -->
             <Menu as="div" class="ml-3 relative">

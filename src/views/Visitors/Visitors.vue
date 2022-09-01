@@ -169,7 +169,7 @@
   }
 
   const grid = new Grid().updateConfig({
-    columns: ['Page', 'Views', 'Clicks', 'Customer', 'Updated'],
+    columns: ['Page', 'Views', 'Clicks', 'Updated'],
     pagination: {
       enabled: true,
       limit: 5,
@@ -187,7 +187,7 @@
       headers: {'Authorization': `Bearer ${userStore.user.token}`},
       url: `https://wibi.wilbertzgroup.com/visitors/`,
       then: data => data.visitors.map(c => 
-        [ c.page.url, c.views, c.clicks, c.customer ? c.customer.name : '', c.updatedAt ? moment().isSame(c.updatedAt, 'day') ? moment(c.updatedAt).format('h:mm a') : moment(c.updatedAt).format('MMM DD, YYYY h:mm a') : '-']
+        [ c.page.url, c.views, c.clicks, c.updatedAt ? moment().isSame(c.updatedAt, 'day') ? moment(c.updatedAt).format('h:mm a') : moment(c.updatedAt).format('MMM DD, YYYY h:mm a') : '-']
       ),
       total: data => data.total
     },
