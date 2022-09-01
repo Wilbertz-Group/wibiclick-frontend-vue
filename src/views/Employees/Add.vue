@@ -4,7 +4,9 @@
   import { onMounted, ref } from "vue";
   import { useToast } from 'vue-toast-notification';
   import { useRouter, useRoute } from "vue-router";
+  import { useUserStore } from "@/stores/UserStore"
 
+  const userStore = useUserStore()
   const loading = ref(false)
   const modalOpen = ref(false)
   const toast = useToast();
@@ -13,7 +15,7 @@
   async function add(credentials) {
     try {
       loading.value = true
-      const response = await axios.post('add-employee', credentials);
+      const response = await axios.post('add-employee?id='+ userStore.currentWebsite, credentials);
       loading.value = false
       toast.success(response.data.message)
       router.push({ name: 'employees' })

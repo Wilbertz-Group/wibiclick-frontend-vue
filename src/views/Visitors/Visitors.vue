@@ -7,18 +7,172 @@
   import moment from 'moment'
   import "gridjs/dist/theme/mermaid.css";
   import ScaleLoader from 'vue-spinner/src/ScaleLoader.vue'
+  import axios from "axios";
+  import _ from 'lodash';
+  import { useToast } from 'vue-toast-notification';
 
-  const route = useRoute()
-  const router = useRouter()
-  const dropdownExport = ref(false)
   const userStore = useUserStore()
   const visitorsNode = ref(null)
+  const toast = useToast();
+  const loading = ref(false)
+  const options = ref()
+  const series = ref()
+
+  options.value = {
+    chart: {
+      height: 350,
+      type: 'bar'
+    },
+    dataLabels: {
+      enabled: false
+    },
+    stroke: {
+      curve: 'smooth'
+    },
+    xaxis: {
+      type: 'datetime',
+      labels: {
+      datetimeUTC: false
+    },
+      categories: []
+    },
+    tooltip: {
+      x: {
+        format: 'dd MMM yyyy'
+      },
+    },
+  },
+
+  series.value = [{
+      name: 'visitors',
+      data: []
+  }]
+
+  const groups = (() => {
+      const byDay = (item) => moment(item.x).format('MMM DD YYYY'),
+          byHour = (item) => moment(byDay(item) + ' ' + moment(item.x).format('hh a'), "dd MMM yyyy").toISOString(),
+          by6Hour = (item) => {
+              const m = moment(item.x);
+              return byDay(item) + ' ' + ['first', 'second', 'third', 'fourth'][Number(m.format('k')) % 6] + ' 6 hours';
+          },
+          byMonth = (item) => moment(item.x).format('MMM YYYY'),
+          byWeek = (item) => byMonth(item) + ' ' + moment(item.x).format('ww');
+      return {
+          byDay,
+          byHour,
+          by6Hour,
+          byMonth,
+          byWeek,
+      };
+  })();
+
+  async function fetchVisitors() {
+    try {
+      loading.value = true;
+      const response = await axios.get(
+        `visitors?id=${userStore.currentWebsite}&limit=1500&offset=0`
+      );
+
+      let visitorss = [];
+
+      for (const c of response.data.visitors) {
+        visitorss.push({
+          x: c.updatedAt,
+          y: 1,
+        });
+      }
+
+      const data = _.sortBy(visitorss, 'x')
+
+      const currentGroup = 'byDay';
+      const grouped = _.groupBy(data, groups[currentGroup])
+      const seriesData = Object.values(grouped).map( a => a.length )
+      const optionsData = Object.keys(grouped)
+          
+      options.value = {
+          chart: {
+            height: 350,
+            type: 'bar',
+            toolbar: {
+              autoSelected: "pan",
+              show: false
+            } 
+          },
+          dataLabels: {
+            enabled: false
+          },
+          stroke: {
+            curve: 'smooth'
+          },
+          xaxis: {
+            type: 'datetime',
+            labels: {
+              datetimeUTC: false
+            },
+            categories: optionsData,
+            labels: {
+              style: {
+                colors: '#FFFFFF'
+              }
+            }
+          },
+          yaxis: {
+            min: 0,
+            tickAmount: 4,
+            labels: {
+              style: {
+                colors: '#FFFFFF'
+              }
+            }
+          },
+          fill: {
+            gradient: {
+              enabled: true,
+              opacityFrom: 0.55,
+              opacityTo: 0
+            }
+          },
+          grid: {
+            borderColor: "#fff",
+            strokeDashArray: 2,
+            clipMarkers: false,
+            yaxis: {
+              lines: {
+                show: true
+              }
+            }
+          },
+          markers: {
+            size: 5,
+            colors: ["#ffffff"],
+            strokeColor: "#00BAEC",
+            strokeWidth: 3
+          },
+          tooltip: {
+            theme: "dark",
+            x: {
+              format: 'dd MMM yyyy'
+            },
+          },
+      }
+      series.value = [{
+        name: 'visitors',
+        data: seriesData
+      }]
+
+      loading.value = false;
+    } catch (error) {
+      console.log(error);
+      loading.value = false;
+      toast.error("Error getting visitors data")
+    }
+  }
 
   const grid = new Grid().updateConfig({
     columns: ['Page', 'Views', 'Clicks', 'Customer', 'Updated'],
     pagination: {
       enabled: true,
-      limit: 20,
+      limit: 5,
       server: {
         url: (prev, page, limit) => `${prev}?limit=${limit}&offset=${page * limit}&id=${userStore.currentWebsite}`
       }
@@ -50,17 +204,22 @@
     }
   })
 
+
   onMounted(() => {
-    grid.render(visitorsNode.value)
+    if(userStore.currentWebsite && userStore.user){
+      fetchVisitors()  
+      grid.render(visitorsNode.value)
+    }
   })
 
   watchEffect(() => {    
     if(userStore.currentWebsite){
       if(grid.callbacks == undefined){
-        grid.render(customersNode.value)
+        grid.render(visitorsNode.value)
       } else {
         grid.forceRender()
       }
+      fetchVisitors() 
     }
   })
 
@@ -85,9 +244,20 @@
           <div class="mt-3 md:col-span-2">
               <div class="shadow p-10 sm:rounded-md sm:overflow-hidden">
                   <div id="label"></div>
-                  <div ref="visitorsNode">
-                      
-                 </div>
+                  <div ref="visitorsNode"></div>
+                  <div class="text-center mt-10 mb-10 pb-6 pr-3 shadow-lg rounded-lg bg-blueGray-800">
+                    <div class="rounded-t mb-0 px-4 py-3 bg-transparent">
+                      <div class="flex flex-wrap items-center">
+                        <div class="relative w-full max-w-full flex-grow flex-1 text-left">
+                          <h6 class="uppercase mb-1 text-xs font-semibold text-blueGray-200">
+                            Overview
+                          </h6>
+                          <h2 class="text-xl font-semibold text-white">New Visitors</h2>
+                        </div>
+                      </div>
+                    </div>
+                    <apexchart type="bar" height="450" :options="options" :series="series"></apexchart>
+                  </div> 
               </div>
           </div>
         </div>

@@ -74,7 +74,7 @@ async function fetchJobs() {
   try {
     loading.value = true;
     const response = await axios.get(
-      `jobs?id=${userStore.currentWebsite}&employeeID=${route.query.employeeID}`
+      `jobs?id=${userStore.currentWebsite}&limit=1500&offset=0&employeeID=${route.query.employeeID}`
     );
 
     let jobs = [];

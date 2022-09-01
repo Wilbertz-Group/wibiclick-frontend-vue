@@ -70,7 +70,7 @@
     try {
       loading.value = true;
       const response = await axios.get(
-        `jobs?id=${userStore.currentWebsite}`
+        `jobs?id=${userStore.currentWebsite}&limit=1500&offset=0`
       );
 
       let jobss = [];
