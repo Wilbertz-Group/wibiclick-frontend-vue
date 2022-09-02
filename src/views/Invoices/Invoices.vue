@@ -2,7 +2,6 @@
 import Header from "@/components/Header.vue";
 import { useUserStore } from "@/stores/UserStore";
 import { onMounted, ref, reactive, watchEffect } from "vue";
-import { useRouter, useRoute } from "vue-router";
 import moment from "moment";
 
 import { AgGridVue } from "ag-grid-vue3";
@@ -10,22 +9,12 @@ import "ag-grid-community/styles/ag-grid.css"; // Core grid CSS, always needed
 import "ag-grid-community/styles/ag-theme-alpine.css"; // Optional theme CSS
 import Actions from "@/components/Actions.vue";
 
-const route = useRoute();
-const router = useRouter();
-const dropdownExport = ref(false);
 const userStore = useUserStore();
-const employeesNode = ref(null);
-
-const gridApi = ref(null); // Optional - for accessing Grid's API
-
-// Obtain API from grid's onGridReady event
+const gridApi = ref(null); 
 const onGridReady = (params) => {
   gridApi.value = params.api;
 };
-
-const rowData = reactive({}); // Set rowData to Array of Objects, one Object per Row
-
-// Each Column Definition results in one Column.
+const rowData = reactive({}); 
 const columnDefs = reactive({
   value: [
     { field: "make" }, 
@@ -33,25 +22,22 @@ const columnDefs = reactive({
     { 
       field: "price",
       cellRendererSelector: (p) => {
-            if (p.value === 320200) {
-              return {
-                component: Actions,
-                params: {},
-              };
-            }
-          },
+        if (p.value === 320200) {
+          return {
+            component: Actions,
+            params: {},
+          };
+        }
+      },
     },
     { field: "actions", cellRenderer: Actions }, 
   ],
 });
-
-// DefaultColDef sets props common to all Columns
 const defaultColDef = {
   sortable: true,
   filter: true,
   flex: 1,
 };
-
 const cellWasClicked = (event) => {
   console.log("cell was clicked", event);
 };

@@ -124,15 +124,15 @@ onMounted(() => {
                 <!-- Dropdown menu -->
                 <div id="dropdown" v-show="dropdownContacts" @click="dropdownContacts = !dropdownContacts" class="absolute right-0 text-left ml-4 mt-3 z-10 bg-custom-gray divide-y divide-gray-100 shadow dark:bg-gray-700 block" data-popper-reference-hidden="" data-popper-escaped="" data-popper-placement="bottom" >
                     <ul class="py-1 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDefault">
-                      <li>
-                        <router-link :to="{name: 'employees'}" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium">
-                          <box-icon color="white" type='solid' name='user'></box-icon>
-                          <span class="ml-2">Employees</span>
-                        </router-link>
+                      <li>                        
                         <router-link :to="{name: 'customers'}" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium">
                           <box-icon color="white" type='solid' name='user-detail'></box-icon>
                           <span class="ml-2">Customers</span>
-                        </router-link>                        
+                        </router-link>  
+                        <router-link :to="{name: 'employees'}" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium">
+                          <box-icon color="white" type='solid' name='user'></box-icon>
+                          <span class="ml-2">Employees</span>
+                        </router-link>                      
                         <router-link :to="{name: 'users'}" v-if="userStore.user.role == 'admin'" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium">
                           <box-icon color="white" type="solid" name='user-account'></box-icon>
                           <span class="ml-2">Users</span>

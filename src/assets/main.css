@@ -1085,3 +1085,77 @@ pre {
 }
 
 /* End Timeline */
+
+/* Start Tables */
+
+table.gridjs-table {
+  border-collapse: collapse;
+  margin: 25px 2%;
+  max-width: 96%;
+  font-size: 0.9em;
+  font-family: sans-serif;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+}
+
+.ag-theme-alpine {
+  border-collapse: collapse;
+  margin: 25px 0;
+  width: 100%;
+  font-size: 0.9em;
+  font-family: sans-serif;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+}
+
+.gridjs-thead tr.gridjs-tr, .ag-header {
+  background-color: #212939;
+  color: #ffffff;
+  text-align: left;
+}
+
+.ag-theme-alpine .ag-header-row, .ag-header-icon {
+  color: #ffffff;
+  opacity: 1;
+}
+
+th,
+td.gridjs-td {
+    padding: 12px 15px;
+}
+
+.gridjs-tbody .gridjs-tr {
+  border-bottom: none;
+}
+
+td.gridjs-td {
+  background-color: initial;
+}
+
+button.gridjs-sort-neutral {
+  opacity: 1;
+  filter: invert(100%);
+  -webkit-filter: invert(100%);
+}
+
+th.gridjs-th {
+  color: white;
+  background-color: initial;
+}
+
+th.gridjs-th-sort:hover {
+  background-color: #0e1c37;
+}
+
+.gridjs-tr:nth-of-type(even) {
+  background-color: #f3f3f3;
+}
+
+.gridjs-tbody .gridjs-tr:last-of-type, .ag-root-wrapper {
+  border-bottom: 3px solid #212939;
+}
+
+.gridjs-tbody .gridjs-tr.active-row {
+  font-weight: bold;
+  color: #212939;
+}
+
+/* End Tables */

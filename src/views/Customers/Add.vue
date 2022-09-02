@@ -62,7 +62,7 @@
 
                     <div class="double">
                       <FormKit type="text" name="portal" label="Portal" placeholder="Cape Town" outer-class="text-left"  />
-                      <FormKit type="text" name="vid" label="Hubspot ID" placeholder="Cape Town" outer-class="text-left"  />
+                      <FormKit type="text" name="foreignID" label="Hubspot ID" placeholder="Cape Town" outer-class="text-left"  />
                     </div>
 
                     <FormKit type="textarea" name="Message" label="Issue" placeholder="HVAC & Appliance Technician" outer-class="text-left"  />
