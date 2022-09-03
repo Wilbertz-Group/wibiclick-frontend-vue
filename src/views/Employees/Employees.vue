@@ -6,7 +6,7 @@
   import moment from 'moment'
   import _ from 'lodash';
   import { useToast } from 'vue-toast-notification';
-  import ScaleLoader from 'vue-spinner/src/ScaleLoader.vue'
+  import ScaleLoader from 'vue-spinner/src/ScaleLoader.vue' 
 
   import { AgGridVue } from "ag-grid-vue3";
   import "ag-grid-community/styles/ag-grid.css"; // Core grid CSS, always needed

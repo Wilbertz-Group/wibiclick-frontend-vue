@@ -18,7 +18,7 @@
       const response = await axios.post('add-customer?id='+ userStore.currentWebsite, {data: credentials});
       loading.value = false
       toast.success("Customer added successfully")
-      router.push({ name: 'customers' })
+      router.push({ name: 'contacts' })
     } catch (error) {
       console.log(error)
       loading.value = false

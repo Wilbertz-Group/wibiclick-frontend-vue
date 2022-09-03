@@ -13,7 +13,7 @@ import { computed } from "@vue/reactivity";
   const router = useRouter()  
   const employees = ref({})
   const customers = ref({})
-  const dbCustomers = ref()
+  const dbContacts = ref()
   const phone = ref('phone')
   const address = ref('address')
   const name = ref('name')
@@ -48,14 +48,14 @@ import { computed } from "@vue/reactivity";
     }
   }
 
-  async function getCustomers() {
+  async function getContacts() {
     try {
       loading.value = true
-      const response = await axios.get('customers?id='+ userStore.currentWebsite);
+      const response = await axios.get('customers?id='+ userStore.currentWebsite+'&filter=jobs');
       let b = {}
       response.data.customers ? response.data.customers.map(e => { b[e.id] = e.name}) : ''
       customers.value = b
-      dbCustomers.value = response.data.customers
+      dbContacts.value = response.data.customers
       loading.value = false
     } catch (error) {
       console.log(error)
@@ -76,12 +76,12 @@ import { computed } from "@vue/reactivity";
     }
   }
 
-  const selectedCustomer = computed(() => dbCustomers.value ? dbCustomers.value.filter(e => { return e.id == customer.value })[0] : '')
+  const selectedCustomer = computed(() => dbContacts.value ? dbContacts.value.filter(e => { return e.id == customer.value })[0] : '')
 
   onMounted(()=>{
     if(userStore.currentWebsite){
       getEmployees()
-      getCustomers()
+      getContacts()
     }
   })
 

@@ -128,7 +128,7 @@
 <template>
   <Header title="Users" /> 
   <scale-loader :loading="loading" color="#23293b" height="50px" class="vld-overlay is-active is-full-page" width="6px"></scale-loader>
-  <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+  <div class="mx-auto py-6 sm:px-6 lg:px-8">
     <div class="px-4 py-6 sm:px-0">
       <div>
         <div class="">

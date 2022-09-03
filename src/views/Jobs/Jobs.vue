@@ -2,21 +2,39 @@
   import axios from "axios";
   import Header from "@/components/Header.vue";  
   import { useUserStore } from "@/stores/UserStore"
-  import { onMounted, ref, watchEffect } from "vue";
-  import { Grid, h } from "gridjs";
+  import { onMounted, ref, reactive, watchEffect } from "vue";
   import moment from 'moment'
   import _ from 'lodash';
-  import "gridjs/dist/theme/mermaid.css";
   import { useToast } from 'vue-toast-notification';
   import ScaleLoader from 'vue-spinner/src/ScaleLoader.vue'
 
+  import { AgGridVue } from "ag-grid-vue3";
+  import "ag-grid-community/styles/ag-grid.css"; // Core grid CSS, always needed
+  import "ag-grid-community/styles/ag-theme-alpine.css"; // Optional theme CSS
+  import Edit from "@/components/Edit.vue";
+  import Whatsapp from "@/components/jobs/Whatsapp.vue";
+  import Status from "@/components/jobs/Status.vue";
+
   const userStore = useUserStore()
-  const jobsNode = ref(null)
-  const jobs = ref()
   const toast = useToast();
   const loading = ref(false)
   const options = ref()
   const series = ref()
+
+  const employees = ref({})
+  const selectedJob = ref(null)
+  const paginationPageSize = ref(12)
+  const modalOpen = ref(false)
+  const status = ref([ 
+    'quoting', 
+    'quoted', 
+    'no parts', 
+    'accepted', 
+    'scheduled',
+    'cancelled',
+    'pending',
+    'done'    
+  ])
 
   options.value = {
     chart: {
@@ -72,6 +90,8 @@
       const response = await axios.get(
         `jobs?id=${userStore.currentWebsite}&limit=1500&offset=0`
       );
+
+      rowData.value = response.data.jobs
 
       let jobss = [];
 
@@ -168,80 +188,113 @@
     }
   }
 
-  const grid = new Grid().updateConfig({
-    columns: ['Name', 'Issue', 'Location', 'Technician', 'Status', { 
-        name: 'Send To',
-        formatter: (cell, row) => {
-          return h('button', {
-            className: 'font-bold text-green-600 dark:text-green-800 hover:underline',
-            onClick: async () => {
-              let job = jobs.value.filter(a => a.id == row.cells[6].data)[0]
-              let data = {}
+  const gridApi = ref(null); 
+  const onGridReady = (params) => {
+    gridApi.value = params.api;
+  };
+  const rowData = reactive({}); 
 
-              data.name = job.name
-              data.callout = job.callout
-              data.slotStart = job.slotStart
-              data.address = job.address
-              data.issue = job.issue
-              data.employeeId = job.employee.id
-              data.employeePhone = job.employee.phone
-              data.location = job.location
-              data.phone = job.phone
-              data.slotTime = job.slotTime
+  const dateFormatter = (params) => {
+    return params.value ? moment().isSame(params.value, 'day') ? moment(params.value).format('h:mm a') : moment(params.value).format('MMM DD, YYYY h:mm a') : '-';
+  }
 
-              let b = await axios.post('send-whatsapp', data);
-              toast.success(b.data)
-            }
-          }, 'Whatsapp');
+  const nameFormatter = (params) => {
+    return  params.data.employee.firstName + ' ' + params.data.employee.lastName
+  }
+
+  const columnDefs = reactive({
+    value: [
+      { field: "name", maxWidth: 130 }, 
+      { field: "issue" }, 
+      { field: "location", maxWidth: 170 }, 
+      { field: "employee", maxWidth: 130, valueFormatter: nameFormatter }, 
+      { field: "jobStatus", maxWidth: 130, cellRendererSelector: params => {
+          return {
+              component: Status,
+              params
+          };
         }
-      }, 'Scheduled Date'],
-    pagination: {
-      enabled: true,
-      limit: 5,
-      server: {
-        url: (prev, page, limit) => `${prev}?limit=${limit}&offset=${page * limit}&id=${userStore.currentWebsite}`
-      }
-    },
-    search: true,
-    server: {
-      headers: {'Authorization': `Bearer ${userStore.user.token}`},
-      url: `https://wibi.wilbertzgroup.com/jobs/`,
-      then: data => {
-        jobs.value = data.jobs;
-        let jobsData = data.jobs.sort((a, b) => new Date(a.slotStart) - new Date(b.slotStart)).reverse();
-        return jobsData.map(c => 
-        [c.name, c.issue, c.location, c.employee.firstName + ' ' + c.employee.lastName, c.jobStatus, c.id, c.slotStart ? moment().isSame(c.slotStart, 'day') ? moment(c.slotStart).format('h:mm a') : moment(c.slotStart).format('DD MMM: h:mma') : '-']
-      )},
-      total: data => data.total
-    },
-    language: {
-      'search': {
-        'placeholder': '🔍 Search name, location...'
+      },  
+      { field: "slotStart", maxWidth: 200, valueFormatter: dateFormatter },
+      { 
+        field: "Edit", 
+        headerName: 'Edit',
+        maxWidth: 80,
+        cellRendererSelector: params => {
+          return {
+              component: Edit,
+              params
+          };
+        } 
       },
-      'pagination': {
-        'previous': '⬅️',
-        'next': '➡️',
-        'showing': 'Displaying',
-        'results': () => 'Jobs'
-      }
+      { 
+        field: "id", 
+        headerName: "Notify", 
+        maxWidth: 100,
+        cellRendererSelector: params => {
+          return {
+              component: Whatsapp,
+              params
+          };
+        }  
+      },  
+    ],
+  });
+
+  const defaultColDef = {
+    sortable: true,
+    filter: true,
+    flex: 1,
+  }
+
+  async function update(credentials) {
+    try {
+      loading.value = true
+      const response = await axios.post('add-job?id='+ userStore.currentWebsite, credentials);
+      loading.value = false
+      modalOpen.value = false
+      fetchJobs() 
+      toast.success("Successfully updated job details")
+    } catch (error) {
+      console.log(error)
+      loading.value = false
     }
-  })
+  }
+
+  const toggleEditModal = (event) => {
+    if( event.value === undefined ){
+      let data = event.data
+      data.slotStart = moment(data.slotStart).format('YYYY-MM-DDTHH:MM')
+      selectedJob.value = data      
+      modalOpen.value = !modalOpen.value
+    } 
+  }
+
+  async function getEmployees() {
+    try {
+      loading.value = true
+      const response = await axios.get('employees?id='+ userStore.currentWebsite);
+      let b = {}
+      response.data.employees ? response.data.employees.map(e => { b[e.id] = e.firstName + ' ' + e.lastName }) : ''
+      employees.value = b
+      loading.value = false
+    } catch (error) {
+      console.log(error)
+      loading.value = false
+    }
+  }
 
   onMounted(() => {
     if(userStore.currentWebsite && userStore.user){
       fetchJobs()  
-      grid.render(jobsNode.value)
+      getEmployees()
     }
   })
 
   watchEffect(() => {    
     if(userStore.currentWebsite){
-      if(grid.callbacks == undefined){
-        grid.render(jobsNode.value)
-      } else {
-        grid.forceRender()
-      }
-      fetchJobs() 
+      fetchJobs()  
+      getEmployees()
     }
   })
 
@@ -256,19 +309,34 @@
       <div>
         <div class="">
           <div class="md:col-span-1">
-            <div class="grid gap-3 text-right lg:grid-cols-3 md:grid-cols-2 sm:grid-cols-1">
-              <div></div>
-              <div class="relative text-right"></div>
-              <div class="relative text-right">
-                 <router-link :to="{name: 'add-job'}" class="text-white bg-gray-800 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-gray-300 dark:focus:ring-gray-800 shadow-lg shadow-gray-500/50 dark:shadow-lg dark:shadow-gray-800/80 font-medium rounded-lg text-sm px-5 py-2.5 text-center mb-5">Add Job</router-link>                
-              </div>                   
-
-            </div>   
+               
           </div>
-          <div class="mt-3 md:col-span-2 px-5">
-              <div v-if="userStore.currentWebsite" class="sm:overflow-hidden">
-                <div id="label"></div>
-                <div ref="jobsNode"></div>
+          <div class="mt-3 md:col-span-2">
+              <div v-if="userStore.currentWebsite" class="shadow p-10 sm:rounded-md sm:overflow-hidden">
+
+                <div class="grid gap-3 text-right lg:grid-cols-3 md:grid-cols-2 sm:grid-cols-1">
+                  <div><h2 class="text-xl font-semibold text-left">All Jobs</h2> </div>
+                  <div class="relative text-right"></div>
+                  <div class="relative text-right">
+                    <router-link :to="{name: 'add-job'}" class="text-white bg-gray-800 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-gray-300 dark:focus:ring-gray-800 shadow-lg shadow-gray-500/50 dark:shadow-lg dark:shadow-gray-800/80 font-medium rounded-lg text-sm px-5 py-2.5 text-center mb-5">Add Job</router-link> 
+                  </div>
+                </div> 
+
+                <ag-grid-vue
+                    class="ag-theme-alpine"
+                    style="height: 605px"
+                    :columnDefs="columnDefs.value"
+                    :rowData="rowData.value"
+                    :defaultColDef="defaultColDef"
+                    :pagination="true"
+                    :paginationPageSize="paginationPageSize"
+                    rowSelection="multiple"
+                    animateRows="true"
+                    @grid-ready="onGridReady"
+                    @cell-clicked="toggleEditModal"
+                  >
+                </ag-grid-vue>
+
                 <div class="text-center mt-10 mb-10 pb-6 pr-3 shadow-lg rounded-lg bg-blueGray-800">
                   <div class="rounded-t mb-0 px-4 py-3 bg-transparent">
                     <div class="flex flex-wrap items-center">
@@ -296,5 +364,69 @@
 
     </div>
   </div>
+
+  <div id="modalOpen" tabindex="-1" :class="{ flex: modalOpen, hidden: !modalOpen }" class="overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 w-full md:inset-0 h-modal md:h-full justify-center items-center">
+    <div class="relative p-4 w-full max-w-2xl h-full md:h-auto">
+      <!-- Modal content -->
+      <div class="relative bg-white rounded-lg shadow dark:bg-gray-700">
+        <!-- Modal header -->
+        <div class="flex justify-between items-start p-4 rounded-t border-b dark:border-gray-600">
+          <h3 class="text-xl font-semibold text-gray-900 dark:text-white">
+            Update Job Details
+          </h3>
+          <button ref="closeDefaultModal" type="button"
+            class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center dark:hover:bg-gray-600 dark:hover:text-white"
+            @click="modalOpen = false">
+            <svg aria-hidden="true" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"
+              xmlns="http://www.w3.org/2000/svg">
+              <path fill-rule="evenodd"
+                d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                clip-rule="evenodd"></path>
+            </svg>
+            <span class="sr-only">Close modal</span>
+          </button>
+        </div>
+        <!-- Modal body -->
+        <div class="p-6 space-y-6">
+          <FormKit type="form" id="job" submit-label="Add" @submit="update" :actions="false" #default="{ value }">
+            <div class="double">                
+              <FormKit type="text" v-model="selectedJob.name" :value="name" name="name" label="Customer Name" placeholder="Customer Name" outer-class="text-left"  />                     
+              <FormKit type="select" v-model="selectedJob.jobStatus" label="Job Status" name="jobStatus" :options="status" placeholder="Job Status" outer-class="text-left"  />
+            </div>
+
+            <div class="double">
+              <FormKit type="text" v-model="selectedJob.callout" name="callout" label="Callout Fee" placeholder="Callout Fee" value="R300" outer-class="text-left"  />
+              <FormKit type="text" v-model="selectedJob.location" name="location" label="Location" placeholder="Location" outer-class="text-left"  />            
+            </div>
+
+            <div class="double">
+              <FormKit type="text" v-model="selectedJob.address" :value="address" name="address" label="Customer address" placeholder="Customer address" outer-class="text-left"  />
+              <FormKit type="tel" v-model="selectedJob.phone" :value="phone" name="phone" label="Customer Phone" placeholder="021 000 0000" outer-class="text-left" validation="required|phone" />
+            </div>                    
+
+            <div class="double">
+              <FormKit type="datetime-local" v-model="selectedJob.slotStart" name="slotStart" label="Job Start Date" placeholder="Job Start" outer-class="text-left"  />
+              <FormKit type="select" v-model="selectedJob.slotTime" name="slotTime" label="Job Duration" :options="['1hr', '2hrs', '3hrs', '4hrs']" />
+            </div>
+
+            <FormKit type="radio" v-model="selectedJob.employee.id" name="employeeId" label="Employee" :options="employees" />
+
+            <FormKit type="textarea" v-model="selectedJob.issue" :value="issue" name="issue" label="Issue" placeholder="Issue" outer-class="text-left"  />
+
+            <FormKit type="checkbox" label="Notify Employee" name="notify" outer-class="text-left" />
+
+            <FormKit type="hidden" v-model="selectedJob.customer.id" name="customerId" />
+
+            <FormKit type="hidden" v-model="selectedJob.id" name="id" />
+
+            <FormKit type="submit" label="Update job" />
+
+          </FormKit>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div v-if="modalOpen" class="bg-gray-900 bg-opacity-50 dark:bg-opacity-80 fixed inset-0 z-40"></div>
 
 </template>

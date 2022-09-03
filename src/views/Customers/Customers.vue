@@ -15,7 +15,7 @@
   import Hubspot from "@/components/customers/Hubspot.vue";
 
   const userStore = useUserStore()
-  const selectedCustomer = ref(null)
+  const selectedContact = ref(null)
   const toast = useToast();
   const loading = ref(false)
   const options = ref()
@@ -121,7 +121,7 @@
     flex: 1,
   };
 
-  async function fetchCustomers() {
+  async function fetchContacts() {
     try {
       loading.value = true;
       const response = await axios.get(
@@ -232,7 +232,7 @@
       loading.value = false
       toast.success(data)
       modalOpen.value = !modalOpen.value
-      fetchCustomers()
+      fetchContacts()
     } catch (error) {
       console.log(error)
       loading.value = false
@@ -241,27 +241,27 @@
 
   const toggleEditModal = (event) => {
     if( event.value === undefined ){
-      selectedCustomer.value = event.data
+      selectedContact.value = event.data
       modalOpen.value = !modalOpen.value
     } 
   }
 
   onMounted(() => {
     if(userStore.currentWebsite && userStore.user){
-      fetchCustomers()  
+      fetchContacts()  
     }
   })
 
   watchEffect(() => {    
     if(userStore.currentWebsite){
-      fetchCustomers() 
+      fetchContacts() 
     }
   })
 
 </script>
 
 <template>
-  <Header title="Customers" /> 
+  <Header title="Contacts" /> 
   <div class=" mx-auto py-6 sm:px-6 lg:px-8">
     <div class="px-4 py-6 sm:px-0">
       <div>
@@ -273,10 +273,10 @@
              
               <div class="shadow p-10 sm:rounded-md sm:overflow-hidden">
                   <div class="grid gap-3 text-right lg:grid-cols-3 md:grid-cols-2 sm:grid-cols-1">
-                    <div><h2 class="text-xl font-semibold text-left">Recent Customers</h2> </div>
+                    <div><h2 class="text-xl font-semibold text-left">Recent Contacts</h2> </div>
                     <div class="relative text-right"></div>
                     <div class="relative text-right">
-                      <router-link :to="{name: 'add-customer'}" class="text-white bg-gray-800 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-gray-300 dark:focus:ring-gray-800 shadow-lg shadow-gray-500/50 dark:shadow-lg dark:shadow-gray-800/80 font-medium rounded-lg text-sm px-5 py-2.5 text-center">Add Customer</router-link>                
+                      <router-link :to="{name: 'add-customer'}" class="text-white bg-gray-800 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-gray-300 dark:focus:ring-gray-800 shadow-lg shadow-gray-500/50 dark:shadow-lg dark:shadow-gray-800/80 font-medium rounded-lg text-sm px-5 py-2.5 text-center">Add Contact</router-link>                
                     </div>                   
 
                   </div>  
@@ -301,7 +301,7 @@
                           <h6 class="uppercase mb-1 text-xs font-semibold text-blueGray-200">
                             Overview
                           </h6>
-                          <h2 class="text-xl font-semibold text-white">New Customers</h2>
+                          <h2 class="text-xl font-semibold text-white">New Contacts</h2>
                         </div>
                       </div>
                     </div>
@@ -330,7 +330,7 @@
         <!-- Modal header -->
         <div class="flex justify-between items-start p-4 rounded-t border-b dark:border-gray-600">
           <h3 class="text-xl font-semibold text-gray-900 dark:text-white">
-            Update Customer Details
+            Update Contact Details
           </h3>
           <button ref="closeDefaultModal" type="button"
             class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center dark:hover:bg-gray-600 dark:hover:text-white"
@@ -349,23 +349,23 @@
           <FormKit type="form" id="customer" submit-label="Add" @submit="update" :actions="false" #default="{ value }">
 
             <div class="double">
-              <FormKit type="text" v-model="selectedCustomer.name" name="name" label="Full Name" placeholder="Jane" outer-class="text-left"  />
-              <FormKit type="select" v-model="selectedCustomer.channel" name="Reply" label="Reply" :options="[ 'Reply me by Email', 'Send me a message on Whatsapp', 'Use any of the above' ]"  />   
+              <FormKit type="text" v-model="selectedContact.name" name="name" label="Full Name" placeholder="Jane" outer-class="text-left"  />
+              <FormKit type="select" v-model="selectedContact.channel" name="Reply" label="Reply" :options="[ 'Reply me by Email', 'Send me a message on Whatsapp', 'Use any of the above' ]"  />   
             </div>
 
             <div class="double">
-              <FormKit type="email" v-model="selectedCustomer.email" name="Email" label="Email" placeholder="jane@company.com" outer-class="text-left" />
-              <FormKit type="tel" v-model="selectedCustomer.phone" name="Phone" label="Phone" placeholder="0210002314" outer-class="text-left" validation="required|phone" />
+              <FormKit type="email" v-model="selectedContact.email" name="Email" label="Email" placeholder="jane@company.com" outer-class="text-left" />
+              <FormKit type="tel" v-model="selectedContact.phone" name="Phone" label="Phone" placeholder="0210002314" outer-class="text-left" validation="required|phone" />
             </div>
 
             <div class="double">
-              <FormKit type="text" v-model="selectedCustomer.portal" name="portal" label="Portal" placeholder="Cape Town" outer-class="text-left"  />
-              <FormKit type="text" v-model="selectedCustomer.foreignID" name="foreignID" label="Hubspot ID" placeholder="Cape Town" outer-class="text-left"  />
+              <FormKit type="text" v-model="selectedContact.portal" name="portal" label="Portal" placeholder="Cape Town" outer-class="text-left"  />
+              <FormKit type="text" v-model="selectedContact.foreignID" name="foreignID" label="Hubspot ID" placeholder="Cape Town" outer-class="text-left"  />
             </div>
 
-            <FormKit type="textarea" v-model="selectedCustomer.message" name="Message" label="Issue" placeholder="HVAC & Appliance Technician" outer-class="text-left"  />
+            <FormKit type="textarea" v-model="selectedContact.message" name="Message" label="Issue" placeholder="HVAC & Appliance Technician" outer-class="text-left"  />
 
-            <FormKit type="submit" label="Update Customer" />
+            <FormKit type="submit" label="Update Contact" />
 
           </FormKit>
         </div>

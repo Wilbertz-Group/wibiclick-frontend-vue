@@ -107,8 +107,8 @@ const router = createRouter({
       component: AddJobs
     },
     {
-      path: '/customers',
-      name: 'customers',
+      path: '/contacts',
+      name: 'contacts',
       component: Customers
     },
     {
