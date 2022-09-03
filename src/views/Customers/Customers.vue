@@ -102,7 +102,7 @@
         } 
       },
       { 
-        field: "hubspotLink", 
+        field: "foreignID", 
         headerName: "View", 
         maxWidth: 90,
         cellRendererSelector: params => {
