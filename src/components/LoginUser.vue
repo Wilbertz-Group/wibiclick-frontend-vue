@@ -34,7 +34,6 @@
   <FormKit
       type="form"
       id="registration"
-      :form-class="submitted ? 'hide' : 'show'"
       submit-label="Login"
       @submit="login"
       :actions="false"
