@@ -346,7 +346,7 @@
         </div>
         <!-- Modal body -->
         <div class="p-6 space-y-6">
-          <FormKit type="form" id="customer" submit-label="Add" @submit="update" :actions="false" #default="{ value }">
+          <FormKit type="form" v-if="selectedContact" id="customer" submit-label="Add" @submit="update" :actions="false" #default="{ value }">
 
             <div class="double">
               <FormKit type="text" v-model="selectedContact.name" name="name" label="Full Name" placeholder="Jane" outer-class="text-left"  />
