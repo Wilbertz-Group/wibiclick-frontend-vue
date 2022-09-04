@@ -117,7 +117,7 @@ onMounted(() => {
               
               <div class="relative" v-if="userStore.user.role == 'admin'">
                 <button @click="dropdownContacts = !dropdownContacts" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium relative" type="button">
-                  <box-icon color="white" class="mr-2" type="solid" name='user-circle'></box-icon>
+                  <!-- <box-icon color="white" class="mr-2" type="solid" name='user-circle'></box-icon> -->
                   Contacts 
                   <svg :class="dropdownContacts ? 'rotate-180': ''" class="ml-2 w-4 h-4 float-right right-0 relative" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                 </button>
@@ -126,15 +126,15 @@ onMounted(() => {
                     <ul class="py-1 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDefault">
                       <li>                        
                         <router-link :to="{name: 'contacts'}" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium">
-                          <box-icon color="white" type='solid' name='user-detail'></box-icon>
+                          <!-- <box-icon color="white" type='solid' name='user-detail'></box-icon> -->
                           <span class="ml-2">Contacts</span>
                         </router-link>  
                         <router-link :to="{name: 'employees'}" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium">
-                          <box-icon color="white" type='solid' name='user'></box-icon>
+                          <!-- <box-icon color="white" type='solid' name='user'></box-icon> -->
                           <span class="ml-2">Employees</span>
                         </router-link>                      
                         <router-link :to="{name: 'users'}" v-if="userStore.user.role == 'admin'" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium">
-                          <box-icon color="white" type="solid" name='user-account'></box-icon>
+                          <!-- <box-icon color="white" type="solid" name='user-account'></box-icon> -->
                           <span class="ml-2">Users</span>
                         </router-link>
                       </li>
@@ -144,7 +144,7 @@ onMounted(() => {
 
               <div class="relative" v-if="userStore.user.role == 'admin'">
                 <button @click="dropdownMarketing = !dropdownMarketing" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium relative" type="button">
-                  <box-icon color="white" class="mr-2" type="solid" name='store'></box-icon>
+                  <!-- <box-icon color="white" class="mr-2" type="solid" name='store'></box-icon> -->
                   Marketing 
                   <svg :class="dropdownMarketing ? 'rotate-180': ''" class="ml-2 w-4 h-4 float-right right-0 relative" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                 </button>
@@ -153,15 +153,15 @@ onMounted(() => {
                     <ul class="py-1 min-w-[110px] text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDefault">
                       <li> 
                         <router-link :to="{name: 'visitors'}" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium">
-                          <box-icon color="white" type='solid' name='user-check'></box-icon>
+                          <!-- <box-icon color="white" type='solid' name='user-check'></box-icon> -->
                           <span class="ml-2">Visitors</span>
                         </router-link>
                         <router-link :to="{name: 'pages'}" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium">
-                          <box-icon color="white" type='solid' name='book-content'></box-icon>
+                          <!-- <box-icon color="white" type='solid' name='book-content'></box-icon> -->
                           <span class="ml-2">Pages</span>
                         </router-link>
                         <router-link :to="{name: 'forms'}" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium">
-                          <box-icon color="white" type='solid' name='book'></box-icon>
+                          <!-- <box-icon color="white" type='solid' name='book'></box-icon> -->
                           <span class="ml-2">Forms</span>
                         </router-link>
                       </li>
@@ -171,7 +171,7 @@ onMounted(() => {
 
               <div class="relative" v-if="userStore.user.role == 'admin'">
                 <button @click="dropdownSales = !dropdownSales" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium relative" type="button">
-                  <box-icon color="white" class="mr-2" type="solid" name='cart-download'></box-icon>
+                  <!-- <box-icon color="white" class="mr-2" type="solid" name='cart-download'></box-icon> -->
                   Sales
                   <svg :class="dropdownSales ? 'rotate-180': ''" class="ml-2 w-4 h-4 float-right right-0 relative" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                 </button>
@@ -180,11 +180,11 @@ onMounted(() => {
                     <ul class="py-1 min-w-[110px] text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDefault">
                       <li>
                         <router-link :to="{name: 'jobs'}" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium">
-                          <box-icon color="white" type='solid' name='business'></box-icon>
+                          <!-- <box-icon color="white" type='solid' name='business'></box-icon> -->
                           <span class="ml-2">Jobs</span>
                         </router-link>
                         <router-link :to="{name: 'invoices'}" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium">
-                          <box-icon color="white" type='solid' name='receipt'></box-icon>
+                          <!-- <box-icon color="white" type='solid' name='receipt'></box-icon> -->
                           <span class="ml-2">Invoices</span>
                         </router-link>
                       </li>
@@ -193,7 +193,7 @@ onMounted(() => {
               </div>
 
               <router-link :to="{name: 'dashboard'}" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium">
-                <box-icon type='solid' color="white" name='dashboard'></box-icon>
+                <!-- <box-icon type='solid' color="white" name='dashboard'></box-icon> -->
                 <span class="ml-2">Analytics</span>
               </router-link>
             </div>
@@ -201,8 +201,8 @@ onMounted(() => {
         </div>
         <div class="hidden md:block">
           <div class="ml-4 flex items-center md:ml-6">
-            <box-icon @click="addModal = true" type='solid' name='plus-circle'
-              class="text-white cursor-pointer mx-2 h-6 w-6 rounded-full bg-white"></box-icon>
+            <!-- <box-icon @click="addModal = true" type='solid' name='plus-circle'
+              class="text-white cursor-pointer mx-2 h-6 w-6 rounded-full bg-white"></box-icon> -->
             <div class="relative">
               <FormKit type="select" name="website" placeholder="select website" inner-class="selectClass"
                 v-model="selectedWebsite" :options="opt">
@@ -211,7 +211,7 @@ onMounted(() => {
             </div>
 
             <router-link :to="{name: 'settings'}" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium">
-              <box-icon color="white" type='solid' name='cog'></box-icon>
+              <!-- <box-icon color="white" type='solid' name='cog'></box-icon> -->
             </router-link>
 
             <!-- <p class="text-white text-sm">Hello, {{ userStore.user.firstName }} {{ userStore.user.lastName }}.</p> -->
@@ -281,8 +281,8 @@ onMounted(() => {
       </div>
 
       <div class="pt-4 pb-3 border-t border-gray-700">
-        <box-icon @click="addModal = true" type='solid' name='plus-circle'
-          class="text-white cursor-pointer mx-2 h-6 w-6 rounded-full bg-white"></box-icon>
+        <!-- <box-icon @click="addModal = true" type='solid' name='plus-circle'
+          class="text-white cursor-pointer mx-2 h-6 w-6 rounded-full bg-white"></box-icon> -->
         <div class="relative flex items-center px-5 pb-6">
           <FormKit type="select" name="website" placeholder="select website" inner-class="selectClass"
             v-model="selectedWebsite" :options="opt">

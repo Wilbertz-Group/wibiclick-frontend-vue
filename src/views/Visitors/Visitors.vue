@@ -1,17 +1,19 @@
 <script setup>
   import Header from "@/components/Header.vue";  
   import { useUserStore } from "@/stores/UserStore"
-  import { onMounted, ref, watchEffect } from "vue";
-  import { useRouter, useRoute } from "vue-router";
-  import { Grid, h } from "gridjs";
+  import { onMounted, ref, reactive, watchEffect } from "vue";
   import moment from 'moment'
-  import "gridjs/dist/theme/mermaid.css";
-  import ScaleLoader from 'vue-spinner/src/ScaleLoader.vue'
   import axios from "axios";
   import _ from 'lodash';
   import { useToast } from 'vue-toast-notification';
 
+  import { AgGridVue } from "ag-grid-vue3";
+  import "ag-grid-community/styles/ag-grid.css"; // Core grid CSS, always needed
+  import "ag-grid-community/styles/ag-theme-alpine.css"; // Optional theme CSS
+
   const userStore = useUserStore()
+  const paginationPageSize = ref(16)
+
   const visitorsNode = ref(null)
   const toast = useToast();
   const loading = ref(false)
@@ -66,12 +68,39 @@
       };
   })();
 
+  const gridApi = ref(null); 
+  const onGridReady = (params) => {
+    gridApi.value = params.api;
+  };
+  const rowData = reactive({}); 
+
+  const dateFormatter = (params) => {
+    return params.value ? moment().isSame(params.value, 'day') ? moment(params.value).format('h:mm a') : moment(params.value).format('MMM DD, YYYY h:mm a') : '-';
+  }
+
+  const columnDefs = reactive({
+    value: [
+      { field: "page.url" }, 
+      { field: "views", maxWidth: 100 }, 
+      { field: "clicks", maxWidth: 100 }, 
+      { field: "updatedAt", valueFormatter: dateFormatter, maxWidth: 200 },   
+    ],
+  });
+
+  const defaultColDef = {
+    sortable: true,
+    filter: true,
+    flex: 1,
+  };
+
   async function fetchVisitors() {
     try {
       loading.value = true;
       const response = await axios.get(
         `visitors?id=${userStore.currentWebsite}&limit=1500&offset=0`
       );
+
+      rowData.value = response.data.visitors
 
       let visitorss = [];
 
@@ -168,57 +197,14 @@
     }
   }
 
-  const grid = new Grid().updateConfig({
-    columns: ['Page', 'Views', 'Clicks', 'Updated'],
-    pagination: {
-      enabled: true,
-      limit: 5,
-      server: {
-        url: (prev, page, limit) => `${prev}?limit=${limit}&offset=${page * limit}&id=${userStore.currentWebsite}`
-      }
-    },
-    search: true,
-    sort: true,
-    resizable: true,
-    fixedHeader: true,
-    theme: 'mermaid',
-    selecting: true,
-    server: {
-      headers: {'Authorization': `Bearer ${userStore.user.token}`},
-      url: `https://wibi.wilbertzgroup.com/visitors/`,
-      then: data => data.visitors.map(c => 
-        [ c.page.url, c.views, c.clicks, c.updatedAt ? moment().isSame(c.updatedAt, 'day') ? moment(c.updatedAt).format('h:mm a') : moment(c.updatedAt).format('MMM DD, YYYY h:mm a') : '-']
-      ),
-      total: data => data.total
-    },
-    language: {
-      'search': {
-        'placeholder': '🔍 Search page...'
-      },
-      'pagination': {
-        'previous': '⬅️',
-        'next': '➡️',
-        'showing': 'Displaying',
-        'results': () => 'Visitors'
-      }
-    }
-  })
-
-
   onMounted(() => {
     if(userStore.currentWebsite && userStore.user){
       fetchVisitors()  
-      grid.render(visitorsNode.value)
     }
   })
 
   watchEffect(() => {    
     if(userStore.currentWebsite){
-      if(grid.callbacks == undefined){
-        grid.render(visitorsNode.value)
-      } else {
-        grid.forceRender()
-      }
       fetchVisitors() 
     }
   })
@@ -236,15 +222,25 @@
               <div></div>
               <div class="relative text-right"></div>
               <div class="relative text-right">
-                 <router-link :to="{name: 'add-visitor'}" class="text-white bg-gray-800 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-gray-300 dark:focus:ring-gray-800 shadow-lg shadow-gray-500/50 dark:shadow-lg dark:shadow-gray-800/80 font-medium rounded-lg text-sm px-5 py-2.5 text-center mb-5">Add Visitor</router-link>                
               </div>                   
 
             </div>   
           </div>
-          <div class="mt-3 md:col-span-2">
+          <div class="md:col-span-2">
               <div class="shadow p-10 sm:rounded-md sm:overflow-hidden">
-                  <div id="label"></div>
-                  <div ref="visitorsNode"></div>
+                  <ag-grid-vue
+                      class="ag-theme-alpine"
+                      style="height: 800px"
+                      :columnDefs="columnDefs.value"
+                      :rowData="rowData.value"
+                      :defaultColDef="defaultColDef"
+                      :pagination="true"
+                      :paginationPageSize="paginationPageSize"
+                      rowSelection="multiple"
+                      animateRows="true"
+                      @grid-ready="onGridReady"
+                    >
+                  </ag-grid-vue>
                   <div class="text-center mt-10 mb-10 pb-6 pr-3 shadow-lg rounded-lg bg-blueGray-800">
                     <div class="rounded-t mb-0 px-4 py-3 bg-transparent">
                       <div class="flex flex-wrap items-center">
