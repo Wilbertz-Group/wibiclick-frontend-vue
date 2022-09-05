@@ -210,6 +210,7 @@ const columnDefs = reactive({
     { field: "name", maxWidth: 130 }, 
     { field: "issue" }, 
     { field: "location", maxWidth: 170 }, 
+    { field: "callout", maxWidth: 170 }, 
     { field: "employee", maxWidth: 130, valueFormatter: nameFormatter }, 
     { field: "jobStatus", maxWidth: 130, cellRendererSelector: params => {
         return {

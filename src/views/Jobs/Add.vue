@@ -131,6 +131,8 @@ import { computed } from "@vue/reactivity";
 
                     <FormKit type="checkbox" label="Notify Employee" name="notify" outer-class="text-left" />
 
+                    <FormKit type="hidden" value="scheduled" name="jobStatus" outer-class="text-left"  />
+
                     <FormKit type="submit" label="Add job" />
 
                   </FormKit>
