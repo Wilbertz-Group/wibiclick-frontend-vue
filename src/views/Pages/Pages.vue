@@ -73,7 +73,8 @@
   const rowData = reactive({}); 
 
   const dateFormatter = (params) => {
-    return params.value ? moment().isSame(params.value, 'day') ? moment(params.value).format('h:mm a') : moment(params.value).format('MMM DD, YYYY h:mm a') : '-';
+    let dt = params.value.slice(0, 16)
+    return params.value ? moment().isSame(dt, 'day') ? moment(dt).format('h:mm a') : moment(dt).format('MMM DD, YYYY h:mm a') : '-';
   }
 
   const columnDefs = reactive({
