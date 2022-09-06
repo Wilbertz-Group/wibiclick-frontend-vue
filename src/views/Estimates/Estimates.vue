@@ -391,10 +391,6 @@
             </div>   
 
             <FormKit type="textarea" v-model="selectedEstimate.notes" name="notes" label="Estimate Notes" placeholder="Estimate Notes" outer-class="text-left" />
-
-            <FormKit type="hidden" v-model="selectedEstimate.employee.id" name="employeeId" label="Employee" />
-
-            <FormKit type="hidden" v-model="selectedEstimate.customer.id" name="customerId" label="Customer" /> 
             
             <FormKit type="hidden" v-model="selectedEstimate.id" name="id" label="ID" /> 
 

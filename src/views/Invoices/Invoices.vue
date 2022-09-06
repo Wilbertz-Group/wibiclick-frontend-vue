@@ -208,15 +208,10 @@
       { field: "customer.name", headerName: 'Client' }, 
       { field: "employee", valueFormatter: nameFormatter },
       { field: "sales", headerName: 'Amount' },
-      // { field: "tech_expenses", headerName: 'Tech Expenses', maxWidth: 170 },
-      // { field: "company_expenses", headerName: 'Comp Expenses', maxWidth: 170 },
-      // { field: "parts", maxWidth: 170 },
       { field: "callout" }, 
       { field: "tech_share", headerName: 'Wages' },
       { field: "company_expenses", headerName: 'Profit' },
       { field: "paid" },
-      // { field: "number", headerName: 'Invoice Number', maxWidth: 170 },
-      // { field: "dueAt", maxWidth: 170 },
        
       { field: "reason", headerName: 'Status', cellRendererSelector: params => {
           return {
@@ -420,14 +415,8 @@
             <FormKit type="textarea" v-model="selectedInvoice.notes" name="notes" label="Invoice Notes" placeholder="Invoice Notes" outer-class="text-left" />
 
             <FormKit type="number" v-model="selectedInvoice.parts" name="parts" label="Parts" placeholder="Parts" outer-class="text-left" /> 
-            
-            <FormKit type="hidden" v-model="selectedInvoice.employee.id" name="employeeId" label="Employee" />
-
-            <FormKit type="hidden" v-model="selectedInvoice.customer.id" name="customerId" label="Customer" /> 
-            
+          
             <FormKit type="hidden" v-model="selectedInvoice.id" name="id" label="ID" /> 
-
-            <FormKit type="hidden" v-model="selectedInvoice.estimate" name="estimateId" label="Estimate" /> 
 
             <FormKit type="submit" label="Update invoice" />
 
