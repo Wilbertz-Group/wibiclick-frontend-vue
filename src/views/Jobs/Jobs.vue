@@ -14,6 +14,7 @@
   import Edit from "@/components/Edit.vue";
   import Whatsapp from "@/components/jobs/Whatsapp.vue";
   import Status from "@/components/jobs/Status.vue";
+  import Hubspot from "@/components/customers/Hubspot.vue";
 
   const userStore = useUserStore()
   const toast = useToast();
@@ -230,16 +231,27 @@
         } 
       },
       { 
+        field: "customer.foreignID", 
+        headerName: "View", 
+        maxWidth: 85,
+        cellRendererSelector: params => {
+          return {
+              component: Hubspot,
+              params
+          };
+        }  
+      },      
+      { 
         field: "id", 
         headerName: "Notify", 
-        maxWidth: 100,
+        maxWidth: 95,
         cellRendererSelector: params => {
           return {
               component: Whatsapp,
               params
           };
         }  
-      },  
+      },
     ],
   });
 
