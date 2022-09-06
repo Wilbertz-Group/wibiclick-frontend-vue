@@ -183,6 +183,10 @@ onMounted(() => {
                           <box-icon color="white" type='solid' name='business'></box-icon>
                           <span class="ml-2">Jobs</span>
                         </router-link>
+                        <router-link :to="{name: 'estimates'}" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium">
+                          <box-icon color="white" name='receipt'></box-icon>
+                          <span class="ml-2">Estimates</span>
+                        </router-link>
                         <router-link :to="{name: 'invoices'}" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium">
                           <box-icon color="white" type='solid' name='receipt'></box-icon>
                           <span class="ml-2">Invoices</span>

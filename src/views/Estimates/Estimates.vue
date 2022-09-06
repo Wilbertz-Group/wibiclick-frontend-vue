@@ -21,7 +21,7 @@
   const options = ref()
   const series = ref()
 
-  const selectedInvoice = ref({})
+  const selectedEstimate = ref({})
   const paginationPageSize = ref(12)
   const modalOpen = ref(false)
   const status = ref([ 
@@ -61,7 +61,7 @@
   },
 
   series.value = [{
-      name: 'invoices',
+      name: 'estimates',
       data: []
   }]
 
@@ -83,25 +83,25 @@
       };
   })();
 
-  async function fetchInvoices() {
+  async function fetchEstimates() {
     try {
       loading.value = true;
       const response = await axios.get(
-        `invoices?id=${userStore.currentWebsite}&limit=1500&offset=0`
+        `estimates?id=${userStore.currentWebsite}&limit=1500&offset=0`
       );
 
-      rowData.value = response.data.invoices
+      rowData.value = response.data.estimates
 
-      let invoicess = [];
+      let estimatess = [];
 
-      for (const invoice of response.data.invoices) {
-        invoicess.push({
-          x: invoice.issuedAt,
+      for (const estimates of response.data.estimates) {
+        estimatess.push({
+          x: estimates.issuedAt,
           y: 1,
         });
       }
 
-      const data = _.sortBy(invoicess, 'x')
+      const data = _.sortBy(estimatess, 'x')
 
       const currentGroup = 'byDay';
       const grouped = _.groupBy(data, groups[currentGroup])
@@ -175,7 +175,7 @@
           },
       }
       series.value = [{
-        name: 'invoices',
+        name: 'estimates',
         data: seriesData
       }]
 
@@ -183,7 +183,7 @@
     } catch (error) {
       console.log(error);
       loading.value = false;
-      toast.error("Error getting invoices data")
+      toast.error("Error getting estimates data")
     }
   }
 
@@ -207,17 +207,7 @@
       { field: "issuedAt", valueFormatter: dateFormatter },
       { field: "customer.name", headerName: 'Client' }, 
       { field: "employee", valueFormatter: nameFormatter },
-      { field: "sales", headerName: 'Amount' },
-      // { field: "tech_expenses", headerName: 'Tech Expenses', maxWidth: 170 },
-      // { field: "company_expenses", headerName: 'Comp Expenses', maxWidth: 170 },
-      // { field: "parts", maxWidth: 170 },
-      { field: "callout" }, 
-      { field: "tech_share", headerName: 'Wages' },
-      { field: "company_expenses", headerName: 'Profit' },
-      { field: "paid" },
-      // { field: "number", headerName: 'Invoice Number', maxWidth: 170 },
-      // { field: "dueAt", maxWidth: 170 },
-       
+      { field: "amount", headerName: 'Amount' },       
       { field: "reason", headerName: 'Status', cellRendererSelector: params => {
           return {
               component: Status,
@@ -238,7 +228,7 @@
       }, 
       { 
         field: "url", 
-        headerName: "Invoice", 
+        headerName: "Estimate", 
         maxWidth: 120,
         cellRendererSelector: params => {
           return {
@@ -259,11 +249,11 @@
   async function update(credentials) {
     try {
       loading.value = true
-      const response = await axios.post('add-invoice?id='+ userStore.currentWebsite, credentials);
+      const response = await axios.post('add-estimate?id='+ userStore.currentWebsite, credentials);
       loading.value = false
       modalOpen.value = false
-      fetchInvoices() 
-      toast.success("Successfully updated invoice details")
+      fetchEstimates() 
+      toast.success("Successfully updated estimate details")
     } catch (error) {
       console.log(error)
       loading.value = false
@@ -274,27 +264,27 @@
     if( event.value === undefined ){
       let data = event.data
       data.issuedAt = moment(data.issuedAt).format('YYYY-MM-DDTHH:MM')
-      selectedInvoice.value = data      
+      selectedEstimate.value = data      
       modalOpen.value = !modalOpen.value
     } 
   }
 
   onMounted(() => {
     if(userStore.currentWebsite && userStore.user){
-      fetchInvoices()  
+      fetchEstimates()  
     }
   })
 
   watchEffect(() => {    
     if(userStore.currentWebsite){
-      fetchInvoices(selectedInvoice)  
+      fetchEstimates(selectedEstimate)  
     }
   })
 
 </script>
 
 <template>
-  <Header title="Invoices" /> 
+  <Header title="Estimates" /> 
   <scale-loader :loading="loading" color="#23293b" height="50px" class="vld-overlay is-active is-full-page" width="6px">
   </scale-loader>
   <div class="mx-auto py-6 sm:px-6 lg:px-8">
@@ -308,10 +298,10 @@
               <div v-if="userStore.currentWebsite" class="shadow p-10 sm:rounded-md sm:overflow-hidden">
 
                 <div class="grid gap-3 text-right lg:grid-cols-3 md:grid-cols-2 sm:grid-cols-1">
-                  <div><h2 class="text-xl font-semibold text-left">All Invoices</h2> </div>
+                  <div><h2 class="text-xl font-semibold text-left">All Estimates</h2> </div>
                   <div class="relative text-right"></div>
                   <div class="relative text-right">
-                    <router-link :to="{name: 'add-invoice'}" class="text-white bg-gray-800 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-gray-300 dark:focus:ring-gray-800 shadow-lg shadow-gray-500/50 dark:shadow-lg dark:shadow-gray-800/80 font-medium rounded-lg text-sm px-5 py-2.5 text-center mb-5">Add Invoice</router-link> 
+                    <router-link :to="{name: 'add-estimate'}" class="text-white bg-gray-800 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-gray-300 dark:focus:ring-gray-800 shadow-lg shadow-gray-500/50 dark:shadow-lg dark:shadow-gray-800/80 font-medium rounded-lg text-sm px-5 py-2.5 text-center mb-5">Add Estimate</router-link> 
                   </div>
                 </div> 
 
@@ -337,7 +327,7 @@
                         <h6 class="uppercase mb-1 text-xs font-semibold text-blueGray-200">
                           Overview
                         </h6>
-                        <h2 class="text-xl font-semibold text-white">Last sent invoices</h2>
+                        <h2 class="text-xl font-semibold text-white">Last sent estimates</h2>
                       </div>
                     </div>
                   </div>
@@ -365,7 +355,7 @@
         <!-- Modal header -->
         <div class="flex justify-between items-start p-4 rounded-t border-b dark:border-gray-600">
           <h3 class="text-xl font-semibold text-gray-900 dark:text-white">
-            Update Invoice Details
+            Update Estimate Details
           </h3>
           <button ref="closeDefaultModal" type="button"
             class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center dark:hover:bg-gray-600 dark:hover:text-white"
@@ -381,55 +371,34 @@
         </div>
         <!-- Modal body -->
         <div class="p-6 space-y-6">
-          <FormKit type="form" v-if="selectedInvoice" id="invoice" submit-label="Add" @submit="update" :actions="false" #default="{ value }">
+          <FormKit type="form" v-if="selectedEstimate" id="estimate" submit-label="Add" @submit="update" :actions="false" #default="{ value }">
+
+            <FormKit type="hidden" v-model="selectedEstimate.jobId" name="jobId" label="Job" />                     
 
             <div class="double">
-              <FormKit type="hidden" v-model="selectedInvoice.jobId" name="jobId" label="Job" />   
-              <FormKit type="text" v-model="selectedInvoice.callout" name="callout" label="Callout Fee" placeholder="Callout Fee" outer-class="text-left" />                    
+              <FormKit type="select" v-model="selectedEstimate.reason" name="reason" label="Estimate Stage" :options="status" />  
+              <FormKit type="text" v-model="selectedEstimate.name" name="name" label="Estimate Name" placeholder="Estimate Name" outer-class="text-left" />                   
             </div>
 
             <div class="double">
-              <FormKit type="select" v-model="selectedInvoice.reason" name="reason" label="Invoice Stage" :options="status" />  
-              <FormKit type="text" v-model="selectedInvoice.name" name="name" label="Invoice Name" placeholder="Invoice Name" outer-class="text-left" />                   
-            </div>
-
-            <div class="double">
-              <FormKit type="number" v-model="selectedInvoice.tech_expenses" name="tech_expenses" label="Technician Expenses" placeholder="Technician Expenses" outer-class="text-left" />
-              <FormKit type="number" v-model="selectedInvoice.tech_share" name="tech_share" label="Technician Share" placeholder="Technician Share" value="" outer-class="text-left" />                                   
-            </div>
-
-            <div class="double">
-              <FormKit type="number" v-model="selectedInvoice.company_expenses" name="company_expenses" label="Company Expenses" placeholder="Company Expenses" outer-class="text-left" />
-              <FormKit type="number" v-model="selectedInvoice.company_share" name="company_share" label="Company Share" placeholder="Company Share" value="" outer-class="text-left" />                                   
-            </div>
-
-            <div class="double">
-              <FormKit type="text" v-model="selectedInvoice.number" name="number" label="Invoice Number" placeholder="Invoice Number" outer-class="text-left" />
-              <FormKit type="text" v-model="selectedInvoice.url" name="url" label="Invoice Url" placeholder="Invoice Url" outer-class="text-left" />
+              <FormKit type="text" v-model="selectedEstimate.number" name="number" label="Estimate Number" placeholder="Estimate Number" outer-class="text-left" />
+              <FormKit type="text" v-model="selectedEstimate.url" name="url" label="Estimate Url" placeholder="Estimate Url" outer-class="text-left" />
             </div>                    
 
             <div class="double">
-              <FormKit type="datetime-local" v-model="selectedInvoice.issuedAt" name="issuedAt" label="Issued Date" placeholder="Issued Date" outer-class="text-left" />
-              <FormKit type="datetime-local" v-model="selectedInvoice.dueAt" name="dueAt" label="Due Date" placeholder="Due Date" outer-class="text-left" />                      
+              <FormKit type="datetime-local" v-model="selectedEstimate.issuedAt" name="issuedAt" label="Issued Date" placeholder="Issued Date" outer-class="text-left" />
+              <FormKit type="text" v-model="selectedEstimate.amount" name="amount" label="Estimate Amount" placeholder="Estimate Amount" outer-class="text-left" />
             </div>   
 
-            <FormKit type="text" v-model="selectedInvoice.sales" name="sales" label="Invoice Amount" placeholder="Invoice Amount" outer-class="text-left" />
+            <FormKit type="textarea" v-model="selectedEstimate.notes" name="notes" label="Estimate Notes" placeholder="Estimate Notes" outer-class="text-left" />
+
+            <FormKit type="hidden" v-model="selectedEstimate.employee.id" name="employeeId" label="Employee" />
+
+            <FormKit type="hidden" v-model="selectedEstimate.customer.id" name="customerId" label="Customer" /> 
             
-            <FormKit type="checkbox" v-model="selectedInvoice.paid" label="Paid" name="paid" outer-class="text-left" />
+            <FormKit type="hidden" v-model="selectedEstimate.id" name="id" label="ID" /> 
 
-            <FormKit type="textarea" v-model="selectedInvoice.notes" name="notes" label="Invoice Notes" placeholder="Invoice Notes" outer-class="text-left" />
-
-            <FormKit type="number" v-model="selectedInvoice.parts" name="parts" label="Parts" placeholder="Parts" outer-class="text-left" /> 
-            
-            <FormKit type="hidden" v-model="selectedInvoice.employee.id" name="employeeId" label="Employee" />
-
-            <FormKit type="hidden" v-model="selectedInvoice.customer.id" name="customerId" label="Customer" /> 
-            
-            <FormKit type="hidden" v-model="selectedInvoice.id" name="id" label="ID" /> 
-
-            <FormKit type="hidden" v-model="selectedInvoice.estimate" name="estimateId" label="Estimate" /> 
-
-            <FormKit type="submit" label="Update invoice" />
+            <FormKit type="submit" label="Update estimate" />
 
           </FormKit>
         </div>

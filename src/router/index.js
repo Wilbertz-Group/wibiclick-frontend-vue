@@ -14,6 +14,9 @@ import AddJobs from '@/views/Jobs/Add.vue'
 import Customers from '@/views/Customers/Customers.vue'
 import CustomersAdd from '@/views/Customers/Add.vue'
 import Invoices from '@/views/Invoices/Invoices.vue'
+import AddInvoices from '@/views/Invoices/Add.vue'
+import Estimates from '@/views/Estimates/Estimates.vue'
+import AddEstimates from '@/views/Estimates/Add.vue'
 import Visitors from '@/views/Visitors/Visitors.vue'
 import Forms from '@/views/Forms/Forms.vue'
 import Pages from '@/views/Pages/Pages.vue'
@@ -120,6 +123,21 @@ const router = createRouter({
       path: '/invoices',
       name: 'invoices',
       component: Invoices
+    },
+    {
+      path: '/add-invoice',
+      name: 'add-invoice',
+      component: AddInvoices
+    },
+    {
+      path: '/estimates',
+      name: 'estimates',
+      component: Estimates
+    },
+    {
+      path: '/add-estimate',
+      name: 'add-estimate',
+      component: AddEstimates
     },
     {
       path: '/visitors',
