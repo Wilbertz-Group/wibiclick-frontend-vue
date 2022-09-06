@@ -13,8 +13,6 @@ import 'boxicons'
 import ToastPlugin from 'vue-toast-notification';
 import 'vue-toast-notification/dist/theme-sugar.css';
 import VueHighlightJS from 'vue-highlightjs'
-import * as Sentry from "@sentry/vue";
-import { BrowserTracing } from "@sentry/tracing";
 
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { library } from '@fortawesome/fontawesome-svg-core'
@@ -36,19 +34,6 @@ app.use(ToastPlugin);
 app.use(VueApexCharts);
 app.use(plugin, defaultConfig)
 app.use(pinia)
-
-Sentry.init({
-  app,
-  dsn: "https://686c73a4bb00415eaf63b145575a9574@o1376965.ingest.sentry.io/6686904",
-  integrations: [
-    new BrowserTracing({
-      routingInstrumentation: Sentry.vueRouterInstrumentation(router),
-      tracingOrigins: ["https://wibi.wilbertzgroup.com/", "wibi.co.za", /^\//],
-    }),
-  ],
-  tracesSampleRate: 1.0,
-});
-
 app.use(router)
 
 app.mount('#app')
