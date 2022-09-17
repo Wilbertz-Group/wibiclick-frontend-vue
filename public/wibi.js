@@ -57,6 +57,15 @@ function createWidget(n) {
 			async function C() { 
 				"none" == document.getElementById("myForm").style.display ? (document.getElementById("myForm").style.display = "block", document.getElementById("openButton__closeIcon").style.display = "block", document.getElementById("openButton__phoneIcon").style.display = "none", document.getElementById("openButton__label").innerText = `${u}`) : (document.getElementById("myForm").style.display = "none", document.getElementById("openButton__closeIcon").style.display = "none", document.getElementById("openButton__phoneIcon").style.display = "block", document.getElementById("openButton__label").innerText = `${h}`); }
 
+			//Hubspot
+			window.addEventListener('message', async event => { 
+					if(event.data.type === 'hsFormCallback' && event.data.eventName === 'onFormSubmit') { 
+							let msgtxt = "form_submit"
+							var Q = await fetch(`https://wibi.wilbertzgroup.com/wibi-action?id=${n}&c=3&ic=${msgtxt}&pg=${pg}&utk=${utk}`),
+							Y = await Q.json();
+					}
+			});
+
 			async function F(e) {
 					var target = e.target || e.srcElement,
 							text = target.getAttribute("class") || target.innerText;

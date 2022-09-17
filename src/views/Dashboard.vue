@@ -60,6 +60,11 @@ const buttons = {
     name: "Skype",
     icon: "fab fa-skype",
     color: "bg-sky-500 hover:bg-sky-600"
+  },
+  form_submit: {
+    name: "Hubspot",
+    icon: "fa-brands fa-hubspot",
+    color: "bg-rose-500 hover:bg-rose-600"
   }
 }
 

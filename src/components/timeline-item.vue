@@ -14,7 +14,7 @@ const props = defineProps(['item', 'buttons'])
 				{{ moment(item.created).format('MMM DD, YYYY h:mm a') }} 
 			</div>
 			<div class="timeline-body text-left text-sm tracking-tight">
-				{{ buttons[item.name].name }} button clicked on <a :href="item.url" target="_blank" class="underline underline-offset-2">{{ item.title || item.url }}</a>
+				{{ buttons[item.name].name }} {{ buttons[item.name].name == 'Hubspot' ? 'form submitted' : 'button clicked' }} on <a :href="item.url" target="_blank" class="underline underline-offset-2">{{ item.title || item.url }}</a>
 			</div>
 		</div>
 	</li>
