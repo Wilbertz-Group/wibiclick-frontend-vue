@@ -65,7 +65,7 @@
                       
                     </div>
 
-                    <FormKit type="textarea" name="description" label="Job Description" placeholder="HVAC & Appliance Technician" outer-class="text-left" validation="required" />
+                    <FormKit type="textarea" name="description" label="Job Description" value="HVAC & Appliance Technician" outer-class="text-left" validation="required" />
 
                     <FormKit type="submit" label="Add Employee" />
 
