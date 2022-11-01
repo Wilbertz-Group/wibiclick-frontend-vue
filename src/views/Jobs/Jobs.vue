@@ -219,7 +219,7 @@
         }
       },  
       { field: "slotStart", maxWidth: 200, valueFormatter: dateFormatter },
-      { 
+      {
         field: "Edit", 
         headerName: 'Edit',
         maxWidth: 80,
@@ -278,7 +278,10 @@
   const toggleEditModal = (event) => {
     if( event.value === undefined ){
       let data = event.data
-      data.slotStart = moment(data.slotStart).format('YYYY-MM-DDTHH:MM')
+      console.log(data.slotStart)
+      let ntime = moment(data.slotStart).subtract(2, 'hours')
+      data.slotStart = moment(ntime).format('YYYY-MM-DDTHH:MM')
+      console.log(data.slotStart)
       selectedJob.value = data      
       modalOpen.value = !modalOpen.value
     } 

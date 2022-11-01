@@ -10,7 +10,9 @@
 
 	async function whatsapp(job) {
 		let to = job.employee.phone + '@s.whatsapp.net'
-		let message = `--------------------\nName: ${job?.name}\nPhone: ${job?.phone}\nCallout: ${job?.callout}\nDate: ${moment(job?.slotStart).format('dddd DD MMMM YYYY h:mm a')}\nAddress: ${job?.address}\nIssue: ${job?.issue}\n--------------------`
+		let ntime = moment(job.slotStart).subtract(2, 'hours')
+		let time = moment(ntime).format('dddd DD MMMM YYYY h:mm a')
+		let message = `--------------------\nName: ${job?.name}\nPhone: ${job?.phone}\nCallout: ${job?.callout}\nDate: ${time}\nAddress: ${job?.address}\nIssue: ${job?.issue}\n--------------------`
 
 		await axios.post(`send-whatsapp?id=${userStore.currentWebsite}`, { to, message });
 		toast.success(`${job.name}'s job have been sent to technician on whatsapp`)
