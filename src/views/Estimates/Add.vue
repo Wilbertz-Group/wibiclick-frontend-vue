@@ -19,17 +19,7 @@
   const customer = ref()
   
   const userStore = useUserStore()
-  const status = ref([ 
-    'quoting', 
-    'quoted', 
-    'no parts', 
-    'accepted', 
-    'scheduled',
-    'cancelled',
-    'pending',
-    'invoiced',
-    'done'    
-  ])
+  const status = ref(userStore.status)
 
   async function add(credentials) {
     try {

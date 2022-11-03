@@ -26,17 +26,7 @@
   const selectedJob = ref(null)
   const paginationPageSize = ref(12)
   const modalOpen = ref(false)
-  const status = ref([ 
-    'scheduled',
-    'quoting', 
-    'quoted', 
-    'no parts', 
-    'accepted',     
-    'cancelled',
-    'pending',
-    'invoiced',
-    'done'    
-  ])
+  const status = ref(userStore.status)
 
   options.value = {
     chart: {

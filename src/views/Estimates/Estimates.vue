@@ -24,17 +24,7 @@
   const selectedEstimate = ref({})
   const paginationPageSize = ref(12)
   const modalOpen = ref(false)
-  const status = ref([ 
-    'quoting', 
-    'quoted', 
-    'no parts', 
-    'accepted', 
-    'scheduled',
-    'cancelled',
-    'pending',
-    'invoiced',
-    'done'    
-  ])
+  const status = ref(userStore.status)
 
   options.value = {
     chart: {

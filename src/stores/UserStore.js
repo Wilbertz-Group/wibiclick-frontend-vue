@@ -13,6 +13,18 @@ export const useUserStore = defineStore("UserStore", {
       analytics: {},
       currentWebsite: "default",
       settings: {},
+      status: [ 
+        'scheduled',
+        'quoting', 
+        'quoted', 
+        'no parts', 
+        'accepted',     
+        'cancelled',
+        'pending',
+        'invoiced',
+        'follow-up',
+        'done'    
+      ]
     };
   },
   getters: {
