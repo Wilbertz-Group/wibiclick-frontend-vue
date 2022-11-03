@@ -27,13 +27,14 @@
   const paginationPageSize = ref(12)
   const modalOpen = ref(false)
   const status = ref([ 
+    'scheduled',
     'quoting', 
     'quoted', 
     'no parts', 
-    'accepted', 
-    'scheduled',
+    'accepted',     
     'cancelled',
     'pending',
+    'invoiced',
     'done'    
   ])
 
@@ -208,8 +209,8 @@
     value: [
       { field: "name", maxWidth: 130 }, 
       { field: "issue" }, 
-      { field: "location", maxWidth: 170 },
-      { field: "callout", maxWidth: 170 },       
+      { field: "location", maxWidth: 150 },
+      { field: "callout", maxWidth: 120 },       
       { field: "employee", maxWidth: 130, valueFormatter: nameFormatter }, 
       { field: "jobStatus", maxWidth: 130, cellRendererSelector: params => {
           return {
@@ -232,8 +233,8 @@
       },
       { 
         field: "customer.foreignID", 
-        headerName: "View", 
-        maxWidth: 85,
+        headerName: "Hubspot", 
+        maxWidth: 114,
         cellRendererSelector: params => {
           return {
               component: Hubspot,

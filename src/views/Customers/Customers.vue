@@ -85,12 +85,12 @@
 
   const columnDefs = reactive({
     value: [
-      { field: "name" }, 
-      { field: "phone" }, 
+      { field: "name", maxWidth: 130 }, 
+      { field: "phone", maxWidth: 130 }, 
       { field: "message" }, 
       { field: "address" }, 
       { field: "channel" },
-      { field: "createdAt", valueFormatter: dateFormatter },  
+      { field: "createdAt", valueFormatter: dateFormatter, maxWidth: 190 },  
       { 
         field: "Edit", 
         headerName: 'Edit',
@@ -104,8 +104,8 @@
       },
       { 
         field: "foreignID", 
-        headerName: "View", 
-        maxWidth: 90,
+        headerName: "Hubspot", 
+        maxWidth: 114,
         cellRendererSelector: params => {
           return {
               component: Hubspot,

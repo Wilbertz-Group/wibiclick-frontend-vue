@@ -5,7 +5,8 @@
   import { onMounted, ref, watchEffect } from "vue";
   import { useToast } from 'vue-toast-notification';
   import { useRouter, useRoute } from "vue-router";
-import { computed } from "@vue/reactivity";
+  import { computed } from "@vue/reactivity";
+  import ScaleLoader from 'vue-spinner/src/ScaleLoader.vue'
 
   const loading = ref(false)
   const modalOpen = ref(false)
@@ -56,6 +57,7 @@ import { computed } from "@vue/reactivity";
       response.data.customers ? response.data.customers.map(e => { b[e.id] = e.name}) : ''
       customers.value = b
       dbContacts.value = response.data.customers
+      autofillForm(response.data.customers[0])
       loading.value = false
     } catch (error) {
       console.log(error)
@@ -68,11 +70,11 @@ import { computed } from "@vue/reactivity";
   }
 
   function autofillForm(customer) {
-    if (selectedCustomer.value) {
-      phone.value = selectedCustomer.value.phone
-      name.value = selectedCustomer.value.name
-      address.value = selectedCustomer.value.address
-      issue.value = selectedCustomer.value.message
+    if (customer) {
+      phone.value = customer.phone
+      name.value = customer.name
+      address.value = customer.address
+      issue.value = customer.message
     }
   }
 
@@ -86,12 +88,14 @@ import { computed } from "@vue/reactivity";
   })
 
   watchEffect(() => {
-    autofillForm(selectedCustomer)
+    autofillForm(selectedCustomer.value)
   })
 </script>
 
 <template>
   <Header title="Add a job" /> 
+  <scale-loader :loading="loading" color="#23293b" height="50px" class="vld-overlay is-active is-full-page" width="6px">
+  </scale-loader>
   <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
     <div class="px-4 py-6 sm:px-0">
       <div>
@@ -111,7 +115,7 @@ import { computed } from "@vue/reactivity";
                     </div>
 
                     <div class="double">
-                      <FormKit type="text" name="callout" label="Callout Fee" placeholder="Callout Fee" value="R300" outer-class="text-left" validation="required" />
+                      <FormKit type="text" name="callout" label="Callout Fee" placeholder="Callout Fee" value="R350" outer-class="text-left" validation="required" />
                        <FormKit type="text" name="location" label="Location" placeholder="Location" outer-class="text-left" validation="required" />            
                     </div>
 
@@ -122,10 +126,10 @@ import { computed } from "@vue/reactivity";
 
                     <div class="double">
                       <FormKit type="datetime-local" name="slotStart" label="Job Start Date" placeholder="Job Start" outer-class="text-left" validation="required" />
-                      <FormKit type="select" name="slotTime" label="Job Duration" :options="['1hr', '2hrs', '3hrs', '4hrs']" />
+                      <FormKit type="select" name="slotTime" label="Job Duration" :options="['1hr', '2hrs', '3hrs', '4hrs']" validation="required" />
                     </div>
 
-                    <FormKit type="radio" name="employeeId" label="Employee" :options="employees" />
+                    <FormKit type="radio" name="employeeId" label="Employee" :options="employees" validation="required" />
 
                     <FormKit type="textarea" v-model="issue" :value="issue" name="issue" label="Issue" placeholder="Issue" outer-class="text-left" validation="required" />
 

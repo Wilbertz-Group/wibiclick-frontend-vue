@@ -27,6 +27,7 @@
     'scheduled',
     'cancelled',
     'pending',
+    'invoiced',
     'done'    
   ])
 

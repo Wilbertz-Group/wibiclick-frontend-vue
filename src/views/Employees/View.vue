@@ -35,6 +35,7 @@ const status = ref([
   'scheduled',
   'cancelled',
   'pending',
+  'invoiced',
   'done'    
 ])
 
