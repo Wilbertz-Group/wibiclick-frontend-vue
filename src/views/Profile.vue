@@ -19,7 +19,27 @@
     state: '', 
     zip: '', 
     marketing: false, 
-    updates: false
+    updates: false,
+    banking: {
+      account_name: '',
+      bank: '',
+      account_number: '',
+      account_type: '',
+      branch_code: '',
+    },
+    company: {
+      company_name: '',
+      email: '',
+      slogan: '',
+      address1: '',
+      address2: '',
+      city: '',
+      state: '',
+      country: '',
+      postal_code: '',
+      currency_symbol: ''
+    },
+    setting: ''
   })
   const notificationMessage = ref('')
   const countryCampaign = [
@@ -273,14 +293,13 @@
     "Zimbabwe",
     "Åland Islands"
   ];
-  const employeesCampaign = ["1 - 20 employees", "21 - 200 employees", "201 - 10,000 employees", "10,001+ employees"]
   const userStore = useUserStore()
   const loading = ref(false)
 
   async function fetchProfileInfo() {
 			try {
         loading.value = true
-				const response = await axios.get('profile');
+				const response = await axios.get('profile?id='+ userStore.currentWebsite);
         profile.value = response.data
         loading.value = false
 			} catch (error) {
@@ -303,7 +322,7 @@
   async function companyUpdate(credentials) {
     try {
       loading.value = true
-      const response = await axios.post('organisation', credentials);
+      const response = await axios.post('company-information', credentials);
       loading.value = false
       toast.success(response.data.message)
     } catch (error) {
@@ -459,7 +478,7 @@
                         <FormKit
                           type="text"
                           name="companyEmail"
-                          label="Company Email"
+                          label="Your Email"
                           label-class="text-left"
                           validation="required|email"
                           v-model="profile.companyEmail"
@@ -557,19 +576,53 @@
                     :actions="false"
                     #default="{ value }"
                   >
-                  <div class="px-4 py-5 bg-white space-y-6 sm:p-6">                  
-                    
+
+                  <div class="px-4 py-5 bg-white space-y-6 sm:p-6">                 
                     <div class="w-full">
-                      <div class="">
+                      <div class="grid grid-cols-2 gap-3">
                         <FormKit
                           type="text"
-                          name="company"
-                          label="Company"
-                          :placeholder="profile.company"
+                          name="company_name"
+                          label="Company Name"
+                          label-class="text-left"
+                          validation="required"
+                          v-model="profile.company.company_name"
+                          :value="profile.company.company_name"
+                        />
+
+                        <FormKit
+                          type="text"
+                          name="slogan"
+                          label="Slogan"
+                          label-class="text-left"
+                          validation="required"
+                          v-model="profile.company.slogan"
+                          :value="profile.company.slogan"
+                        />
+                      </div>
+                    </div>
+
+                    <div class="w-full">
+                      <div class="grid grid-cols-2 gap-3">
+                        <FormKit
+                          type="text"
+                          name="email"
+                          label="Company Email"
+                          label-class="text-left"
+                          validation="required|email"
+                          v-model="profile.company.email"
+                          :value="profile.company.email"
+                        />
+  
+                        <FormKit
+                          type="text"
+                          name="currency_symbol"
+                          label="Currency Symbol"
+                          placeholder="$ or R"
                           outer-class="text-left"
                           validation="required"
-                          :value="profile.company"
-                          v-model="profile.company"
+                          :value="profile.company.currency_symbol"
+                          v-model="profile.company.currency_symbol"
                         />
                       </div>
                     </div>
@@ -577,17 +630,182 @@
                     <div class="w-full">
                       <div class="">
                         <FormKit
-                          type="select"
-                          name="employees"
-                          label="Employees"
-                          :placeholder="profile.employees"
-                          :options=employeesCampaign
-                          outer-class="text-left"
+                          type="text"
+                          name="address1"
+                          label="Street address 1"
+                          label-class="text-left"
                           validation="required"
-                          v-model="profile.employees"
+                          v-model="profile.company.address1"
+                          :value="profile.company.address1"
                         />
                       </div>
                     </div>
+
+                    <div class="w-full">
+                      <div class="">
+                        <FormKit
+                          type="text"
+                          name="address2"
+                          label="Street address 2"
+                          label-class="text-left"
+                          validation="required"
+                          v-model="profile.company.address2"
+                          :value="profile.company.address2"
+                        />
+                      </div>
+                    </div>
+
+                    <div class="w-full">
+                      <div class="grid grid-cols-3 gap-3">
+                        <FormKit
+                          type="text"
+                          name="city"
+                          label="City"
+                          label-class="text-left"
+                          validation="required"
+                          v-model="profile.company.city"
+                          :value="profile.company.city"
+                        />
+                        <FormKit
+                          type="text"
+                          name="state"
+                          label="State / Province"
+                          label-class="text-left"
+                          validation="required"
+                          v-model="profile.company.state"
+                          :value="profile.company.state"
+                        />
+                        <FormKit
+                          type="text"
+                          name="postal_code"
+                          label="Zip / Postal code"
+                          label-class="text-left"
+                          validation="required"  
+                          v-model="profile.company.postal_code"   
+                          :value="profile.company.postal_code"                     
+                        />
+                      </div>
+                    </div>
+                    
+                    <div class="w-full">                        
+                        <FormKit
+                          type="select"
+                          name="country"
+                          label="Country"
+                          label-class="text-left"
+                          :options=countryCampaign
+                          validation="required"
+                          v-model="profile.company.country"
+                          :value="profile.company.country"
+                        />
+                    </div>
+
+                    <FormKit type="hidden" v-model="profile.setting" :value="profile.setting" name="setting" label="setting" /> 
+
+                  </div>
+                  <div class="px-4 py-3 bg-gray-50 text-right sm:px-6">
+                    <FormKit
+                      type="submit"
+                      label="Update"
+                    />
+                  </div>
+                </FormKit>
+              </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="hidden sm:block" aria-hidden="true">
+        <div class="py-5">
+          <div class="border-t border-gray-200" />
+        </div>
+      </div>
+
+      <div class="mt-10 sm:mt-0">
+        <div class="md:grid md:grid-cols-3 md:gap-6">
+          <div class="md:col-span-1">
+            <div class="px-4 sm:px-0">
+              <h3 class="text-lg font-medium leading-6 text-gray-900">Banking Details</h3>
+              <p class="mt-1 text-sm text-gray-600">Update your company/organisation banking details</p>
+            </div>
+          </div>
+          <div class="mt-5 md:mt-0 md:col-span-2">
+              <div class="shadow sm:rounded-md sm:overflow-hidden">
+                <FormKit
+                    type="form"
+                    id="banking"
+                    :form-class="submitted ? 'hide' : 'show'"
+                    submit-label="Update"
+                    @submit="companyUpdate"
+                    :actions="false"
+                    #default="{ value }"
+                  >
+
+                  <div class="px-4 py-5 bg-white space-y-6 sm:p-6">                 
+                    <div class="w-full">
+                      <div class="grid grid-cols-2 gap-3">
+                        <FormKit
+                          type="text"
+                          name="account_name"
+                          label="Account Name"
+                          label-class="text-left"
+                          validation="required"
+                          v-model="profile.banking.account_name"
+                          :value="profile.banking.account_name"
+                        />
+
+                        <FormKit
+                          type="text"
+                          name="bank"
+                          label="Bank Name"
+                          label-class="text-left"
+                          validation="required"
+                          v-model="profile.banking.bank"
+                          :value="profile.banking.bank"
+                        />
+                      </div>
+                    </div>
+
+                    <div class="w-full">
+                      <div class="grid grid-cols-2 gap-3">
+                        <FormKit
+                          type="text"
+                          name="account_number"
+                          label="Account Number"
+                          label-class="text-left"
+                          validation="required"
+                          :value="profile.banking.account_number"
+                          v-model="profile.banking.account_number"
+                        />
+  
+                        <FormKit
+                          type="text"
+                          name="account_type"
+                          label="Account Type"
+                          placeholder="Cheque or Current"
+                          outer-class="text-left"
+                          validation="required"
+                          :value="profile.banking.account_type"
+                          v-model="profile.banking.account_type"
+                        />
+                      </div>
+                    </div>
+
+                    <div class="w-full">
+                      <div class="">
+                        <FormKit
+                          type="text"
+                          name="branch_code"
+                          label="Branch Code"
+                          label-class="text-left"
+                          validation="required"
+                          v-model="profile.banking.branch_code"
+                          :value="profile.banking.branch_code"
+                        />
+                      </div>
+                    </div>
+
+                    <FormKit type="hidden" v-model="profile.setting" :value="profile.setting" name="setting" label="setting" />
 
                   </div>
                   <div class="px-4 py-3 bg-gray-50 text-right sm:px-6">
@@ -635,6 +853,7 @@
                           label="Marketing Emails"
                           name="marketing"
                           v-model="profile.marketing"
+                          :value="profile.marketing"
                         />
                       </div>
                     </div>
@@ -646,6 +865,7 @@
                           label="Product Updates and Offers"
                           name="updates"
                           v-model="profile.updates"
+                          :value="profile.updates"
                         />
                       </div>
                     </div>

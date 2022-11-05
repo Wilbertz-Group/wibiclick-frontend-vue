@@ -10,11 +10,11 @@ import { computed } from "@vue/reactivity";
 import ScaleLoader from 'vue-spinner/src/ScaleLoader.vue'
 
 const loading = ref(false);
-const all_jobs = ref();
-const job = ref();
+const invoiceData = ref({});
+const all_invoices = ref();
 const profile = ref(false);
 const selectedJob = ref();
-const jobsData = ref({job: 'Select Job'});
+const invoicesData = ref({invoice: 'Select Invoice'});
 const toast = useToast();
 const router = useRouter();
 const route = useRoute()
@@ -60,10 +60,10 @@ const invoice = ref({
 });
 
 const lineItem = ref({
-  name: 'Installation Labour',
+  name: '',
   description: '',
-  amount: 1,
-  quantity: 1,
+  amount: '',
+  quantity: '',
 })
 
 function addItem() {
@@ -101,43 +101,33 @@ function deleteItem(i) {
   invoice.value.items.splice(i, 1);
 }
 
-async function checkParams() {
-  if( route.query.job_id ){    
-    toast.success("You have successfully provided job id")
-  } else {
-    toast.warning("Job id is required to create an invoice")
-    fetchJobs()
-  }
-} 
-
-async function fetchJobs() {
+async function fetchInvoices() {
   try {
     loading.value = true
     const response = await axios.get(
-      `jobs?id=${userStore.currentWebsite}&limit=1500&offset=0`
+      `invoices?id=${userStore.currentWebsite}&limit=1500&offset=0`
     );
 
-    all_jobs.value = response.data.jobs
-    let jobs = {};
+    all_invoices.value = response.data.invoices
+    let invoices = {};
 
-    for (const job of response.data.jobs) {
-      jobs[job.id] = job.name
+    for (const invoice of response.data.invoices) {
+      invoices[invoice.id] = invoice.name
     }
 
-    jobsData.value = jobs
+    invoicesData.value = invoices
     loading.value = false
-    modalOpen.value = true
+    route.query.invoice_id ? updateInvoice({invoice: route.query.invoice_id}) : ''
   } catch (error) {
     console.log(error);
     loading.value = false
-    modalOpen.value = true
-    toast.error("Error getting jobs data")
+    toast.error("Error getting invoices data")
   }
 }
 
-async function updateJob(data){
-  let job_data = all_jobs.value.filter(e => { return e.id == data.job })[0]
-  job.value = job_data
+async function updateInvoice(data){
+  let invoice_data = all_invoices.value.filter(e => { return e.id == data.invoice })[0]
+  invoiceData.value = invoice_data
 
   if(!profile.value){
     try {
@@ -158,39 +148,39 @@ async function updateJob(data){
   invoice.value = {
     company: profile.value.company,
     customer: {
-      id: job_data.customer.id,
-      name: job_data.customer.name,
-      address: job_data.address,
-      phone: job_data.phone,
+      id: invoiceData.value.customer?.id,
+      name: invoiceData.value.customer?.name,
+      address: invoiceData.value.job?.address,
+      phone: invoiceData.value.job?.phone,
       vat: "",
     },
     banking: profile.value.banking,
-    items: [],
-    subtotal: 0,
+    items: invoiceData.value.lineItem,
+    subtotal: invoiceData.value.sales,
     paid: 0,
-    status: "Pending",
-    name: "Invoice",
-    invoice_nr: 1234,
-    invoice_date: moment().format('YYYY-MM-DD'),
-    invoice_due_date: moment().add(1, 'days').format('YYYY-MM-DD'),
+    status: invoiceData.value.reason,
+    name: invoiceData.value.name,
+    invoice_nr: invoiceData.value.number,
+    invoice_date: moment(invoiceData.value.issuedAt).format('YYYY-MM-DD'),
+    invoice_due_date: moment(invoiceData.value.invoice_due_date).add(1, 'days').format('YYYY-MM-DD'),
   }
   modalOpen.value = false
 }
 
 async function saveInvoice() {
   let payload = {
-    jobId: job.value.id,
+    id: invoiceData.value.id,
     reason: invoice.value.status,
-    name: invoice.value.customer.name + " " + invoice.value.name,
+    name: invoice.value.customer.name + " " +  invoice.value.name,
     number: invoice.value.invoice_nr,
     issuedAt: moment(invoice.value.invoice_date,).toISOString(),
     dueAt: moment(invoice.value.invoice_due_date,).toISOString(),
     sales: invoice.value.subtotal,
     subtotal: invoice.value.subtotal, 
     notes: "notes",
-    customerId: invoice.value.customer.id,
-    employeeId: job.value.employee.id,
-    websiteId: job.value.website.id,
+    customerId: invoiceData.value.customer.id,
+    employeeId: invoiceData.value.employee.id,
+    websiteId: invoiceData.value.website.id,
     items: invoice.value.items
   }
 
@@ -208,6 +198,17 @@ async function saveInvoice() {
   
 }
 
+async function checkParams() {
+  if( route.query.invoice_id ){    
+    toast.success("You have successfully selected an invoice to edit")
+    fetchInvoices()    
+  } else {
+    toast.warning("Please select an invoice to edit")
+    fetchInvoices()
+    modalOpen = true
+  }
+} 
+
 const lineItemTotal = computed(() => Number(lineItem.value.amount) * Number(lineItem.value.quantity))
 
 onMounted(()=>{
@@ -220,7 +221,7 @@ onMounted(()=>{
 </script>
 
 <template>
-  <Header title="Add new invoice" />
+  <Header title="Edit invoice" />
   <scale-loader :loading="loading" color="#23293b" height="50px" class="vld-overlay is-active is-full-page" width="6px"></scale-loader>
   <div class="mx-auto py-6 sm:px-6 lg:px-8">
     <div class="px-4 py-6 sm:px-0">
@@ -295,17 +296,17 @@ onMounted(()=>{
 
               <!-- Invoice Details -->
               <div>
-                <div class="text-2xl font-bold">{{invoice.name}} Details</div>
+                <div class="text-2xl font-bold">Invoice Details</div>
                 <div class="text-lg flex mt-2">
-                  <span class="flex justify-items-center items-center"> {{invoice.name}} #: </span>
+                  <span class="flex justify-items-center items-center"> Invoice #: </span>
                   <FormKit type="text" name="invoice_number" validation="required" :value="invoice.invoice_nr" input-class="p-1 m-0 bg-slate-100" :classes="{ outer: 'mb-0 ml-12 w-96', inner: { $reset: true, 'p-0 m-0': true } }" />
                 </div>
                 <div class="text-lg flex mt-2">
-                  <span class="flex justify-items-center items-center"> {{invoice.name}} Date: </span>
+                  <span class="flex justify-items-center items-center"> Invoice Date: </span>
                   <FormKit type="date" name="invoice_date" validation="required" :value="invoice.invoice_date" input-class="p-1 m-0 bg-slate-100" :classes="{ outer: 'mb-0 ml-5 w-96', inner: { $reset: true, 'p-0 m-0': true } }" />
                 </div>
                 <div class="text-lg flex mt-2">
-                  <span class="flex justify-items-center items-center"> {{invoice.name}} Due: </span>
+                  <span class="flex justify-items-center items-center"> Invoice Due: </span>
                   <FormKit type="date" name="invoice_due_date" validation="required" :value="invoice.invoice_due_date"  input-class="p-1 m-0 bg-slate-100" :classes="{ outer: 'mb-0 ml-6 w-96', inner: { $reset: true, 'p-0 m-0': true } }" />
                 </div>
                 <div class="text-lg flex font-bold mt-2">
@@ -329,7 +330,7 @@ onMounted(()=>{
 
             <!-- Billed To -->
             <div class="">
-              <div class="text-2xl font-bold">Billed To <span class="text-sm text-blue-600 underline cursor-pointer" @click="modalOpen = true">click here to select different job</span></div>
+              <div class="text-2xl font-bold">Billed To</div>
               <div class="text-lg flex font-bold mt-2">
                 <span class="flex justify-items-center items-center mr-10">Name: </span>
                 <FormKit type="text" name="customer_name" validation="required" v-model="invoice.customer.name" :value="invoice.customer.name" input-class="p-1 m-0 bg-slate-100" :classes="{ outer: 'mb-0 ml-3 w-96', inner: { $reset: true, 'p-0 m-0': true } }" />
@@ -374,19 +375,19 @@ onMounted(()=>{
             <!-- Add Line Item -->
             <div class="grid grid-flow-col grid-rows-1 grid-cols-12 gap-4 mb-2 border-2 border-transparent border-b-[#11101e]">
               <div class="text-md col-span-8 pb-2">
-                <FormKit type="text" name="item_name" placeholder="Line Item Name" validation="required" v-model="lineItem.name" :value="lineItem.name" input-class="p-1 m-0 bg-slate-100" :classes="{ outer: 'mb-0 ml-0 w-full', inner: { $reset: true, 'p-0 m-0': true } }" />
+                <FormKit type="text" name="item_name" placeholder="Line Item Name" v-model="lineItem.name" :value="lineItem.name" input-class="p-1 m-0 bg-slate-100" :classes="{ outer: 'mb-0 ml-0 w-full', inner: { $reset: true, 'p-0 m-0': true } }" />
                 <p class="text-sm mt-2 ml-0">
                   <FormKit type="text" name="item_description" placeholder="Line Item Description" v-model="lineItem.description" :value="lineItem.description" input-class="p-1 m-0 bg-slate-100 ml-0" :classes="{ outer: 'mb-0 ml-0 w-full', inner: { $reset: true, 'p-0 m-0': true } }" />
                 </p>
               </div>
               <div class="text-md text-center content-center">
-                <FormKit type="text" name="item_amount" validation="required" v-model="lineItem.amount" :value="lineItem.amount" input-class="p-1 m-0 bg-slate-100 w-full text-center" :classes="{ outer: 'mb-0 ml-0 w-full', inner: { $reset: true, 'p-0 m-0': true } }" />
+                <FormKit type="text" name="item_amount" v-model="lineItem.amount" :value="lineItem.amount" input-class="p-1 m-0 bg-slate-100 w-full text-center" :classes="{ outer: 'mb-0 ml-0 w-full', inner: { $reset: true, 'p-0 m-0': true } }" />
               </div>
               <div class="text-md text-center content-center">
-                <FormKit type="text" name="item_quantity" validation="required" v-model="lineItem.quantity" :value="lineItem.quantity" input-class="p-1 m-0 bg-slate-100 w-full text-center" :classes="{ outer: 'mb-0 ml-0 w-full', inner: { $reset: true, 'p-0 m-0': true } }" />
+                <FormKit type="text" name="item_quantity" v-model="lineItem.quantity" :value="lineItem.quantity" input-class="p-1 m-0 bg-slate-100 w-full text-center" :classes="{ outer: 'mb-0 ml-0 w-full', inner: { $reset: true, 'p-0 m-0': true } }" />
               </div>
               <div class="text-md text-right content-center">
-                <FormKit type="text" name="item_total" validation="required" v-model="lineItemTotal" :value="lineItemTotal" input-class="p-1 m-0 bg-slate-100 w-full text-center" :classes="{ outer: 'mb-0 ml-0 w-full', inner: { $reset: true, 'p-0 m-0': true } }" />
+                <FormKit type="text" name="item_total" v-model="lineItemTotal" :value="lineItemTotal || ''" input-class="p-1 m-0 bg-slate-100 w-full text-center" :classes="{ outer: 'mb-0 ml-0 w-full', inner: { $reset: true, 'p-0 m-0': true } }" />
               </div> 
               <div class="text-md text-center content-center">
                 <span class="symbol" @click="addItem">+</span>
@@ -431,14 +432,14 @@ onMounted(()=>{
         <!-- Modal header -->
         <div class="flex justify-between items-start p-4 rounded-t border-b dark:border-gray-600">
           <h3 class="text-xl font-semibold text-gray-900 dark:text-white">
-            Select Job
+            Select Invoice
           </h3>
         </div>
         <!-- Modal body -->
         <div class="p-6 space-y-6">
-          <FormKit type="form" id="job" submit-label="Add" @submit="updateJob" :actions="false" #default="{ value }">
-            <FormKit type="select" v-model="selectedJob" name="job" :options="jobsData" placeholder="Select Job" outer-class="text-left"  />
-            <FormKit type="submit" label="Select Job" />
+          <FormKit type="form" id="invoice" submit-label="Add" @submit="updateInvoice" :actions="false" #default="{ value }">
+            <FormKit type="select" v-model="selectedJob" name="invoice" :options="invoicesData" placeholder="Select Invoice" outer-class="text-left"  />
+            <FormKit type="submit" label="Select Invoice" />
           </FormKit>
         </div>
       </div>

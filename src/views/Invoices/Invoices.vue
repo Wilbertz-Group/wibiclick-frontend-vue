@@ -11,7 +11,7 @@
   import { AgGridVue } from "ag-grid-vue3";
   import "ag-grid-community/styles/ag-grid.css"; // Core grid CSS, always needed
   import "ag-grid-community/styles/ag-theme-alpine.css"; // Optional theme CSS
-  import Edit from "@/components/Edit.vue";
+  import Edit from "@/components/invoices/Edit.vue";
   import Status from "@/components/invoices/Status.vue";
   import View from "@/components/invoices/View.vue";
 
@@ -198,12 +198,7 @@
       { field: "issuedAt", valueFormatter: dateFormatter },
       { field: "customer.name", headerName: 'Client' }, 
       { field: "employee", valueFormatter: nameFormatter },
-      { field: "sales", headerName: 'Amount' },
-      { field: "callout" }, 
-      { field: "tech_share", headerName: 'Wages' },
-      { field: "company_expenses", headerName: 'Profit' },
-      { field: "paid" },
-       
+      { field: "sales", headerName: 'Amount' },     
       { field: "reason", headerName: 'Status', cellRendererSelector: params => {
           return {
               component: Status,
@@ -212,7 +207,7 @@
         }
       },        
       { 
-        field: "Edit", 
+        field: "id", 
         headerName: 'Edit',
         maxWidth: 80,
         cellRendererSelector: params => {
@@ -223,8 +218,8 @@
         } 
       }, 
       { 
-        field: "url", 
-        headerName: "Invoice", 
+        field: "id", 
+        headerName: "View", 
         maxWidth: 120,
         cellRendererSelector: params => {
           return {
@@ -240,29 +235,6 @@
     sortable: true,
     filter: true,
     flex: 1,
-  }
-
-  async function update(credentials) {
-    try {
-      loading.value = true
-      const response = await axios.post('add-invoice?id='+ userStore.currentWebsite, credentials);
-      loading.value = false
-      modalOpen.value = false
-      fetchInvoices() 
-      toast.success("Successfully updated invoice details")
-    } catch (error) {
-      console.log(error)
-      loading.value = false
-    }
-  }
-
-  const toggleEditModal = (event) => {
-    if( event.value === undefined ){
-      let data = event.data
-      data.issuedAt = moment(data.issuedAt).format('YYYY-MM-DDTHH:MM')
-      selectedInvoice.value = data      
-      modalOpen.value = !modalOpen.value
-    } 
   }
 
   onMounted(() => {
@@ -312,7 +284,6 @@
                     rowSelection="multiple"
                     animateRows="true"
                     @grid-ready="onGridReady"
-                    @cell-clicked="toggleEditModal"
                   >
                 </ag-grid-vue>
 
@@ -343,80 +314,5 @@
 
     </div>
   </div>
-
-  <div id="modalOpen" tabindex="-1" :class="{ flex: modalOpen, hidden: !modalOpen }" class="overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 w-full md:inset-0 h-modal md:h-full justify-center items-center">
-    <div class="relative p-4 w-full max-w-2xl h-full md:h-auto">
-      <!-- Modal content -->
-      <div class="relative bg-white rounded-lg shadow dark:bg-gray-700">
-        <!-- Modal header -->
-        <div class="flex justify-between items-start p-4 rounded-t border-b dark:border-gray-600">
-          <h3 class="text-xl font-semibold text-gray-900 dark:text-white">
-            Update Invoice Details
-          </h3>
-          <button ref="closeDefaultModal" type="button"
-            class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center dark:hover:bg-gray-600 dark:hover:text-white"
-            @click="modalOpen = false">
-            <svg aria-hidden="true" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"
-              xmlns="http://www.w3.org/2000/svg">
-              <path fill-rule="evenodd"
-                d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                clip-rule="evenodd"></path>
-            </svg>
-            <span class="sr-only">Close modal</span>
-          </button>
-        </div>
-        <!-- Modal body -->
-        <div class="p-6 space-y-6">
-          <FormKit type="form" v-if="selectedInvoice" id="invoice" submit-label="Add" @submit="update" :actions="false" #default="{ value }">
-
-            <div class="double">
-              <FormKit type="hidden" v-model="selectedInvoice.jobId" name="jobId" label="Job" />   
-              <FormKit type="text" v-model="selectedInvoice.callout" name="callout" label="Callout Fee" placeholder="Callout Fee" outer-class="text-left" />                    
-            </div>
-
-            <div class="double">
-              <FormKit type="select" v-model="selectedInvoice.reason" name="reason" label="Invoice Stage" :options="status" />  
-              <FormKit type="text" v-model="selectedInvoice.name" name="name" label="Invoice Name" placeholder="Invoice Name" outer-class="text-left" />                   
-            </div>
-
-            <div class="double">
-              <FormKit type="number" v-model="selectedInvoice.tech_expenses" name="tech_expenses" label="Technician Expenses" placeholder="Technician Expenses" outer-class="text-left" />
-              <FormKit type="number" v-model="selectedInvoice.tech_share" name="tech_share" label="Technician Share" placeholder="Technician Share" value="" outer-class="text-left" />                                   
-            </div>
-
-            <div class="double">
-              <FormKit type="number" v-model="selectedInvoice.company_expenses" name="company_expenses" label="Company Expenses" placeholder="Company Expenses" outer-class="text-left" />
-              <FormKit type="number" v-model="selectedInvoice.company_share" name="company_share" label="Company Share" placeholder="Company Share" value="" outer-class="text-left" />                                   
-            </div>
-
-            <div class="double">
-              <FormKit type="text" v-model="selectedInvoice.number" name="number" label="Invoice Number" placeholder="Invoice Number" outer-class="text-left" />
-              <FormKit type="text" v-model="selectedInvoice.url" name="url" label="Invoice Url" placeholder="Invoice Url" outer-class="text-left" />
-            </div>                    
-
-            <div class="double">
-              <FormKit type="datetime-local" v-model="selectedInvoice.issuedAt" name="issuedAt" label="Issued Date" placeholder="Issued Date" outer-class="text-left" />
-              <FormKit type="datetime-local" v-model="selectedInvoice.dueAt" name="dueAt" label="Due Date" placeholder="Due Date" outer-class="text-left" />                      
-            </div>   
-
-            <FormKit type="text" v-model="selectedInvoice.sales" name="sales" label="Invoice Amount" placeholder="Invoice Amount" outer-class="text-left" />
-            
-            <FormKit type="checkbox" v-model="selectedInvoice.paid" label="Paid" name="paid" outer-class="text-left" />
-
-            <FormKit type="textarea" v-model="selectedInvoice.notes" name="notes" label="Invoice Notes" placeholder="Invoice Notes" outer-class="text-left" />
-
-            <FormKit type="number" v-model="selectedInvoice.parts" name="parts" label="Parts" placeholder="Parts" outer-class="text-left" /> 
-          
-            <FormKit type="hidden" v-model="selectedInvoice.id" name="id" label="ID" /> 
-
-            <FormKit type="submit" label="Update invoice" />
-
-          </FormKit>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div v-if="modalOpen" class="bg-gray-900 bg-opacity-50 dark:bg-opacity-80 fixed inset-0 z-40"></div>
 
 </template>

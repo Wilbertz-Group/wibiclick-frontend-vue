@@ -4,7 +4,7 @@
 
 <template>	
 	<div class="flex items-center -space-x-4 hover:space-x-1">
-		<a :href="params.value" target="_blank" class="z-20 p-2.5 block bg-blue-100 border-2 border-white rounded-full transition-all active:bg-blue-50 hover:scale-110 focus:outline-none focus:ring">
+		<a :href="'/view-invoice?invoice_id='+params.value" target="_blank" class="z-20 p-2.5 block bg-blue-100 border-2 border-white rounded-full transition-all active:bg-blue-50 hover:scale-110 focus:outline-none focus:ring">
 			<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" x="0px" y="0px"
 				width="30" height="30"
 				viewBox="0 0 30 30"
