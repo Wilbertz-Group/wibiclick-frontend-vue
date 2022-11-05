@@ -13,7 +13,6 @@
   import "ag-grid-community/styles/ag-theme-alpine.css"; // Optional theme CSS
   import Edit from "@/components/invoices/Edit.vue";
   import Status from "@/components/invoices/Status.vue";
-  import View from "@/components/invoices/View.vue";
 
   const userStore = useUserStore()
   const toast = useToast();
@@ -193,12 +192,16 @@
     return  params.data.employee.firstName + ' ' + params.data.employee.lastName
   }
 
+  const amountFormatter = (params) => {
+    return  'R' + params.data.sales
+  }
+
   const columnDefs = reactive({
     value: [
       { field: "issuedAt", valueFormatter: dateFormatter },
       { field: "customer.name", headerName: 'Client' }, 
       { field: "employee", valueFormatter: nameFormatter },
-      { field: "sales", headerName: 'Amount' },     
+      { field: "sales", headerName: 'Amount', valueFormatter: amountFormatter },
       { field: "reason", headerName: 'Status', cellRendererSelector: params => {
           return {
               component: Status,
@@ -216,18 +219,7 @@
               params
           };
         } 
-      }, 
-      { 
-        field: "id", 
-        headerName: "View", 
-        maxWidth: 120,
-        cellRendererSelector: params => {
-          return {
-              component: View,
-              params
-          };
-        }  
-      },      
+      },       
     ],
   });
 

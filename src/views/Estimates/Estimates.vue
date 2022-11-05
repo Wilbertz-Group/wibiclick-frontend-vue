@@ -13,7 +13,6 @@
   import "ag-grid-community/styles/ag-theme-alpine.css"; // Optional theme CSS
   import Edit from "@/components/Edit.vue";
   import Status from "@/components/invoices/Status.vue";
-  import View from "@/components/invoices/View.vue";
 
   const userStore = useUserStore()
   const toast = useToast();
@@ -216,18 +215,7 @@
               params
           };
         } 
-      }, 
-      { 
-        field: "url", 
-        headerName: "Estimate", 
-        maxWidth: 120,
-        cellRendererSelector: params => {
-          return {
-              component: View,
-              params
-          };
-        }  
-      },      
+      },       
     ],
   });
 
