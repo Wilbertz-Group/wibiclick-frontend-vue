@@ -508,7 +508,7 @@ onMounted(()=>{
             <!-- Invoice Header -->
             <div class="grid grid-flow-col grid-rows-1 grid-cols-2 gap-8">
               <div class="flex items-center">
-                <img id="tux" crossOrigin="anonymous" src="@/assets/images/Logo Only.png" class="w-24 pr-2" loading="lazy" height="" width="" alt="Invoice Logo">
+                <img id="tux" crossOrigin="anonymous" src="@/assets/images/lg.png" class="w-24 pr-2" loading="lazy" height="" width="" alt="Invoice Logo">
                 <div>
                   <h3 class="text-3xl">{{ invoice.company.name }}</h3> 
                   <h3 class="text-xl">{{ invoice.company.slogan }}</h3> 
