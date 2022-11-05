@@ -170,33 +170,33 @@ async function updateInvoice(data){
 }
 
 async function saveInvoice(data) {
-  // let payload = {
-  //   id: invoiceData.value.id,
-  //   reason: data.invoice_status,
-  //   name: invoice.value.customer.name + " " +  invoice.value.name,
-  //   number: data.invoice_number,
-  //   issuedAt: moment(data.invoice_date).toISOString(),
-  //   dueAt: moment(data.invoice_due_date,).toISOString(),
-  //   sales: data.invoice_subtotal,
-  //   subtotal: data.invoice_subtotal, 
-  //   notes: "notes",
-  //   customerId: invoiceData.value.customer.id,
-  //   employeeId: invoiceData.value.employee.id,
-  //   websiteId: invoiceData.value.website.id,
-  //   items: invoice.value.items
-  // }
+  let payload = {
+    id: invoiceData.value.id,
+    reason: data.invoice_status,
+    name: invoice.value.customer.name + " " +  invoice.value.name,
+    number: data.invoice_number,
+    issuedAt: moment(data.invoice_date).toISOString(),
+    dueAt: moment(data.invoice_due_date,).toISOString(),
+    sales: data.invoice_subtotal,
+    subtotal: data.invoice_subtotal, 
+    notes: "notes",
+    customerId: invoiceData.value.customer.id,
+    employeeId: invoiceData.value.employee.id,
+    websiteId: invoiceData.value.website.id,
+    items: invoice.value.items
+  }
 
-  // try {
-  //   loading.value = true
-  //   const response = await axios.post('add-invoice?id='+ userStore.currentWebsite, payload);
-  //   toast.success(response.data.message)
-  //   loading.value = false
-  //   modalOpen.value = false
-  //   router.push({ name: 'invoices' })
-  // } catch (error) {
-  //   console.log(error)
-  //   loading.value = false
-  // }
+  try {
+    loading.value = true
+    const response = await axios.post('add-invoice?id='+ userStore.currentWebsite, payload);
+    toast.success(response.data.message)
+    loading.value = false
+    modalOpen.value = false
+    router.push({ name: 'invoices' })
+  } catch (error) {
+    console.log(error)
+    loading.value = false
+  }
 
   function createInvoice(invoice, path) {
     let doc = new PDFDocument({ size: "A4", margin: 50 });
