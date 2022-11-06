@@ -12,7 +12,7 @@ function createWidget(n) {
 			var contact_utk = getCookie("hubspotutk") || ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c => (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)),
 					pg = window.location.href,
 					utk = contact_utk || "",
-					P = await fetch(`https://wibi.wilbertzgroup.com/wibi-options?id=${n}&c=0&pg=${pg}&utk=${utk}`),
+					P = await fetch(`https://wibiclick-backend-ngugicaesa-uc.a.run.app/wibi-options?id=${n}&c=0&pg=${pg}&utk=${utk}`),
 					B = await P.json();
 			m = B.name, f = B.designation, e = B.pnumber, t = B.wnumber, o = B.message, _ = B.messenger_url, y = B.color_code, b = B.profile_imgUrl, w = B.email, a = B.subject, i = B.body, c = B.whatsapp_message, p = B.telegram_num, l = B.viber_num, s = B.skype_nameemail, r = B.pnumber_sms, d = B.sms_body, h = B.label, g = B.position, v = B.custom_buttons, x = B.line, u = B.close_label, void 0 === h && (h = "Contact Us"), void 0 !== g && "" !== g || (g = "right");
 			var k = document.createElement("div");
@@ -61,7 +61,7 @@ function createWidget(n) {
 			window.addEventListener('message', async event => { 
 					if(event.data.type === 'hsFormCallback' && event.data.eventName === 'onFormSubmit') { 
 							let msgtxt = "form_submit"
-							var Q = await fetch(`https://wibi.wilbertzgroup.com/wibi-action?id=${n}&c=3&ic=${msgtxt}&pg=${pg}&utk=${utk}`),
+							var Q = await fetch(`https://wibiclick-backend-ngugicaesa-uc.a.run.app/wibi-action?id=${n}&c=3&ic=${msgtxt}&pg=${pg}&utk=${utk}`),
 							Y = await Q.json();
 					}
 			});
@@ -73,7 +73,7 @@ function createWidget(n) {
 							text = target.closest("a").getAttribute("class")
 					}
 
-					var Q = await fetch(`https://wibi.wilbertzgroup.com/wibi-action?id=${n}&c=3&ic=${text}&pg=${pg}&utk=${utk}`),
+					var Q = await fetch(`https://wibiclick-backend-ngugicaesa-uc.a.run.app/wibi-action?id=${n}&c=3&ic=${text}&pg=${pg}&utk=${utk}`),
 							Y = await Q.json();
 
 					if (B.ga_show ) {
