@@ -198,8 +198,9 @@
 
   const columnDefs = reactive({
     value: [
+      { field: "number", headerName: 'Invoice #' },
       { field: "issuedAt", valueFormatter: dateFormatter },
-      { field: "customer.name", headerName: 'Client' }, 
+      { field: "customer.name", headerName: 'Client' },        
       { field: "employee", valueFormatter: nameFormatter },
       { field: "sales", headerName: 'Amount', valueFormatter: amountFormatter },
       { field: "reason", headerName: 'Status', cellRendererSelector: params => {

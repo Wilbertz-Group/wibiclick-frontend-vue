@@ -18,6 +18,7 @@ import AddInvoices from '@/views/Invoices/Add.vue'
 import EditInvoices from '@/views/Invoices/Edit.vue'
 import Estimates from '@/views/Estimates/Estimates.vue'
 import AddEstimates from '@/views/Estimates/Add.vue'
+import EditEstimates from '@/views/Estimates/Edit.vue'
 import Visitors from '@/views/Visitors/Visitors.vue'
 import Forms from '@/views/Forms/Forms.vue'
 import Pages from '@/views/Pages/Pages.vue'
@@ -138,12 +139,17 @@ const router = createRouter({
     {
       path: '/estimates',
       name: 'estimates',
-      component: Estimates
+      component: Estimates 
     },
     {
       path: '/add-estimate',
       name: 'add-estimate',
       component: AddEstimates
+    },
+    {
+      path: '/edit-estimate',
+      name: 'edit-estimate',
+      component: EditEstimates
     },
     {
       path: '/visitors',

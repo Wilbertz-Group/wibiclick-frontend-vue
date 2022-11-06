@@ -11,8 +11,8 @@
   import { AgGridVue } from "ag-grid-vue3";
   import "ag-grid-community/styles/ag-grid.css"; // Core grid CSS, always needed
   import "ag-grid-community/styles/ag-theme-alpine.css"; // Optional theme CSS
-  import Edit from "@/components/Edit.vue";
-  import Status from "@/components/invoices/Status.vue";
+  import Edit from "@/components/estimates/Edit.vue";
+  import Status from "@/components/estimates/Status.vue";
 
   const userStore = useUserStore()
   const toast = useToast();
@@ -194,10 +194,11 @@
 
   const columnDefs = reactive({
     value: [
+      { field: "number", headerName: 'Estimate #' },
       { field: "issuedAt", valueFormatter: dateFormatter },
       { field: "customer.name", headerName: 'Client' }, 
       { field: "employee", valueFormatter: nameFormatter },
-      { field: "amount", headerName: 'Amount' },       
+      { field: "sales", headerName: 'Amount' },       
       { field: "reason", headerName: 'Status', cellRendererSelector: params => {
           return {
               component: Status,
@@ -206,7 +207,7 @@
         }
       },        
       { 
-        field: "Edit", 
+        field: "id", 
         headerName: 'Edit',
         maxWidth: 80,
         cellRendererSelector: params => {
