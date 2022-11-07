@@ -20,6 +20,7 @@ const toast = useToast();
 const router = useRouter();
 const route = useRoute()
 const modalOpen = ref(false)
+const save_type = ref()
 
 const userStore = useUserStore();
 const status = ref(userStore.status);
@@ -169,7 +170,8 @@ async function updateInvoice(data){
   modalOpen.value = false
 }
 
-async function saveInvoice(data) {
+async function saveInvoiceOnly(data) {
+  toast.success("Saving Invoice Only")
   let payload = {
     id: invoiceData.value.id,
     reason: data.invoice_status,
@@ -197,6 +199,40 @@ async function saveInvoice(data) {
     console.log(error)
     loading.value = false
   }
+}
+
+async function saveInvoice(data) {
+  if( save_type.value == 'save' ){
+    saveInvoiceOnly(data)
+    return
+  }
+
+  let payload = {
+    id: invoiceData.value.id,
+    reason: data.invoice_status,
+    name: invoice.value.customer.name + " " +  invoice.value.name,
+    number: data.invoice_number,
+    issuedAt: moment(data.invoice_date).toISOString(),
+    dueAt: moment(data.invoice_due_date,).toISOString(),
+    sales: data.invoice_subtotal,
+    subtotal: data.invoice_subtotal, 
+    notes: "notes",
+    customerId: invoiceData.value.customer.id,
+    employeeId: invoiceData.value.employee.id,
+    websiteId: invoiceData.value.website.id,
+    items: invoice.value.items
+  }
+
+  try {
+    loading.value = true
+    const response = await axios.post('add-invoice?id='+ userStore.currentWebsite, payload);
+    toast.success(response.data.message)
+    loading.value = false
+    modalOpen.value = false
+  } catch (error) {
+    console.log(error)
+    loading.value = false
+  }
 
   function createInvoice(invoice, path) {
     let doc = new PDFDocument({ size: "A4", margin: 50 });
@@ -220,11 +256,13 @@ async function saveInvoice(data) {
 
     function download() {
       if (!blob) return;
+      toast.success("Downloading your Invoice")
       var url = window.URL.createObjectURL(blob);
       a.href = url;
       a.download = path;
       a.click();
       window.URL.revokeObjectURL(url);
+      router.push({ name: 'invoices' })
     }
 
     stream.on("finish", function() {
@@ -500,7 +538,10 @@ onMounted(()=>{
             />
 
             <div class="btn-container">
-              <FormKit type="submit" class="btn btn-mark" label="Save & Download" />
+              <FormKit type="submit" @click="save_type = 'save'" class="btn btn-mark" label="Save Only" />
+            </div>
+            <div class="btn-container">
+              <FormKit type="submit" @click="save_type = 'download'" class="btn btn-mark" label="Save & Download" />
             </div>
           </div>
 
