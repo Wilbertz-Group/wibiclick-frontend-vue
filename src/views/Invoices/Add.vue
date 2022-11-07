@@ -54,13 +54,13 @@ const invoice = ref({
 	paid: 0,
   status: "Pending",
 	name: "Invoice",
-	invoice_nr: 1234,
+	invoice_nr: 1,
 	invoice_date: moment().format('YYYY-MM-DD'),
 	invoice_due_date: moment().add(1, 'days').format('YYYY-MM-DD'),  
 });
 
 const lineItem = ref({
-  name: 'Installation Labour',
+  name: '',
   description: '',
   amount: 1,
   quantity: 1,
@@ -76,7 +76,7 @@ function addItem() {
 		})
 
     lineItem.value = {
-      name: 'Installation Labour',
+      name: '',
       description: '',
       amount: 1,
       quantity: 1,
@@ -170,7 +170,7 @@ async function updateJob(data){
     paid: 0,
     status: "Pending",
     name: "Invoice",
-    invoice_nr: profile.value.invoice_number,
+    invoice_nr: profile.value.invoice_number + 1,
     invoice_date: moment().format('YYYY-MM-DD'),
     invoice_due_date: moment().add(1, 'days').format('YYYY-MM-DD'),
   }

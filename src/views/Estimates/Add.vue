@@ -54,13 +54,13 @@ const estimate = ref({
 	paid: 0,
   status: "Pending",
 	name: "Estimate",
-	estimate_nr: 1234,
+	estimate_nr: 1,
 	estimate_date: moment().format('YYYY-MM-DD'),
 	estimate_due_date: moment().add(3, 'days').format('YYYY-MM-DD'),  
 });
 
 const lineItem = ref({
-  name: 'Installation Labour',
+  name: '',
   description: '',
   amount: 1,
   quantity: 1,
@@ -76,7 +76,7 @@ function addItem() {
 		})
 
     lineItem.value = {
-      name: 'Installation Labour',
+      name: '',
       description: '',
       amount: 1,
       quantity: 1,
@@ -170,7 +170,7 @@ async function updateJob(data){
     paid: 0,
     status: "Pending",
     name: "Estimate",
-    estimate_nr: profile.value.estimate_number,
+    estimate_nr: profile.value.estimate_number + 1,
     estimate_date: moment().format('YYYY-MM-DD'),
     estimate_due_date: moment().add(3, 'days').format('YYYY-MM-DD'),
   }
