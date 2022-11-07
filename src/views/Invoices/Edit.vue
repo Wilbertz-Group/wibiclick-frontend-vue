@@ -65,8 +65,8 @@ const invoice = ref({
 const lineItem = ref({
   name: '',
   description: '',
-  amount: '',
-  quantity: '',
+  amount: 1,
+  quantity: 1,
 })
 
 function addItem() {
