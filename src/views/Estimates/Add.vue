@@ -170,7 +170,7 @@ async function updateJob(data){
     paid: 0,
     status: "Pending",
     name: "Estimate",
-    estimate_nr: 1234,
+    estimate_nr: profile.value.estimate_number,
     estimate_date: moment().format('YYYY-MM-DD'),
     estimate_due_date: moment().add(3, 'days').format('YYYY-MM-DD'),
   }
@@ -298,15 +298,15 @@ onMounted(()=>{
                 <div class="text-2xl font-bold">{{estimate.name}} Details</div>
                 <div class="text-lg flex mt-2">
                   <span class="flex justify-items-center items-center"> {{estimate.name}} #: </span>
-                  <FormKit type="text" name="estimate_number" validation="required" :value="estimate.estimate_nr" input-class="p-1 m-0 bg-slate-100" :classes="{ outer: 'mb-0 ml-12 w-96', inner: { $reset: true, 'p-0 m-0': true } }" />
+                  <FormKit type="text" name="estimate_number" validation="required" v-model="estimate.estimate_nr" :value="estimate.estimate_nr" input-class="p-1 m-0 bg-slate-100" :classes="{ outer: 'mb-0 ml-12 w-96', inner: { $reset: true, 'p-0 m-0': true } }" />
                 </div>
                 <div class="text-lg flex mt-2">
                   <span class="flex justify-items-center items-center"> {{estimate.name}} Date: </span>
-                  <FormKit type="date" name="estimate_date" validation="required" :value="estimate.estimate_date" input-class="p-1 m-0 bg-slate-100" :classes="{ outer: 'mb-0 ml-5 w-96', inner: { $reset: true, 'p-0 m-0': true } }" />
+                  <FormKit type="date" name="estimate_date" validation="required" v-model="estimate.estimate_date" :value="estimate.estimate_date" input-class="p-1 m-0 bg-slate-100" :classes="{ outer: 'mb-0 ml-5 w-96', inner: { $reset: true, 'p-0 m-0': true } }" />
                 </div>
                 <div class="text-lg flex mt-2">
                   <span class="flex justify-items-center items-center"> {{estimate.name}} Due: </span>
-                  <FormKit type="date" name="estimate_due_date" validation="required" :value="estimate.estimate_due_date"  input-class="p-1 m-0 bg-slate-100" :classes="{ outer: 'mb-0 ml-6 w-96', inner: { $reset: true, 'p-0 m-0': true } }" />
+                  <FormKit type="date" name="estimate_due_date" validation="required" v-model="estimate.estimate_due_date" :value="estimate.estimate_due_date"  input-class="p-1 m-0 bg-slate-100" :classes="{ outer: 'mb-0 ml-6 w-96', inner: { $reset: true, 'p-0 m-0': true } }" />
                 </div>
                 <div class="text-lg flex font-bold mt-2">
                   <span class="flex justify-items-center items-center"> Balance Due: </span>

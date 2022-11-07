@@ -170,7 +170,7 @@ async function updateJob(data){
     paid: 0,
     status: "Pending",
     name: "Invoice",
-    invoice_nr: 1234,
+    invoice_nr: profile.value.invoice_number,
     invoice_date: moment().format('YYYY-MM-DD'),
     invoice_due_date: moment().add(1, 'days').format('YYYY-MM-DD'),
   }
@@ -298,15 +298,15 @@ onMounted(()=>{
                 <div class="text-2xl font-bold">{{invoice.name}} Details</div>
                 <div class="text-lg flex mt-2">
                   <span class="flex justify-items-center items-center"> {{invoice.name}} #: </span>
-                  <FormKit type="text" name="invoice_number" validation="required" :value="invoice.invoice_nr" input-class="p-1 m-0 bg-slate-100" :classes="{ outer: 'mb-0 ml-12 w-96', inner: { $reset: true, 'p-0 m-0': true } }" />
+                  <FormKit type="text" name="invoice_number" validation="required" v-model="invoice.invoice_nr" :value="invoice.invoice_nr" input-class="p-1 m-0 bg-slate-100" :classes="{ outer: 'mb-0 ml-12 w-96', inner: { $reset: true, 'p-0 m-0': true } }" />
                 </div>
                 <div class="text-lg flex mt-2">
                   <span class="flex justify-items-center items-center"> {{invoice.name}} Date: </span>
-                  <FormKit type="date" name="invoice_date" validation="required" :value="invoice.invoice_date" input-class="p-1 m-0 bg-slate-100" :classes="{ outer: 'mb-0 ml-5 w-96', inner: { $reset: true, 'p-0 m-0': true } }" />
+                  <FormKit type="date" name="invoice_date" validation="required" v-model="invoice.invoice_date" :value="invoice.invoice_date" input-class="p-1 m-0 bg-slate-100" :classes="{ outer: 'mb-0 ml-5 w-96', inner: { $reset: true, 'p-0 m-0': true } }" />
                 </div>
                 <div class="text-lg flex mt-2">
                   <span class="flex justify-items-center items-center"> {{invoice.name}} Due: </span>
-                  <FormKit type="date" name="invoice_due_date" validation="required" :value="invoice.invoice_due_date"  input-class="p-1 m-0 bg-slate-100" :classes="{ outer: 'mb-0 ml-6 w-96', inner: { $reset: true, 'p-0 m-0': true } }" />
+                  <FormKit type="date" name="invoice_due_date" validation="required" v-model="invoice.invoice_due_date" :value="invoice.invoice_due_date"  input-class="p-1 m-0 bg-slate-100" :classes="{ outer: 'mb-0 ml-6 w-96', inner: { $reset: true, 'p-0 m-0': true } }" />
                 </div>
                 <div class="text-lg flex font-bold mt-2">
                   <span class="flex justify-items-center items-center"> Balance Due: </span>
