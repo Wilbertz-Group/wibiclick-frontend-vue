@@ -532,7 +532,7 @@ onMounted(()=>{
               type="select" 
               v-model="invoice.status" 
               name="invoice_status" 
-              :options="['pending', 'paid']" 
+              :options="['pending', 'processing', 'paid']" 
               outer-class="status-body text-left mb-0"  
               input-class="bg-[#0275ff] text-white m-0"
             />

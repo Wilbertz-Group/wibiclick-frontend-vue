@@ -52,7 +52,7 @@ const invoice = ref({
 	items: [],
 	subtotal: 0,
 	paid: 0,
-  status: "Pending",
+  status: "sent",
 	name: "Invoice",
 	invoice_nr: 1,
 	invoice_date: moment().format('YYYY-MM-DD'),
@@ -168,7 +168,7 @@ async function updateJob(data){
     items: [],
     subtotal: 0,
     paid: 0,
-    status: "Pending",
+    status: "sent",
     name: "Invoice",
     invoice_nr: profile.value.invoice_number + 1,
     invoice_date: moment().format('YYYY-MM-DD'),
@@ -240,7 +240,7 @@ onMounted(()=>{
               type="select" 
               v-model="invoice.status" 
               name="invoice_status" 
-              :options="['pending', 'paid']" 
+              :options="['pending', 'processing', 'paid']" 
               outer-class="status-body text-left mb-0"  
               input-class="bg-sky-500 text-white m-0"
             />

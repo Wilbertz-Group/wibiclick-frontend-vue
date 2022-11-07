@@ -21,7 +21,6 @@ const route = useRoute()
 const modalOpen = ref(false)
 
 const userStore = useUserStore();
-const status = ref(userStore.status);
 
 const estimate = ref({
 	company: {
@@ -52,7 +51,7 @@ const estimate = ref({
 	items: [],
 	subtotal: 0,
 	paid: 0,
-  status: "Pending",
+  status: "sent",
 	name: "Estimate",
 	estimate_nr: 1,
 	estimate_date: moment().format('YYYY-MM-DD'),
@@ -168,7 +167,7 @@ async function updateJob(data){
     items: [],
     subtotal: 0,
     paid: 0,
-    status: "Pending",
+    status: "sent",
     name: "Estimate",
     estimate_nr: profile.value.estimate_number + 1,
     estimate_date: moment().format('YYYY-MM-DD'),
@@ -240,7 +239,7 @@ onMounted(()=>{
               type="select" 
               v-model="estimate.status" 
               name="estimate_status" 
-              :options="['pending', 'paid']" 
+              :options="['sent', 'accepted', 'rejected']" 
               outer-class="status-body text-left mb-0"  
               input-class="bg-sky-500 text-white m-0"
             />

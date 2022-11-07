@@ -55,7 +55,7 @@ const estimate = ref({
 	items: [],
 	subtotal: 0,
 	paid: 0,
-  status: "",
+  status: "sent",
 	name: "",
 	estimate_nr: "",
 	estimate_date: "",
@@ -532,7 +532,7 @@ onMounted(()=>{
               type="select" 
               v-model="estimate.status" 
               name="estimate_status" 
-              :options="['pending', 'paid']" 
+              :options="['sent', 'accepted', 'rejected']" 
               outer-class="status-body text-left mb-0"  
               input-class="bg-[#0275ff] text-white m-0"
             />
