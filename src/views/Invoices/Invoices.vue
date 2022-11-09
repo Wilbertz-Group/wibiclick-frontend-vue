@@ -186,7 +186,7 @@
 
   const dateFormatter = (params) => {
     let dt = params.value.slice(0, 16)
-    return params.value ? moment().isSame(dt, 'day') ? moment(dt).format('h:mm a') : moment(dt).format('MMM DD, YYYY h:mm a') : '-';
+    return params.value ? moment().isSame(dt, 'day') ? moment(dt).format('h:mm a') : moment(dt).format('MMM DD, YYYY') : '-';
   }
 
   const nameFormatter = (params) => {
