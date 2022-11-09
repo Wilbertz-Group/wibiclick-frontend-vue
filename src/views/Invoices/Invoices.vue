@@ -199,8 +199,7 @@
 
   const columnDefs = reactive({
     value: [
-      { field: "number", headerName: 'Invoice #', sort: 'desc' },
-      { field: "issuedAt", valueFormatter: dateFormatter },
+      { field: "number", headerName: 'Invoice #', sort: 'desc', maxWidth: 150, },      
       { field: "customer.name", headerName: 'Client' },        
       { field: "employee", valueFormatter: nameFormatter },
       { field: "sales", headerName: 'Amount', valueFormatter: amountFormatter },
@@ -210,7 +209,8 @@
               params
           };
         }
-      },        
+      },  
+      { field: "issuedAt", valueFormatter: dateFormatter },      
       { 
         field: "id", 
         headerName: 'Edit',
