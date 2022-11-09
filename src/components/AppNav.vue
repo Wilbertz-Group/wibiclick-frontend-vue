@@ -101,15 +101,16 @@ function iniABLY(){
     unreadNotifications.value.push(
       { 
         index    : unreadNotifications.value.length,
-        title    : message.data.name,
-        msg      : message.data.data,
-        img      : message.data.image_url,
-        time     : randomDate({sec: 0})
+        title    : message.data?.name,
+        msg      : message.data?.data,
+        img      : message.data?.image_url,
+        time     : randomDate({sec: 0}),
+        website_id : message.data?.website
       }
     )
 
     toast.success(message.data.data, {
-      duration: 0
+      duration: 2000
     })
 
     playSound()
