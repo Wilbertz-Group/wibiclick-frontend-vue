@@ -97,7 +97,7 @@ function playSound () {
 function iniABLY(){
   const channel = ably.channels.get("notifications");
   
-  channel.subscribe(userStore.currentWebsite, function (message) {
+  channel.subscribe('wibi', function (message) {
     unreadNotifications.value.push(
       { 
         index    : unreadNotifications.value.length,
@@ -123,7 +123,6 @@ function iniABLY(){
       console.log("This browser does not support desktop notification");
     } else if (Notification.permission === "granted") {
       const notification = new Notification(message.data.name, optns);
-
     } else if (Notification.permission !== "denied") {
       Notification.requestPermission().then((permission) => {
         if (permission === "granted") {
