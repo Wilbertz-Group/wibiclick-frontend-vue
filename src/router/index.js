@@ -16,8 +16,10 @@ import CustomersAdd from '@/views/Customers/Add.vue'
 import Invoices from '@/views/Invoices/Invoices.vue'
 import AddInvoices from '@/views/Invoices/Add.vue'
 import EditInvoices from '@/views/Invoices/Edit.vue'
+import ViewInvoices from '@/views/Invoices/View.vue'
 import Estimates from '@/views/Estimates/Estimates.vue'
 import AddEstimates from '@/views/Estimates/Add.vue'
+import ViewEstimates from '@/views/Estimates/View.vue'
 import EditEstimates from '@/views/Estimates/Edit.vue'
 import Visitors from '@/views/Visitors/Visitors.vue'
 import Forms from '@/views/Forms/Forms.vue'
@@ -137,6 +139,11 @@ const router = createRouter({
       component: EditInvoices
     },
     {
+      path: '/view-invoice',
+      name: 'view-invoice',
+      component: ViewInvoices
+    },
+    {
       path: '/estimates',
       name: 'estimates',
       component: Estimates 
@@ -145,6 +152,11 @@ const router = createRouter({
       path: '/add-estimate',
       name: 'add-estimate',
       component: AddEstimates
+    },
+    {
+      path: '/view-estimate',
+      name: 'view-estimate',
+      component: ViewEstimates
     },
     {
       path: '/edit-estimate',

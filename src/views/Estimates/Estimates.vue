@@ -12,6 +12,7 @@
   import "ag-grid-community/styles/ag-grid.css"; // Core grid CSS, always needed
   import "ag-grid-community/styles/ag-theme-alpine.css"; // Optional theme CSS
   import Edit from "@/components/estimates/Edit.vue";
+  import View from "@/components/estimates/View.vue";
   import Status from "@/components/estimates/Status.vue";
 
   const userStore = useUserStore()
@@ -198,7 +199,7 @@
 
   const columnDefs = reactive({
     value: [
-      { field: "number", headerName: 'Estimate #' },
+      { field: "number", headerName: 'Estimate #', sort: 'desc' },
       { field: "issuedAt", valueFormatter: dateFormatter },
       { field: "customer.name", headerName: 'Client' }, 
       { field: "employee", valueFormatter: nameFormatter },
@@ -217,6 +218,17 @@
         cellRendererSelector: params => {
           return {
               component: Edit,
+              params
+          };
+        } 
+      },  
+      { 
+        field: "id", 
+        headerName: 'View',
+        maxWidth: 85,
+        cellRendererSelector: params => {
+          return {
+              component: View,
               params
           };
         } 
