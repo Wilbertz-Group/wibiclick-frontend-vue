@@ -68,9 +68,6 @@
                             <h6 class="text-lg font-medium text-white">Contact</h6>
                             <ul class="list-inside mt-4 space-y-4">
                                 <li>
-                                    <a href="mailto:meschacirung@gmail.com" class="hover:text-cyan-400 transition">info@wibi.co.za</a>
-                                </li>
-                                <li>
                                   <a href="./authenticate" @click="isNew(false)" class="hover:text-cyan-400 transition">Login</a>
                                 </li>
                                 <li>
