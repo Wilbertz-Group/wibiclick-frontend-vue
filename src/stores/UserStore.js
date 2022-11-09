@@ -8,6 +8,7 @@ export const useUserStore = defineStore("UserStore", {
   state: () => {
     return {
       user: null,
+      ableyk: '58qyVA.CKD0Qg:iOOkt2jKULP5UGOH',
       events: null,
       newUser: true,
       analytics: {},
@@ -105,6 +106,7 @@ export const useUserStore = defineStore("UserStore", {
     },
     updateWebsite(a) {
       this.currentWebsite = a;
+      this.ableyk = '58qyVA.CKD0Qg:iOOkt2jKULP5UGOH';
     },
   },
   persist: {

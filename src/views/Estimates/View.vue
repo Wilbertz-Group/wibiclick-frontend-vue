@@ -428,13 +428,6 @@ onMounted(()=>{
   <div class="mx-auto py-6 sm:px-6 lg:px-8">
     <div class="px-4 py-6 sm:px-0">
       <main class="detail">
-          <div class="">
-            <p class="status-title"></p>
-
-            <div class="btn-container">
-              
-            </div>
-          </div>
           <div class="grid gap-3 text-right lg:grid-cols-2 md:grid-cols-2 sm:grid-cols-1">
             <div><h2 class="text-md font-semibold text-left ml-5">STATUS: {{estimate.status}}</h2> </div>
             <div class="relative text-right">

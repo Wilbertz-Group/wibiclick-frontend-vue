@@ -6,6 +6,7 @@ import { MenuIcon, XIcon } from '@heroicons/vue/outline'
 import { ref, onMounted, watchEffect } from "vue";
 import ScaleLoader from 'vue-spinner/src/ScaleLoader.vue'
 import { useToast } from 'vue-toast-notification';
+import Ably from "ably";
 
 const toast = useToast();
 const userStore = useUserStore()
@@ -17,6 +18,10 @@ const analytics = ref({})
 const dropdownContacts = ref(false)
 const dropdownMarketing = ref(false)
 const dropdownSales = ref(false)
+const unreadNotifications = ref([]);
+const ably = new Ably.Realtime(userStore.ableyk);
+
+
 const opt = ref([
   { label: 'Select Website', value: 'default', attrs: { disabled: true } },
 ])
@@ -84,10 +89,84 @@ async function addWebsite(credentials) {
   }
 }
 
+function playSound () {
+  const audio = new Audio('notification.mp3');
+  audio.play();
+}
+
+function iniABLY(){
+  const channel = ably.channels.get("notifications");
+  
+  channel.subscribe(userStore.currentWebsite, function (message) {
+    unreadNotifications.value.push(
+      { 
+        index    : unreadNotifications.value.length,
+        title    : message.data.name,
+        msg      : message.data.data,
+        img      : message.data.image_url,
+        time     : randomDate({sec: 0})
+      }
+    )
+
+    toast.success(message.data.data, {
+      duration: 5000
+    })
+
+    playSound()
+  });
+}
+
+function elapsedTime(startTime) {
+  let x        = new Date(startTime)
+  let now      = new Date()
+  var timeDiff = now - x
+  timeDiff    /= 1000
+
+  var seconds = Math.round(timeDiff)
+  timeDiff    = Math.floor(timeDiff / 60)
+
+  var minutes = Math.round(timeDiff % 60)
+  timeDiff    = Math.floor(timeDiff / 60)
+
+  var hours   = Math.round(timeDiff % 24)
+  timeDiff    = Math.floor(timeDiff / 24)
+
+  var days    = Math.round(timeDiff % 365)
+  timeDiff    = Math.floor(timeDiff / 365)
+
+  var years   = timeDiff
+
+  if (years > 0) {
+    return years + (years > 1 ? ' Years ' : ' Year ') + 'ago'
+  } else if (days > 0) {
+    return days + (days > 1 ? ' Days ' : ' Day ') + 'ago'
+  } else if (hours > 0) {
+    return hours + (hours > 1 ? ' Hrs ' : ' Hour ') + 'ago'
+  } else if (minutes > 0) {
+    return minutes + (minutes > 1 ? ' Mins ' : ' Min ') + 'ago'
+  } else if (seconds > 0) {
+    return seconds + (seconds > 1 ? ' sec ago' : 'just now')
+  }
+
+  return 'Just Now'
+}
+
+// Method for creating dummy notification time
+function randomDate({ hr, min, sec }) {
+  let date = new Date()
+
+  if (hr) date.setHours(date.getHours() - hr)
+  if (min) date.setMinutes(date.getMinutes() - min)
+  if (sec) date.setSeconds(date.getSeconds() - sec)
+
+  return date
+}
+
 onMounted(() => {
   if (!userStore.user) {
     logout()
   } else {
+    iniABLY();
     fetchWebsites();
   }
 }),
