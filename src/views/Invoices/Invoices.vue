@@ -202,7 +202,7 @@
   }
 
   const totalFormatter = (params) => {
-    return  'R' + (params.data.deposit + params.data.sales)
+    return  'R' + (Number(params.data.deposit) + Number(params.data.sales))
   }
 
   const columnDefs = reactive({
