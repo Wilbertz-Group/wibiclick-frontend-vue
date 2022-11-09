@@ -197,12 +197,22 @@
     return  'R' + params.data.sales
   }
 
+  const depositFormatter = (params) => {
+    return  'R' + params.data.deposit
+  }
+
+  const totalFormatter = (params) => {
+    return  'R' + (params.data.deposit + params.data.sales)
+  }
+
   const columnDefs = reactive({
     value: [
       { field: "number", headerName: 'Invoice #', sort: 'desc', maxWidth: 150, },      
       { field: "customer.name", headerName: 'Client' },        
       { field: "employee", valueFormatter: nameFormatter },
       { field: "sales", headerName: 'Amount', valueFormatter: amountFormatter },
+      { field: "deposit", headerName: 'Deposit', valueFormatter: depositFormatter },
+      { field: "sales", headerName: 'Total', valueFormatter: totalFormatter },
       { field: "reason", headerName: 'Status', cellRendererSelector: params => {
           return {
               component: Status,
