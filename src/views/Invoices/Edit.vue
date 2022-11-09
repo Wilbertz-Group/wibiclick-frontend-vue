@@ -23,7 +23,6 @@ const modalOpen = ref(false)
 const save_type = ref()
 
 const userStore = useUserStore();
-const status = ref(userStore.status);
 
 const invoice = ref({
 
@@ -102,6 +101,9 @@ function getSum(array){
 
 function deleteItem(i) {
   invoice.value.items.splice(i, 1);
+  if(invoice.value.items){
+    getSum(invoice.value.items)
+  }
 }
 
 async function fetchInvoices() {
@@ -160,7 +162,7 @@ async function updateInvoice(data){
     banking: profile.value.banking,
     items: invoiceData.value.lineItem,
     subtotal: invoiceData.value.sales,
-    paid: 0,
+    paid: Number(invoiceData.value.deposit) || 0,
     status: invoiceData.value.reason,
     name: invoiceData.value.name,
     invoice_nr: invoiceData.value.number,
@@ -180,7 +182,8 @@ async function saveInvoiceOnly(data) {
     issuedAt: moment(data.invoice_date).toISOString(),
     dueAt: moment(data.invoice_due_date,).toISOString(),
     sales: data.invoice_subtotal,
-    subtotal: data.invoice_subtotal, 
+    subtotal: data.invoice_subtotal,
+    deposit: data.paid, 
     notes: "notes",
     customerId: invoiceData.value.customer.id,
     employeeId: invoiceData.value.employee.id,
@@ -215,7 +218,8 @@ async function saveInvoice(data) {
     issuedAt: moment(data.invoice_date).toISOString(),
     dueAt: moment(data.invoice_due_date,).toISOString(),
     sales: data.invoice_subtotal,
-    subtotal: data.invoice_subtotal, 
+    subtotal: data.invoice_subtotal,
+    deposit: data.paid,  
     notes: "notes",
     customerId: invoiceData.value.customer.id,
     employeeId: invoiceData.value.employee.id,
@@ -315,7 +319,7 @@ async function saveInvoice(data) {
       .font("Helvetica-Bold")
       .text("Balance Due:", 50, customerInformationTop + 60)
       .text(
-        formatCurrency(invoice.subtotal - invoice.paid),
+        formatCurrency(invoice.subtotal),
         invoiceSpace,
         customerInformationTop + 60
       )
@@ -422,7 +426,7 @@ async function saveInvoice(data) {
       "",
       "Balance Due",
       "",
-      formatCurrency(invoice.subtotal - invoice.paid)
+      formatCurrency(invoice.subtotal)
     );
     doc.font("Helvetica");
   }
@@ -506,6 +510,12 @@ onMounted(()=>{
 
   if(invoice.value.items){
     getSum(invoice.value.items)
+  }
+})
+
+watchEffect(() => {    
+  if(invoice){
+    getSum(invoice.value.items);
   }
 })
 
@@ -694,7 +704,9 @@ onMounted(()=>{
             <div class="grid grid-flow-col grid-rows-1 grid-cols-12 gap-4 mb-2">
               <div class="text-lg font-bold col-span-9"></div>
               <div class="text-lg text-left col-span-2">Paid To Date</div>
-              <div class="text-lg text-right">{{invoice.company.currency_symbol + invoice.paid}}</div>
+              <div class="text-lg text-right">
+                <FormKit type="text" name="paid" v-model="invoice.paid" :value="invoice.paid" input-class="p-1 m-0 bg-slate-100 w-full text-center" :classes="{ outer: 'mb-0 ml-0 float-right w-14', inner: { $reset: true, 'p-0 m-0': true } }" />
+              </div>
             </div>
 
             <!-- Balance Due  -->

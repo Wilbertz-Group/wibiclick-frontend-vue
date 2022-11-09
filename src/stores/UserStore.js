@@ -9,7 +9,7 @@ export const useUserStore = defineStore("UserStore", {
     return {
       user: null,
       ableyk: '58qyVA.CKD0Qg:iOOkt2jKULP5UGOH',
-      events: null,
+      events: '',
       newUser: true,
       analytics: {},
       currentWebsite: "default",

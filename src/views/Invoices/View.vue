@@ -136,7 +136,7 @@ async function updateInvoice(data){
     banking: profile.value.banking,
     items: invoiceData.value.lineItem,
     subtotal: invoiceData.value.sales,
-    paid: 0,
+    paid: Number(invoiceData.value.deposit) || 0,
     status: invoiceData.value.reason,
     name: invoiceData.value.name,
     invoice_nr: invoiceData.value.number,
@@ -229,7 +229,7 @@ async function saveInvoice(data) {
       .font("Helvetica-Bold")
       .text("Balance Due:", 50, customerInformationTop + 60)
       .text(
-        formatCurrency(invoice.subtotal - invoice.paid),
+        formatCurrency(invoice.subtotal),
         invoiceSpace,
         customerInformationTop + 60
       )
@@ -336,7 +336,7 @@ async function saveInvoice(data) {
       "",
       "Balance Due",
       "",
-      formatCurrency(invoice.subtotal - invoice.paid)
+      formatCurrency(invoice.subtotal)
     );
     doc.font("Helvetica");
   }
