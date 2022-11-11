@@ -643,7 +643,7 @@ onMounted(()=>{
             <div class="grid grid-flow-col grid-rows-1 grid-cols-12 gap-4 mb-2 mt-10">
               <div class="text-lg font-bold col-span-9"></div>
               <div class="text-lg text-left col-span-2">Subtotal</div>
-              <div class="text-lg text-right">{{invoice.company.currency_symbol + invoice.subtotal}}</div>
+              <div class="text-lg text-right">{{invoice.company.currency_symbol + (invoice.subtotal + invoice.paid)}}</div>
             </div>
 
             <!-- Paid To Date -->

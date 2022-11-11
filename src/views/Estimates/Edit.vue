@@ -696,7 +696,7 @@ onMounted(()=>{
             <div class="grid grid-flow-col grid-rows-1 grid-cols-12 gap-4 mb-2">
               <div class="text-lg font-bold col-span-9"></div>
               <div class="text-lg text-left col-span-2">Paid To Date</div>
-              <div class="text-lg text-right">{{estimate.company.currency_symbol + estimate.paid}}</div>
+              <div class="text-lg text-right">{{estimate.company.currency_symbol + (estimate.subtotal + estimate.paid)}}</div>
             </div>
 
             <!-- Balance Due  -->
