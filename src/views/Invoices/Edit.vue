@@ -544,6 +544,7 @@ watchEffect(() => {
               name="invoice_status" 
               :options="['pending', 'processing', 'paid']" 
               outer-class="status-body text-left mb-0"  
+              inner-class="border-none focus-within:border-none shadow-none focus-within:shadow-none"  
               input-class="bg-[#0275ff] text-white m-0"
             />
 
@@ -739,7 +740,7 @@ watchEffect(() => {
         <!-- Modal body -->
         <div class="p-6 space-y-6">
           <FormKit type="form" id="invoice" submit-label="Add" @submit="updateInvoice" :actions="false" #default="{ value }">
-            <FormKit type="select" v-model="selectedJob" name="invoice" :options="invoicesData" placeholder="Select Invoice" outer-class="text-left"  />
+            <FormKit type="select" validation="required" v-model="selectedJob" name="invoice" :options="invoicesData" placeholder="Select Invoice" outer-class="text-left"  />
             <FormKit type="submit" label="Select Invoice" />
           </FormKit>
         </div>

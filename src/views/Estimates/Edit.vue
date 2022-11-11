@@ -534,6 +534,7 @@ onMounted(()=>{
               name="estimate_status" 
               :options="['sent', 'accepted', 'rejected']" 
               outer-class="status-body text-left mb-0"  
+              inner-class="border-none focus-within:border-none shadow-none focus-within:shadow-none"  
               input-class="bg-[#0275ff] text-white m-0"
             />
 
@@ -728,7 +729,7 @@ onMounted(()=>{
         <!-- Modal body -->
         <div class="p-6 space-y-6">
           <FormKit type="form" id="estimate" submit-label="Add" @submit="updateestimate" :actions="false" #default="{ value }">
-            <FormKit type="select" v-model="selectedJob" name="estimate" :options="estimatesData" placeholder="Select Estimate" outer-class="text-left"  />
+            <FormKit type="select" validation="required" v-model="selectedJob" name="estimate" :options="estimatesData" placeholder="Select Estimate" outer-class="text-left"  />
             <FormKit type="submit" label="Select Estimate" />
           </FormKit>
         </div>
