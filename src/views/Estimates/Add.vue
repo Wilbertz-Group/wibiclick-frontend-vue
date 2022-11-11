@@ -500,7 +500,7 @@ onMounted(()=>{
             />
 
             <div class="btn-container">
-              <FormKit type="submit" @click="save_type = 'download'" class="btn btn-mark" label="Save & Download" suffix-icon="download" />
+              <FormKit type="submit" @click="save_type = 'download'" class="btn btn-mark" outer-class="mb-0" label="Save & Download" suffix-icon="download" />
             </div>
           </div>
 

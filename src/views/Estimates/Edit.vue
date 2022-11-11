@@ -539,11 +539,11 @@ onMounted(()=>{
             />
 
             <div class="btn-container">
-              <FormKit type="submit" @click="save_type = 'save'" class="btn btn-mark" label="Save" suffix-icon="checkbox" />
+              <FormKit type="submit" @click="save_type = 'save'" class="btn btn-mark" outer-class="mb-0" label="Save" suffix-icon="checkbox" />
             </div>
 
             <div class="btn-container">
-              <FormKit type="submit" @click="save_type = 'download'" class="btn btn-mark" label="Download" suffix-icon="download" />
+              <FormKit type="submit" @click="save_type = 'download'" class="btn btn-mark" outer-class="mb-0" label="Download" suffix-icon="download" />
             </div>
           </div>
 
