@@ -593,7 +593,7 @@ onMounted(()=>{
               </div>
               <div class="text-lg flex font-bold mt-2">
                 <span class="flex justify-items-center items-center mr-14">VAT: </span>
-                <FormKit type="text" name="customer_vat" validation="required" v-model="estimate.customer.vat" :value="estimate.customer.vat" input-class="p-1 m-0 bg-slate-100" :classes="{ outer: 'mb-0 ml-3 w-96', inner: { $reset: true, 'p-0 m-0': true } }" />
+                <FormKit type="text" name="customer_vat" v-model="estimate.customer.vat" :value="estimate.customer.vat" input-class="p-1 m-0 bg-slate-100" :classes="{ outer: 'mb-0 ml-3 w-96', inner: { $reset: true, 'p-0 m-0': true } }" />
               </div>
             </div>
 
@@ -623,7 +623,7 @@ onMounted(()=>{
             <!-- Add Line Item -->
             <div class="grid grid-flow-col grid-rows-1 grid-cols-12 gap-4 mb-2 border-2 border-transparent border-b-[#11101e]">
               <div class="text-md col-span-8 pb-2">
-                <FormKit type="text" name="item_name" placeholder="Line Item Name" validation="required" v-model="lineItem.name" :value="lineItem.name" input-class="p-1 m-0 bg-slate-100" :classes="{ outer: 'mb-0 ml-0 w-full', inner: { $reset: true, 'p-0 m-0': true } }" />
+                <FormKit type="text" name="item_name" placeholder="Line Item Name" v-model="lineItem.name" :value="lineItem.name" input-class="p-1 m-0 bg-slate-100" :classes="{ outer: 'mb-0 ml-0 w-full', inner: { $reset: true, 'p-0 m-0': true } }" />
                 <p class="text-sm mt-2 ml-0">
                   <FormKit type="text" name="item_description" placeholder="Line Item Description" v-model="lineItem.description" :value="lineItem.description" input-class="p-1 m-0 bg-slate-100 ml-0" :classes="{ outer: 'mb-0 ml-0 w-full', inner: { $reset: true, 'p-0 m-0': true } }" />
                 </p>

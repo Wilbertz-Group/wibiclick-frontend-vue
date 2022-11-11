@@ -52,7 +52,7 @@
   async function getContacts() {
     try {
       loading.value = true
-      const response = await axios.get('customers?id='+ userStore.currentWebsite+'&filter=jobs');
+      const response = await axios.get('customers?id='+ userStore.currentWebsite);
       let b = {}
       response.data.customers ? response.data.customers.map(e => { b[e.id] = e.name}) : ''
       customers.value = b
