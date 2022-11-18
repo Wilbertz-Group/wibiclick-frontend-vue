@@ -481,7 +481,7 @@ onMounted(()=>{
                   <span class="flex justify-items-center items-center"> Estimate Due: {{estimate.estimate_due_date}}</span>
                 </div>
                 <div class="text-lg flex font-bold mt-2">
-                  <span class="flex justify-items-center items-center"> Balance Due: {{estimate.subtotal}}</span>
+                  <span class="flex justify-items-center items-center"> Balance Due: R{{estimate.subtotal}}</span>
                 </div>
               </div>
 
@@ -540,7 +540,7 @@ onMounted(()=>{
             <div class="grid grid-flow-col grid-rows-1 grid-cols-12 gap-4 mb-2 mt-10">
               <div class="text-lg font-bold col-span-9"></div>
               <div class="text-lg text-left col-span-2">Subtotal</div>
-              <div class="text-lg text-right">{{estimate.company.currency_symbol + (estimate.subtotal + estimate.paid)}}</div>
+              <div class="text-lg text-right">{{estimate.company.currency_symbol + (Number(estimate.subtotal) + Number(estimate.paid))}}</div>
             </div>
 
             <!-- Paid To Date -->
