@@ -435,7 +435,7 @@ async function saveInvoice(data) {
     doc
       .fontSize(10)
       .text(
-        "Payment is due within 1 day. Thank you for your business.",
+        "Thank you for your business, your payment is due within 1 day. Use the Invoice # as your payment reference.",
         50,
         780,
         { align: "center", width: 500 }
@@ -718,7 +718,7 @@ watchEffect(() => {
             </div>
 
             <div class="mt-20 mb-20 text-center">
-              <FormKit type="text" name="customer_due_note" validation="required" value="Payment is due within 1 day. Thank you for your business." input-class="p-1 m-0 bg-slate-100" :classes="{ outer: 'mb-0 ml-3 w-1/3 ml-auto mr-auto text-center', inner: { $reset: true, 'p-0 m-0': true } }" />              
+              <FormKit type="text" name="customer_due_note" validation="required" value="Thank you for your business, your payment is due within 1 day. Use the Invoice # as your payment reference." input-class="p-1 m-0 bg-slate-100" :classes="{ outer: 'mb-0 ml-3 w-1/3 ml-auto mr-auto text-center', inner: { $reset: true, 'p-0 m-0': true } }" />              
             </div>
 
           </div>
