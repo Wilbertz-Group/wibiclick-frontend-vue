@@ -333,17 +333,6 @@
     }
   }
 
-  const badgeColor = (type) => {
-    const mappings = {
-      Design: "purple",
-      "Feature Request": "teal",
-      Backend: "blue",
-      QA: "green",
-      default: "teal"
-    };
-    return mappings[type] || mappings.default;
-  }
-
   onMounted(() => {
     if(userStore.currentWebsite && userStore.user){
       fetchJobs()  
