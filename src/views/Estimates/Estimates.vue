@@ -353,7 +353,7 @@
                                   <p :class="colors[column.title]" class="text-xs text-white rounded-full shadow-md px-3 my-1 py-1.5 w-fit">{{item.reason}}</p>
                                 </div>
                                 <div class="flex mt-4 justify-between items-center">
-                                  <span class="text-sm text-gray-600"><b>Amount: </b>{{item.sales}}</span>                    
+                                  <span class="text-sm text-gray-600"><b>Amount: </b>R{{item.sales}}</span>                    
                                 </div>
                                 <p class="text-sm text-gray-600"><b>Tech:   </b> {{item.employee.firstName + ' ' + item.employee.lastName}}</p> 
                                 <p class="text-sm font-bold text-emerald-800"><b>Date:    </b> {{universalDateFormatter(item.createdAt)}}</p>
