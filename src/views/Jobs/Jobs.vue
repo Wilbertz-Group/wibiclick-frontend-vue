@@ -15,18 +15,32 @@
   import Whatsapp from "@/components/jobs/Whatsapp.vue";
   import Status from "@/components/jobs/Status.vue";
   import Hubspot from "@/components/customers/Hubspot.vue";
+  import Draggable from "vue3-draggable";
 
   const userStore = useUserStore()
   const toast = useToast();
   const loading = ref(false)
   const options = ref()
   const series = ref()
+  const colors = ref({
+    scheduled: "bg-emerald-400",
+    done: "bg-green-500",
+    quoted: "bg-purple-600",
+    cancelled: "bg-red-600",
+    quoting: "bg-blue-400",
+    accepted: "bg-blue-600",
+    pending: "bg-gray-800",
+    "no parts": "bg-yellow-500",
+    invoiced: "bg-green-800"
+  })
 
   const employees = ref({})
   const selectedJob = ref(null)
   const paginationPageSize = ref(12)
   const modalOpen = ref(false)
   const status = ref(userStore.status)
+  const jobsApi = ref([])
+  const jobsStatusesApi = ref([])
 
   options.value = {
     chart: {
@@ -84,6 +98,28 @@
       );
 
       rowData.value = response.data.jobs
+
+      let fJobs = {};
+      jobsApi.value = []
+
+      response.data.jobs.forEach((itm) => {
+        if (fJobs[itm.jobStatus]) {
+          fJobs[itm.jobStatus].push(itm);
+        } else {
+          fJobs[itm.jobStatus] = [itm];
+        }
+      });
+
+      Object.keys(fJobs).forEach((itm) => {
+        if(itm != 'done' && itm != "cancelled" && itm != "no parts"){
+          jobsApi.value.push({
+            title: itm,
+            jobs: fJobs[itm]
+          })
+        }
+      });
+
+      jobsStatusesApi.value = Object.keys(fJobs)
 
       let jobss = [];
 
@@ -184,11 +220,16 @@
   const onGridReady = (params) => {
     gridApi.value = params.api;
   };
-  const rowData = reactive({}); 
+  const rowData = reactive([]); 
 
   const dateFormatter = (params) => {
     let dt = params.value.slice(0, 16)
     return params.value ? moment().isSame(dt, 'day') ? moment(dt).format('h:mm a') : moment(dt).format('MMM DD, YYYY h:mm a') : '-';
+  }
+
+  const universalDateFormatter = (dat) => {
+    let dt = dat.slice(0, 16)
+    return moment().isSame(dt, 'day') ? moment(dt).format('h:mm a') : moment(dt).format("dddd, DD MMM YYYY, h:mm a");
   }
 
   const nameFormatter = (params) => {
@@ -292,6 +333,17 @@
     }
   }
 
+  const badgeColor = (type) => {
+    const mappings = {
+      Design: "purple",
+      "Feature Request": "teal",
+      Backend: "blue",
+      QA: "green",
+      default: "teal"
+    };
+    return mappings[type] || mappings.default;
+  }
+
   onMounted(() => {
     if(userStore.currentWebsite && userStore.user){
       fetchJobs()  
@@ -320,6 +372,50 @@
           </div>
           <div class="mt-3 md:col-span-2">
               <div v-if="userStore.currentWebsite" class="shadow p-10 sm:rounded-md sm:overflow-hidden">
+                <div class="grid gap-3 text-right lg:grid-cols-3 md:grid-cols-2 sm:grid-cols-1 mx-auto py-6">
+                  <div><h2 class="font-semibold text-4xl text-left">Kanban</h2> </div>
+                  <div class="relative text-right"></div>
+                  <div class="relative text-right">
+                    <router-link :to="{name: 'add-job'}" class="text-white bg-gray-800 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-gray-300 dark:focus:ring-gray-800 shadow-lg shadow-gray-500/50 dark:shadow-lg dark:shadow-gray-800/80 font-medium rounded-lg text-sm px-5 py-2.5 text-center mb-5 w-56">Add Job <svg class="w-6 h-6 inline pb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></router-link> 
+                  </div>
+                </div> 
+                <div class="flex justify-center mb-24">    
+                  <div class="min-h-screen flex overflow-x-scroll overflow-y-scroll shadow bg-slate-100 mx-auto py-6 sm:px-6 lg:px-8 max-h-40">
+                  
+                    <div
+                        v-for="column in jobsApi"
+                        :key="column.title"
+                        class="rounded-lg px-3 py-3 column-width mr-4 max-h-40"
+                      >
+                      <p :class="colors[column.title]" class="text-white font-bold font-sans tracking-wide text-xl rounded-lg capitalize px-3 py-3">{{column.title}}</p>
+
+                      <draggable v-model="column.jobs">
+                          <template v-slot:item="{item}">
+                              <div class="bg-white shadow rounded px-3 pt-3 pb-1 border border-white mt-3 cursor-move w-80">
+                                <div class="flex justify-between">
+                                  <p class="text-gray-700 font-bold font-sans tracking-wide text-xl">{{item.location}}</p>
+
+                                  <p :class="colors[column.title]" class="text-xs text-white rounded-full shadow-md px-3 my-1 py-1.5 w-fit">{{item.jobStatus}}</p>
+                                </div>
+                                <div class="flex mt-4 justify-between items-center">
+                                  <span class="text-sm text-gray-600"><b>Name: </b>{{item.name}}</span>                    
+                                </div>
+                                <p class="text-sm text-gray-600"><b>Tech:   </b> {{item.employee.firstName + ' ' + item.employee.lastName}}</p> 
+                                <p class="text-sm font-bold text-emerald-800"><b>Date:    </b> {{universalDateFormatter(item.slotStart)}}</p>
+                                <p class="text-sm text-gray-600"><b>Issue:   </b> {{item.issue.slice(0, 80) + '...'}}</p>                  
+                                <div class="flex mt-4 mb-1 justify-between items-center shadow rounded-2xl bg-slate-100">
+                                  <Whatsapp :params="{ data: item }"></Whatsapp>
+                                  <Edit @click="toggleEditModal({ data: item, value: undefined })"></Edit>
+                                  <Hubspot :params="{ data: item, value: item.customer.foreignID }"></Hubspot>
+                                </div>
+                              </div>
+                          </template>
+                      </draggable>
+                    </div>
+
+
+                  </div>
+                </div>
 
                 <div class="grid gap-3 text-right lg:grid-cols-3 md:grid-cols-2 sm:grid-cols-1">
                   <div><h2 class="text-xl font-semibold text-left">All Jobs</h2> </div>
@@ -342,7 +438,7 @@
                     @grid-ready="onGridReady"
                     @cell-clicked="toggleEditModal"
                   >
-                </ag-grid-vue>
+                </ag-grid-vue>                
 
                 <div class="text-center mt-10 mb-10 pb-6 pr-3 shadow-lg rounded-lg bg-blueGray-800">
                   <div class="rounded-t mb-0 px-4 py-3 bg-transparent">
@@ -363,14 +459,10 @@
         </div>
       </div>
 
-      <div class="hidden sm:block" aria-hidden="true">
-        <div class="py-5">
-          <div class="border-t border-gray-200" />
-        </div>
-      </div>
-
     </div>
   </div>
+
+  
 
   <div id="modalOpen" tabindex="-1" :class="{ flex: modalOpen, hidden: !modalOpen }" class="overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 w-full md:inset-0 h-modal md:h-full justify-center items-center">
     <div class="relative p-4 w-full max-w-2xl h-full md:h-auto">
