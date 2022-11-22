@@ -223,7 +223,7 @@
 
   const universalDateFormatter = (dat) => {
     let dt = dat.slice(0, 16)
-    return moment().isSame(dt, 'day') ? moment(dt).format('h:mm a') : moment(dt).format("dddd, DD MMM YYYY, h:mm a");
+    return moment().isSame(dt, 'day') ? moment(dt).format('h:mm a') : moment(dt).format("dddd, DD MMMM YYYY");
   }
 
   const amountFormatter = (params) => {
@@ -326,51 +326,6 @@
           <div class="mt-3 md:col-span-2">
               <div v-if="userStore.currentWebsite" class="shadow p-10 sm:rounded-md sm:overflow-hidden">
 
-                <div class="grid gap-3 text-right lg:grid-cols-3 md:grid-cols-2 sm:grid-cols-1  mx-auto py-6">
-                  <div><h2 class="font-semibold text-4xl text-left">Kanban</h2> </div>
-                  <div class="relative text-right"></div>
-                  <div class="relative text-right">
-                    <router-link :to="{name: 'add-estimate'}" class="text-white bg-gray-800 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-gray-300 dark:focus:ring-gray-800 shadow-lg shadow-gray-500/50 dark:shadow-lg dark:shadow-gray-800/80 font-medium rounded-lg text-sm px-5 py-2.5 text-center mb-5">Add Estimate <svg class="w-6 h-6 inline pb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></router-link> 
-                  </div>
-                </div> 
-
-                <div class="flex justify-center mb-24">    
-                  <div class="min-h-screen flex overflow-x-scroll overflow-y-scroll shadow bg-slate-100 w-full py-6 sm:px-6 lg:px-8 max-h-40 ">
-                  
-                    <div
-                        v-for="column in estimatesApi"
-                        :key="column.title"
-                        class="rounded-lg px-3 py-3 column-width mr-4 max-h-40"
-                      >
-                      <p :class="colors[column.title]" class="text-white font-bold font-sans tracking-wide text-xl rounded-lg capitalize px-3 py-3">{{column.title}}</p>
-
-                      <draggable v-model="column.estimates">
-                          <template v-slot:item="{item}">
-                              <div class="bg-white shadow rounded px-3 pt-3 pb-1 border border-white mt-3 cursor-move w-96">
-                                <div class="flex justify-between">
-                                  <p class="text-gray-700 font-bold font-sans tracking-wide text-xl">{{item.customer.name}}</p>
-
-                                  <p :class="colors[column.title]" class="text-xs text-white rounded-full shadow-md px-3 my-1 py-1.5 w-fit">{{item.reason}}</p>
-                                </div>
-                                <div class="flex mt-4 justify-between items-center">
-                                  <span class="text-sm text-gray-600"><b>Amount: </b>R{{item.sales}}</span>                    
-                                </div>
-                                <p class="text-sm text-gray-600"><b>Tech:   </b> {{item.employee.firstName + ' ' + item.employee.lastName}}</p> 
-                                <p class="text-sm font-bold text-emerald-800"><b>Date:    </b> {{universalDateFormatter(item.createdAt)}}</p>
-                                <p class="text-sm text-gray-600"><b>Estimate #: </b> {{item.number}}</p>                  
-                                <div class="flex mt-4 mb-1 justify-between items-center shadow rounded-2xl bg-slate-100">
-                                  <Edit @click="toggleEditModal({ data: item, value: undefined })" :params="{ value: item.id }"></Edit>
-                                  <View :params="{ value: item.id }"></View>
-                                </div>
-                              </div>
-                          </template>
-                      </draggable>
-                    </div>
-
-
-                  </div>
-                </div>
-
                 <div class="grid gap-3 text-right lg:grid-cols-3 md:grid-cols-2 sm:grid-cols-1">
                   <div><h2 class="text-xl font-semibold text-left">All Estimates</h2> </div>
                   <div class="relative text-right"></div>
@@ -393,6 +348,69 @@
                     @cell-clicked="toggleEditModal"
                   >
                 </ag-grid-vue>
+
+                <div class="grid gap-3 text-right lg:grid-cols-3 md:grid-cols-2 sm:grid-cols-1  mx-auto py-6">
+                  <div></div>
+                  <div class="relative text-right"></div>
+                  <div class="relative text-right">
+                    
+                  </div>
+                </div> 
+
+                <div class="flex justify-center mb-24">    
+                  <div class="min-h-screen flex overflow-x-scroll overflow-y-scroll shadow bg-slate-100 w-full py-6 sm:px-6 lg:px-8 max-h-40 ">
+                  
+                    <div
+                        v-for="column in estimatesApi"
+                        :key="column.title"
+                        class="rounded-lg px-3 py-3 column-width mr-4 max-h-40"
+                      >
+                      <p :class="colors[column.title]" class="text-white font-bold font-sans tracking-wide text-xl rounded-lg capitalize px-3 py-3">{{column.title}}</p>
+
+                      <draggable v-model="column.estimates">
+                          <template v-slot:item="{item}">
+                              <div class="bg-white shadow rounded px-3 pt-3 pb-1 border border-white mt-3 cursor-move w-96">
+                                <div class="flex justify-between mb-0">
+                                  <p class="text-black font-bold font-sans tracking-wide text-2xl capitalize">{{item.customer.name}}</p>
+
+                                  <p :class="colors[column.title]" class="text-sm text-white rounded-full shadow-md px-3 py-1.5 my-1 w-fit">{{item.reason}}</p>
+                                </div>
+
+                                <p class="text-lg text-black -mt-3 mb-3">{{item.employee.firstName + ' ' + item.employee.lastName}}</p>
+
+                                <div class="mt-3 mb-4 p-2 shadow rounded-2xl bg-slate-100">
+                                  <div class="flex justify-between">
+                                    <p class="text-md font-bold text-black">Estimate Number</p>
+                                    <p class="text-md text-black">#{{item.number}}</p>                                  
+                                  </div>
+
+                                  <div class="flex justify-between">
+                                    <p class="text-md font-bold text-black">Amount</p>
+                                    <p class="text-md text-black">{{'R' + item.sales}}</p>                                  
+                                  </div>
+
+                                  <div class="flex justify-between">
+                                    <p class="text-md font-bold text-black">Date</p>
+                                    <p class="text-md text-black">{{universalDateFormatter(item.createdAt)}}</p>                                  
+                                  </div>
+                                </div>
+                                                  
+                                <div class="flex mt-4 mb-1 justify-between items-center">
+                                  <router-link :to="{ name: 'edit-estimate', query:{ estimate_id: item.id } }" class="text-white cursor-pointer inline-block bg-gray-800 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-gray-300 dark:focus:ring-gray-800 shadow-lg shadow-gray-500/50 dark:shadow-lg dark:shadow-gray-800/80 font-medium rounded-lg text-sm px-3 py-1 text-center">
+                                    Edit
+                                  </router-link>
+                                  <router-link :to="{ name: 'view-estimate', query:{ estimate_id: item.id } }" class="text-white cursor-pointer inline-block bg-gray-800 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-gray-300 dark:focus:ring-gray-800 shadow-lg shadow-gray-500/50 dark:shadow-lg dark:shadow-gray-800/80 font-medium rounded-lg text-sm px-3 py-1 text-center">
+                                    View
+                                  </router-link>
+                                </div>
+                              </div>
+                          </template>
+                      </draggable>
+                    </div>
+
+
+                  </div>
+                </div>
 
                 <div class="text-center mt-10 mb-10 pb-6 pr-3 shadow-lg rounded-lg bg-blueGray-800">
                   <div class="rounded-t mb-0 px-4 py-3 bg-transparent">
