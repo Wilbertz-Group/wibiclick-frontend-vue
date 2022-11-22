@@ -182,9 +182,9 @@ async function saveEstimateOnly(data) {
     sales: data.estimate_subtotal,
     subtotal: data.estimate_subtotal, 
     notes: "notes",
-    customerId: estimateData.value.customer.id,
-    employeeId: estimateData.value.employee.id,
-    websiteId: estimateData.value.website.id,
+    customerId: estimateData.value.customer?.id,
+    employeeId: estimateData.value.employee?.id || "",
+    websiteId: estimateData.value.website?.id,
     items: estimate.value.items
   }
 
@@ -217,9 +217,9 @@ async function saveestimate(data) {
     sales: data.estimate_subtotal,
     subtotal: data.estimate_subtotal, 
     notes: "notes",
-    customerId: estimateData.value.customer.id,
-    employeeId: estimateData.value.employee.id,
-    websiteId: estimateData.value.website.id,
+    customerId: estimateData.value.customer?.id,
+    employeeId: estimateData.value.employee?.id || '',
+    websiteId: estimateData.value.website?.id,
     items: estimate.value.items
   }
 
