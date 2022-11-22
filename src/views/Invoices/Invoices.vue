@@ -105,13 +105,25 @@
       });
 
       Object.keys(fInvoices).forEach((itm) => {
-          invoicesApi.value.push({
+        if(itm == 'sent'){
+          invoicesApi.value[0] = {
             title: itm,
             invoices: fInvoices[itm]
-          })
+          }
+        } else if(itm == 'pending'){
+          invoicesApi.value[1] = {
+            title: itm,
+            invoices: fInvoices[itm]
+          }
+        } else if(itm == 'paid'){
+          invoicesApi.value[2] = {
+            title: itm,
+            invoices: fInvoices[itm]
+          }
+        }
       });
 
-      invoicesApi.value = invoicesApi.value.reverse()
+      //invoicesApi.value = invoicesApi.value.reverse()
 
       invoicesStatusesApi.value = Object.keys(fInvoices)
 

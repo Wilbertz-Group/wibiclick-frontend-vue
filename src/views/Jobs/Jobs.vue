@@ -100,7 +100,7 @@
       rowData.value = response.data.jobs
 
       let fJobs = {};
-      jobsApi.value = []
+      let tempJobs = []
 
       response.data.jobs.forEach((itm) => {
         if (fJobs[itm.jobStatus]) {
@@ -112,11 +112,53 @@
 
       Object.keys(fJobs).forEach((itm) => {
         //if(itm != 'done' && itm != "cancelled" && itm != "no parts"){
-          jobsApi.value.push({
+          tempJobs.push({
             title: itm,
             jobs: fJobs[itm]
           })
         //}
+      });
+
+      jobsApi.value = []
+
+      tempJobs.forEach((itm) => {
+        switch (itm.title) {
+          case "scheduled":
+            jobsApi.value[0] = itm
+          break;
+
+          case "quoting":
+            jobsApi.value[1] = itm
+          break;
+
+          case "quoted":
+            jobsApi.value[2] = itm
+          break;
+
+          case "accepted":
+            jobsApi.value[3] = itm
+          break;
+
+          case "cancelled":
+            jobsApi.value[4] = itm
+          break;
+
+          case "no parts":
+            jobsApi.value[5] = itm
+          break;
+
+          case "pending":
+            jobsApi.value[6] = itm
+          break;
+
+          case "invoiced":
+            jobsApi.value[7] = itm
+          break;
+
+          case "done":
+            jobsApi.value[8] = itm
+          break;
+        }
       });
 
       jobsStatusesApi.value = Object.keys(fJobs)
