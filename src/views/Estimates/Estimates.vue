@@ -91,8 +91,7 @@
 
       rowData.value = response.data.estimates
 
-      let fEstimates = {};
-      estimatesApi.value = []
+      let fEstimates = {}, estAp = []
 
       response.data.estimates.forEach((itm) => {
         if (fEstimates[itm.reason]) {
@@ -103,11 +102,13 @@
       });
 
       Object.keys(fEstimates).forEach((itm) => {
-          estimatesApi.value.push({
-            title: itm,
-            estimates: fEstimates[itm]
-          })
+        estAp.push({
+          title: itm,
+          estimates: fEstimates[itm]
+        })
       });
+
+      estimatesApi.value = estAp.filter(e => e);
 
       estimatesStatusesApi.value = Object.keys(fEstimates)
 

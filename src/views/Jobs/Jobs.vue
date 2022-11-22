@@ -119,47 +119,49 @@
         //}
       });
 
-      jobsApi.value = []
+      let jobAp = []
 
       tempJobs.forEach((itm) => {
         switch (itm.title) {
           case "scheduled":
-            jobsApi.value[0] = itm
+            jobAp[0] = itm
           break;
 
           case "quoting":
-            jobsApi.value[1] = itm
+            jobAp[1] = itm
           break;
 
           case "quoted":
-            jobsApi.value[2] = itm
+            jobAp[2] = itm
           break;
 
           case "accepted":
-            jobsApi.value[3] = itm
+            jobAp[3] = itm
           break;
 
           case "cancelled":
-            jobsApi.value[4] = itm
+            jobAp[4] = itm
           break;
 
           case "no parts":
-            jobsApi.value[5] = itm
+            jobAp[5] = itm
           break;
 
           case "pending":
-            jobsApi.value[6] = itm
+            jobAp[6] = itm
           break;
 
           case "invoiced":
-            jobsApi.value[7] = itm
+            jobAp[7] = itm
           break;
 
           case "done":
-            jobsApi.value[8] = itm
+            jobAp[8] = itm
           break;
         }
       });
+
+      jobsApi.value = jobAp.filter(e => e);
 
       jobsStatusesApi.value = Object.keys(fJobs)
 
@@ -439,7 +441,7 @@
                     
                   </div>
                 </div> 
-                <div class="flex justify-center mb-24">    
+                <div class="w-full mb-24">    
                   <div class="min-h-[70vh] flex overflow-x-scroll overflow-y-scroll shadow bg-slate-100 mx-auto py-6 sm:px-6 lg:px-8 max-h-40">
                   
                     <div
