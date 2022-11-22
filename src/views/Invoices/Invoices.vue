@@ -93,8 +93,7 @@
 
       rowData.value = response.data.invoices
 
-      let fInvoices = {};
-      invoicesApi.value = []
+      let fInvoices = {}, invAp = []
 
       response.data.invoices.forEach((itm) => {
         if (fInvoices[itm.reason]) {
@@ -105,25 +104,25 @@
       });
 
       Object.keys(fInvoices).forEach((itm) => {
-        if(itm == 'sent'){
-          invoicesApi.value[0] = {
+        if(itm == 'sent' && itm != undefined){
+          invAp[0] = {
             title: itm,
             invoices: fInvoices[itm]
           }
-        } else if(itm == 'pending'){
-          invoicesApi.value[1] = {
+        } else if(itm == 'pending' && itm != undefined){
+          invAp[1] = {
             title: itm,
             invoices: fInvoices[itm]
           }
-        } else if(itm == 'paid'){
-          invoicesApi.value[2] = {
+        } else if(itm == 'paid' && itm != undefined){
+          invAp[2] = {
             title: itm,
             invoices: fInvoices[itm]
           }
         }
       });
 
-      //invoicesApi.value = invoicesApi.value.reverse()
+      invoicesApi.value = invAp.filter(e => e);
 
       invoicesStatusesApi.value = Object.keys(fInvoices)
 
@@ -365,6 +364,7 @@
                     <div
                         v-for="column in invoicesApi"
                         :key="column.title"
+                        v-if="invoicesApi"
                         class="rounded-lg px-3 py-3 column-width mr-4 max-h-40"
                       >
                       <p :class="colors[column.title]" class="text-white font-bold font-sans tracking-wide text-xl rounded-lg capitalize px-3 py-3">{{column.title}}</p>
