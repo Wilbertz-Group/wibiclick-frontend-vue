@@ -335,7 +335,7 @@
 
                 <ag-grid-vue
                     class="ag-theme-alpine"
-                    style="height: 380px"
+                    style="height:580px"
                     :columnDefs="columnDefs.value"
                     :rowData="rowData.value"
                     :defaultColDef="defaultColDef"
@@ -357,12 +357,12 @@
                 </div> 
 
                 <div class="flex justify-center mb-24">    
-                  <div class="min-h-screen flex overflow-x-scroll overflow-y-scroll shadow bg-slate-100 w-full py-6 sm:px-6 lg:px-8 max-h-40 ">
+                  <div class="flex min-h-[70vh] overflow-x-scroll overflow-y-scroll shadow bg-slate-100 w-full py-6 sm:px-6 lg:px-8 h-20 ">
                   
                     <div
                         v-for="column in estimatesApi"
                         :key="column.title"
-                        class="rounded-lg px-3 py-3 column-width mr-4 max-h-40"
+                        class="rounded-lg px-3 py-3 column-width mr-4 h-20"
                       >
                       <p :class="colors[column.title]" class="text-white font-bold font-sans tracking-wide text-xl rounded-lg capitalize px-3 py-3">{{column.title}}</p>
 
@@ -370,7 +370,7 @@
                           <template v-slot:item="{item}">
                               <div class="bg-white shadow rounded px-3 pt-3 pb-1 border border-white mt-3 cursor-move w-96">
                                 <div class="flex justify-between mb-0">
-                                  <p class="text-black font-bold font-sans tracking-wide text-2xl capitalize">{{item.customer?.name}}</p>
+                                  <p class="text-black font-bold font-sans tracking-wide text-xl capitalize">{{item.customer?.name}}</p>
 
                                   <p :class="colors[column.title]" class="text-sm text-white rounded-full shadow-md px-3 py-1.5 my-1 w-fit">{{item.reason}}</p>
                                 </div>

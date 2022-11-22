@@ -440,7 +440,7 @@
                   </div>
                 </div> 
                 <div class="flex justify-center mb-24">    
-                  <div class="min-h-screen flex overflow-x-scroll overflow-y-scroll shadow bg-slate-100 mx-auto py-6 sm:px-6 lg:px-8 max-h-40">
+                  <div class="min-h-[70vh] flex overflow-x-scroll overflow-y-scroll shadow bg-slate-100 mx-auto py-6 sm:px-6 lg:px-8 max-h-40">
                   
                     <div
                         v-for="column in jobsApi"
@@ -453,7 +453,7 @@
                           <template v-slot:item="{item}">
                               <div class="bg-white shadow rounded px-3 pt-3 pb-1 border border-white mt-3 cursor-move w-80">
                                 <div class="flex justify-between mb-0">
-                                  <p class="text-black font-bold font-sans tracking-wide text-2xl capitalize">{{item.name}}</p>
+                                  <p class="text-black font-bold font-sans tracking-wide text-xl capitalize">{{item.name}}</p>
 
                                   <p :class="colors[column.title]" class="text-sm text-white rounded-full shadow-md px-3 py-1.5 my-1 w-fit">{{item.jobStatus}}</p>
                                 </div>
