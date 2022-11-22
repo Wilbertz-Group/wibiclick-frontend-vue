@@ -271,7 +271,7 @@
 
   const universalDateFormatter = (dat) => {
     let dt = dat.slice(0, 16)
-    return moment().isSame(dt, 'day') ? moment(dt).format('h:mm a') : moment(dt).format("dddd, DD MMM YYYY");
+    return moment().isSame(dt, 'day') ? "Today" : moment(dt).format("dddd, DD MMM YYYY");
   }
 
   const universalTimeFormatter = (dat) => {
