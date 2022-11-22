@@ -10,11 +10,11 @@ import { computed } from "@vue/reactivity";
 import ScaleLoader from 'vue-spinner/src/ScaleLoader.vue'
 
 const loading = ref(false);
-const all_jobs = ref();
-const job = ref();
+const all_contacts = ref();
+const contact = ref();
 const profile = ref(false);
-const selectedJob = ref();
-const jobsData = ref({job: 'Select Job'});
+const selectedContact = ref();
+const dbContacts = ref({job: 'Select Job'});
 const toast = useToast();
 const router = useRouter();
 const route = useRoute()
@@ -101,42 +101,39 @@ function deleteItem(i) {
 }
 
 async function checkParams() {
-  if( route.query.job_id ){    
-    toast.success("You have successfully provided job id")
-  } else {
-    toast.warning("Job id is required to create an estimate")
-    fetchJobs()
+  if( !route.query?.job_id ){   
+    toast.warning("Contact id is required to create an estimate")
+    getContacts()
   }
 } 
 
-async function fetchJobs() {
+async function getContacts() {
   try {
     loading.value = true
-    const response = await axios.get(
-      `jobs?id=${userStore.currentWebsite}&limit=1500&offset=0`
-    );
+    const response = await axios.get('customers?&limit=60&offset=0&id='+ userStore.currentWebsite);
 
-    all_jobs.value = response.data.jobs
-    let jobs = {};
+    let contacts = {};
 
-    for (const job of response.data.jobs) {
-      jobs[job.id] = job.name
+    for (const contact of response.data.customers) {
+      contacts[contact.id] = contact.name
     }
 
-    jobsData.value = jobs
+    dbContacts.value = contacts
+    all_contacts.value = response.data.customers
+
     loading.value = false
     modalOpen.value = true
   } catch (error) {
-    console.log(error);
+    console.log(error)
     loading.value = false
     modalOpen.value = true
-    toast.error("Error getting jobs data")
+    toast.error("Error getting contacts data")
   }
 }
 
-async function updateJob(data){
-  let job_data = all_jobs.value.filter(e => { return e.id == data.job })[0]
-  job.value = job_data
+async function updateEstimate(data){
+  let contact_data = all_contacts.value.filter(e => { return e.id == data.contact })[0]
+  contact.value = contact_data;
 
   if(!profile.value){
     try {
@@ -148,7 +145,7 @@ async function updateJob(data){
       modalOpen.value = true
     } catch (error) {
       console.log(error)
-      toast.warning("Failed to get Company Data")
+      toast.warning("Failed to get profile data")
       loading.value = false
       modalOpen.value = true
     }
@@ -157,10 +154,10 @@ async function updateJob(data){
   estimate.value = {
     company: profile.value.company,
     customer: {
-      id: job_data.customer.id,
-      name: job_data.customer.name,
-      address: job_data.address,
-      phone: job_data.phone,
+      id: contact_data.id,
+      name: contact_data.name,
+      address: contact_data.address,
+      phone: contact_data.phone,
       vat: "",
     },
     banking: profile.value.banking,
@@ -178,7 +175,6 @@ async function updateJob(data){
 
 async function saveEstimate(data) {
   let payload = {
-    jobId: job.value.id,
     reason: estimate.value.status,
     name: estimate.value.customer.name + " " + estimate.value.name,
     number: estimate.value.estimate_nr,
@@ -188,8 +184,6 @@ async function saveEstimate(data) {
     subtotal: estimate.value.subtotal, 
     notes: "notes",
     customerId: estimate.value.customer.id,
-    employeeId: job.value.employee.id,
-    websiteId: job.value.website.id,
     items: estimate.value.items
   }
 
@@ -578,7 +572,7 @@ onMounted(()=>{
 
             <!-- Billed To -->
             <div class="">
-              <div class="text-2xl font-bold">Billed To <span class="text-sm text-blue-600 underline cursor-pointer" @click="modalOpen = true">click here to select different job</span></div>
+              <div class="text-2xl font-bold">Billed To <span class="text-sm text-blue-600 underline cursor-pointer" @click="modalOpen = true">click here to select different contact</span></div>
               <div class="text-lg flex font-bold mt-2">
                 <span class="flex justify-items-center items-center mr-10">Name: </span>
                 <FormKit type="text" name="customer_name" validation="required" v-model="estimate.customer.name" :value="estimate.customer.name" input-class="p-1 m-0 bg-slate-100" :classes="{ outer: 'mb-0 ml-3 w-96', inner: { $reset: true, 'p-0 m-0': true } }" />
@@ -680,14 +674,14 @@ onMounted(()=>{
         <!-- Modal header -->
         <div class="flex justify-between items-start p-4 rounded-t border-b dark:border-gray-600">
           <h3 class="text-xl font-semibold text-gray-900 dark:text-white">
-            Select Job
+            Select Contact
           </h3>
         </div>
         <!-- Modal body -->
         <div class="p-6 space-y-6">
-          <FormKit type="form" id="job" submit-label="Add" @submit="updateJob" :actions="false" #default="{ value }">
-            <FormKit type="select" v-model="selectedJob" name="job" :options="jobsData" placeholder="Select Job" outer-class="text-left" validation="required" />
-            <FormKit type="submit" label="Select Job" />
+          <FormKit type="form" id="contact" submit-label="Add" @submit="updateEstimate" :actions="false" #default="{ value }">
+            <FormKit type="select" v-model="selectedContact" name="contact" :options="dbContacts" placeholder="Select Contact" outer-class="text-left" validation="required" />
+            <FormKit type="submit" label="Select Contact" />
           </FormKit>
         </div>
       </div>

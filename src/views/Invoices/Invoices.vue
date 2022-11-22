@@ -373,12 +373,12 @@
                           <template v-slot:item="{item}">
                               <div class="bg-white shadow rounded px-3 pt-3 pb-1 border border-white mt-3 cursor-move w-96">
                                 <div class="flex justify-between mb-0">
-                                  <p class="text-black font-bold font-sans tracking-wide text-2xl capitalize">{{item.customer.name}}</p>
+                                  <p class="text-black font-bold font-sans tracking-wide text-2xl capitalize">{{item.customer?.name}}</p>
 
                                   <p :class="colors[column.title]" class="text-sm text-white rounded-full shadow-md px-3 py-1.5 my-1 w-fit">{{item.reason}}</p>
                                 </div>
 
-                                <p class="text-lg text-black -mt-3 mb-3">{{item.employee.firstName + ' ' + item.employee.lastName}}</p>
+                                <p class="text-lg text-black -mt-3 mb-3">{{item.employee?.firstName + ' ' + item.employee?.lastName}}</p>
 
                                 <div class="mt-3 mb-4 p-2 shadow rounded-2xl bg-slate-100">
                                   <div class="flex justify-between">

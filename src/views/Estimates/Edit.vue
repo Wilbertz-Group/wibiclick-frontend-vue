@@ -151,21 +151,21 @@ async function updateestimate(data){
   estimate.value = {
     company: profile.value.company,
     customer: {
-      id: estimateData.value.customer?.id,
-      name: estimateData.value.customer?.name,
-      address: estimateData.value.job?.address,
-      phone: estimateData.value.job?.phone,
+      id: estimate_data.customer?.id,
+      name: estimate_data.customer?.name,
+      address: estimate_data.customer?.address,
+      phone: estimate_data.customer?.phone,
       vat: "",
     },
     banking: profile.value.banking,
-    items: estimateData.value.lineItem,
-    subtotal: estimateData.value.sales,
+    items: estimate_data.lineItem,
+    subtotal: estimate_data.sales,
     paid: 0,
-    status: estimateData.value.reason,
-    name: estimateData.value.name,
-    estimate_nr: estimateData.value.number,
-    estimate_date: moment(estimateData.value.issuedAt).format('YYYY-MM-DD'),
-    estimate_due_date: moment(estimateData.value.estimate_due_date).add(1, 'days').format('YYYY-MM-DD'),
+    status: estimate_data.reason,
+    name: estimate_data.name,
+    estimate_nr: estimate_data.number,
+    estimate_date: moment(estimate_data.issuedAt).format('YYYY-MM-DD'),
+    estimate_due_date: moment(estimate_data.estimate_due_date).add(1, 'days').format('YYYY-MM-DD'),
   }
   modalOpen.value = false
 }

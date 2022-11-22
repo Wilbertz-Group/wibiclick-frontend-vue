@@ -458,7 +458,7 @@
                                   <p :class="colors[column.title]" class="text-sm text-white rounded-full shadow-md px-3 py-1.5 my-1 w-fit">{{item.jobStatus}}</p>
                                 </div>
 
-                                <p class="text-lg text-black -mt-3 mb-3">{{item.employee.firstName + ' ' + item.employee.lastName}}</p> 
+                                <p class="text-lg text-black -mt-3 mb-3">{{item.employee?.firstName + ' ' + item.employee?.lastName}}</p> 
 
                                 <div class="mt-3 mb-4 p-2 shadow bg-slate-100">
                                   <div class="flex justify-between">
