@@ -353,9 +353,9 @@ async function saveInvoice(data) {
         position,
         item.name || item.item,
         item.description,
-        formatCurrency(item.amount / item.quantity),
+        formatCurrency(item.amount),
         item.quantity,
-        formatCurrency(item.amount)
+        formatCurrency(item.amount * item.quantity)
       );
 
       generateHr(doc, position + 20);
