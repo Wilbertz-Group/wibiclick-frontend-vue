@@ -376,7 +376,7 @@ onMounted(async () => {
 watchEffect(() => {    
   if(userStore.currentWebsite){
     fetchClicks()
-    fetchViews()
+    //fetchViews()
     fetchRecentClicks()
   }
 })
@@ -607,7 +607,7 @@ watchEffect(() => {
         </div>
 
         <div class="grid grid-cols-none md:grid-cols-1 gap-3">
-          <div class="text-center mt-10 pb-6 pr-3 shadow-lg rounded-lg bg-blueGray-800">
+          <!-- <div class="text-center mt-10 pb-6 pr-3 shadow-lg rounded-lg bg-blueGray-800">
             <div class="rounded-t mb-0 px-4 py-3 bg-transparent">
               <div class="flex flex-wrap items-center">
                 <div class="relative w-full max-w-full flex-grow flex-1 text-left">
@@ -619,7 +619,7 @@ watchEffect(() => {
               </div>
             </div>
             <apexchart type="area" height="450" :options="voptions" :series="vseries"></apexchart>
-          </div>
+          </div> -->
           <div class="text-center mt-10 pb-6 pr-3 shadow-lg rounded-lg bg-blueGray-800">
             <div class="rounded-t mb-0 px-4 py-3 bg-transparent">
               <div class="flex flex-wrap items-center">
