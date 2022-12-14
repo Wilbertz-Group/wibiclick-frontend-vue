@@ -376,7 +376,7 @@ onMounted(async () => {
 watchEffect(() => {    
   if(userStore.currentWebsite){
     fetchClicks()
-    //fetchViews()
+    fetchViews()
     fetchRecentClicks()
   }
 })
@@ -553,7 +553,7 @@ watchEffect(() => {
                 </button>
               </div>
 
-              <div v-if="userStore?.analytics?.call" class="rounded-lg text-center pt-1 pb-6 border border-gray-200 shadow-md divide-y divide-gray-300/50">
+              <div class="rounded-lg text-center pt-1 pb-6 border border-gray-200 shadow-md divide-y divide-gray-300/50">
                 <h4 class="text-4xl py-4 text-center">{{ userStore?.analytics?.call || 0 }}</h4>
                 <button type="button" :class="buttons.call.color"
                   class="btn-air-light text-white focus:outline-none focus:ring-4 focus:ring-green-300 font-medium rounded-full text-base px-10 pt-2 pb-2.5 text-center mr-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800">
@@ -573,7 +573,7 @@ watchEffect(() => {
                   <span class="ml-2">{{ buttons.telegram.name }}</span>
                 </button>
               </div>
-              <div v-if="userStore?.analytics?.viber" class="rounded-lg text-center pt-1 pb-6 border border-gray-200 shadow-md divide-y divide-gray-300/50">
+              <div class="rounded-lg text-center pt-1 pb-6 border border-gray-200 shadow-md divide-y divide-gray-300/50">
                 <h4 class="text-4xl py-4 text-center">{{ userStore?.analytics?.viber || 0 }}</h4>
                 <button type="button" :class="buttons.viber.color"
                   class="btn-air-light text-white focus:outline-none focus:ring-4 focus:ring-green-300 font-medium rounded-full text-base px-10 pt-2 pb-2.5 text-center mr-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800">
@@ -583,7 +583,7 @@ watchEffect(() => {
                   <span class="ml-2">{{ buttons.viber.name }}</span>
                 </button>
               </div>
-              <div v-if="userStore?.analytics?.skype" class="rounded-lg text-center pt-1 pb-6 border border-gray-200 shadow-md divide-y divide-gray-300/50">
+              <div class="rounded-lg text-center pt-1 pb-6 border border-gray-200 shadow-md divide-y divide-gray-300/50">
                 <h4 class="text-4xl py-4 text-center">{{ userStore?.analytics?.skype || 0 }}</h4>
                 <button type="button" :class="buttons.skype.color"
                   class="btn-air-light text-white focus:outline-none focus:ring-4 focus:ring-green-300 font-medium rounded-full text-base px-10 pt-2 pb-2.5 text-center mr-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800">
@@ -607,7 +607,7 @@ watchEffect(() => {
         </div>
 
         <div class="grid grid-cols-none md:grid-cols-1 gap-3">
-          <!-- <div class="text-center mt-10 pb-6 pr-3 shadow-lg rounded-lg bg-blueGray-800">
+          <div class="text-center mt-10 pb-6 pr-3 shadow-lg rounded-lg bg-blueGray-800">
             <div class="rounded-t mb-0 px-4 py-3 bg-transparent">
               <div class="flex flex-wrap items-center">
                 <div class="relative w-full max-w-full flex-grow flex-1 text-left">
@@ -619,7 +619,7 @@ watchEffect(() => {
               </div>
             </div>
             <apexchart type="area" height="450" :options="voptions" :series="vseries"></apexchart>
-          </div> -->
+          </div>
           <div class="text-center mt-10 pb-6 pr-3 shadow-lg rounded-lg bg-blueGray-800">
             <div class="rounded-t mb-0 px-4 py-3 bg-transparent">
               <div class="flex flex-wrap items-center">
