@@ -56,7 +56,8 @@ const router = createRouter({
     {
       path: '/snippet',
       name: 'snippet',
-      component: Snippet
+      component: Snippet,
+      meta: {permission: ['owner', 'admin']}
     },
     {
       path: '/billing',
@@ -66,7 +67,8 @@ const router = createRouter({
     {
       path: '/settings',
       name: 'settings',
-      component: Settings
+      component: Settings,
+      meta: {permission: ['owner', 'admin']}
     },
     {
       path: '/terms-of-service',
@@ -81,7 +83,8 @@ const router = createRouter({
     {
       path: '/users',
       name: 'users',
-      component: Users
+      component: Users,
+      meta: ['admin']
     },
     {
       path: '/feedback',
@@ -166,17 +169,20 @@ const router = createRouter({
     {
       path: '/visitors',
       name: 'visitors',
-      component: Visitors
+      component: Visitors,
+      meta: {permission: ['owner', 'admin']}
     },
     {
       path: '/pages',
       name: 'pages',
-      component: Pages
+      component: Pages,
+      meta: {permission: ['owner', 'admin']}
     },
     {
       path: '/forms',
       name: 'forms',
-      component: Forms
+      component: Forms,
+      meta: { permission: ['owner', 'admin']}
     },
   ]
 })
@@ -186,12 +192,19 @@ router.beforeEach((to, from, next) => {
   const publicPages = ['/authenticate', '/', '/terms-of-service', '/privacy-policy']
   const authRequired = !publicPages.includes(to.path)
   const loggedIn = localStorage.getItem('user')
+  const userStore = useUserStore()
 
   if (authRequired && !loggedIn) {
-    useUserStore().$reset()
+    userStore.$reset()
     localStorage.removeItem('user')
     localStorage.removeItem('UserStore')
     return next('/authenticate')
+  }
+
+  if (to.meta?.permission != undefined){    
+    if (to.meta?.permission.includes('owner') && userStore.user.permission != 'owner') return next('/')
+    if (to.meta?.permission.includes('admin') && userStore.user.permission != 'admin') return next('/')
+    if (to.meta?.permission.includes('manager') && userStore.user.permission != 'manager') return next('/')
   }
 
   next()
