@@ -216,7 +216,7 @@ onMounted(() => {
           <div class="hidden md:block">
             <div class="ml-10 flex items-center space-x-4">              
               
-              <div class="relative" v-if="userStore.user.role == 'admin'">
+              <div class="relative">
                 <button @click="dropdownContacts = !dropdownContacts" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium relative" type="button">
                   <box-icon color="white" class="mr-2" type="solid" name='user-circle'></box-icon>
                   Contacts 
@@ -234,7 +234,7 @@ onMounted(() => {
                           <box-icon color="white" type='solid' name='user'></box-icon>
                           <span class="ml-2">Employees</span>
                         </router-link>                      
-                        <router-link :to="{name: 'users'}" v-if="userStore.user.role == 'admin'" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium">
+                        <router-link :to="{name: 'users'}" v-if="userStore.user.role == 'admin' && userStore.user.permission == 'owner'" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium">
                           <box-icon color="white" type="solid" name='user-account'></box-icon>
                           <span class="ml-2">Users</span>
                         </router-link>
@@ -243,7 +243,7 @@ onMounted(() => {
                 </div>
               </div>
 
-              <div class="relative" v-if="userStore.user.role == 'admin'">
+              <div class="relative" v-if="userStore.user.permission == 'owner'">
                 <button @click="dropdownMarketing = !dropdownMarketing" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium relative" type="button">
                   <box-icon color="white" class="mr-2" type="solid" name='store'></box-icon>
                   Marketing 
@@ -270,7 +270,7 @@ onMounted(() => {
                 </div>
               </div>
 
-              <div class="relative" v-if="userStore.user.role == 'admin'">
+              <div class="relative" >
                 <button @click="dropdownSales = !dropdownSales" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium relative" type="button">
                   <box-icon color="white" class="mr-2" type="solid" name='cart-download'></box-icon>
                   Sales
@@ -315,11 +315,11 @@ onMounted(() => {
               <font-awesome-icon icon="far fa-arrow-alt-circle-down" class="downarrow absolute" />
             </div>
 
-            <router-link :to="{name: 'settings'}" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium">
+            <router-link :to="{name: 'settings'}" v-if="userStore.user.permission == 'owner'" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium">
               <box-icon color="white" type='solid' name='cog'></box-icon>
             </router-link>
 
-            <!-- <p class="text-white text-sm">Hello, {{ userStore.user.firstName }} {{ userStore.user.lastName }}.</p> -->
+            <p class="text-white text-sm">Hello, {{ userStore.user.firstName }}.</p>
 
             <!-- Profile dropdown -->
             <Menu as="div" class="ml-3 relative">
@@ -348,7 +348,7 @@ onMounted(() => {
                       id="headlessui-menu-item-20" role="menuitem" tabindex="-1">Your Profile</router-link>
                     <router-link :to="{name: 'billing'}" class="block px-4 py-2 text-sm text-gray-700" disabled="false"
                       id="headlessui-menu-item-20" role="menuitem" tabindex="-1">Billing & Usage</router-link>
-                    <router-link :to="{name: 'snippet'}" class="block px-4 py-2 text-sm text-gray-700" disabled="false"
+                    <router-link :to="{name: 'snippet'}" v-if="userStore.user.role == 'admin' && userStore.user.permission == 'owner'" class="block px-4 py-2 text-sm text-gray-700" disabled="false"
                       id="headlessui-menu-item-20" role="menuitem" tabindex="-1">Snippet</router-link>
                     <router-link :to="{name: 'feedback'}" class="block px-4 py-2 text-sm text-gray-700" disabled="false"
                       id="headlessui-menu-item-20" role="menuitem" tabindex="-1">Feedback</router-link>
@@ -376,7 +376,7 @@ onMounted(() => {
       <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
         <router-link :to="{name: 'dashboard'}" disabled="false"
           class="text-white block px-3 py-2 rounded-md text-base font-medium"> Dashboard </router-link>
-        <router-link :to="{name: 'settings'}" disabled="false" class="text-white block px-3 py-2 rounded-md text-base font-medium">
+        <router-link :to="{name: 'settings'}" v-if="userStore.user.permission == 'owner'" disabled="false" class="text-white block px-3 py-2 rounded-md text-base font-medium">
           Settings </router-link>
         <router-link :to="{name: 'employees'}" disabled="false" class="text-white block px-3 py-2 rounded-md text-base font-medium">
           Employees </router-link>
@@ -417,7 +417,7 @@ onMounted(() => {
             <router-link :to="{name: 'billing'}" disabled="false"
               class="block px-3 py-2 rounded-md text-base font-medium text-gray-400 hover:text-white hover:bg-gray-700">Billing
               & Usage</router-link>
-            <router-link :to="{name: 'snippet'}" disabled="false"
+            <router-link :to="{name: 'snippet'}" v-if="userStore.user.permission == 'owner'" disabled="false"
               class="block px-3 py-2 rounded-md text-base font-medium text-gray-400 hover:text-white hover:bg-gray-700">
               Snippet</router-link>
             <router-link :to="{name: 'feedback'}" disabled="false"
