@@ -57,6 +57,7 @@ const invoice = ref({
 	paid: 0,
   status: "",
 	name: "",
+  notes: "",
 	invoice_nr: "",
 	invoice_date: "",
 	invoice_due_date: "",  
@@ -138,6 +139,7 @@ async function updateInvoice(data){
     subtotal: invoiceData.value.sales,
     paid: Number(invoiceData.value.deposit) || 0,
     status: invoiceData.value.reason,
+    notes: invoiceData.value.notes,
     name: invoiceData.value.name,
     invoice_nr: invoiceData.value.number,
     invoice_date: moment(invoiceData.value.issuedAt).format('YYYY-MM-DD'),
@@ -158,6 +160,7 @@ async function saveInvoice(data) {
     generateHeader(doc, invoice);
     generateCustomerInformation(doc, invoice);
     generateInvoiceTable(doc, invoice);
+    generateNotes(doc, invoice);
     generateFooter(doc);
 
     doc.end();
@@ -341,6 +344,21 @@ async function saveInvoice(data) {
     doc.font("Helvetica");
   }
 
+  function generateNotes(doc, invoice) {
+    doc
+      .fontSize(11)
+      .font("Helvetica-Bold")
+      .text("Notes:", 50, 580, "Notes")
+      .fontSize(10)
+      .font("Helvetica")
+      .text(
+        invoice.notes,
+        50,
+        595,
+        { align: "left", width: 250 }
+      );
+  }
+
   function generateFooter(doc) {
     doc
       .fontSize(10)
@@ -389,7 +407,7 @@ async function saveInvoice(data) {
     return year + "/" + month + "/" + day;
   }
   
-  createInvoice(invoice.value, invoice.value.invoice_nr + '.pdf');
+  createInvoice(invoice.value, invoice.value.customer.name + '.pdf');
   
 }
 
@@ -535,6 +553,14 @@ onMounted(()=>{
               <div class="text-lg text-center content-center">{{invoice.company.currency_symbol + item.amount}}</div>
               <div class="text-lg text-center content-center">{{item.quantity}}</div>
               <div class="text-lg text-center content-center">{{invoice.company.currency_symbol + (Number(item.amount) * Number(item.quantity))}}</div>           
+            </div>
+
+            <!-- Notes -->
+            <div class="">
+              <div class="text-2xl font-bold mt-24">Notes:</div>
+              <div class="text-lg flex mt-2 max-w-[300px]">
+                <span class="flex justify-items-center items-center mr-10">{{invoice.notes}}</span>
+              </div>              
             </div>
 
             <!-- Sub Totals -->

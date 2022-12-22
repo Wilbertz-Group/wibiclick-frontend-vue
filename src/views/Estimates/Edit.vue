@@ -57,6 +57,7 @@ const estimate = ref({
 	paid: 0,
   status: "sent",
 	name: "",
+  notes: "",
 	estimate_nr: "",
 	estimate_date: "",
 	estimate_due_date: "",  
@@ -176,6 +177,7 @@ async function updateestimate(data){
     items: estimate_data.lineItem,
     subtotal: estimate_data.sales,
     paid: 0,
+    notes: estimate_data.notes,
     status: estimate_data.reason,
     name: estimate_data.name,
     estimate_nr: estimate_data.number,
@@ -196,7 +198,7 @@ async function saveEstimateOnly(data) {
     dueAt: moment(data.estimate_due_date,).toISOString(),
     sales: data.estimate_subtotal,
     subtotal: data.estimate_subtotal, 
-    notes: "notes",
+    notes: data.notes,
     customerId: estimateData.value.customer?.id,
     employeeId: estimateData.value.employee?.id || "",
     websiteId: estimateData.value.website?.id,
@@ -233,7 +235,7 @@ async function saveestimate(data) {
     dueAt: moment(data.estimate_due_date,).toISOString(),
     sales: data.estimate_subtotal,
     subtotal: data.estimate_subtotal, 
-    notes: "notes",
+    notes: data.notes,
     customerId: estimateData.value.customer?.id,
     employeeId: estimateData.value.employee?.id || '',
     websiteId: estimateData.value.website?.id,
@@ -261,6 +263,7 @@ async function saveestimate(data) {
     generateHeader(doc, estimate);
     generateCustomerInformation(doc, estimate);
     generateestimateTable(doc, estimate);
+    generateNotes(doc, estimate);
     generateFooter(doc);
 
     doc.end();
@@ -444,6 +447,21 @@ async function saveestimate(data) {
     doc.font("Helvetica");
   }
 
+  function generateNotes(doc, estimate) {
+    doc
+      .fontSize(11)
+      .font("Helvetica-Bold")
+      .text("Notes:", 50, 580, "Notes")
+      .fontSize(10)
+      .font("Helvetica")
+      .text(
+        estimate.notes,
+        50,
+        595,
+        { align: "left", width: 250 }
+      );
+  }
+
   function generateFooter(doc) {
     doc
       .fontSize(10)
@@ -492,7 +510,7 @@ async function saveestimate(data) {
     return year + "/" + month + "/" + day;
   }
   
-  createestimate(estimate.value, estimate.value.estimate_nr + '.pdf');
+  createestimate(estimate.value, estimate.value.customer.name + '.pdf');
   
 }
 
@@ -701,6 +719,17 @@ onMounted(()=>{
                 <span class="symbol" @click="addItem">+</span>
               </div>           
             </div> 
+
+            <!-- Notes -->
+            <div class="mt-24 mb-24">
+              <div class="text-2xl font-bold">Notes: </div>
+              <div class="text-lg mt-2 max-w-xl">
+                <span class="mr-10">
+                  <FormKit type="textarea" name="notes" v-model="estimate.notes" :value="estimate.notes"  input-class="p-1 m-0 bg-slate-100 w-full text-left" :classes="{ outer: 'mb-0 ml-0 float-right w-full', inner: { $reset: true, 'p-0 m-0': true } }" />
+
+                </span>
+              </div>              
+            </div>
             
             <!-- Sub Totals -->
             <div class="grid grid-flow-col grid-rows-1 grid-cols-12 gap-4 mb-2 mt-10">

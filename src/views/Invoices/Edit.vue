@@ -56,6 +56,7 @@ const invoice = ref({
 	paid: 0,
   status: "",
 	name: "",
+  notes: "",
 	invoice_nr: "",
 	invoice_date: "",
 	invoice_due_date: "",  
@@ -153,10 +154,10 @@ async function updateInvoice(data){
   invoice.value = {
     company: profile.value.company,
     customer: {
-      id: invoiceData.value.customer?.id,
-      name: invoiceData.value.customer?.name,
-      address: invoiceData.value.job?.address,
-      phone: invoiceData.value.job?.phone,
+      id: invoice_data.customer?.id,
+      name: invoice_data.customer?.name,
+      address: invoice_data.job?.address,
+      phone: invoice_data.job?.phone,
       vat: "",
     },
     banking: profile.value.banking,
@@ -165,6 +166,7 @@ async function updateInvoice(data){
     paid: Number(invoiceData.value.deposit) || 0,
     status: invoiceData.value.reason,
     name: invoiceData.value.name,
+    notes: invoice_data.notes,
     invoice_nr: invoiceData.value.number,
     invoice_date: moment(invoiceData.value.issuedAt).format('YYYY-MM-DD'),
     invoice_due_date: moment(invoiceData.value.invoice_due_date).add(1, 'days').format('YYYY-MM-DD'),
@@ -184,7 +186,7 @@ async function saveInvoiceOnly(data) {
     sales: data.invoice_subtotal,
     subtotal: data.invoice_subtotal,
     deposit: data.paid, 
-    notes: "notes",
+    notes: data.notes,
     customerId: invoiceData.value.customer.id,
     employeeId: invoiceData.value.employee.id,
     websiteId: invoiceData.value.website.id,
@@ -220,7 +222,7 @@ async function saveInvoice(data) {
     sales: data.invoice_subtotal,
     subtotal: data.invoice_subtotal,
     deposit: data.paid,  
-    notes: "notes",
+    notes: data.notes,
     customerId: invoiceData.value.customer.id,
     employeeId: invoiceData.value.employee.id,
     websiteId: invoiceData.value.website.id,
@@ -248,7 +250,9 @@ async function saveInvoice(data) {
     generateHeader(doc, invoice);
     generateCustomerInformation(doc, invoice);
     generateInvoiceTable(doc, invoice);
+    generateNotes(doc, invoice);
     generateFooter(doc);
+
 
     doc.end();
 
@@ -431,6 +435,21 @@ async function saveInvoice(data) {
     doc.font("Helvetica");
   }
 
+  function generateNotes(doc, invoice) {
+    doc
+      .fontSize(11)
+      .font("Helvetica-Bold")
+      .text("Notes:", 50, 580, "Notes")
+      .fontSize(10)
+      .font("Helvetica")
+      .text(
+        invoice.notes,
+        50,
+        595,
+        { align: "left", width: 250 }
+      );
+  }
+
   function generateFooter(doc) {
     doc
       .fontSize(10)
@@ -479,7 +498,7 @@ async function saveInvoice(data) {
     return year + "/" + month + "/" + day;
   }
   
-  createInvoice(invoice.value, invoice.value.invoice_nr + '.pdf');
+  createInvoice(invoice.value, invoice.value.customer.name + '.pdf');
   
 }
 
@@ -693,6 +712,17 @@ watchEffect(() => {
                 <span class="symbol" @click="addItem">+</span>
               </div>           
             </div> 
+
+            <!-- Notes -->
+            <div class="mt-24 mb-24">
+              <div class="text-2xl font-bold">Notes: </div>
+              <div class="text-lg mt-2 max-w-xl">
+                <span class="mr-10">
+                  <FormKit type="textarea" name="notes" v-model="invoice.notes" :value="invoice.notes"  input-class="p-1 m-0 bg-slate-100 w-full text-left" :classes="{ outer: 'mb-0 ml-0 float-right w-full', inner: { $reset: true, 'p-0 m-0': true } }" />
+
+                </span>
+              </div>              
+            </div>
             
             <!-- Sub Totals -->
             <div class="grid grid-flow-col grid-rows-1 grid-cols-12 gap-4 mb-2 mt-10">

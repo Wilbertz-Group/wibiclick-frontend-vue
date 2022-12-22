@@ -54,6 +54,7 @@ const invoice = ref({
 	paid: 0,
   status: "sent",
 	name: "Invoice",
+  notes: "",
 	invoice_nr: 1,
 	invoice_date: moment().format('YYYY-MM-DD'),
 	invoice_due_date: moment().add(1, 'days').format('YYYY-MM-DD'),  
@@ -170,6 +171,7 @@ async function updateJob(data){
     paid: 0,
     status: "sent",
     name: "Invoice",
+    notes: "",
     invoice_nr: profile.value.invoice_number + 1,
     invoice_date: moment().format('YYYY-MM-DD'),
     invoice_due_date: moment().add(1, 'days').format('YYYY-MM-DD'),
@@ -187,7 +189,7 @@ async function saveInvoice(data) {
     dueAt: moment(invoice.value.invoice_due_date,).toISOString(),
     sales: invoice.value.subtotal,
     subtotal: invoice.value.subtotal, 
-    notes: "notes",
+    notes: invoice.value.notes,
     customerId: invoice.value.customer.id,
     employeeId: job.value.employee.id,
     websiteId: job.value.website.id,
@@ -214,6 +216,7 @@ async function saveInvoice(data) {
     generateHeader(doc, invoice);
     generateCustomerInformation(doc, invoice);
     generateInvoiceTable(doc, invoice);
+    generateNotes(doc, invoice);
     generateFooter(doc);
 
     doc.end();
@@ -397,6 +400,21 @@ async function saveInvoice(data) {
     doc.font("Helvetica");
   }
 
+  function generateNotes(doc, invoice) {
+    doc
+      .fontSize(11)
+      .font("Helvetica-Bold")
+      .text("Notes:", 50, 580, "Notes")
+      .fontSize(10)
+      .font("Helvetica")
+      .text(
+        invoice.notes,
+        50,
+        595,
+        { align: "left", width: 250 }
+      );
+  }
+
   function generateFooter(doc) {
     doc
       .fontSize(10)
@@ -445,7 +463,7 @@ async function saveInvoice(data) {
     return year + "/" + month + "/" + day;
   }
   
-  createInvoice(invoice.value, invoice.value.invoice_nr + '.pdf');
+  createInvoice(invoice.value, invoice.value.customer.name + '.pdf');
   
 }
 
@@ -638,6 +656,16 @@ onMounted(()=>{
                 <span class="symbol" @click="addItem">+</span>
               </div>           
             </div> 
+
+           <!-- Notes -->
+           <div class="mt-10">
+              <div class="text-2xl font-bold">Notes:</div>
+              <div class="text-lg mt-2 max-w-xl">
+                <span class="mr-10">
+                  <FormKit type="textarea" name="notes" v-model="invoice.notes" :value="invoice.notes" input-class="p-1 m-0 bg-slate-100 w-full text-center" :classes="{ outer: 'mb-0 ml-0 float-right w-full', inner: { $reset: true, 'p-0 m-0': true } }" />
+                </span>
+              </div>              
+            </div>
             
             <!-- Sub Totals -->
             <div class="grid grid-flow-col grid-rows-1 grid-cols-12 gap-4 mb-2 mt-10">

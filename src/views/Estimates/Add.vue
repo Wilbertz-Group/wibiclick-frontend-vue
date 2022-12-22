@@ -51,6 +51,7 @@ const estimate = ref({
 	items: [],
 	subtotal: 0,
 	paid: 0,
+  notes: "",
   status: "sent",
 	name: "Estimate",
 	estimate_nr: 1,
@@ -164,6 +165,7 @@ async function updateEstimate(data){
     items: [],
     subtotal: 0,
     paid: 0,
+    notes: "",
     status: "sent",
     name: "Estimate",
     estimate_nr: profile.value.estimate_number + 1,
@@ -182,7 +184,7 @@ async function saveEstimate(data) {
     dueAt: moment(estimate.value.estimate_due_date,).toISOString(),
     sales: estimate.value.subtotal,
     subtotal: estimate.value.subtotal, 
-    notes: "notes",
+    notes: estimate.value.notes,
     customerId: estimate.value.customer.id,
     items: estimate.value.items
   }
@@ -209,6 +211,7 @@ async function saveEstimate(data) {
     generateHeader(doc, estimate);
     generateCustomerInformation(doc, estimate);
     generateestimateTable(doc, estimate);
+    generateNotes(doc, estimate);
     generateFooter(doc);
 
     doc.end();
@@ -392,6 +395,21 @@ async function saveEstimate(data) {
     doc.font("Helvetica");
   }
 
+  function generateNotes(doc, estimate) {
+    doc
+      .fontSize(11)
+      .font("Helvetica-Bold")
+      .text("Notes:", 50, 580, "Notes")
+      .fontSize(10)
+      .font("Helvetica")
+      .text(
+        estimate.notes,
+        50,
+        595,
+        { align: "left", width: 250 }
+      );
+  }
+
   function generateFooter(doc) {
     doc
       .fontSize(10)
@@ -440,7 +458,7 @@ async function saveEstimate(data) {
     return year + "/" + month + "/" + day;
   }
   
-  createestimate(estimate.value, estimate.value.estimate_nr + '.pdf');
+  createestimate(estimate.value, estimate.value.customer.name + '.pdf');
   
 }
 
@@ -635,6 +653,16 @@ onMounted(()=>{
                 <span class="symbol" @click="addItem">+</span>
               </div>           
             </div> 
+
+            <!-- Notes -->
+           <div class="mt-10">
+              <div class="text-2xl font-bold">Notes:</div>
+              <div class="text-lg mt-2 max-w-xl">
+                <span class="mr-10">
+                  <FormKit type="textarea" name="notes" v-model="estimate.notes" :value="estimate.notes" input-class="p-1 m-0 bg-slate-100 w-full text-center" :classes="{ outer: 'mb-0 ml-0 float-right w-full', inner: { $reset: true, 'p-0 m-0': true } }" />
+                </span>
+              </div>              
+            </div>
             
             <!-- Sub Totals -->
             <div class="grid grid-flow-col grid-rows-1 grid-cols-12 gap-4 mb-2 mt-10">

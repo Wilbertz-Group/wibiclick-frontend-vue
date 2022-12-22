@@ -57,6 +57,7 @@
     paid: 0,
     status: "sent",
     name: "",
+    notes: "",
     estimate_nr: "",
     estimate_date: "",
     estimate_due_date: "",  
@@ -137,6 +138,7 @@
       items: estimate_data.lineItem,
       subtotal: estimate_data.sales,
       paid: 0,
+      notes: estimate_data.notes,
       status: estimate_data.reason,
       name: estimate_data.name,
       estimate_nr: estimate_data.number,
@@ -157,6 +159,7 @@
       generateHeader(doc, estimate);
       generateCustomerInformation(doc, estimate);
       generateestimateTable(doc, estimate);
+      generateNotes(doc, estimate);
       generateFooter(doc);
 
       doc.end();
@@ -340,6 +343,21 @@
       doc.font("Helvetica");
     }
 
+    function generateNotes(doc, estimate) {
+      doc
+        .fontSize(11)
+        .font("Helvetica-Bold")
+        .text("Notes:", 50, 580, "Notes")
+        .fontSize(10)
+        .font("Helvetica")
+        .text(
+          estimate.notes,
+          50,
+          595,
+          { align: "left", width: 250 }
+        );
+    }
+
     function generateFooter(doc) {
       doc
         .fontSize(10)
@@ -388,7 +406,7 @@
       return year + "/" + month + "/" + day;
     }
     
-    createestimate(estimate.value, estimate.value.estimate_nr + '.pdf');
+    createestimate(estimate.value, estimate.value.customer.name + '.pdf');
     
   }
 
@@ -534,6 +552,14 @@
               <div class="text-lg text-center content-center">{{estimate.company.currency_symbol + item.amount}}</div>
               <div class="text-lg text-center content-center">{{item.quantity}}</div>
               <div class="text-lg text-center content-center">{{estimate.company.currency_symbol + (Number(item.amount) * Number(item.quantity))}}</div>           
+            </div>
+
+            <!-- Notes -->
+            <div class="">
+              <div class="text-2xl font-bold mt-24">Notes:</div>
+              <div class="text-lg flex mt-2 max-w-[300px]">
+                <span class="flex justify-items-center items-center mr-10">{{estimate.notes}}</span>
+              </div>              
             </div>
             
             <!-- Sub Totals -->
