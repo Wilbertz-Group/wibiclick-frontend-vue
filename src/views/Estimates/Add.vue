@@ -111,7 +111,7 @@ async function checkParams() {
 async function getContacts() {
   try {
     loading.value = true
-    const response = await axios.get('customers?&limit=60&offset=0&id='+ userStore.currentWebsite);
+    const response = await axios.get(`customers?id=${userStore.currentWebsite}&limit=1000&offset=0`);
 
     let contacts = {};
 

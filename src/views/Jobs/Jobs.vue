@@ -359,10 +359,8 @@
   const toggleEditModal = (event) => {
     if( event.value === undefined ){
       let data = event.data
-      console.log(data.slotStart)
       let ntime = moment(data.slotStart).subtract(2, 'hours')
       data.slotStart = moment(ntime).format('YYYY-MM-DDTHH:MM')
-      console.log(data.slotStart)
       selectedJob.value = data      
       modalOpen.value = !modalOpen.value
     } 

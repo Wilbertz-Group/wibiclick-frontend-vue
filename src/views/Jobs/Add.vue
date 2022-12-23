@@ -69,12 +69,13 @@
     modalOpen.value = !modalOpen.value
   }
 
-  function autofillForm(customer) {
-    if (customer) {
-      phone.value = customer.phone
-      name.value = customer.name
-      address.value = customer.address
-      issue.value = customer.message
+  function autofillForm(c) {
+    if (c) {
+      customer.value = c.id
+      phone.value = c.phone
+      name.value = c.name
+      address.value = c.address
+      issue.value = c.message
     }
   }
 
