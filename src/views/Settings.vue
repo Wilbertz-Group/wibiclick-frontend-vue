@@ -164,7 +164,7 @@ function toggleMenu() {
 
         <!-- Phone Tab -->
         <FormKit type="form" v-if="phone" :form-class="phone ? 'w-full' : 'show w-full'"  submit-label="Update"
-          @submit="settingsUpdate" :actions="false" #default="{ value }">
+          @submit="settingsUpdate" :actions="false" >
           <div class="px-4 py-5 bg-white space-y-6 sm:p-6">
             <h3 class="text-2xl font-semibold text-gray-700">Edit Phone Call</h3>
             <div class="w-full">
@@ -183,7 +183,7 @@ function toggleMenu() {
 
         <!-- Whatsapp Tab -->
         <FormKit type="form" v-if="whatsapp" :form-class="whatsapp ? 'w-full' : 'show w-full'"  submit-label="Update"
-          @submit="settingsUpdate" :actions="false" #default="{ value }">
+          @submit="settingsUpdate" :actions="false" >
           <div class="px-4 py-5 bg-white space-y-6 sm:p-6">
             <h3 class="text-2xl font-semibold text-gray-700">Edit Whatsapp Settings</h3>
             <div class="w-full">
@@ -202,7 +202,7 @@ function toggleMenu() {
 
         <!-- Text Message Tab -->
         <FormKit type="form" v-if="text" :form-class="text ? 'w-full' : 'show w-full'"  submit-label="Update"
-          @submit="settingsUpdate" :actions="false" #default="{ value }">
+          @submit="settingsUpdate" :actions="false" >
           <div class="px-4 py-5 bg-white space-y-6 sm:p-6">
             <h3 class="text-2xl font-semibold text-gray-700">Edit Text Message Settings</h3>
             <div class="w-full">
@@ -221,7 +221,7 @@ function toggleMenu() {
 
         <!-- Facebook Messenger Tab -->
         <FormKit type="form" v-if="messenger" :form-class="messenger ? 'w-full' : 'show w-full'"  submit-label="Update"
-          @submit="settingsUpdate" :actions="false" #default="{ value }">
+          @submit="settingsUpdate" :actions="false" >
           <div class="px-4 py-5 bg-white space-y-6 sm:p-6">
             <h3 class="text-2xl font-semibold text-gray-700">Edit Facebook Messenger Settings</h3>
             <div class="w-full">
@@ -238,7 +238,7 @@ function toggleMenu() {
 
         <!-- Email Tab -->
         <FormKit type="form" v-if="email" :form-class="email ? 'w-full' : 'show w-full'"  submit-label="Update"
-          @submit="settingsUpdate" :actions="false" #default="{ value }">
+          @submit="settingsUpdate" :actions="false" >
           <div class="px-4 py-5 bg-white space-y-6 sm:p-6">
             <h3 class="text-2xl font-semibold text-gray-700">Edit Email Settings</h3>
             <div class="w-full">
@@ -259,7 +259,7 @@ function toggleMenu() {
 
         <!-- Telegram Tab -->
         <FormKit type="form" v-if="telegram" :form-class="telegram ? 'w-full' : 'show w-full'"  submit-label="Update"
-          @submit="settingsUpdate" :actions="false" #default="{ value }">
+          @submit="settingsUpdate" :actions="false" >
           <div class="px-4 py-5 bg-white space-y-6 sm:p-6">
             <h3 class="text-2xl font-semibold text-gray-700">Edit Telegram Settings</h3>
             <div class="w-full">
@@ -276,7 +276,7 @@ function toggleMenu() {
 
         <!-- Viber Tab -->
         <FormKit type="form" v-if="viber" :form-class="viber ? 'w-full' : 'show w-full'"  submit-label="Update"
-          @submit="settingsUpdate" :actions="false" #default="{ value }">
+          @submit="settingsUpdate" :actions="false" >
           <div class="px-4 py-5 bg-white space-y-6 sm:p-6">
             <h3 class="text-2xl font-semibold text-gray-700">Edit Viber Settings</h3>
             <div class="w-full">
@@ -293,7 +293,7 @@ function toggleMenu() {
 
         <!-- Skype Tab -->
         <FormKit type="form" v-if="skype" :form-class="skype ? 'w-full' : 'show w-full'"  submit-label="Update"
-          @submit="settingsUpdate" :actions="false" #default="{ value }">
+          @submit="settingsUpdate" :actions="false" >
           <div class="px-4 py-5 bg-white space-y-6 sm:p-6">
             <h3 class="text-2xl font-semibold text-gray-700">Edit Skype Settings</h3>
             <div class="w-full">
@@ -310,7 +310,7 @@ function toggleMenu() {
 
         <!-- Whatsapp Tab -->
         <FormKit type="form" v-if="whatsappweb" :form-class="whatsappweb ? 'w-full' : 'show w-full'"  submit-label="Update"
-          :actions="false" #default="{ value }">
+          :actions="false" >
           <div class="px-4 py-5 bg-white space-y-6 sm:p-6">
             <h3 class="text-2xl font-semibold text-gray-700">Scan Whatsapp QR Code</h3>
             <div class="w-full">

@@ -371,7 +371,7 @@
                     submit-label="Update"
                     @submit="updateLogin"
                     :actions="false"
-                    #default="{ value }"
+                    
                   >
                   <div class="px-4 py-5 bg-white space-y-6 sm:p-6">                  
                     <div class="w-full">
@@ -448,7 +448,7 @@
                     submit-label="Update"
                     @submit="profileUpdate"
                     :actions="false"
-                    #default="{ value }"
+                    
                   >
                   <div class="px-4 py-5 bg-white space-y-6 sm:p-6">                  
                     <div class="w-full">
@@ -574,7 +574,7 @@
                     submit-label="Update"
                     @submit="companyUpdate"
                     :actions="false"
-                    #default="{ value }"
+                    
                   >
 
                   <div class="px-4 py-5 bg-white space-y-6 sm:p-6">                 
@@ -738,7 +738,7 @@
                     submit-label="Update"
                     @submit="companyUpdate"
                     :actions="false"
-                    #default="{ value }"
+                    
                   >
 
                   <div class="px-4 py-5 bg-white space-y-6 sm:p-6">                 
@@ -843,7 +843,7 @@
                     submit-label="Update"
                     @submit="profileUpdate"
                     :actions="false"
-                    #default="{ value }"
+                    
                   >
                   <div class="px-4 py-5 bg-white space-y-6 sm:p-6">                  
                     <div class="w-full">

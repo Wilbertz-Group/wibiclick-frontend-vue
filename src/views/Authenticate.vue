@@ -18,13 +18,18 @@
             </div>
             <div class="px-4 py-0 sm:p-10">
               <div class="">
-                <component :is="tabs[loginOrRegister]" />
+                <component @selectedComponent="toggleComponent" :is="tabs[selectedComponent]" />
 
-                <p class="border-t pt-6 text-sm text-center">
+                <p class="pt-6 text-sm text-center">
 
-                  <a v-show="userStore.newUser" class="cursor-pointer" @click="toggleComponent"> Don't have an account ?
-                    <span class="text-sky-500">Try free with 1000 credits</span></a>
-                  <a v-show="!userStore.newUser" class="cursor-pointer" @click="toggleComponent">Already have an
+                  <a v-show="selectedComponent == 'LoginUser'" class="cursor-pointer text-sky-500 mb-5 block" @click="toggleComponent('VerifyEmail')">    
+                      Forgot Password
+                  </a>
+                  <a v-show="selectedComponent == 'LoginUser'" class="cursor-pointer" @click="toggleComponent('RegisterUser')"> Don't have an account ?
+                    <span class="text-sky-500">Create an account</span></a>
+                  <a v-show="selectedComponent == 'VerifyEmail'" class="cursor-pointer" @click="toggleComponent('LoginUser')"> Remembered your password -
+                    <span class="text-sky-500">Click here to login</span></a>
+                  <a v-show="selectedComponent == 'RegisterUser'" class="cursor-pointer" @click="toggleComponent('LoginUser')">Already have an
                     account? <span class="text-sky-500">Login</span></a>
                 </p>
               </div>
@@ -43,24 +48,38 @@
 </template>
 
 <script setup>
-import { computed, ref } from "vue";
+import { onMounted, computed, ref } from "vue";
+import { useRoute } from "vue-router";
 import { useUserStore } from "@/stores/UserStore"
 import LoginUser from '@/components/LoginUser.vue'
 import RegisterUser from '@/components/RegisterUser.vue'
+import VerifyEmail from "../components/verifyEmail.vue";
+import ForgotPassword from "../components/ForgotPassword.vue";
 
+const route = useRoute();
 const userStore = useUserStore()
 const tabs = {
   LoginUser,
-  RegisterUser
+  RegisterUser,
+  VerifyEmail,
+  ForgotPassword
 }
+
+const selectedComponent = ref('LoginUser');
 
 const loginOrRegister = computed(() => {
   return userStore.newUser ? 'LoginUser' : 'RegisterUser'
 })
 
-function toggleComponent() {
-  userStore.isNewUser(!userStore.newUser)
+function toggleComponent(c) {
+  selectedComponent.value = c
 }
+
+onMounted(async ()=>{
+  if (route.query?.token) {
+    selectedComponent.value = 'ForgotPassword'
+  }
+})
 
 </script>
 

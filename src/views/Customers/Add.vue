@@ -46,7 +46,7 @@
           </div>
           <div class="mt-3 md:col-span-2">
               <div class="shadow p-10 sm:rounded-md sm:overflow-hidden">
-                  <FormKit type="form" id="customer" submit-label="Add" @submit="add" :actions="false" #default="{ value }">
+                  <FormKit type="form" id="customer" submit-label="Add" @submit="add" :actions="false" >
                     <h2 class="mb-2 text-2xl text-cyan-900 font-bold">Add customer details below  </h2>
                     <hr />
 
