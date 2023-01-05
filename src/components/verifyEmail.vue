@@ -1,28 +1,27 @@
 <script setup>
-import { onMounted, ref } from "vue";
-import { useRoute } from "vue-router";
+import { ref } from "vue";
+import { useRouter } from "vue-router";
 import { useUserStore } from "@/stores/UserStore";
 import ScaleLoader from "vue-spinner/src/ScaleLoader.vue";
 import { useToast } from "vue-toast-notification";
 
 const loading = ref(false);
-const route = useRoute();
+const status = ref(false);
 const userStore = useUserStore();
 const toast = useToast();
 const emit = defineEmits(['selectedComponent'])
 
-function forgotPassword(credentials) {
-  if(!route.query.token) throw new Error("Invalid reset password token. Please open link from email again!!")
+function verifyEmail(credentials) {
   loading.value = true;
   userStore
-    .forgotPassword({
-      token: route.query.token,
+    .verifyEmail({
       ...credentials,
     })
     .then((data) => {
-      loading.value = false;      
-      emit('selectedComponent', 'LoginUser')
-      toast.success('You have successfully reseted your password. Login to continue');
+      loading.value = false;
+      toast.success('Please check your email for the password reset link');
+      // emit('selectedComponent', 'LoginUser')
+      status.value = true
     })
     .catch((err) => {
       loading.value = false;
@@ -41,12 +40,12 @@ function forgotPassword(credentials) {
     width="6px"
   ></scale-loader>
 
-  <div>
+  <div v-show="!status">
     <FormKit 
       type="form"
-      id="forgotPassword"
+      id="verifyEmail"
       submit-label="Reset Password"
-      @submit="forgotPassword"
+      @submit="verifyEmail"
       :actions="false"
     >
       <h2 class="mb-4 text-2xl text-cyan-900 font-bold">
@@ -54,33 +53,22 @@ function forgotPassword(credentials) {
       </h2>
 
       <FormKit
-        type="password"
-        name="password"
-        label="Password"
+        type="text"
+        name="email"
+        label="Email"
         outer-class="text-left"
-        validation="required|length:6|matches:/[^a-zA-Z]/"
-        :validation-messages="{
-          matches: 'Please include at least one symbol',
-        }"
-        placeholder="Your password"
-      />
-
-      <FormKit
-        type="password"
-        name="password-confirm"
-        label="Password Confirm"
-        outer-class="text-left"
-        validation="required|length:6|matches:/[^a-zA-Z]/"
-        :validation-messages="{
-          matches: 'Please include at least one symbol',
-        }"
-        placeholder="Retype password"
+        placeholder="Email that you login with"
+        validation="required|email"
       />
 
       <FormKit type="submit" label="Reset Password" />
       
     </FormKit>
   </div>
+
+  <h2 v-show="status" class="mb-4 mt-20 text-xl text-cyan-900 font-bold">
+    Please check your email for the password reset link
+  </h2>
   
   <div
     v-if="loading"

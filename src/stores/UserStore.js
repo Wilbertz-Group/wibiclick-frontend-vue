@@ -42,6 +42,20 @@ export const useUserStore = defineStore("UserStore", {
         toast.error(error.message);
       }
     },
+    async verifyEmail(credentials){
+      try {
+        await axios.post("verify-email", credentials);
+      } catch (error) {
+        toast.error(error.message);
+      }
+    },
+    async forgotPassword(credentials){
+      try {
+        await axios.post("password-reset", credentials);
+      } catch (error) {
+        toast.error(error.message);
+      }
+    },
     async login(credentials) {
       try {
         const response = await axios.post("login", credentials);
