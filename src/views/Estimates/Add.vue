@@ -396,18 +396,20 @@ async function saveEstimate(data) {
   }
 
   function generateNotes(doc, estimate) {
-    doc
-      .fontSize(11)
-      .font("Helvetica-Bold")
-      .text("Notes:", 50, 580, "Notes")
-      .fontSize(10)
-      .font("Helvetica")
-      .text(
-        estimate.notes,
-        50,
-        595,
-        { align: "left", width: 250 }
-      );
+    if(estimate.notes){
+      doc
+        .fontSize(11)
+        .font("Helvetica-Bold")
+        .text("Notes:", 50, 580, "Notes")
+        .fontSize(10)
+        .font("Helvetica")
+        .text(
+          estimate.notes,
+          50,
+          595,
+          { align: "left", width: 250 }
+        );
+    }
   }
 
   function generateFooter(doc) {

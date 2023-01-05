@@ -401,18 +401,20 @@ async function saveInvoice(data) {
   }
 
   function generateNotes(doc, invoice) {
-    doc
-      .fontSize(11)
-      .font("Helvetica-Bold")
-      .text("Notes:", 50, 580, "Notes")
-      .fontSize(10)
-      .font("Helvetica")
-      .text(
-        invoice.notes,
-        50,
-        595,
-        { align: "left", width: 250 }
-      );
+    if(invoice.notes){
+      doc
+        .fontSize(11)
+        .font("Helvetica-Bold")
+        .text("Notes:", 50, 580, "Notes")
+        .fontSize(10)
+        .font("Helvetica")
+        .text(
+          invoice.notes,
+          50,
+          595,
+          { align: "left", width: 250 }
+        );
+    }
   }
 
   function generateFooter(doc) {

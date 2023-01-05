@@ -436,18 +436,20 @@ async function saveInvoice(data) {
   }
 
   function generateNotes(doc, invoice) {
-    doc
-      .fontSize(11)
-      .font("Helvetica-Bold")
-      .text("Notes:", 50, 580, "Notes")
-      .fontSize(10)
-      .font("Helvetica")
-      .text(
-        invoice.notes,
-        50,
-        595,
-        { align: "left", width: 250 }
-      );
+    if(invoice.notes){
+      doc
+        .fontSize(11)
+        .font("Helvetica-Bold")
+        .text("Notes:", 50, 580, "Notes")
+        .fontSize(10)
+        .font("Helvetica")
+        .text(
+          invoice.notes,
+          50,
+          595,
+          { align: "left", width: 250 }
+        );
+    }
   }
 
   function generateFooter(doc) {
@@ -555,23 +557,30 @@ watchEffect(() => {
           :actions="false"
           
         >
-          <div class="status-container">
-            <p class="status-title">Status</p>
-            <FormKit 
-              type="select" 
-              v-model="invoice.status" 
-              name="invoice_status" 
-              :options="['pending', 'processing', 'paid']" 
-              outer-class="status-body text-left mb-0"  
-              inner-class="border-none focus-within:border-none shadow-none focus-within:shadow-none"  
-              input-class="bg-[#0275ff] text-white m-0"
-            />
 
-            <div class="btn-container">
-              <FormKit type="submit" @click="save_type = 'save'" class="btn btn-mark" outer-class="mb-0" label="Save" suffix-icon="checkbox"  />
+          <div class="grid gap-3 text-right lg:grid-cols-2 md:grid-cols-2 sm:grid-cols-1 mt-5 w">
+            <div class="relative text-left"> 
+              <FormKit
+                type="select"
+                name="invoice_status"
+                v-model="invoice.status"
+                outer-class="text-white ml-2 mb-0 w-36 bg-gray-800 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-gray-300 dark:focus:ring-gray-800 shadow-lg shadow-gray-500/50 dark:shadow-lg dark:shadow-gray-800/80" 
+                input-class="font-medium text-sm m-0 text-white border-none focus-within:border-none"
+              >
+                <optgroup label="Select Status" class="text-gray-800 text-lg">
+                  <option value="pending">Pending</option>
+                  <option value="processing">Processing</option>
+                  <option value="paid">Paid</option>
+                  <option value="sent">Sent</option>
+                </optgroup>
+              </FormKit>
+
             </div>
-            <div class="btn-container">
-              <FormKit type="submit" @click="save_type = 'download'" class="btn btn-mark" outer-class="mb-0" label="Download" suffix-icon="download" />
+
+            <div class="relative text-right"> 
+              <button type="submit" @click="save_type = 'save'" class="text-white inline-block bg-gray-800 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-gray-300 dark:focus:ring-gray-800 shadow-lg shadow-gray-500/50 dark:shadow-lg dark:shadow-gray-800/80 font-medium rounded-lg text-sm px-5 py-2.5 text-center mb-5 mr-10"><svg class="w-6 h-6 inline pb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> Save</button> 
+              
+              <button type="submit" @click="save_type = 'download'" class="text-white cursor-pointer inline-block bg-gray-800 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-gray-300 dark:focus:ring-gray-800 shadow-lg shadow-gray-500/50 dark:shadow-lg dark:shadow-gray-800/80 font-medium rounded-lg text-sm px-5 py-2.5 text-center mb-5 mr-10"><svg class="w-6 h-6 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg> Download</button>
             </div>
           </div>
 

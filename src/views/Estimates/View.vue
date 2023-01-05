@@ -176,8 +176,6 @@
       number: profile.value.invoice_number + 1,
     }
 
-    console.log(payload)
-
     try {
       loading.value = true
       const response = await axios.post('add-invoice?id='+ userStore.currentWebsite, payload);
@@ -429,18 +427,20 @@
     }
 
     function generateNotes(doc, estimate) {
-      doc
-        .fontSize(11)
-        .font("Helvetica-Bold")
-        .text("Notes:", 50, 580, "Notes")
-        .fontSize(10)
-        .font("Helvetica")
-        .text(
-          estimate.notes,
-          50,
-          595,
-          { align: "left", width: 250 }
-        );
+      if(estimate.notes){
+        doc
+          .fontSize(11)
+          .font("Helvetica-Bold")
+          .text("Notes:", 50, 580, "Notes")
+          .fontSize(10)
+          .font("Helvetica")
+          .text(
+            estimate.notes,
+            50,
+            595,
+            { align: "left", width: 250 }
+          );
+      }
     }
 
     function generateFooter(doc) {
