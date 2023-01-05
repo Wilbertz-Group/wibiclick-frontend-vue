@@ -72,6 +72,9 @@ function createWidget(n) {
 					if (target.tagName != "A") {
 							text = target.closest("a").getAttribute("class")
 					}
+					if (text == 'chatPopup__callNow') {
+						target.innerText = pn
+					}
 
 					var Q = await fetch(`https://wibi.wilbertzgroup.com/wibi-action?id=${n}&c=3&ic=${text}&pg=${pg}&utk=${utk}`),
 							Y = await Q.json();
