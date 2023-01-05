@@ -84,7 +84,7 @@ const router = createRouter({
       path: '/users',
       name: 'users',
       component: Users,
-      meta: ['admin']
+      meta: {permission: ['owner', 'admin']}
     },
     {
       path: '/feedback',
@@ -201,10 +201,18 @@ router.beforeEach((to, from, next) => {
     return next('/authenticate')
   }
 
-  if (to.meta?.permission != undefined){    
-    if (to.meta?.permission.includes('owner') && userStore.user.permission != 'owner') return next('/')
-    if (to.meta?.permission.includes('admin') && userStore.user.permission != 'admin') return next('/')
-    if (to.meta?.permission.includes('manager') && userStore.user.permission != 'manager') return next('/')
+  if (to.meta?.permission != undefined){
+    if (to.meta?.permission.includes('owner') && userStore.user.permission != 'owner') {
+      return next('/')
+    }
+
+    if (to.meta?.permission.includes('admin') && (userStore.user.permission != 'admin' && userStore.user.permission != 'owner')) {
+      return next('/')
+    }
+
+    if (to.meta?.permission.includes('manager') && (userStore.user.permission != 'admin' && userStore.user.permission != 'owner' && userStore.user.permission != 'manager')) {
+      return next('/')
+    }
   }
 
   next()
