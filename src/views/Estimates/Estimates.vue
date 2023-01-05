@@ -463,7 +463,7 @@
         </div>
         <!-- Modal body -->
         <div class="p-6 space-y-6">
-          <FormKit type="form" v-if="selectedEstimate" id="estimate" submit-label="Add" @submit="update" :actions="false" #default="{ value }">
+          <FormKit type="form" v-if="selectedEstimate" id="estimate" submit-label="Add" @submit="update" :actions="false" >
 
             <FormKit type="hidden" v-model="selectedEstimate.jobId" name="jobId" label="Job" />                     
 

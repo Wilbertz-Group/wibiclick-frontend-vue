@@ -11,16 +11,15 @@ const userStore = useUserStore();
 const router = useRouter();
 const toast = useToast();
 
-function login(credentials) {
+function resetPassword(credentials) {
   loading.value = true;
   userStore
-    .login({
-      source: "api",
+    .resetPassword({
       ...credentials,
     })
     .then((data) => {
       loading.value = false;
-      router.push({ name: "dashboard" });
+      router.push({ name: "login" });
     })
     .catch((err) => {
       loading.value = false;
@@ -40,36 +39,25 @@ function login(credentials) {
   ></scale-loader>
   <FormKit
     type="form"
-    id="registration"
-    submit-label="Login"
-    @submit="login"
+    id="resetPassword"
+    submit-label="Reset Password"
+    @submit="resetPassword"
     :actions="false"
   >
     <h2 class="mb-4 text-2xl text-cyan-900 font-bold">
-      Sign in to your account
+      Reset your password
     </h2>
-    <hr />
+
     <FormKit
       type="text"
       name="email"
       label="Email"
       outer-class="text-left"
-      placeholder="jane@example.com"
+      placeholder="Email that you login with"
       validation="required|email"
     />
-    <FormKit
-      type="password"
-      name="password"
-      label="Password"
-      outer-class="text-left"
-      validation="required|length:6|matches:/[^a-zA-Z]/"
-      :validation-messages="{
-        matches: 'Please include at least one symbol',
-      }"
-      placeholder="Your password"
-    />
 
-    <FormKit type="submit" label="Login" />
+    <FormKit type="submit" label="Reset Password" />
     
   </FormKit>
 

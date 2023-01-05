@@ -106,7 +106,7 @@
           </div>
           <div class="mt-3 md:col-span-2">
               <div v-if="userStore.currentWebsite" class="shadow p-10 sm:rounded-md sm:overflow-hidden">
-                  <FormKit type="form" id="job" submit-label="Add" @submit="add" :actions="false" #default="{ value }">
+                  <FormKit type="form" id="job" submit-label="Add" @submit="add" :actions="false" >
                     <h2 class="mb-2 text-2xl text-cyan-900 font-bold">Add job details below </h2>
                     <hr />
 
@@ -130,7 +130,7 @@
                       <FormKit type="select" name="slotTime" label="Job Duration" :options="['1hr', '2hrs', '3hrs', '4hrs']" validation="required" />
                     </div>
 
-                    <FormKit type="radio" name="employeeId" label="Employee" :options="employees" validation="required" />
+                    <FormKit type="select" name="employeeId" label="Employee" :options="employees" validation="required" />
 
                     <FormKit type="textarea" v-model="issue" :value="issue" name="issue" label="Issue" placeholder="Issue" outer-class="text-left" validation="required" />
 

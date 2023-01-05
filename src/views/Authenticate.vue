@@ -18,13 +18,18 @@
             </div>
             <div class="px-4 py-0 sm:p-10">
               <div class="">
-                <component :is="tabs[loginOrRegister]" />
+                <component :is="tabs[selectedComponent]" />
 
                 <p class="border-t pt-6 text-sm text-center">
 
-                  <a v-show="userStore.newUser" class="cursor-pointer" @click="toggleComponent"> Don't have an account ?
-                    <span class="text-sky-500">Try free with 1000 credits</span></a>
-                  <a v-show="!userStore.newUser" class="cursor-pointer" @click="toggleComponent">Already have an
+                  <a v-show="selectedComponent == 'LoginUser'" class="cursor-pointer text-sky-500 mb-5 block" @click="toggleComponent('ForgotPassword')">    
+                      Forgot Password
+                  </a>
+                  <a v-show="selectedComponent == 'LoginUser'" class="cursor-pointer" @click="toggleComponent('RegisterUser')"> Don't have an account ?
+                    <span class="text-sky-500">Create an account</span></a>
+                  <a v-show="selectedComponent == 'ForgotPassword'" class="cursor-pointer" @click="toggleComponent('LoginUser')"> Remembered your password
+                    <span class="text-sky-500">Login</span></a>
+                  <a v-show="selectedComponent == 'RegisterUser'" class="cursor-pointer" @click="toggleComponent('LoginUser')">Already have an
                     account? <span class="text-sky-500">Login</span></a>
                 </p>
               </div>
@@ -47,19 +52,23 @@ import { computed, ref } from "vue";
 import { useUserStore } from "@/stores/UserStore"
 import LoginUser from '@/components/LoginUser.vue'
 import RegisterUser from '@/components/RegisterUser.vue'
+import ForgotPassword from "../components/ForgotPassword.vue";
 
 const userStore = useUserStore()
 const tabs = {
   LoginUser,
-  RegisterUser
+  RegisterUser,
+  ForgotPassword
 }
+
+const selectedComponent = ref('LoginUser');
 
 const loginOrRegister = computed(() => {
   return userStore.newUser ? 'LoginUser' : 'RegisterUser'
 })
 
-function toggleComponent() {
-  userStore.isNewUser(!userStore.newUser)
+function toggleComponent(c) {
+  selectedComponent.value = c
 }
 
 </script>

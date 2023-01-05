@@ -500,7 +500,7 @@ onMounted(()=>{
           submit-label="Update"
           @submit="saveInvoice"
           :actions="false"
-          #default="{ value }"
+          
         >
           <div class="status-container">
             <p class="status-title">Status</p>
@@ -710,7 +710,7 @@ onMounted(()=>{
         </div>
         <!-- Modal body -->
         <div class="p-6 space-y-6">
-          <FormKit type="form" id="job" submit-label="Add" @submit="updateJob" :actions="false" #default="{ value }">
+          <FormKit type="form" id="job" submit-label="Add" @submit="updateJob" :actions="false" >
             <FormKit type="select" validation="required" v-model="selectedJob" name="job" :options="jobsData" placeholder="Select Job" outer-class="text-left"  />
             <FormKit type="submit" label="Select Job" />
           </FormKit>

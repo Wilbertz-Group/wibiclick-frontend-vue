@@ -30,7 +30,7 @@ async function register(credentials) {
   </scale-loader>
   <div>
     <FormKit type="form" id="registration" :form-class="submitted ? 'hide' : 'show'" submit-label="Register"
-      @submit="register" :actions="false" #default="{ value }">
+      @submit="register" :actions="false" >
       <h2 class="mb-4 text-2xl text-cyan-900 font-bold">Start your free trial with 1000 credits. <span
           class="text-base block">No credit card needed. Signup and start using it</span></h2>
       <hr />

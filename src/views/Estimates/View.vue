@@ -606,7 +606,7 @@
         </div>
         <!-- Modal body -->
         <div class="p-6 space-y-6">
-          <FormKit type="form" id="estimate" submit-label="Add" @submit="updateestimate" :actions="false" #default="{ value }">
+          <FormKit type="form" id="estimate" submit-label="Add" @submit="updateestimate" :actions="false" >
             <FormKit type="select" v-model="selectedJob" name="estimate" :options="estimatesData" placeholder="Select Estimate" outer-class="text-left" validation="required" />
             <FormKit type="submit" label="Select Estimate" />
           </FormKit>

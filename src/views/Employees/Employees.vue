@@ -240,7 +240,7 @@
       loading.value = true
       const { data } = await axios.post('add-employee?id='+ userStore.currentWebsite, credentials);
       loading.value = false
-      toast.success(data)
+      toast.success(data.message)
       modalOpen.value = !modalOpen.value
       fetchEmployees()
     } catch (error) {

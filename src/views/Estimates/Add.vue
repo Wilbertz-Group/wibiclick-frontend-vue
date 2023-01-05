@@ -497,7 +497,7 @@ onMounted(()=>{
           submit-label="Update"
           @submit="saveEstimate"
           :actions="false"
-          #default="{ value }"
+          
         >
           <div class="status-container">
             <p class="status-title">Status</p>
@@ -707,7 +707,7 @@ onMounted(()=>{
         </div>
         <!-- Modal body -->
         <div class="p-6 space-y-6">
-          <FormKit type="form" id="contact" submit-label="Add" @submit="updateEstimate" :actions="false" #default="{ value }">
+          <FormKit type="form" id="contact" submit-label="Add" @submit="updateEstimate" :actions="false" >
             <FormKit type="select" v-model="selectedContact" name="contact" :options="dbContacts" placeholder="Select Contact" outer-class="text-left" validation="required" />
             <FormKit type="submit" label="Select Contact" />
           </FormKit>
