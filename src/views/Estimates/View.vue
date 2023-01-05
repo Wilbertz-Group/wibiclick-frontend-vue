@@ -10,16 +10,21 @@
   import { computed } from "@vue/reactivity";
   import ScaleLoader from 'vue-spinner/src/ScaleLoader.vue'
 
+  
+  const all_jobs = ref();
+  const job = ref();
+  const selectedJob = ref();
+  const jobsData = ref({job: 'Select Job'});
   const loading = ref(false);
   const estimateData = ref({});
   const all_estimates = ref();
   const profile = ref(false);
-  const selectedJob = ref();
   const estimatesData = ref({estimate: 'Select Estimate'});
   const toast = useToast();
   const router = useRouter();
   const route = useRoute()
   const modalOpen = ref(false)
+  const jobsModalOpen = ref(false)
   const save_type = ref()
 
   const userStore = useUserStore();
@@ -102,6 +107,86 @@
       console.log(error);
       loading.value = false
       toast.error("Error getting estimates data")
+    }
+  }
+
+  async function fetchJobs() {
+    try {
+      loading.value = true
+      const response = await axios.get(
+        `jobs?id=${userStore.currentWebsite}&limit=1500&offset=0`
+      );
+
+      all_jobs.value = response.data.jobs
+      let jobs = {};
+
+      for (const job of response.data.jobs) {
+        jobs[job.id] = job.name
+      }
+
+      jobsData.value = jobs
+      loading.value = false
+      jobsModalOpen.value = true
+    } catch (error) {
+      console.log(error);
+      loading.value = false
+      jobsModalOpen.value = true
+      toast.error("Error getting jobs data")
+    }
+  }
+
+  async function updateJob(data){
+    
+    let job_data = all_jobs.value.filter(e => { return e.id == data.job })[0]
+    job.value = job_data
+
+    if(!profile.value){
+      try {
+        loading.value = true
+        modalOpen.value = false
+        const response = await axios.get('profile?id='+ userStore.currentWebsite);
+        profile.value = response.data
+        loading.value = false
+        saveInvoice(job_data)
+      } catch (error) {
+        console.log(error)
+        toast.warning("Failed to get Company Data")
+        loading.value = false
+        modalOpen.value = true
+      }
+    } else {
+      saveInvoice(job_data)
+    }
+  }
+
+  async function saveInvoice(data) {
+    let payload = {
+      jobId: job.value.id,
+      reason: estimateData.value.reason,
+      name: data.customer.name,
+      issuedAt: moment().toISOString(),
+      dueAt: moment().add(1, 'days').toISOString(),
+      sales: estimateData.value.sales,
+      subtotal: estimateData.value.sales, 
+      notes: estimateData.value.notes,
+      customerId: estimateData.value.customer.id,
+      employeeId: job.value.employee.id,
+      websiteId: job.value.website.id,
+      items: estimateData.value.lineItem,
+      number: profile.value.invoice_number + 1,
+    }
+
+    console.log(payload)
+
+    try {
+      loading.value = true
+      const response = await axios.post('add-invoice?id='+ userStore.currentWebsite, payload);
+      toast.success(response.data.message)
+      loading.value = false   
+      router.push({ name: 'view-invoice', query: { invoice_id: response.data.invoice.id } })
+    } catch (error) {
+      console.log(error)
+      loading.value = false
     }
   }
 
@@ -449,9 +534,12 @@
           <div class="grid gap-3 text-right lg:grid-cols-2 md:grid-cols-2 sm:grid-cols-1 mt-5">
             <div><h2 class="text-md font-semibold text-left ml-5">STATUS: {{estimate.status}}</h2> </div>
             <div class="relative text-right"> 
-              <router-link :to="{name: 'edit-estimate', query:{ estimate_id: route.query.estimate_id }}" class="text-white inline-block bg-gray-800 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-gray-300 dark:focus:ring-gray-800 shadow-lg shadow-gray-500/50 dark:shadow-lg dark:shadow-gray-800/80 font-medium rounded-lg text-sm px-5 py-2.5 text-center mb-5 mr-10">Edit Estimate <svg class="w-6 h-6 inline pb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></router-link> 
+              <router-link :to="{name: 'edit-estimate', query:{ estimate_id: route.query.estimate_id }}" class="text-white inline-block bg-gray-800 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-gray-300 dark:focus:ring-gray-800 shadow-lg shadow-gray-500/50 dark:shadow-lg dark:shadow-gray-800/80 font-medium rounded-lg text-sm px-5 py-2.5 text-center mb-5 mr-10"><svg class="w-6 h-6 inline pb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> Edit Estimate</router-link> 
               
-              <div @click="saveestimate()" class="text-white cursor-pointer inline-block bg-gray-800 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-gray-300 dark:focus:ring-gray-800 shadow-lg shadow-gray-500/50 dark:shadow-lg dark:shadow-gray-800/80 font-medium rounded-lg text-sm px-5 py-2.5 text-center mb-5 mr-10">Download <svg class="w-6 h-6 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg></div>
+              <div @click="saveestimate()" class="text-white cursor-pointer inline-block bg-gray-800 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-gray-300 dark:focus:ring-gray-800 shadow-lg shadow-gray-500/50 dark:shadow-lg dark:shadow-gray-800/80 font-medium rounded-lg text-sm px-5 py-2.5 text-center mb-5 mr-10"><svg class="w-6 h-6 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg> Download</div>
+
+              <div @click="fetchJobs()" class="text-white cursor-pointer inline-block bg-gray-800 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-gray-300 dark:focus:ring-gray-800 shadow-lg shadow-gray-500/50 dark:shadow-lg dark:shadow-gray-800/80 font-medium rounded-lg text-sm px-5 py-2.5 text-center mb-5 mr-10">
+              <svg class="w-6 h-6 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg> Convert to Invoice</div>
             </div>
           </div> 
 
@@ -615,7 +703,28 @@
     </div>
   </div>
 
-  <div v-if="modalOpen" class="bg-gray-900 bg-opacity-50 dark:bg-opacity-80 fixed inset-0 z-40"></div>
+  <div id="jobsModalOpen" tabindex="-1" :class="{ flex: jobsModalOpen, hidden: !jobsModalOpen }" class="overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 w-full md:inset-0 h-modal md:h-full justify-center items-center">
+    <div class="relative p-4 w-full max-w-2xl h-full md:h-auto">
+      <!-- Modal content -->
+      <div class="relative bg-white rounded-lg shadow dark:bg-gray-700">
+        <!-- Modal header -->
+        <div class="flex justify-between items-start p-4 rounded-t border-b dark:border-gray-600">
+          <h3 class="text-xl font-semibold text-gray-900 dark:text-white">
+            Select Job
+          </h3>
+        </div>
+        <!-- Modal body -->
+        <div class="p-6 space-y-6">
+          <FormKit type="form" id="job" submit-label="Add" @submit="updateJob" :actions="false" >
+            <FormKit type="select" validation="required" v-model="selectedJob" name="job" :options="jobsData" placeholder="Select Job" outer-class="text-left"  />
+            <FormKit type="submit" label="Select Job" />
+          </FormKit>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div v-if="modalOpen || jobsModalOpen" class="bg-gray-900 bg-opacity-50 dark:bg-opacity-80 fixed inset-0 z-40"></div>
 </template>
 
 
