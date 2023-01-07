@@ -2,6 +2,7 @@
 import fs from 'fs'
 import axios from "axios";
 import moment from 'moment'
+import { generateBorder, generateTableRow } from '../../helpers/index.js'
 import Header from "@/components/Header.vue";
 import { useUserStore } from "@/stores/UserStore";
 import { onMounted, ref, watchEffect } from "vue";
@@ -199,7 +200,7 @@ async function saveInvoiceOnly(data) {
     toast.success(response.data.message)
     loading.value = false
     modalOpen.value = false
-    router.push({ name: 'invoices' })
+    //router.push({ name: 'invoices' })
   } catch (error) {
     console.log(error)
     loading.value = false
@@ -252,7 +253,7 @@ async function saveInvoice(data) {
     generateInvoiceTable(doc, invoice);
     generateNotes(doc, invoice);
     generateFooter(doc);
-
+    generateBorder(doc);
 
     doc.end();
 
@@ -270,7 +271,7 @@ async function saveInvoice(data) {
       a.download = path;
       a.click();
       window.URL.revokeObjectURL(url);
-      router.push({ name: 'invoices' })
+      //router.push({ name: 'invoices' })
     }
 
     stream.on("finish", function() {
@@ -461,26 +462,6 @@ async function saveInvoice(data) {
         780,
         { align: "center", width: 500 }
       );
-  }
-
-  function generateTableRow(
-    doc,
-    y,
-    item,
-    description,
-    unitCost,
-    quantity,
-    lineTotal
-  ) {
-    doc
-      .fontSize(9)
-      .text(item, 50, y)
-      .fontSize(7)
-      .text(description, 50, y + 10)
-      .fontSize(9)
-      .text(unitCost, 350, y, { width: 90, align: "right" })
-      .text(quantity, 400, y, { width: 90, align: "right" })
-      .text(lineTotal, 0, y, { align: "right" });
   }
 
   function generateHr(doc, y) {

@@ -23,6 +23,7 @@
     "apexcharts": "^3.35.3",
     "axios": "^0.27.2",
     "boxicons": "^2.1.2",
+    "buffer": "^6.0.3",
     "esbuild": "^0.15.13",
     "gridjs": "^5.0.2",
     "lodash": "^4.17.21",

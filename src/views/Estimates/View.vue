@@ -1,5 +1,5 @@
 <script setup>
-  import { Buffer } from 'node:buffer';
+  import { Buffer } from 'buffer'
   import axios from "axios";
   import moment from 'moment'
   import Header from "@/components/Header.vue";
@@ -9,8 +9,8 @@
   import { useRoute, useRouter } from "vue-router";
   import { computed } from "@vue/reactivity";
   import ScaleLoader from 'vue-spinner/src/ScaleLoader.vue'
+  import { generateBorder, generateTableRow } from '../../helpers/index.js'
 
-  
   const all_jobs = ref();
   const job = ref();
   const selectedJob = ref();
@@ -111,28 +111,35 @@
   }
 
   async function fetchJobs() {
-    try {
-      loading.value = true
-      const response = await axios.get(
-        `jobs?id=${userStore.currentWebsite}&limit=1500&offset=0`
-      );
+    
+      try {
+        loading.value = true
+        const response = await axios.get(
+          `jobs?id=${userStore.currentWebsite}&limit=1500&offset=0`
+        );
 
-      all_jobs.value = response.data.jobs
-      let jobs = {};
+        all_jobs.value = response.data.jobs
+        let jobs = {};
 
-      for (const job of response.data.jobs) {
-        jobs[job.id] = job.name
+        for (const job of response.data.jobs) {
+          jobs[job.id] = job.name
+        }
+
+        jobsData.value = jobs
+
+        if(!estimate.value?.jobId){
+          jobsModalOpen.value = true
+        } else {
+          updateJob({job: estimate.value?.jobId})
+        }
+
+        loading.value = false        
+      } catch (error) {
+        console.log(error);
+        loading.value = false
+        toast.error("Error getting jobs data")
       }
-
-      jobsData.value = jobs
-      loading.value = false
-      jobsModalOpen.value = true
-    } catch (error) {
-      console.log(error);
-      loading.value = false
-      jobsModalOpen.value = true
-      toast.error("Error getting jobs data")
-    }
+    
   }
 
   async function updateJob(data){
@@ -244,6 +251,7 @@
       generateestimateTable(doc, estimate);
       generateNotes(doc, estimate);
       generateFooter(doc);
+      generateBorder(doc);
 
       doc.end();
 
@@ -261,7 +269,7 @@
         a.download = path;
         a.click();
         window.URL.revokeObjectURL(url);
-        router.push({ name: 'estimates' })
+        //router.push({ name: 'estimates' })
       }
 
       stream.on("finish", function() {
@@ -457,26 +465,6 @@
           780,
           { align: "center", width: 500 }
         );
-    }
-
-    function generateTableRow(
-      doc,
-      y,
-      item,
-      description,
-      unitCost,
-      quantity,
-      lineTotal
-    ) {
-      doc
-        .fontSize(9)
-        .text(item, 50, y)
-        .fontSize(7)
-        .text(description, 50, y + 10)
-        .fontSize(9)
-        .text(unitCost, 350, y, { width: 90, align: "right" })
-        .text(quantity, 400, y, { width: 90, align: "right" })
-        .text(lineTotal, 0, y, { align: "right" });
     }
 
     function generateHr(doc, y) {
