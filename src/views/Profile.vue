@@ -295,12 +295,14 @@
   ];
   const userStore = useUserStore()
   const loading = ref(false)
+  const logo = ref()
 
   async function fetchProfileInfo() {
 			try {
         loading.value = true
 				const response = await axios.get('profile?id='+ userStore.currentWebsite);
         profile.value = response.data
+        logo.value = response.data.invoice_logo
         loading.value = false
 			} catch (error) {
 				console.log(error)
@@ -341,6 +343,34 @@
       toast.success("Profile updated successfully")
     })
     .catch(err => { loading.value = false; status.value = err.response.status })
+  }
+
+  async function uploadImage(data) {
+    // We need to submit this as a multipart/form-data
+    // to do this we use the FormData API.
+    const body = new FormData()
+    // We can append other data to our form data:
+    body.append('name', data.logo[0].name)
+    // Finally, we append the actual File object
+    body.append('logo', data.logo[0].file)
+
+    try {
+      loading.value = true
+
+      const res = await axios.post(`upload-logo?id=${userStore.currentWebsite}`, body, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+      })
+
+      if (res.status == 200) {
+        logo.value = res.data.downloadUrl
+      }
+
+      loading.value = false
+    } catch (error) {
+      console.log(error)
+    }
   }
 
   onMounted(() => {
@@ -881,6 +911,55 @@
               </div>
           </div>
         </div>
+      </div>
+
+      <div class="hidden sm:block" aria-hidden="true" v-if="userStore.user.permission == 'owner'">
+        <div class="py-5">
+          <div class="border-t border-gray-200" />
+        </div>
+      </div>
+
+      <div class="mt-10 sm:mt-0">
+        <div class="md:grid md:grid-cols-3 md:gap-6">
+          <div class="md:col-span-1">
+            <div class="px-4 sm:px-0">
+              <h3 class="text-lg font-medium leading-6 text-gray-900">Invoice Logo</h3>
+              <p class="mt-1 text-sm text-gray-600">Set a logo to be used on invoice logo</p>
+            </div>
+          </div>
+          <div class="mt-5 md:mt-0 md:col-span-2">
+              <div class="shadow sm:rounded-md sm:overflow-hidden">
+                <div class="text-center" v-if="logo">
+                  <img :src="logo" class="m-auto w-40" loading="lazy" height="" width="" alt="Invoice Logo">
+                </div> 
+                <FormKit
+                  id="logoForm"
+                  type="form"
+                  @submit="uploadImage"
+                  :actions="false"
+                >
+
+                  <div class="px-4 py-5 bg-white space-y-6 sm:p-6"> 
+                    <FormKit
+                      type="file"
+                      label="Logo"
+                      name="logo"
+                      help="Please upload your logo"
+                      accept=".jpg,.png,.jpeg,.svg"
+                      validation="required"
+                    />
+                  </div>
+
+                  <div class="px-4 py-3 bg-gray-50 text-right sm:px-6">
+                    <FormKit
+                      type="submit"
+                      label="Update"
+                    />
+                  </div>
+                </FormKit>
+              </div>
+          </div>
+        </div> 
       </div>
     </div>
     <div v-if="loading" class="bg-gray-900 bg-opacity-50 dark:bg-opacity-80 fixed inset-0 z-40"></div>
