@@ -270,7 +270,7 @@ async function saveestimate(data) {
     generateestimateTable(doc, estimate);
     generateNotes(doc, estimate);
     generateFooter(doc);
-    generateBorder(doc);
+    //generateBorder(doc);
 
     doc.end();
 

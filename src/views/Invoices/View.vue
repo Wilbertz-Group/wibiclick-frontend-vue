@@ -163,7 +163,7 @@ async function saveInvoice(data) {
     generateInvoiceTable(doc, invoice);
     generateNotes(doc, invoice);
     generateFooter(doc);
-    generateBorder(doc);
+    //generateBorder(doc);
 
     doc.end();
 
