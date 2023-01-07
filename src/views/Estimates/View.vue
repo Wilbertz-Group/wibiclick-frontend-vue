@@ -272,8 +272,6 @@
 
     }
 
-    console.log(profile.value.estimate_logo)
-
     const response = await axios.get(profile.value.estimate_logo,  { responseType: 'arraybuffer' })
     const buffer = Buffer.from(response.data, "utf-8")
 
