@@ -1,5 +1,5 @@
 <script setup>
-  import fs from 'fs'
+  import { Buffer } from 'node:buffer';
   import axios from "axios";
   import moment from 'moment'
   import Header from "@/components/Header.vue";
