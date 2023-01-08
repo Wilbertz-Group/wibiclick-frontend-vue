@@ -12,6 +12,7 @@ import EmployeesView from '@/views/Employees/View.vue'
 import Jobs from '@/views/Jobs/Jobs.vue'
 import AddJobs from '@/views/Jobs/Add.vue'
 import Customers from '@/views/Customers/Customers.vue'
+import CustomerView from '@/views/Customers/View.vue'
 import CustomersAdd from '@/views/Customers/Add.vue'
 import Invoices from '@/views/Invoices/Invoices.vue'
 import AddInvoices from '@/views/Invoices/Add.vue'
@@ -120,6 +121,11 @@ const router = createRouter({
       path: '/contacts',
       name: 'contacts',
       component: Customers
+    },
+    {
+      path: '/contact',
+      name: 'contact',
+      component: CustomerView
     },
     {
       path: '/add-customer',
