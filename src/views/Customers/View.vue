@@ -187,7 +187,7 @@
 			<section class="shadow sm:rounded-md sm:overflow-hidden mt-4">
 				<div class="p-2 sm:rounded-md sm:overflow-hidden">
 						<FormKit type="form" id="customer" submit-label="Add" @submit="add" :actions="false">
-							<h5 class="text-xl font-medium text-gray-900 dark:text-white border-b-4 border-gray-900">About contact</h5>
+							<span class="text-xl font-medium text-gray-900 dark:text-white border-b-4 border-gray-900">About contact</span>
 							<div class="mt-4">
 								<FormKit type="text" name="name" v-model="customer.name" label="Name" placeholder="--" inner-class="shadow-none" outer-class="text-left border-none" input-class="pl-0 hover:border-sky-500 hover:ring-1 hover:ring-sky-500" />
 								<FormKit type="select" name="Reply" v-model="customer.channel" label="Reply" placeholder="--" inner-class="shadow-none" input-class="pl-0 hover:border-sky-500 hover:ring-1 hover:ring-sky-500" :options="[ 'Reply me by Email', 'Send me a message on Whatsapp', 'Use any of the above' ]"  />   
