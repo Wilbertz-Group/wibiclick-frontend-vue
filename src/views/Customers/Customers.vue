@@ -6,6 +6,7 @@
   import ScaleLoader from 'vue-spinner/src/ScaleLoader.vue'
   import axios from "axios";
   import _ from 'lodash';
+  import { useRouter } from "vue-router";
   import { useToast } from 'vue-toast-notification';
 
   import { AgGridVue } from "ag-grid-vue3";
@@ -22,6 +23,7 @@
   const series = ref()
   const paginationPageSize = ref(6)
   const modalOpen = ref(false)
+  const router = useRouter()
 
   options.value = {
     chart: {
@@ -85,7 +87,21 @@
 
   const columnDefs = reactive({
     value: [
-      { field: "name", maxWidth: 130 }, 
+    { 
+        field: "name", 
+        maxWidth: 130,
+        cellRenderer: (params) => {
+            const link = document.createElement("a");
+            link.href = './customers';
+            link.classList.add("text-blue-600", "hover:underline", "dark:text-blue-500");
+            link.innerText = params.value;
+            link.addEventListener("click", e => {
+              e.preventDefault();
+              router.push({ path: '/contact', query: { customer_id: params.data.id } })
+            });
+            return link;
+        }
+      }, 
       { field: "phone", maxWidth: 130 }, 
       { field: "message" }, 
       { field: "address" }, 

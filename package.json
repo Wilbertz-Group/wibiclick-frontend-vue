@@ -25,6 +25,7 @@
     "boxicons": "^2.1.2",
     "buffer": "^6.0.3",
     "esbuild": "^0.15.13",
+    "flowbite": "^1.6.0",
     "gridjs": "^5.0.2",
     "lodash": "^4.17.21",
     "moment": "^2.29.4",

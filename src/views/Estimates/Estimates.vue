@@ -5,6 +5,7 @@
   import { onMounted, ref, reactive, watchEffect } from "vue";
   import moment from 'moment'
   import _ from 'lodash';
+  import { useRouter } from "vue-router";
   import { useToast } from 'vue-toast-notification';
   import ScaleLoader from 'vue-spinner/src/ScaleLoader.vue'
 
@@ -21,6 +22,7 @@
   const loading = ref(false)
   const options = ref()
   const series = ref()
+  const router = useRouter()
 
   const selectedEstimate = ref({})
   const paginationPageSize = ref(12)
@@ -234,7 +236,21 @@
   const columnDefs = reactive({
     value: [
       { field: "number", headerName: 'Estimate #', sort: 'desc', maxWidth: 150, },      
-      { field: "customer.name", headerName: 'Client' }, 
+      { 
+        field: "customer.name", 
+        headerName: 'Client',
+        cellRenderer: (params) => {
+            const link = document.createElement("a");
+            link.href = './estimates';
+            link.classList.add("text-blue-600", "hover:underline", "dark:text-blue-500");
+            link.innerText = params.value;
+            link.addEventListener("click", e => {
+              e.preventDefault();
+              router.push({ path: '/contact', query: { customer_id: params.data.customer.id } })
+            });
+            return link;
+        }
+      }, 
       { field: "sales", headerName: 'Amount', valueFormatter: amountFormatter },  
       { field: "reason", headerName: 'Status', cellRendererSelector: params => {
           return {
