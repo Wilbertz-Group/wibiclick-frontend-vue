@@ -21,6 +21,7 @@
 						<option value="pending">Pending</option>
 						<option value="processing">Processing</option>
 						<option value="paid">Paid</option>
+						<option value="accepted">Accepted</option>
 						<option value="sent">Sent</option>
 					</optgroup>
 				</FormKit>
