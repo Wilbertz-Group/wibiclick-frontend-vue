@@ -1,4 +1,5 @@
 import moment from 'moment'
+import { Tooltip } from 'flowbite'
 
 const generateBorder = (doc) => {
 	doc.lineWidth(5);
@@ -50,4 +51,90 @@ const dateFormatter = (dat) => {
 	return dat ? moment().isSame(dt, 'day') ? moment(dt).format('h:mm a') : moment(dt).format('h:mm a') : '-';
 }
 
-export { generateBorder, generateTableRow, getBase64FromUrl, universalDateFormatter, dateFormatter }
+const tooltips = () => {
+	const options = {
+    placement: 'top',
+    triggerType: 'hover',
+  };
+
+	// tooltip-note
+	const $targetEl = document.getElementById('tooltip-note');
+	const $triggerEl = document.getElementById('tooltip-note-button');
+
+	if ($targetEl) {
+		new Tooltip($targetEl, $triggerEl, options);
+	}
+
+	// tooltip-email
+	const $targetE2 = document.getElementById('tooltip-email');
+	const $triggerE2 = document.getElementById('tooltip-email-button');
+
+	if ($targetE2) {
+		new Tooltip($targetE2, $triggerE2, options);
+	}
+
+	// tooltip-whatsapp
+	const $targetE3 = document.getElementById('tooltip-whatsapp');
+	const $triggerE3 = document.getElementById('tooltip-whatsapp-button');
+
+	if ($targetE3) {
+		new Tooltip($targetE3, $triggerE3, options);
+	}
+
+	// tooltip-call
+	const $targetE4 = document.getElementById('tooltip-call');
+	const $triggerE4 = document.getElementById('tooltip-call-button');
+
+	if ($targetE4) {
+		new Tooltip($targetE4, $triggerE4, options);
+	}
+
+	// tooltip-activity
+	const $targetE5 = document.getElementById('tooltip-activity');
+	const $triggerE5 = document.getElementById('tooltip-activity-button');
+
+	if ($targetE5) {
+		new Tooltip($targetE5, $triggerE5, options);
+	}
+
+	// tooltip-view-contacts
+	const $targetE6 = document.getElementById('tooltip-view-contacts');
+	const $triggerE6 = document.getElementById('tooltip-view-contacts-button');
+
+	if ($targetE6) {
+		new Tooltip($targetE6, $triggerE6, options);
+	}
+
+	// tooltip-add-job
+	const $targetE7 = document.getElementById('tooltip-add-job');
+	const $triggerE7 = document.getElementById('tooltip-add-job-button');
+
+	if ($targetE7) {
+		new Tooltip($targetE7, $triggerE7, options);
+	}
+
+	// tooltip-add-estimate
+	const $targetE8 = document.getElementById('tooltip-add-estimate');
+	const $triggerE8 = document.getElementById('tooltip-add-estimate-button');
+
+	if ($targetE8) {
+		new Tooltip($targetE8, $triggerE8, options);
+	}
+
+	// tooltip-add-invoice
+	const $targetE9 = document.getElementById('tooltip-add-invoice');
+	const $triggerE9 = document.getElementById('tooltip-add-invoice-button');
+
+	if ($targetE9) {
+		new Tooltip($targetE9, $triggerE9, options);
+	}
+}
+
+export { 
+	generateBorder, 
+	generateTableRow, 
+	getBase64FromUrl, 
+	universalDateFormatter, 
+	dateFormatter, 
+	tooltips 
+}

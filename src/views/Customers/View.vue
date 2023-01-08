@@ -8,6 +8,7 @@
   import { useToast } from 'vue-toast-notification';
   import { useRouter, useRoute } from "vue-router";
   import { useUserStore } from "@/stores/UserStore"
+	import { tooltips } from '../../helpers';
 
 	const loading = ref(false)
 	const lineItems = ref()
@@ -69,6 +70,7 @@
 
 	onMounted(()=>{
   	fetchContacts();
+		tooltips();
 	})
 
 </script>
@@ -82,7 +84,7 @@
 			<section class="shadow sm:rounded-md sm:overflow-hidden">
 				<!-- Go to all contacts -->
 				<div @click="router.back()" class="flex justify-start absolute mt-4 ml-3">
-					<svg data-tooltip-target="tooltip-view-contacts" class="w-10 h-10 rounded-full shadow-lg bg-slate-900 hover:bg-slate-700 text-white" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+					<svg id="tooltip-view-contacts-button" data-tooltip-target="tooltip-view-contacts" class="w-10 h-10 rounded-full shadow-lg bg-slate-900 hover:bg-slate-700 text-white" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
 						<path clip-rule="evenodd" fill-rule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zm-4.28 9.22a.75.75 0 000 1.06l3 3a.75.75 0 101.06-1.06l-1.72-1.72h5.69a.75.75 0 000-1.5h-5.69l1.72-1.72a.75.75 0 00-1.06-1.06l-3 3z"></path>
 					</svg>
 					<div id="tooltip-view-contacts" role="tooltip" class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white transition-opacity duration-300 bg-gray-900 rounded-lg shadow-sm opacity-0 tooltip dark:bg-gray-700">
@@ -121,7 +123,7 @@
 						<div class="flex mt-4 space-x-3 md:mt-6">
 
 							<div>
-								<svg data-tooltip-target="tooltip-note" class="w-10 h-10 rounded-full shadow-lg bg-slate-900 hover:bg-slate-700 p-2 text-white" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+								<svg id="tooltip-note-button" data-tooltip-target="tooltip-note" class="w-10 h-10 rounded-full shadow-lg bg-slate-900 hover:bg-slate-700 p-2 text-white" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
 									<path d="M21.731 2.269a2.625 2.625 0 00-3.712 0l-1.157 1.157 3.712 3.712 1.157-1.157a2.625 2.625 0 000-3.712zM19.513 8.199l-3.712-3.712-8.4 8.4a5.25 5.25 0 00-1.32 2.214l-.8 2.685a.75.75 0 00.933.933l2.685-.8a5.25 5.25 0 002.214-1.32l8.4-8.4z"></path>
 									<path d="M5.25 5.25a3 3 0 00-3 3v10.5a3 3 0 003 3h10.5a3 3 0 003-3V13.5a.75.75 0 00-1.5 0v5.25a1.5 1.5 0 01-1.5 1.5H5.25a1.5 1.5 0 01-1.5-1.5V8.25a1.5 1.5 0 011.5-1.5h5.25a.75.75 0 000-1.5H5.25z"></path>
 								</svg>
@@ -132,7 +134,7 @@
 							</div>
 
 							<div>
-								<svg data-tooltip-target="tooltip-email" class="w-10 h-10 rounded-full shadow-lg bg-slate-900 hover:bg-slate-700 p-2 text-white" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+								<svg id="tooltip-email-button" data-tooltip-target="tooltip-email" class="w-10 h-10 rounded-full shadow-lg bg-slate-900 hover:bg-slate-700 p-2 text-white" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
 									<path d="M1.5 8.67v8.58a3 3 0 003 3h15a3 3 0 003-3V8.67l-8.928 5.493a3 3 0 01-3.144 0L1.5 8.67z"></path>
 									<path d="M22.5 6.908V6.75a3 3 0 00-3-3h-15a3 3 0 00-3 3v.158l9.714 5.978a1.5 1.5 0 001.572 0L22.5 6.908z"></path>
 								</svg>
@@ -143,7 +145,7 @@
 							</div>
 
 							<div>
-								<svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px"
+								<svg id="tooltip-whatsapp-button" xmlns="http://www.w3.org/2000/svg" x="0px" y="0px"
 									data-tooltip-target="tooltip-whatsapp"
 									width="192" height="192"
 									viewBox="0,0,256,256"
@@ -158,7 +160,7 @@
 							</div>
 
 							<div>
-								<svg data-tooltip-target="tooltip-call" class="w-10 h-10 rounded-full shadow-lg bg-slate-900 hover:bg-slate-700 p-2 text-white" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+								<svg id="tooltip-call-button" data-tooltip-target="tooltip-call" class="w-10 h-10 rounded-full shadow-lg bg-slate-900 hover:bg-slate-700 p-2 text-white" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
 									<path clip-rule="evenodd" fill-rule="evenodd" d="M1.5 4.5a3 3 0 013-3h1.372c.86 0 1.61.586 1.819 1.42l1.105 4.423a1.875 1.875 0 01-.694 1.955l-1.293.97c-.135.101-.164.249-.126.352a11.285 11.285 0 006.697 6.697c.103.038.25.009.352-.126l.97-1.293a1.875 1.875 0 011.955-.694l4.423 1.105c.834.209 1.42.959 1.42 1.82V19.5a3 3 0 01-3 3h-2.25C8.552 22.5 1.5 15.448 1.5 6.75V4.5z"></path>
 								</svg>
 								<div id="tooltip-call" role="tooltip" class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white transition-opacity duration-300 bg-gray-900 rounded-lg shadow-sm opacity-0 tooltip dark:bg-gray-700">
@@ -168,7 +170,7 @@
 							</div>
 
 							<div>
-								<svg data-tooltip-target="tooltip-activity" class="w-10 h-10 rounded-full shadow-lg bg-slate-900 hover:bg-slate-700 p-2 text-white" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+								<svg id="tooltip-activity-button" data-tooltip-target="tooltip-activity" class="w-10 h-10 rounded-full shadow-lg bg-slate-900 hover:bg-slate-700 p-2 text-white" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
 									<path clip-rule="evenodd" fill-rule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zM12.75 9a.75.75 0 00-1.5 0v2.25H9a.75.75 0 000 1.5h2.25V15a.75.75 0 001.5 0v-2.25H15a.75.75 0 000-1.5h-2.25V9z"></path>
 								</svg>
 								<div id="tooltip-activity" role="tooltip" class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white transition-opacity duration-300 bg-gray-900 rounded-lg shadow-sm opacity-0 tooltip dark:bg-gray-700">
@@ -218,7 +220,16 @@
 			<!-- Jobs Section -->
 			<section class="shadow-lg sm:rounded-md sm:overflow-hidden">
 				<div class="p-3 sm:rounded-md sm:overflow-hidden">
-					<h5 class="text-xl font-medium text-gray-900 dark:text-white border-b-4 border-gray-900">Jobs</h5>
+					<h5 class="border-b-4 border-gray-900 flex justify-between">
+						<span class="text-xl font-medium text-gray-900 dark:text-white">Jobs</span>
+						<svg id="tooltip-add-job-button" @click="router.push({name: 'add-job'})" data-tooltip-target="tooltip-add-job" data-tooltip-placement="left" class="w-7 h-7 font-bold text-sm -mt-1 rounded-full shadow-lg bg-slate-900 hover:rotate-45 hover:bg-slate-700 p-2 text-white" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+							<path clip-rule="evenodd" fill-rule="evenodd" d="M12 5.25a.75.75 0 01.75.75v5.25H18a.75.75 0 010 1.5h-5.25V18a.75.75 0 01-1.5 0v-5.25H6a.75.75 0 010-1.5h5.25V6a.75.75 0 01.75-.75z"></path>
+						</svg>
+						<div id="tooltip-add-job" role="tooltip" class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white transition-opacity duration-300 bg-gray-900 rounded-lg shadow-sm opacity-0 tooltip dark:bg-gray-700">
+								Add Job
+								<div class="tooltip-arrow" data-popper-arrow></div>
+						</div>
+					</h5>
 
 					<!-- Job item -->
 					<JobVue v-for="job in customer?.jobs" :job="job" v-bind:key="job"></JobVue>
@@ -228,7 +239,16 @@
 			<!-- Estimates Section -->
 			<section class="shadow-lg sm:rounded-md sm:overflow-hidden mt-4">
 				<div class="p-3 sm:rounded-md sm:overflow-hidden">
-					<h5 class="text-xl font-medium text-gray-900 dark:text-white border-b-4 border-gray-900">Estimates</h5>
+					<h5 class="border-b-4 border-gray-900 flex justify-between">
+						<span class="text-xl font-medium text-gray-900 dark:text-white">Estimates</span>
+						<svg id="tooltip-add-estimate-button" @click="router.push({name: 'add-estimate'})" data-tooltip-target="tooltip-add-estimate" data-tooltip-placement="top" class="w-7 h-7 font-bold text-sm -mt-1 rounded-full shadow-lg bg-slate-900 hover:rotate-45 hover:bg-slate-700 p-2 text-white" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+							<path clip-rule="evenodd" fill-rule="evenodd" d="M12 5.25a.75.75 0 01.75.75v5.25H18a.75.75 0 010 1.5h-5.25V18a.75.75 0 01-1.5 0v-5.25H6a.75.75 0 010-1.5h5.25V6a.75.75 0 01.75-.75z"></path>
+						</svg>
+						<div id="tooltip-add-estimate" role="tooltip" class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white transition-opacity duration-300 bg-gray-900 rounded-lg shadow-sm opacity-0 tooltip dark:bg-gray-700">
+								Add Estimate
+								<div class="tooltip-arrow" data-popper-arrow></div>
+						</div>
+					</h5>
 
 					<!-- Estimate item -->
 					<EstimateVue v-for="estimate in customer?.estimate" :estimate="estimate" v-bind:key="estimate"></EstimateVue>
@@ -239,7 +259,16 @@
 			<!-- Invoices Section -->
 			<section class="shadow-lg sm:rounded-md sm:overflow-hidden mt-4">
 				<div class="p-3 sm:rounded-md sm:overflow-hidden">
-					<h5 class="text-xl font-medium text-gray-900 dark:text-white border-b-4 border-gray-900">Invoices</h5>
+					<h5 class="border-b-4 border-gray-900 flex justify-between">
+						<span class="text-xl font-medium text-gray-900 dark:text-white">Invoices</span>
+						<svg id="tooltip-add-invoice-button" @click="router.push({name: 'add-invoice'})" data-tooltip-target="tooltip-add-invoice" data-tooltip-placement="top" class="w-7 h-7 font-bold text-sm -mt-1 rounded-full shadow-lg bg-slate-900 hover:rotate-45 hover:bg-slate-700 p-2 text-white" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+							<path clip-rule="evenodd" fill-rule="evenodd" d="M12 5.25a.75.75 0 01.75.75v5.25H18a.75.75 0 010 1.5h-5.25V18a.75.75 0 01-1.5 0v-5.25H6a.75.75 0 010-1.5h5.25V6a.75.75 0 01.75-.75z"></path>
+						</svg>
+						<div id="tooltip-add-invoice" role="tooltip" class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white transition-opacity duration-300 bg-gray-900 rounded-lg shadow-sm opacity-0 tooltip dark:bg-gray-700">
+								Add Invoice
+								<div class="tooltip-arrow" data-popper-arrow></div>
+						</div>
+					</h5>
 
 					<!-- Invoice item -->
 					<InvoiceVue v-for="invoice in customer?.invoice" :invoice="invoice" v-bind:key="invoice"></InvoiceVue>
