@@ -1,6 +1,7 @@
 <script setup>
 	import axios from "axios";
 	import JobVue from '@/components/jobs/Job.vue'
+	import ItemVue from '@/components/line-items/item.vue'
 	import EstimateVue from '@/components/estimates/Estimate.vue'
 	import InvoiceVue from '@/components/invoices/Invoice.vue'
   import { onMounted, ref } from "vue";
@@ -9,6 +10,7 @@
   import { useUserStore } from "@/stores/UserStore"
 
 	const loading = ref(false)
+	const lineItems = ref()
 	const customer = ref({
 		"name":"",
 		"phone":"",
@@ -40,6 +42,23 @@
       );
 
       customer.value = response.data.customer
+
+			let items = []
+
+			if (Array.isArray(response.data.customer?.estimate) && response.data.customer.estimate?.length && !response.data.customer.invoice?.length) {
+				for (const item of response.data.customer.estimate) {					
+					items = [...items, ...item.lineItem];
+				}
+      }
+
+			if (Array.isArray(response.data.customer?.invoice) && response.data.customer.invoice?.length) {
+				for (const item of response.data.customer.invoice) {					
+					items = [...items, ...item.lineItem];
+				} 
+      }
+
+			lineItems.value = items
+
       loading.value = false;
     } catch (error) {
       console.log(error);
@@ -226,6 +245,19 @@
 					<InvoiceVue v-for="invoice in customer?.invoice" :invoice="invoice" v-bind:key="invoice"></InvoiceVue>
 				</div>
 			</section>
+
+			<!-- Line Items Section -->
+			<section class="shadow-lg sm:rounded-md sm:overflow-hidden mt-4">
+				<div class="p-3 sm:rounded-md sm:overflow-hidden">
+					<h5 class="text-xl font-medium text-gray-900 dark:text-white border-b-4 border-gray-900">Line Items</h5>
+
+					<!-- Invoice item -->
+					<ItemVue v-for="item in lineItems" :item="item" v-bind:key="item"></ItemVue>
+				</div>
+			</section>
 		</div>
 	</div>
+	<scale-loader v-if="loading" :loading="loading" color="#23293b" height="50px" class="vld-overlay is-active is-full-page" width="6px">
+  </scale-loader>
+	<div v-if="loading" class="bg-gray-900 bg-opacity-50 dark:bg-opacity-80 fixed inset-0 z-40"></div>
 </template>

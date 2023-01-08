@@ -1,3 +1,5 @@
+import moment from 'moment'
+
 const generateBorder = (doc) => {
 	doc.lineWidth(5);
 	doc.lineJoin('square')
@@ -38,4 +40,14 @@ const getBase64FromUrl = async (url) => {
 	});
 }
 
-export { generateBorder, generateTableRow, getBase64FromUrl }
+const universalDateFormatter = (dat) => {
+	let dt = dat.slice(0, 16)
+	return moment().isSame(dt, 'day') ? moment(dt).format('h:mm a') : moment(dt).format("dddd, DD MMMM YYYY");
+}
+
+const dateFormatter = (dat) => {
+	let dt = dat.slice(0, 16)
+	return dat ? moment().isSame(dt, 'day') ? moment(dt).format('h:mm a') : moment(dt).format('h:mm a') : '-';
+}
+
+export { generateBorder, generateTableRow, getBase64FromUrl, universalDateFormatter, dateFormatter }
