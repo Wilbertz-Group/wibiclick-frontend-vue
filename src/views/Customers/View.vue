@@ -222,9 +222,7 @@
 				<div class="p-3 sm:rounded-md sm:overflow-hidden">
 					<h5 class="border-b-4 border-gray-900 flex justify-between">
 						<span class="text-xl font-medium text-gray-900 dark:text-white">Jobs</span>
-						<svg id="tooltip-add-job-button" @click="router.push({name: 'add-job'})" data-tooltip-target="tooltip-add-job" data-tooltip-placement="left" class="w-7 h-7 font-bold text-sm -mt-1 rounded-full shadow-lg bg-slate-900 hover:rotate-45 hover:bg-slate-700 p-2 text-white" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-							<path clip-rule="evenodd" fill-rule="evenodd" d="M12 5.25a.75.75 0 01.75.75v5.25H18a.75.75 0 010 1.5h-5.25V18a.75.75 0 01-1.5 0v-5.25H6a.75.75 0 010-1.5h5.25V6a.75.75 0 01.75-.75z"></path>
-						</svg>
+						<div id="tooltip-add-job-button" @click="router.push({name: 'add-job'})" data-tooltip-target="tooltip-add-job" data-tooltip-placement="left" class="cursor-pointer">+ Add</div>
 						<div id="tooltip-add-job" role="tooltip" class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white transition-opacity duration-300 bg-gray-900 rounded-lg shadow-sm opacity-0 tooltip dark:bg-gray-700">
 								Add Job
 								<div class="tooltip-arrow" data-popper-arrow></div>
@@ -241,9 +239,7 @@
 				<div class="p-3 sm:rounded-md sm:overflow-hidden">
 					<h5 class="border-b-4 border-gray-900 flex justify-between">
 						<span class="text-xl font-medium text-gray-900 dark:text-white">Estimates</span>
-						<svg id="tooltip-add-estimate-button" @click="router.push({name: 'add-estimate'})" data-tooltip-target="tooltip-add-estimate" data-tooltip-placement="top" class="w-7 h-7 font-bold text-sm -mt-1 rounded-full shadow-lg bg-slate-900 hover:rotate-45 hover:bg-slate-700 p-2 text-white" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-							<path clip-rule="evenodd" fill-rule="evenodd" d="M12 5.25a.75.75 0 01.75.75v5.25H18a.75.75 0 010 1.5h-5.25V18a.75.75 0 01-1.5 0v-5.25H6a.75.75 0 010-1.5h5.25V6a.75.75 0 01.75-.75z"></path>
-						</svg>
+						<div id="tooltip-add-estimate-button" @click="router.push({name: 'add-estimate'})" data-tooltip-target="tooltip-add-estimate" data-tooltip-placement="top" class="cursor-pointer">+ Add</div>
 						<div id="tooltip-add-estimate" role="tooltip" class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white transition-opacity duration-300 bg-gray-900 rounded-lg shadow-sm opacity-0 tooltip dark:bg-gray-700">
 								Add Estimate
 								<div class="tooltip-arrow" data-popper-arrow></div>
@@ -261,9 +257,7 @@
 				<div class="p-3 sm:rounded-md sm:overflow-hidden">
 					<h5 class="border-b-4 border-gray-900 flex justify-between">
 						<span class="text-xl font-medium text-gray-900 dark:text-white">Invoices</span>
-						<svg id="tooltip-add-invoice-button" @click="router.push({name: 'add-invoice'})" data-tooltip-target="tooltip-add-invoice" data-tooltip-placement="top" class="w-7 h-7 font-bold text-sm -mt-1 rounded-full shadow-lg bg-slate-900 hover:rotate-45 hover:bg-slate-700 p-2 text-white" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-							<path clip-rule="evenodd" fill-rule="evenodd" d="M12 5.25a.75.75 0 01.75.75v5.25H18a.75.75 0 010 1.5h-5.25V18a.75.75 0 01-1.5 0v-5.25H6a.75.75 0 010-1.5h5.25V6a.75.75 0 01.75-.75z"></path>
-						</svg>
+						<div id="tooltip-add-invoice-button" @click="router.push({name: 'add-invoice'})" data-tooltip-target="tooltip-add-invoice" data-tooltip-placement="top" class="cursor-pointer">+ Add</div>
 						<div id="tooltip-add-invoice" role="tooltip" class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white transition-opacity duration-300 bg-gray-900 rounded-lg shadow-sm opacity-0 tooltip dark:bg-gray-700">
 								Add Invoice
 								<div class="tooltip-arrow" data-popper-arrow></div>
