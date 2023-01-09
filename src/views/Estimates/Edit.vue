@@ -1,5 +1,6 @@
 <script setup>
 import fs from 'fs'
+import imageHolder from '../../helpers/logo.js'
 import axios from "axios";
 import moment from 'moment'
 import Header from "@/components/Header.vue";
@@ -300,10 +301,14 @@ async function saveestimate(data) {
   }
 
   let img;
-
-  await getBase64FromUrl(profile.value.estimate_logo).then((data) => {
-    img = data
-  })
+  
+  try {
+    await getBase64FromUrl(profile.value.estimate_logo).then((data) => {
+      img = data
+    })
+  } catch (error) {
+    img = imageHolder
+  }
 
   function generateHeader(doc, estimate) {
     doc
@@ -652,7 +657,7 @@ onMounted(()=>{
                 </optgroup>
               </FormKit>
 
-            </div>
+            </div> 
 
             <div class="relative text-right"> 
               <button type="submit" @click="save_type = 'save'" class="text-white inline-block bg-gray-800 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-gray-300 dark:focus:ring-gray-800 shadow-lg shadow-gray-500/50 dark:shadow-lg dark:shadow-gray-800/80 font-medium rounded-lg text-sm px-5 py-2.5 text-center mb-5 mr-10"><svg class="w-6 h-6 inline pb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> Save</button> 

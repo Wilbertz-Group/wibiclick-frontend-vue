@@ -1,5 +1,6 @@
 <script setup>
 import fs from 'fs'
+import imageHolder from '../../helpers/logo.js'
 import { getBase64FromUrl, generateTableRow } from '../../helpers/index.js'
 import axios from "axios";
 import moment from 'moment'
@@ -22,7 +23,7 @@ const router = useRouter();
 const route = useRoute()
 const modalOpen = ref(false)
 const save_type = ref()
-
+ 
 const userStore = useUserStore();
 const status = ref(userStore.status);
 
@@ -194,9 +195,14 @@ async function saveInvoice(data) {
 
   let img;
 
-  await getBase64FromUrl(profile.value.estimate_logo).then((data) => {
-    img = data
-  })
+  try {
+    await getBase64FromUrl(profile.value.estimate_logo).then((data) => {
+      img = data
+    })
+  } catch (error) {
+    img = imageHolder
+  }
+  
 
   function generateHeader(doc, invoice) {
     doc

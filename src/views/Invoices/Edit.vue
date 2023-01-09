@@ -1,5 +1,6 @@
 <script setup>
 import fs from 'fs'
+import imageHolder from '../../helpers/logo.js'
 import axios from "axios";
 import moment from 'moment'
 import { getBase64FromUrl, generateTableRow } from '../../helpers/index.js'
@@ -284,9 +285,14 @@ async function saveInvoice(data) {
 
   let img;
 
-  await getBase64FromUrl(profile.value.estimate_logo).then((data) => {
-    img = data
-  })
+  try {
+    await getBase64FromUrl(profile.value.estimate_logo).then((data) => {
+      img = data
+    })
+  } catch (error) {
+    img = imageHolder
+  }
+  
 
   function generateHeader(doc, invoice) {
     doc
@@ -558,7 +564,7 @@ watchEffect(() => {
                   <option value="paid">Paid</option>
                   <option value="sent">Sent</option>
                 </optgroup>
-              </FormKit>
+              </FormKit> 
 
             </div>
 

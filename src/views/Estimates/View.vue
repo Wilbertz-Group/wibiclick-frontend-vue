@@ -1,5 +1,6 @@
 <script setup>
   import { Buffer } from 'buffer'
+  import imageHolder from '../../helpers/logo.js'
   import axios from "axios";
   import moment from 'moment'
   import Header from "@/components/Header.vue";
@@ -236,7 +237,7 @@
       estimate_due_date: moment(estimate_data.estimate_due_date).add(1, 'days').format('YYYY-MM-DD'),
     }
     modalOpen.value = false
-  }
+  } 
 
   async function saveestimate(data) {
     function createestimate(estimate, path) {
@@ -282,9 +283,13 @@
 
     let img;
 
-    await getBase64FromUrl(profile.value.estimate_logo).then((data) => {
-      img = data
-    })
+    try {
+      await getBase64FromUrl(profile.value.estimate_logo).then((data) => {
+        img = data
+      })
+    } catch (error) {
+      img = imageHolder
+    }
 
     function generateHeader(doc, estimate) {
       doc
