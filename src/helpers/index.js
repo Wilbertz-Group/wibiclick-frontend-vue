@@ -46,13 +46,17 @@ const getBase64FromUrl = async (url) => {
 }
 
 const universalDateFormatter = (dat) => {
-	let dt = dat.slice(0, 16)
+	let dt = dat
 	return moment().isSame(dt, 'day') ? moment(dt).format('h:mm a') : moment(dt).format("dddd, DD MMMM YYYY");
 }
 
 const dateFormatter = (dat) => {
-	let dt = dat.slice(0, 16)
-	return dat ? moment().isSame(dt, 'day') ? moment(dt).format('h:mm a') : moment(dt).format('h:mm a') : '-';
+	let dt = dat
+	return dat ? moment().isSame(dt, 'day') ? moment(dt).utcOffset('+0400').format('h:mm a') : moment(dt).utcOffset('+0400').format('h:mm a') : '-';
+}
+
+const dateTimestamp = (dat) => {
+	return moment(dat).format("x")
 }
 
 const tooltips = () => {
@@ -191,5 +195,6 @@ export {
 	dateFormatter, 
 	tooltips,
 	noteModal,
-	whatsappModal
+	whatsappModal,
+	dateTimestamp
 }
