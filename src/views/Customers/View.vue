@@ -6,7 +6,7 @@
   import { useUserStore } from "@/stores/UserStore"
 	import { tooltips, noteModal, whatsappModal } from '../../helpers';
 	import JobVue from '@/components/jobs/Job.vue'
-	import editor from '@/components/editor/editor.vue'
+	import VueQuill from '@/components/editor/VueQuill.vue'
 	import ItemVue from '@/components/line-items/item.vue'
 	import EstimateVue from '@/components/estimates/Estimate.vue'
 	import InvoiceVue from '@/components/invoices/Invoice.vue'
@@ -170,11 +170,11 @@
 														</div>
 														<!-- Modal body -->
 														<div class="p-6 space-y-6">
-															<editor 
+															<VueQuill 
 																v-model:modelValue="notes"
 																contentType="html"
 																placeholder="Start typing to leave a note..."
-															></editor>
+															></VueQuill>
 														</div>
 														<!-- Modal footer -->
 														<div class="flex items-center p-6 space-x-2 border-t border-gray-200 rounded-b dark:border-gray-600">
@@ -228,11 +228,11 @@
 														</div>
 														<!-- Modal body -->
 														<div class="p-6 space-y-6">
-															<editor 
+															<VueQuill 
 																v-model:modelValue="whatsapp"
 																contentType="text"
 																placeholder="Start typing to send a whatsapp message..."
-															></editor>
+															></VueQuill>
 														</div>
 														<!-- Modal footer -->
 														<div class="flex items-center p-6 space-x-2 border-t border-gray-200 rounded-b dark:border-gray-600">
