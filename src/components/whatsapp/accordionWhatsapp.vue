@@ -56,5 +56,5 @@
 				<p class="mb-2 text-black dark:text-gray-400">{{ msg.text }}</p>
 			</div>
 		</div>
-	</div>
+	</div> 
 </template>

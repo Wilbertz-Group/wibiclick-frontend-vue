@@ -10,7 +10,7 @@
 	import ItemVue from '@/components/line-items/item.vue'
 	import EstimateVue from '@/components/estimates/Estimate.vue'
 	import InvoiceVue from '@/components/invoices/Invoice.vue'
-	import Accordion from '@/components/whatsapp/Accordion.vue'
+	import Accordion from '@/components/whatsapp/accordionWhatsapp.vue'
 
 	const loading = ref(false)
 	const lineItems = ref()
