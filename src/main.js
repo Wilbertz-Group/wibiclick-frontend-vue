@@ -13,6 +13,8 @@ import 'boxicons'
 import ToastPlugin from 'vue-toast-notification';
 import 'vue-toast-notification/dist/theme-sugar.css';
 import VueHighlightJS from 'vue-highlightjs'
+import { QuillEditor } from '@vueup/vue-quill'
+import '@vueup/vue-quill/dist/vue-quill.snow.css';
 
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { library } from '@fortawesome/fontawesome-svg-core'
@@ -22,13 +24,14 @@ import { fab } from '@fortawesome/free-brands-svg-icons'
 library.add(fas, far, fab)
 
 axios.defaults.baseURL = "https://wibi.wilbertzgroup.com/"
-//axios.defaults.baseURL = "http://localhost:3000/"
+//axios.defaults.baseURL = "http://localhost:8080/"
 
 const app = createApp(App)
 const pinia = createPinia()
 pinia.use(piniaPluginPersistedstate)
 
 app.component('font-awesome-icon', FontAwesomeIcon)
+app.component('QuillEditor', QuillEditor)
 app.use(VueHighlightJS)
 app.use(ToastPlugin);
 app.use(VueApexCharts);
