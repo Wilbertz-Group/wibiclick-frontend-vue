@@ -1,16 +1,16 @@
 <script setup>
 	import axios from "axios";
+  import { onMounted, ref } from "vue";
+  import { useToast } from 'vue-toast-notification';
+  import { useRouter, useRoute } from "vue-router";
+  import { useUserStore } from "@/stores/UserStore"
+	import { tooltips, noteModal, whatsappModal } from '../../helpers';
 	import JobVue from '@/components/jobs/Job.vue'
 	import editor from '@/components/editor/editor.vue'
 	import ItemVue from '@/components/line-items/item.vue'
 	import EstimateVue from '@/components/estimates/Estimate.vue'
 	import InvoiceVue from '@/components/invoices/Invoice.vue'
 	import Accordion from '@/components/whatsapp/Accordion.vue'
-  import { onMounted, ref } from "vue";
-  import { useToast } from 'vue-toast-notification';
-  import { useRouter, useRoute } from "vue-router";
-  import { useUserStore } from "@/stores/UserStore"
-	import { tooltips, noteModal, whatsappModal } from '../../helpers';
 
 	const loading = ref(false)
 	const lineItems = ref()
@@ -79,7 +79,7 @@
       loading.value = true
       const response = await axios.post('add-customer?id='+ userStore.currentWebsite, {data: credentials});
       loading.value = false
-      toast.success("Customer added successfully")
+      toast.success("Customer updated successfully")
     } catch (error) {
       console.log(error)
       loading.value = false
@@ -95,7 +95,7 @@
 </script>
 
 <template>
-	<div class="px-2 py-2 grid md:grid-cols-4 sm:grid-cols-2 gap-3">
+	<div class="px-2 py-2 grid md:grid-cols-4 sm:grid-cols-2 gap-3 bg-white">
 
 		<div class="col-span-1 md:col-span-1">
 			

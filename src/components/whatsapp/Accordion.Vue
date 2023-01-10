@@ -42,7 +42,7 @@
 						</button>
 					</div>
 					<span class="ml-3 text-sm text-teal-400">
-						<span class="font-bold">We <span v-if="!msg.fromMe" class="text-green-500">received</span> <span v-if="msg.fromMe" class="text-sky-500">sent</span> a message <span v-if="!msg.fromMe">from</span> <span v-if="msg.fromMe">to</span> {{msg.remoteJid.split("@")[0]}}</span>
+						<span class="font-bold">We <span v-if="!msg.fromMe" class="text-gray-600">received</span> <span v-if="msg.fromMe" class="text-sky-500">sent</span> a message <span v-if="!msg.fromMe">from</span> <span v-if="msg.fromMe">to</span> {{msg.remoteJid.split("@")[0]}}</span>
 					</span>
 				</span>
 				<div class="flex items-center">
