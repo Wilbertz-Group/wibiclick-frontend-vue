@@ -11,6 +11,7 @@
 	import EstimateVue from '@/components/estimates/Estimate.vue'
 	import InvoiceVue from '@/components/invoices/Invoice.vue'
 	import accordion from '@/components/whatsapp/accordion.vue'
+	import ScaleLoader from "vue-spinner/src/ScaleLoader.vue";
 
 	const loading = ref(false)
 	const lineItems = ref()
@@ -64,7 +65,7 @@
 
 			lineItems.value = items
 
-			whatsappModal(whatsapp, userStore.currentWebsite, customer.value.phone)
+			await whatsappModal(whatsapp, userStore.currentWebsite, customer.value.phone)
 
       loading.value = false;
     } catch (error) {
