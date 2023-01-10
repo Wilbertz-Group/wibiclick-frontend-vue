@@ -1,5 +1,9 @@
 import moment from 'moment'
-import { Tooltip } from 'flowbite'
+import axios from "axios";
+import { Tooltip, Modal } from 'flowbite'
+import { useToast } from 'vue-toast-notification';
+
+const toast = useToast();
 
 const generateBorder = (doc) => {
 	doc.lineWidth(5);
@@ -130,11 +134,62 @@ const tooltips = () => {
 	}
 }
 
+const noteModal = (modelValue) => {
+	const $buttonElement = document.querySelector('#tooltip-note-button');
+	const $modalElement = document.querySelector('#noteModal');
+	const $closeButton = document.querySelector('#noteModalClose');
+	const $saveNoteButton = document.querySelector('#noteModalSave');
+
+	const modalOptions = {
+		placement: 'bottom-right',
+		backdropClasses: 'bg-gray-900 bg-opacity-50 dark:bg-opacity-80 fixed inset-0 z-40',
+	};
+
+	const modal = new Modal($modalElement, modalOptions);
+
+	$buttonElement.addEventListener('click', () => modal.toggle());
+	$closeButton.addEventListener('click', () => modal.hide());
+	$saveNoteButton.addEventListener('click', () => {
+		//Save Note logic
+		console.log(modelValue.value)
+		modal.hide()
+	});
+}
+
+const whatsappModal = (modelValue, id, phone) => {
+	const $buttonElement = document.querySelector('#tooltip-whatsapp-button');
+	const $modalElement = document.querySelector('#whatsappModal');
+	const $closeButton = document.querySelector('#whatsappModalClose');
+	const $saveWhatsappButton = document.querySelector('#whatsappModalSave');
+
+	const modalOptions = {
+		placement: 'bottom-right',
+		backdropClasses: 'bg-gray-900 bg-opacity-50 dark:bg-opacity-80 fixed inset-0 z-40',
+	};
+
+	const modal = new Modal($modalElement, modalOptions);
+
+	$buttonElement.addEventListener('click', () => modal.toggle());
+	$closeButton.addEventListener('click', () => modal.hide());
+	$saveWhatsappButton.addEventListener('click', async() => {
+		//Save Whatsapp logic
+		//console.log(modelValue.value)
+		let to = phone + '@s.whatsapp.net'
+		let message = modelValue.value
+
+		await axios.post(`send-whatsapp?id=${id}`, { to, message });
+		toast.success(`Message have been successfully sent to client on whatsapp`)
+		modal.hide()
+	});
+}
+
 export { 
 	generateBorder, 
 	generateTableRow, 
 	getBase64FromUrl, 
 	universalDateFormatter, 
 	dateFormatter, 
-	tooltips 
+	tooltips,
+	noteModal,
+	whatsappModal
 }
