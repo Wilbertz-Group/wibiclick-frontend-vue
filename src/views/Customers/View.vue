@@ -174,7 +174,7 @@
 																v-model:modelValue="notes"
 																contentType="html"
 																placeholder="Start typing to leave a note..."
-															/>
+															></editor>
 														</div>
 														<!-- Modal footer -->
 														<div class="flex items-center p-6 space-x-2 border-t border-gray-200 rounded-b dark:border-gray-600">
@@ -232,7 +232,7 @@
 																v-model:modelValue="whatsapp"
 																contentType="text"
 																placeholder="Start typing to send a whatsapp message..."
-															/>
+															></editor>
 														</div>
 														<!-- Modal footer -->
 														<div class="flex items-center p-6 space-x-2 border-t border-gray-200 rounded-b dark:border-gray-600">
