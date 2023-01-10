@@ -52,7 +52,12 @@ const universalDateFormatter = (dat) => {
 
 const dateFormatter = (dat) => {
 	let dt = dat
-	return dat ? moment().isSame(dt, 'day') ? moment(dt).utcOffset('+0400').format('h:mm a') : moment(dt).utcOffset('+0400').format('h:mm a') : '-';
+	return dat ? moment().isSame(dt, 'day') ? moment(dt).format('h:mm a') : moment(dt).format('MMM DD, YYYY - h:mm a') : '-';
+}
+
+const universalTimeFormatter = (dat) => {
+	let dt = dat.slice(0, 16)
+	return moment().isSame(dt, 'day') ? moment(dt).format('h:mm a') : moment(dt).format("h:mm a");
 }
 
 const dateTimestamp = (dat) => {

@@ -10,7 +10,7 @@
 	import ItemVue from '@/components/line-items/item.vue'
 	import EstimateVue from '@/components/estimates/Estimate.vue'
 	import InvoiceVue from '@/components/invoices/Invoice.vue'
-	import Accordion from '@/components/whatsapp/accordionWhatsapp.vue'
+	import accordion from '@/components/whatsapp/accordion.vue'
 
 	const loading = ref(false)
 	const lineItems = ref()
@@ -300,7 +300,7 @@
 		</div>
 
 		<div class="col-span-2 md:col-span-2 bg-slate-100 p-2 shadow sm:rounded-md sm:overflow-hidden">
-			<Accordion v-if="customer?.whatsapp" :msgs="customer?.whatsapp"></Accordion>
+			<accordion v-if="customer?.whatsapp" :msgs="customer?.whatsapp"></accordion>
 		</div>
 
 		<div class="col-span-1 md:col-span-1">
