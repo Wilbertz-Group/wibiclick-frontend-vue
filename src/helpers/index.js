@@ -1,6 +1,6 @@
 import moment from 'moment'
 import axios from "axios";
-import { Tooltip, Modal } from 'flowbite'
+import { Tooltip, Modal, Tabs } from 'flowbite'
 import { useToast } from 'vue-toast-notification';
 
 const toast = useToast();
@@ -143,7 +143,7 @@ const tooltips = () => {
 	}
 }
 
-const noteModal = (modelValue) => {
+const noteModal = (modelValue, wid, id) => {
 	const $buttonElement = document.querySelector('#tooltip-note-button');
 	const $modalElement = document.querySelector('#noteModal');
 	const $closeButton = document.querySelector('#noteModalClose');
@@ -158,9 +158,12 @@ const noteModal = (modelValue) => {
 
 	$buttonElement.addEventListener('click', () => modal.toggle());
 	$closeButton.addEventListener('click', () => modal.hide());
-	$saveNoteButton.addEventListener('click', () => {
+	$saveNoteButton.addEventListener('click', async() => {
 		//Save Note logic
-		console.log(modelValue.value)
+		let notes = modelValue.value
+
+		await axios.post(`add-notes?id=${wid}`, { id, notes });
+		toast.success(`Notes have been successfully saved`)
 		modal.hide()
 	});
 }
@@ -192,6 +195,35 @@ const whatsappModal = (modelValue, id, phone) => {
 	});
 }
 
+const timelineTabs = (modelValue, id, phone) => {
+	const tabElements = [
+		{
+				id: 'activity',
+				triggerEl: document.querySelector('#activity-tab-el'),
+				targetEl: document.querySelector('#activity-el')
+		},
+		{
+				id: 'whatsapp',
+				triggerEl: document.querySelector('#whatsapp-tab-el'),
+				targetEl: document.querySelector('#whatsapp-el')
+		},
+		{
+				id: 'notes',
+				triggerEl: document.querySelector('#notes-tab-el'),
+				targetEl: document.querySelector('#notes-el')
+		},
+	];
+
+	// options with default values
+	const options = {
+			defaultTabId: 'whatsapp',
+			activeClasses: 'text-blue-600 border-b-2 hover:text-blue-600 dark:text-blue-500 dark:hover:text-blue-400 border-blue-600 dark:border-blue-500',
+			inactiveClasses: 'text-gray-500 hover:text-gray-600 dark:text-gray-400 border-gray-100 hover:border-gray-300 dark:border-gray-700 dark:hover:text-gray-300',
+	};
+
+	const tabs = new Tabs(tabElements, options);
+}
+
 export { 
 	generateBorder, 
 	generateTableRow, 
@@ -201,5 +233,6 @@ export {
 	tooltips,
 	noteModal,
 	whatsappModal,
-	dateTimestamp
+	dateTimestamp,
+	timelineTabs
 }

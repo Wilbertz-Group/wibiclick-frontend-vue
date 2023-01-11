@@ -4,13 +4,14 @@
   import { useToast } from 'vue-toast-notification';
   import { useRouter, useRoute } from "vue-router";
   import { useUserStore } from "@/stores/UserStore"
-	import { tooltips, noteModal, whatsappModal } from '../../helpers';
+	import { tooltips, noteModal, whatsappModal, timelineTabs } from '../../helpers';
 	import JobVue from '@/components/jobs/Job.vue'
 	import VueQuill from '@/components/editor/VueQuill.vue'
 	import ItemVue from '@/components/line-items/item.vue'
 	import EstimateVue from '@/components/estimates/Estimate.vue'
 	import InvoiceVue from '@/components/invoices/Invoice.vue'
 	import accordion from '@/components/whatsapp/accordion.vue'
+	import accordionNotes from '@/components/notes/accordion.vue'
 	import ScaleLoader from "vue-spinner/src/ScaleLoader.vue";
 
 	const loading = ref(false)
@@ -39,6 +40,7 @@
 	const route = useRoute()
 	const router = useRouter()
   const userStore = useUserStore()
+	const timeline = ref(null)
 
 	async function fetchContacts() {
     try {
@@ -66,6 +68,7 @@
 			lineItems.value = items
 
 			await whatsappModal(whatsapp, userStore.currentWebsite, customer.value.phone)
+			await noteModal(notes, userStore.currentWebsite, customer.value.id)
 
       loading.value = false;
     } catch (error) {
@@ -88,20 +91,19 @@
   }
 
 	onMounted(()=>{
+		timelineTabs()
   	fetchContacts();
 		tooltips();
-		noteModal(notes)
 	})
-
 </script>
 
 <template>
-	<div class="px-2 py-2 grid md:grid-cols-4 sm:grid-cols-2 gap-3 bg-white">
+	<div class="px-2 py-2 grid md:grid-cols-4 sm:grid-cols-2 gap-3 bg-white h-[92vh]">
 
-		<div class="col-span-1 md:col-span-1">
+		<div class="h-full overflow-y-scroll col-span-1 md:col-span-1">
 			
 			<!-- Contact Card Section -->
-			<section class="shadow sm:rounded-md sm:overflow-hidden">
+			<section class="shadow sm:rounded-md sm:overflow-hidden relative">
 				<!-- Go to all contacts -->
 				<div @click="router.back()" class="flex justify-start absolute mt-4 ml-3">
 					<svg id="tooltip-view-contacts-button" data-tooltip-target="tooltip-view-contacts" class="w-10 h-10 rounded-full shadow-lg bg-slate-900 hover:bg-slate-700 text-white" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -296,15 +298,36 @@
 				</div>
 			</section>
 
-
-
 		</div>
 
-		<div class="col-span-2 md:col-span-2 bg-slate-100 p-2 shadow sm:rounded-md sm:overflow-hidden">
-			<accordion v-if="customer?.whatsapp" :msgs="customer?.whatsapp"></accordion>
+		<div class="h-full overflow-y-scroll col-span-2 md:col-span-2 bg-slate-100 p-2 shadow sm:rounded-md sm:overflow-hidden">
+			<div class="mb-4 border-b border-gray-200 dark:border-gray-700">
+					<ul class="flex flex-wrap -mb-px text-sm font-medium text-center text-gray-500 dark:text-gray-400" id="tabExample" role="tablist">
+							<li class="mr-2" role="presentation">
+									<button class="inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300" id="activity-tab-el" type="button" role="tab" aria-controls="activity-el" aria-selected="false">Activity</button>
+							</li>
+							<li class="mr-2" role="presentation">
+									<button class="inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300" id="whatsapp-tab-el" type="button" role="tab" aria-controls="whatsapp-el" aria-selected="false">Whatsapp</button>
+							</li>
+							<li class="mr-2" role="presentation">
+									<button class="inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300" id="notes-tab-el" type="button" role="tab" aria-controls="notes-el" aria-selected="false">Notes</button>
+							</li>
+					</ul>
+			</div>
+			<div id="tabContentExample" class="h-[90%] overflow-y-scroll">
+					<div class="hidden p-4 rounded-lg bg-gray-50 dark:bg-gray-800" id="activity-el" role="tabpanel" aria-labelledby="activity-tab-el">
+							<p class="text-sm text-gray-500 dark:text-gray-400">This is some placeholder content the <strong class="font-medium text-gray-800 dark:text-white">Profile tab's associated content</strong>. Clicking another tab will toggle the visibility of this one for the next. The tab JavaScript swaps classes to control the content visibility and styling.</p>
+					</div>
+					<div class="hidden p-4 rounded-lg bg-gray-50 dark:bg-gray-800" id="whatsapp-el" role="tabpanel" aria-labelledby="whatsapp-tab-el">
+						<accordion v-if="customer?.whatsapp" :msgs="customer?.whatsapp"></accordion>
+					</div>
+					<div class="hidden p-4 rounded-lg bg-gray-50 dark:bg-gray-800" id="notes-el" role="tabpanel" aria-labelledby="notes-tab-el">
+						<accordion-notes v-if="customer?.notes" :notes="customer?.notes"></accordion-notes>
+					</div>
+			</div>
 		</div>
 
-		<div class="col-span-1 md:col-span-1">
+		<div class="h-full overflow-y-scroll col-span-1 md:col-span-1">
 			<!-- Jobs Section -->
 			<section class="shadow-lg sm:rounded-md sm:overflow-hidden">
 				<div class="p-3 sm:rounded-md sm:overflow-hidden">
