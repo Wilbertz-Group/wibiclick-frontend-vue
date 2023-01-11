@@ -21,7 +21,7 @@
   const series = ref();
 
   const selectedEmployee = ref(null)
-  const paginationPageSize = ref(6)
+  const paginationPageSize = ref(10)
   const modalOpen = ref(false)
 
   options.value = {
@@ -124,7 +124,9 @@
         `employees?id=${userStore.currentWebsite}&limit=100&offset=0`
       );
 
-      rowData.value = response.data.employees
+      const data = _.orderBy(response.data.employees, 'jobs', 'desc')
+
+      rowData.value = data
       loading.value = false;
     } catch (error) {
       console.log(error);
@@ -294,7 +296,7 @@
                 </div>  
                 <ag-grid-vue
                     class="ag-theme-alpine"
-                    style="height: 353px"
+                    style="height: 505px"
                     :columnDefs="columnDefs.value"
                     :rowData="rowData.value"
                     :defaultColDef="defaultColDef"
