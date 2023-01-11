@@ -296,7 +296,7 @@
                 </div>  
                 <ag-grid-vue
                     class="ag-theme-alpine"
-                    style="height: 505px"
+                    style="height: 521px"
                     :columnDefs="columnDefs.value"
                     :rowData="rowData.value"
                     :defaultColDef="defaultColDef"

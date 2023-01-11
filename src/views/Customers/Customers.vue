@@ -21,7 +21,7 @@
   const loading = ref(false)
   const options = ref()
   const series = ref()
-  const paginationPageSize = ref(6)
+  const paginationPageSize = ref(10)
   const modalOpen = ref(false)
   const router = useRouter()
 
@@ -299,7 +299,7 @@
                   </div>  
                   <ag-grid-vue
                       class="ag-theme-alpine"
-                      style="height: 353px"
+                      style="height: 521px"
                       :columnDefs="columnDefs.value"
                       :rowData="rowData.value"
                       :defaultColDef="defaultColDef"
