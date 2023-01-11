@@ -36,7 +36,7 @@
 			</div>
 			<div class="flex justify-between">
 				<p class="text-sm font-bold text-black">Amount</p>
-				<p class="text-sm text-black">R{{ invoice.sales }}</p>
+				<p class="text-sm text-black">R{{ Number(invoice.sales) || Number(invoice.deposit) }}</p>
 			</div>
 			<div class="flex justify-between">
 				<p class="text-sm font-bold text-black">Date</p>
