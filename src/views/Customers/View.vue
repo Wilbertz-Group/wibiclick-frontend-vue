@@ -105,13 +105,13 @@
 <template>
 	<div class="px-2 py-2 grid md:grid-cols-4 sm:grid-cols-2 gap-3 bg-white h-[92vh]">
 
-		<div class="h-full overflow-y-scroll col-span-1 md:col-span-1">
+		<div class="h-full overflow-y-scroll col-span-1 md:col-span-1 p-1">
 			
 			<!-- Contact Card Section -->
 			<section class="shadow sm:rounded-md sm:overflow-hidden relative">
 				<!-- Go to all contacts -->
 				<div @click="router.back()" class="flex justify-start absolute mt-4 ml-3">
-					<svg id="tooltip-view-contacts-button" data-tooltip-target="tooltip-view-contacts" class="w-10 h-10 rounded-full shadow-lg bg-slate-900 hover:bg-slate-700 text-white" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+					<svg id="tooltip-view-contacts-button" data-tooltip-target="tooltip-view-contacts" class="w-10 h-10 rounded-full shadow bg-slate-900 hover:bg-slate-700 text-white" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
 						<path clip-rule="evenodd" fill-rule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zm-4.28 9.22a.75.75 0 000 1.06l3 3a.75.75 0 101.06-1.06l-1.72-1.72h5.69a.75.75 0 000-1.5h-5.69l1.72-1.72a.75.75 0 00-1.06-1.06l-3 3z"></path>
 					</svg>
 					<div id="tooltip-view-contacts" role="tooltip" class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white transition-opacity duration-300 bg-gray-900 rounded-lg shadow-sm opacity-0 tooltip dark:bg-gray-700">
@@ -144,14 +144,14 @@
 
 				<!-- Contact Card and activity actions -->
 				<div class="flex flex-col items-center pb-10">
-						<svg class="w-16 h-16 mb-3 rounded-full shadow-lg p-4" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path></svg>
+						<svg class="w-16 h-16 mb-3 rounded-full shadow p-4" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path></svg>
 						<h5 class="mb-1 text-xl font-medium text-gray-900 dark:text-white">{{ customer?.name }}</h5>
 						<span v-if="customer?.email" class="text-sm text-gray-500 dark:text-gray-400">{{ customer?.email }}</span>
 						<div class="flex mt-4 space-x-3 md:mt-6">
 
 							<!-- Create a note using a modal -->
 							<div>
-								<svg id="tooltip-note-button" data-tooltip-target="tooltip-note" class="w-10 h-10 cursor-pointer rounded-full shadow-lg bg-slate-900 hover:bg-slate-700 p-2 text-white" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+								<svg id="tooltip-note-button" data-tooltip-target="tooltip-note" class="w-10 h-10 cursor-pointer rounded-full shadow bg-slate-900 hover:bg-slate-700 p-2 text-white" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
 									<path d="M21.731 2.269a2.625 2.625 0 00-3.712 0l-1.157 1.157 3.712 3.712 1.157-1.157a2.625 2.625 0 000-3.712zM19.513 8.199l-3.712-3.712-8.4 8.4a5.25 5.25 0 00-1.32 2.214l-.8 2.685a.75.75 0 00.933.933l2.685-.8a5.25 5.25 0 002.214-1.32l8.4-8.4z"></path>
 									<path d="M5.25 5.25a3 3 0 00-3 3v10.5a3 3 0 003 3h10.5a3 3 0 003-3V13.5a.75.75 0 00-1.5 0v5.25a1.5 1.5 0 01-1.5 1.5H5.25a1.5 1.5 0 01-1.5-1.5V8.25a1.5 1.5 0 011.5-1.5h5.25a.75.75 0 000-1.5H5.25z"></path>
 								</svg>
@@ -194,7 +194,7 @@
 							</div>
 
 							<div>
-								<svg id="tooltip-email-button" data-tooltip-target="tooltip-email" class="w-10 h-10 cursor-pointer rounded-full shadow-lg bg-slate-900 hover:bg-slate-700 p-2 text-white" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+								<svg id="tooltip-email-button" data-tooltip-target="tooltip-email" class="w-10 h-10 cursor-pointer rounded-full shadow bg-slate-900 hover:bg-slate-700 p-2 text-white" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
 									<path d="M1.5 8.67v8.58a3 3 0 003 3h15a3 3 0 003-3V8.67l-8.928 5.493a3 3 0 01-3.144 0L1.5 8.67z"></path>
 									<path d="M22.5 6.908V6.75a3 3 0 00-3-3h-15a3 3 0 00-3 3v.158l9.714 5.978a1.5 1.5 0 001.572 0L22.5 6.908z"></path>
 								</svg>
@@ -210,7 +210,7 @@
 									data-tooltip-target="tooltip-whatsapp"
 									width="192" height="192"
 									viewBox="0,0,256,256"
-									class="w-10 h-10 p-1 cursor-pointer rounded-full shadow-lg bg-slate-900 hover:bg-slate-700 text-white"
+									class="w-10 h-10 p-1 cursor-pointer rounded-full shadow bg-slate-900 hover:bg-slate-700 text-white"
 									style="fill:#000000;">
 									<g fill="#000000" fill-rule="nonzero" stroke="none" stroke-width="1" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="10" stroke-dasharray="" stroke-dashoffset="0" font-family="none" font-weight="none" font-size="none" text-anchor="none" style="mix-blend-mode: normal"><path d="M0,256v-256h256v256z" id="bgRectangle"></path></g><g fill="#ffffff" fill-rule="nonzero" stroke="none" stroke-width="1" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="10" stroke-dasharray="" stroke-dashoffset="0" font-family="none" font-weight="none" font-size="none" text-anchor="none" style="mix-blend-mode: normal"><g transform="scale(10.66667,10.66667)"><path d="M19.077,4.928c-2.082,-2.083 -4.922,-3.134 -7.904,-2.894c-4.009,0.322 -7.523,3.11 -8.699,6.956c-0.84,2.748 -0.487,5.617 0.881,7.987l-1.296,4.303c-0.124,0.413 0.253,0.802 0.67,0.691l4.504,-1.207c1.459,0.796 3.101,1.215 4.773,1.216h0.004c4.195,0 8.071,-2.566 9.412,-6.541c1.306,-3.876 0.34,-7.823 -2.345,-10.511zM16.898,15.554c-0.208,0.583 -1.227,1.145 -1.685,1.186c-0.458,0.042 -0.887,0.207 -2.995,-0.624c-2.537,-1 -4.139,-3.601 -4.263,-3.767c-0.125,-0.167 -1.019,-1.353 -1.019,-2.581c0,-1.228 0.645,-1.832 0.874,-2.081c0.229,-0.25 0.499,-0.312 0.666,-0.312c0.166,0 0.333,0 0.478,0.006c0.178,0.007 0.375,0.016 0.562,0.431c0.222,0.494 0.707,1.728 0.769,1.853c0.062,0.125 0.104,0.271 0.021,0.437c-0.083,0.166 -0.125,0.27 -0.249,0.416c-0.125,0.146 -0.262,0.325 -0.374,0.437c-0.125,0.124 -0.255,0.26 -0.11,0.509c0.146,0.25 0.646,1.067 1.388,1.728c0.954,0.85 1.757,1.113 2.007,1.239c0.25,0.125 0.395,0.104 0.541,-0.063c0.146,-0.166 0.624,-0.728 0.79,-0.978c0.166,-0.25 0.333,-0.208 0.562,-0.125c0.229,0.083 1.456,0.687 1.705,0.812c0.25,0.125 0.416,0.187 0.478,0.291c0.062,0.103 0.062,0.603 -0.146,1.186z"></path></g></g><g fill="none" fill-rule="nonzero" stroke="none" stroke-width="none" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="10" stroke-dasharray="" stroke-dashoffset="0" font-family="none" font-weight="none" font-size="none" text-anchor="none" style="mix-blend-mode: normal"><g id="text" fill="#000000" stroke="none" stroke-width="1"><path d="M-32.295,-19.72l6.27,13.67l6.31,-13.67h6.83l-9.96,19.34v11h-6.35v-11l-9.96,-19.34zM7.325,10.62h-6.08c-0.28,-0.54667 -0.48333,-1.22 -0.61,-2.02v0c-1.45333,1.62 -3.34667,2.43 -5.68,2.43v0c-2.21333,0 -4.04333,-0.63667 -5.49,-1.91c-1.45333,-1.28 -2.18,-2.89333 -2.18,-4.84v0c0,-2.38667 0.88667,-4.22 2.66,-5.5c1.76667,-1.27333 4.32333,-1.91667 7.67,-1.93v0h2.77v-1.3c0,-1.04 -0.26667,-1.87333 -0.8,-2.5c-0.53333,-0.62 -1.37667,-0.93 -2.53,-0.93v0c-1.01333,0 -1.81,0.24333 -2.39,0.73c-0.57333,0.48667 -0.86,1.15333 -0.86,2v0h-6.02c0,-1.30667 0.40333,-2.51667 1.21,-3.63c0.80667,-1.11333 1.94333,-1.98333 3.41,-2.61c1.47333,-0.63333 3.12667,-0.95 4.96,-0.95v0c2.78,0 4.98667,0.69667 6.62,2.09c1.63333,1.4 2.45,3.36333 2.45,5.89v0v9.77c0.01333,2.14 0.31,3.75667 0.89,4.85v0zM-3.735,6.43v0c0.88667,0 1.70667,-0.19667 2.46,-0.59c0.74667,-0.4 1.3,-0.93333 1.66,-1.6v0v-3.87h-2.25c-3.01333,0 -4.61667,1.04 -4.81,3.12v0l-0.02,0.36c0,0.74667 0.26333,1.36333 0.79,1.85c0.52667,0.48667 1.25,0.73 2.17,0.73zM14.975,-11.92l4.18,14.02l4.17,-14.02h6.46l-9.06,26.04l-0.5,1.18c-1.34667,2.94667 -3.57,4.42 -6.67,4.42v0c-0.87333,0 -1.76333,-0.13 -2.67,-0.39v0v-4.57l0.92,0.02c1.14,0 1.99,-0.17333 2.55,-0.52c0.56667,-0.34667 1.01,-0.92333 1.33,-1.73v0l0.7,-1.85l-7.89,-22.6zM38.995,-19.72l-0.71,21.02h-5l-0.71,-21.02zM35.785,4.6v0c1.01333,0 1.83,0.29667 2.45,0.89c0.61333,0.6 0.92,1.36333 0.92,2.29v0c0,0.92 -0.30667,1.67667 -0.92,2.27c-0.62,0.6 -1.43667,0.9 -2.45,0.9v0c-1,0 -1.81,-0.3 -2.43,-0.9c-0.62,-0.59333 -0.93,-1.35 -0.93,-2.27c0,-0.91333 0.31,-1.67333 0.93,-2.28c0.62,-0.6 1.43,-0.9 2.43,-0.9z"></path></g></g>
 								</svg>
@@ -253,7 +253,7 @@
 
 							<div>
 								<a :href="'callto:+'+customer.phone">
-									<svg id="tooltip-call-button" data-tooltip-target="tooltip-call" class="w-10 h-10 cursor-pointer rounded-full shadow-lg bg-slate-900 hover:bg-slate-700 p-2 text-white" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+									<svg id="tooltip-call-button" data-tooltip-target="tooltip-call" class="w-10 h-10 cursor-pointer rounded-full shadow bg-slate-900 hover:bg-slate-700 p-2 text-white" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
 										<path clip-rule="evenodd" fill-rule="evenodd" d="M1.5 4.5a3 3 0 013-3h1.372c.86 0 1.61.586 1.819 1.42l1.105 4.423a1.875 1.875 0 01-.694 1.955l-1.293.97c-.135.101-.164.249-.126.352a11.285 11.285 0 006.697 6.697c.103.038.25.009.352-.126l.97-1.293a1.875 1.875 0 011.955-.694l4.423 1.105c.834.209 1.42.959 1.42 1.82V19.5a3 3 0 01-3 3h-2.25C8.552 22.5 1.5 15.448 1.5 6.75V4.5z"></path>
 									</svg>
 								
@@ -265,7 +265,7 @@
 							</div>
 
 							<div>
-								<svg id="tooltip-activity-button" data-tooltip-target="tooltip-activity" class="w-10 h-10 cursor-pointer rounded-full shadow-lg bg-slate-900 hover:bg-slate-700 p-2 text-white" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+								<svg id="tooltip-activity-button" data-tooltip-target="tooltip-activity" class="w-10 h-10 cursor-pointer rounded-full shadow bg-slate-900 hover:bg-slate-700 p-2 text-white" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
 									<path clip-rule="evenodd" fill-rule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zM12.75 9a.75.75 0 00-1.5 0v2.25H9a.75.75 0 000 1.5h2.25V15a.75.75 0 001.5 0v-2.25H15a.75.75 0 000-1.5h-2.25V9z"></path>
 								</svg>
 								<div id="tooltip-activity" role="tooltip" class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white transition-opacity duration-300 bg-gray-900 rounded-lg shadow-sm opacity-0 tooltip dark:bg-gray-700">
@@ -297,7 +297,7 @@
 
 							<FormKit type="textarea" name="Message" label="Issue" v-model="customer.message" inner-class="shadow-none" placeholder="--" outer-class="text-left" input-class="pl-0 hover:border-sky-500 hover:ring-1 hover:ring-sky-500" />
 
-							<FormKit type="submit" input-class="rounded-full shadow-lg !bg-slate-900 hover:bg-slate-700 text-white" label="Update Customer" />
+							<FormKit type="submit" input-class="rounded-full shadow !bg-slate-900 hover:bg-slate-700 text-white" label="Update Customer" />
 							
 						</FormKit>
 				</div>
@@ -323,12 +323,12 @@
 					<div class="hidden p-4 rounded-lg bg-gray-50 dark:bg-gray-800" id="activity-el" role="tabpanel" aria-labelledby="activity-tab-el">
 						<div v-for="activity in customer?.activities" :key="activity.id">
 							<accordion v-if="activity.type == 'whatsapp'" :msgs="[activity?.whatsapp]"></accordion>
-							<accordion-notes v-if="activity.type == 'note'" :notes="[activity?.notes]" :status="activity?.status" :user="activity?.User?.firstName"></accordion-notes>
-							<accordion-invoice v-if="activity.type == 'invoice'" :invoices="[activity?.invoice]" :status="activity?.status" :user="activity?.User?.firstName"></accordion-invoice>
-							<accordion-estimate v-if="activity.type == 'estimate'" :estimates="[activity?.estimate]" :status="activity?.status" :user="activity?.User?.firstName"></accordion-estimate>
-							<accordion-job v-if="activity.type == 'job'" :jobs="[activity?.job]" :status="activity?.status" :user="activity?.User?.firstName"></accordion-job>
-							<accordion-customer v-if="activity.type == 'customer'" :customers="[activity?.customer]" :status="activity?.status" :user="activity?.User?.firstName"></accordion-customer>
-							<accordion-lineitem v-if="activity.type == 'line item'" :lineitems="[activity?.lineitem]" :status="activity?.status" :user="activity?.User?.firstName"></accordion-lineitem>
+							<accordion-notes v-if="activity.type == 'note'" :notes="[activity?.notes]" :status="activity?.status" :user="activity?.User?.firstName" :created="activity?.createdAt"></accordion-notes>
+							<accordion-invoice v-if="activity.type == 'invoice'" :invoices="[activity?.invoice]" :status="activity?.status" :user="activity?.User?.firstName" :created="activity?.createdAt"></accordion-invoice>
+							<accordion-estimate v-if="activity.type == 'estimate'" :estimates="[activity?.estimate]" :status="activity?.status" :user="activity?.User?.firstName" :created="activity?.createdAt"></accordion-estimate>
+							<accordion-job v-if="activity.type == 'job'" :jobs="[activity?.job]" :status="activity?.status" :user="activity?.User?.firstName" :created="activity?.createdAt"></accordion-job>
+							<accordion-customer v-if="activity.type == 'customer'" :customers="[activity?.customer]" :status="activity?.status" :user="activity?.User?.firstName" :created="activity?.createdAt"></accordion-customer>
+							<accordion-lineitem v-if="activity.type == 'line item'" :lineitems="[activity?.lineitem]" :status="activity?.status" :user="activity?.User?.firstName" :created="activity?.createdAt"></accordion-lineitem>
 						</div>
 					</div>
 					<div class="hidden p-4 rounded-lg bg-gray-50 dark:bg-gray-800" id="whatsapp-el" role="tabpanel" aria-labelledby="whatsapp-tab-el">
@@ -340,9 +340,9 @@
 			</div>
 		</div>
 
-		<div class="h-full overflow-y-scroll col-span-1 md:col-span-1">
+		<div class="h-full overflow-y-scroll col-span-1 md:col-span-1 p-1">
 			<!-- Jobs Section -->
-			<section class="shadow-lg sm:rounded-md sm:overflow-hidden">
+			<section class="shadow sm:rounded-md sm:overflow-hidden">
 				<div class="p-3 sm:rounded-md sm:overflow-hidden">
 					<h5 class="border-b-4 border-gray-900 flex justify-between">
 						<span class="text-xl font-medium text-gray-900 dark:text-white">Jobs</span>
@@ -359,7 +359,7 @@
 			</section>
 
 			<!-- Estimates Section -->
-			<section class="shadow-lg sm:rounded-md sm:overflow-hidden mt-4">
+			<section class="shadow sm:rounded-md sm:overflow-hidden mt-4">
 				<div class="p-3 sm:rounded-md sm:overflow-hidden">
 					<h5 class="border-b-4 border-gray-900 flex justify-between">
 						<span class="text-xl font-medium text-gray-900 dark:text-white">Estimates</span>
@@ -377,7 +377,7 @@
 			</section>
 
 			<!-- Invoices Section -->
-			<section class="shadow-lg sm:rounded-md sm:overflow-hidden mt-4">
+			<section class="shadow sm:rounded-md sm:overflow-hidden mt-4">
 				<div class="p-3 sm:rounded-md sm:overflow-hidden">
 					<h5 class="border-b-4 border-gray-900 flex justify-between">
 						<span class="text-xl font-medium text-gray-900 dark:text-white">Invoices</span>
@@ -394,7 +394,7 @@
 			</section>
 
 			<!-- Line Items Section -->
-			<section class="shadow-lg sm:rounded-md sm:overflow-hidden mt-4">
+			<section class="shadow sm:rounded-md sm:overflow-hidden mt-4">
 				<div class="p-3 sm:rounded-md sm:overflow-hidden">
 					<h5 class="text-xl font-medium text-gray-900 dark:text-white border-b-4 border-gray-900">Line Items</h5>
 

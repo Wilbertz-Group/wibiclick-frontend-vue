@@ -40,7 +40,7 @@
 			</div>
 			<div class="flex justify-between">
 				<p class="text-sm font-bold text-black">Date</p>
-				<p class="text-sm text-black">{{ universalDateFormatter(invoice.issuedAt) }}</p>
+				<p class="text-sm text-black">{{ universalDateFormatter(invoice.createdAt).includes(':') ? 'Today at '+ universalDateFormatter(invoice.createdAt) : universalDateFormatter(invoice.createdAt) }}</p>
 			</div>
 		</div>
 		<div class="flex mt-2 mb-1 justify-between items-center">			

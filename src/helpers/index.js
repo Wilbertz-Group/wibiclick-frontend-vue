@@ -47,7 +47,7 @@ const getBase64FromUrl = async (url) => {
 
 const universalDateFormatter = (dat) => {
 	let dt = dat
-	return moment().isSame(dt, 'day') ? moment(dt).format('h:mm a') : moment(dt).format("dddd, DD MMMM YYYY");
+	return moment().isSame(dt, 'day') ? moment(dt).format('h:mm a') : moment(dt).format("ddd, DD MMM YYYY");
 }
 
 const dateFormatter = (dat) => {
@@ -56,7 +56,7 @@ const dateFormatter = (dat) => {
 }
 
 const universalTimeFormatter = (dat) => {
-	let dt = dat.slice(0, 16)
+	let dt = dat
 	return moment().isSame(dt, 'day') ? moment(dt).format('h:mm a') : moment(dt).format("h:mm a");
 }
 
@@ -237,6 +237,7 @@ export {
 	generateTableRow, 
 	getBase64FromUrl, 
 	universalDateFormatter, 
+	universalTimeFormatter,
 	dateFormatter, 
 	tooltips,
 	noteModal,

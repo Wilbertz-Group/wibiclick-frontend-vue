@@ -1,5 +1,5 @@
 <script setup>
-	import { universalDateFormatter, dateFormatter } from '../../helpers';
+	import { universalDateFormatter, dateFormatter, universalTimeFormatter } from '../../helpers';
 	const props = defineProps(['job'])
 </script>
 
@@ -36,12 +36,12 @@
 				<p v-if="job.employee?.firstName != undefined || job.employee?.lastName != undefined" class="text-sm text-black">{{ (job.employee?.firstName || '') + ' ' + (job.employee?.lastName || '') }}</p>
 			</div>
 			<div class="flex justify-between">
-				<p class="text-sm font-bold text-black">Date:</p>
-				<p class="text-sm text-black">{{ universalDateFormatter(job.slotStart) }}</p>
+				<p class="text-sm font-bold text-black">Scheduled Date:</p>
+				<p class="text-sm text-black">{{ universalDateFormatter(job.slotStart).includes(':') ? 'Today' : universalDateFormatter(job.slotStart) }}</p>
 			</div>
 			<div class="flex justify-between">
-				<p class="text-sm font-bold text-black">Time:</p>
-				<p class="text-sm text-black">{{ dateFormatter(job.slotStart) }}</p>
+				<p class="text-sm font-bold text-black">Scheduled Time:</p>
+				<p class="text-sm text-black">{{ universalTimeFormatter(job.slotStart) }}</p>
 			</div>
 			<div class="">
 				<p class="text-sm font-bold text-black">Issue: </p>

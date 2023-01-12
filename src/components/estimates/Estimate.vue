@@ -34,7 +34,7 @@
 			</div>
 			<div class="flex justify-between" >
 				<p class="text-sm font-bold text-black" >Date</p>
-				<p class="text-sm text-black" >{{ universalDateFormatter(estimate.issuedAt) }}</p>
+				<p class="text-sm text-black" >{{ universalDateFormatter(estimate.createdAt).includes(':') ? 'Today at '+ universalDateFormatter(estimate.createdAt) : universalDateFormatter(estimate.createdAt) }}</p>
 			</div>
 		</div>
 		<div class="flex mt-4 mb-1 justify-between items-center" >
