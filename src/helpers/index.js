@@ -224,8 +224,8 @@ const timelineTabs = (modelValue, id, phone) => {
 
 	// options with default values
 	const options = {
-			defaultTabId: 'whatsapp',
-			activeClasses: 'text-blue-600 border-b-2 hover:text-blue-600 dark:text-blue-500 dark:hover:text-blue-400 border-blue-600 dark:border-blue-500',
+			defaultTabId: 'activity',
+			activeClasses: 'text-blue-600 border-b-2 hover:text-blue-600 dark:text-blue-500 dark:hover:text-blue-400 border-blue-700 dark:border-blue-500',
 			inactiveClasses: 'text-gray-500 hover:text-gray-600 dark:text-gray-400 border-gray-100 hover:border-gray-300 dark:border-gray-700 dark:hover:text-gray-300',
 	};
 

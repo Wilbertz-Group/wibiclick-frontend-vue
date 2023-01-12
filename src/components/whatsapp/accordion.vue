@@ -1,4 +1,5 @@
 <script setup>
+	import { uuid } from 'vue-uuid';
 	import { onMounted } from 'vue'
 	import moment from 'moment'
 	import { dateFormatter, dateTimestamp } from '../../helpers';
@@ -6,15 +7,19 @@
 
 	const props = defineProps(['msgs'])
 
+	props.msgs.forEach((msg) => { 
+		msg.uid = uuid.v1()
+	})
+
 	onMounted(() => {
     // create an array of objects with the id, trigger element (eg. button), and the content element
     const accordionItems = [];
 
-		props.msgs.forEach((msg, i) => { 
+		props.msgs.forEach((msg) => { 
 			accordionItems.push({
-				id: 'accordion-whatsapp-heading-'+ i,
-				triggerEl: document.querySelector('#accordion-whatsapp-heading-'+i),
-				targetEl: document.querySelector('#accordion-whatsapp-body-'+i),
+				id: 'accordion-whatsapp-heading-'+ msg.uid,
+				triggerEl: document.querySelector('#accordion-whatsapp-heading-'+msg.uid),
+				targetEl: document.querySelector('#accordion-whatsapp-body-'+msg.uid),
 				active: true
 			})
 		})
@@ -32,8 +37,8 @@
 </script>
 
 <template>
-	<div v-for="(msg, i) in msgs" :key="msg.id" :id="dateTimestamp(msg.createdAt)" class="shadow rounded-lg sm:overflow-hidden bg-white mb-4">
-		<h2 :id="'accordion-whatsapp-heading-'+i">
+	<div v-for="(msg) in msgs" :key="msg.uid" :id="dateTimestamp(msg.createdAt)" class="shadow rounded-lg sm:overflow-hidden bg-white mb-4">
+		<h2 :id="'accordion-whatsapp-heading-'+ msg.uid">
 			<button type="button" class="flex items-center justify-between w-full px-3 py-1 border-white " data-accordion-target="#accordion-arrow-icon-body-2" aria-expanded="false" aria-controls="accordion-arrow-icon-body-2">
 				<span class="flex items-center">
 					<div class="flex items-center -space-x-4 hover:space-x-1" data-v-2fc82866-s="" data-v-2fb1486c-s="">
@@ -61,7 +66,7 @@
 				</div>
 			</button>
 		</h2> 
-		<div :id="'accordion-whatsapp-body-'+i" class="hidden" aria-labelledby="accordion-arrow-icon-heading-2">
+		<div :id="'accordion-whatsapp-body-'+ msg.uid" class="hidden" aria-labelledby="accordion-arrow-icon-heading-2">
 			<div class="px-3 py-1 rounded-b-md font-light border border-b-0 border-gray-200 dark:border-gray-700">
 				<p class="mb-2 text-black dark:text-gray-400">{{ msg.text }}</p>
 			</div>

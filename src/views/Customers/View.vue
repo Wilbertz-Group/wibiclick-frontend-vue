@@ -10,8 +10,13 @@
 	import ItemVue from '@/components/line-items/item.vue'
 	import EstimateVue from '@/components/estimates/Estimate.vue'
 	import InvoiceVue from '@/components/invoices/Invoice.vue'
+	import accordionJob from '@/components/jobs/accordion.vue'
+	import accordionCustomer from '@/components/customers/accordion.vue'
+	import accordionLineitem from '@/components/line-items/accordion.vue'
 	import accordion from '@/components/whatsapp/accordion.vue'
 	import accordionNotes from '@/components/notes/accordion.vue'
+	import accordionInvoice from '@/components/invoices/accordion.vue'
+	import accordionEstimate from '@/components/estimates/accordion.vue'
 	import ScaleLoader from "vue-spinner/src/ScaleLoader.vue";
 
 	const loading = ref(false)
@@ -316,7 +321,15 @@
 			</div>
 			<div id="tabContentExample" class="h-[90%] overflow-y-scroll">
 					<div class="hidden p-4 rounded-lg bg-gray-50 dark:bg-gray-800" id="activity-el" role="tabpanel" aria-labelledby="activity-tab-el">
-							<p class="text-sm text-gray-500 dark:text-gray-400">This is some placeholder content the <strong class="font-medium text-gray-800 dark:text-white">Profile tab's associated content</strong>. Clicking another tab will toggle the visibility of this one for the next. The tab JavaScript swaps classes to control the content visibility and styling.</p>
+						<div v-for="activity in customer?.activities" :key="activity.id">
+							<accordion v-if="activity.type == 'whatsapp'" :msgs="[activity?.whatsapp]"></accordion>
+							<accordion-notes v-if="activity.type == 'note'" :notes="[activity?.notes]" :status="activity?.status" :user="activity?.User?.firstName"></accordion-notes>
+							<accordion-invoice v-if="activity.type == 'invoice'" :invoices="[activity?.invoice]" :status="activity?.status" :user="activity?.User?.firstName"></accordion-invoice>
+							<accordion-estimate v-if="activity.type == 'estimate'" :estimates="[activity?.estimate]" :status="activity?.status" :user="activity?.User?.firstName"></accordion-estimate>
+							<accordion-job v-if="activity.type == 'job'" :jobs="[activity?.job]" :status="activity?.status" :user="activity?.User?.firstName"></accordion-job>
+							<accordion-customer v-if="activity.type == 'customer'" :customers="[activity?.customer]" :status="activity?.status" :user="activity?.User?.firstName"></accordion-customer>
+							<accordion-lineitem v-if="activity.type == 'line item'" :lineitems="[activity?.lineitem]" :status="activity?.status" :user="activity?.User?.firstName"></accordion-lineitem>
+						</div>
 					</div>
 					<div class="hidden p-4 rounded-lg bg-gray-50 dark:bg-gray-800" id="whatsapp-el" role="tabpanel" aria-labelledby="whatsapp-tab-el">
 						<accordion v-if="customer?.whatsapp" :msgs="customer?.whatsapp"></accordion>
