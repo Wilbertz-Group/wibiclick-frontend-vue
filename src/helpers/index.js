@@ -181,7 +181,7 @@ const whatsappModal = (modelValue, id, phone) => {
 
 	const modal = new Modal($modalElement, modalOptions);
 
-	$buttonElement.addEventListener('click', () => modal.toggle());
+	$buttonElement.addEventListener('click', async() => modal.toggle());
 	$closeButton.addEventListener('click', () => modal.hide());
 	$saveWhatsappButton.addEventListener('click', async() => {
 		//Save Whatsapp logic
@@ -189,9 +189,17 @@ const whatsappModal = (modelValue, id, phone) => {
 		let to = phone + '@s.whatsapp.net'
 		let message = modelValue.value
 
-		await axios.post(`send-whatsapp?id=${id}`, { to, message });
-		toast.success(`Message have been successfully sent to client on whatsapp`)
-		modal.hide()
+		try {
+			const res = await axios.post(`onwhatsapp?id=${id}`, { to });
+			
+			await axios.post(`send-whatsapp?id=${id}`, { to, message });
+			toast.success(`Message have been successfully sent to client on whatsapp`)
+			modal.hide()
+		} catch (error) {
+			toast.error(`This client number ${phone} is not on whatsapp`)
+			modal.hide()
+		}		
+		
 	});
 }
 

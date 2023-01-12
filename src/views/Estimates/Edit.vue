@@ -1,5 +1,4 @@
 <script setup>
-import fs from 'fs'
 import imageHolder from '../../helpers/logo.js'
 import axios from "axios";
 import moment from 'moment'
@@ -16,6 +15,7 @@ const all_jobs = ref();
 const job = ref();
 const selectedJob = ref();
 const jobsModalOpen = ref(false)
+const jobModalOpen = ref(false)
 const jobsData = ref({job: 'Select Job'});
 const loading = ref(false);
 const estimateData = ref({});
@@ -29,7 +29,8 @@ const modalOpen = ref(false)
 const save_type = ref()
 
 const userStore = useUserStore();
-const status = ref(userStore.status);
+
+const status = ref();
 
 const estimate = ref({
 
@@ -541,6 +542,46 @@ async function fetchJobs() {
   }
 }
 
+async function changeJob(data) {
+  try {
+    loading.value = true
+    const response = await axios.get(
+      `jobs?id=${userStore.currentWebsite}&limit=1500&offset=0`
+    );
+
+    all_jobs.value = response.data.jobs
+    let jobs = {};
+
+    for (const job of response.data.jobs) {
+      jobs[job.id] = job.name
+    }
+
+    jobsData.value = jobs
+
+    jobModalOpen.value = true
+    loading.value = false
+  } catch (error) {
+    console.log(error);
+    loading.value = false
+    toast.error("Error getting jobs data")
+  }
+}
+
+async function changeJobData(data){   
+  jobModalOpen.value = false 
+  let job_data = all_jobs.value.filter(e => { return e.id == data.job })[0]
+  job.value = job_data
+
+  estimate.value.customer = {
+    id: job_data.customer?.id,
+    name: job_data.customer?.name,
+    address: job_data.customer?.address,
+    phone: job_data.customer?.phone,
+    vat: "",
+  }
+  
+}
+
 async function updateJob(data){    
   let job_data = all_jobs.value.filter(e => { return e.id == data.job })[0]
   job.value = job_data
@@ -607,6 +648,7 @@ async function checkParams() {
 const lineItemTotal = computed(() => Number(lineItem.value.amount) * Number(lineItem.value.quantity))
 
 onMounted(()=>{
+  status.value = userStore.status
   checkParams();
   let tag = document.createElement("script");
   tag.setAttribute("src", "https://github.com/foliojs/pdfkit/releases/download/v0.12.1/pdfkit.standalone.js");
@@ -743,7 +785,7 @@ onMounted(()=>{
 
             <!-- Billed To -->
             <div class="">
-              <div class="text-2xl font-bold">Billed To</div>
+              <div class="text-2xl font-bold">Billed To <span class="text-sm text-blue-600 underline cursor-pointer" @click="changeJob">click here to select different job</span></div>
               <div class="text-lg flex font-bold mt-2">
                 <span class="flex justify-items-center items-center mr-10">Name: </span>
                 <FormKit type="text" name="customer_name" validation="required" v-model="estimate.customer.name" :value="estimate.customer.name" input-class="p-1 m-0 bg-slate-100" :classes="{ outer: 'mb-0 ml-3 w-96', inner: { $reset: true, 'p-0 m-0': true } }" />
@@ -891,7 +933,28 @@ onMounted(()=>{
     </div>
   </div>
 
-  <div v-if="modalOpen || jobsModalOpen" class="bg-gray-900 bg-opacity-50 dark:bg-opacity-80 fixed inset-0 z-40"></div>
+  <div id="jobsModalOpen" tabindex="-1" :class="{ flex: jobModalOpen, hidden: !jobModalOpen }" class="overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 w-full md:inset-0 h-modal md:h-full justify-center items-center">
+    <div class="relative p-4 w-full max-w-2xl h-full md:h-auto">
+      <!-- Modal content -->
+      <div class="relative bg-white rounded-lg shadow dark:bg-gray-700">
+        <!-- Modal header -->
+        <div class="flex justify-between items-start p-4 rounded-t border-b dark:border-gray-600">
+          <h3 class="text-xl font-semibold text-gray-900 dark:text-white">
+            Select Job
+          </h3>
+        </div>
+        <!-- Modal body -->
+        <div class="p-6 space-y-6">
+          <FormKit type="form" id="job" submit-label="Add" @submit="changeJobData" :actions="false" >
+            <FormKit type="select" validation="required" v-model="selectedJob" name="job" :options="jobsData" placeholder="Select Job" outer-class="text-left"  />
+            <FormKit type="submit" label="Select Job" />
+          </FormKit>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div v-if="modalOpen || jobsModalOpen || jobModalOpen" class="bg-gray-900 bg-opacity-50 dark:bg-opacity-80 fixed inset-0 z-40"></div>
 </template>
 
 

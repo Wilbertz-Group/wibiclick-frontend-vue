@@ -1,5 +1,4 @@
 <script setup>
-import fs from 'fs'
 import imageHolder from '../../helpers/logo.js'
 import { getBase64FromUrl, generateTableRow } from '../../helpers/index.js'
 import axios from "axios";
