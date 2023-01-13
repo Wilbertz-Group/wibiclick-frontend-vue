@@ -269,17 +269,17 @@
   const rowData = reactive([]); 
 
   const dateFormatter = (params) => {
-    let dt = params.value.slice(0, 16)
+    let dt = params.value
     return params.value ? moment().isSame(dt, 'day') ? moment(dt).format('h:mm a') : moment(dt).format('MMM DD, YYYY h:mm a') : '-';
   }
 
   const universalDateFormatter = (dat) => {
-    let dt = dat.slice(0, 16)
+    let dt = dat
     return moment().isSame(dt, 'day') ? "Today" : moment(dt).format("dddd, DD MMM YYYY");
   }
 
   const universalTimeFormatter = (dat) => {
-    let dt = dat.slice(0, 16)
+    let dt = dat
     return moment().isSame(dt, 'day') ? moment(dt).format('h:mm a') : moment(dt).format("h:mm a");
   }
 

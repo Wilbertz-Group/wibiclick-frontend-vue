@@ -188,7 +188,7 @@ const onGridReady = (params) => {
 const rowData = reactive({}); 
 
 const dateFormatter = (params) => {
-    let dt = params.value.slice(0, 16)
+    let dt = params.value
     return params.value ? moment().isSame(dt, 'day') ? moment(dt).format('h:mm a') : moment(dt).format('MMM DD, YYYY h:mm a') : '-';
 }
 

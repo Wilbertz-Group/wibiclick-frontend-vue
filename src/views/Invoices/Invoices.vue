@@ -147,7 +147,7 @@
       options.value = {
           chart: {
             height: 350,
-            type: 'bar',
+            type: 'area',
             toolbar: {
               autoSelected: "pan",
               show: false
@@ -230,7 +230,7 @@
   const rowData = reactive({}); 
 
   const dateFormatter = (params) => {
-    let dt = params.value.slice(0, 16)
+    let dt = params.value
     return params.value ? moment().isSame(dt, 'day') ? moment(dt).format('h:mm a') : moment(dt).format('MMM DD, YYYY') : '-';
   }
 
@@ -239,7 +239,7 @@
   }
 
   const universalDateFormatter = (dat) => {
-    let dt = dat.slice(0, 16)
+    let dt = dat
     return moment().isSame(dt, 'day') ? moment(dt).format('h:mm a') : moment(dt).format("dddd, DD MMMM YYYY");
   }
 
@@ -284,29 +284,29 @@
           };
         }
       },  
-      { field: "issuedAt", valueFormatter: dateFormatter },      
-      { 
-        field: "id", 
-        headerName: 'Edit',
-        maxWidth: 80,
-        cellRendererSelector: params => {
-          return {
-              component: Edit,
-              params
-          };
-        } 
-      },  
-      { 
-        field: "id", 
-        headerName: 'View',
-        maxWidth: 85,
-        cellRendererSelector: params => {
-          return {
-              component: View,
-              params
-          };
-        } 
-      },       
+      { field: "createdAt", valueFormatter: dateFormatter },      
+      // { 
+      //   field: "id", 
+      //   headerName: 'Edit',
+      //   maxWidth: 80,
+      //   cellRendererSelector: params => {
+      //     return {
+      //         component: Edit,
+      //         params
+      //     };
+      //   } 
+      // },  
+      // { 
+      //   field: "id", 
+      //   headerName: 'View',
+      //   maxWidth: 85,
+      //   cellRendererSelector: params => {
+      //     return {
+      //         component: View,
+      //         params
+      //     };
+      //   } 
+      // },       
     ],
   });
 

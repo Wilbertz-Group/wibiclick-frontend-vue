@@ -216,7 +216,7 @@
   const rowData = reactive({}); 
 
   const dateFormatter = (params) => {
-    let dt = params.value.slice(0, 16)
+    let dt = params.value
     return params.value ? moment().isSame(dt, 'day') ? moment(dt).format('h:mm a') : moment(dt).format('MMM DD, YYYY') : '-';
   }
 
@@ -225,7 +225,7 @@
   }
 
   const universalDateFormatter = (dat) => {
-    let dt = dat.slice(0, 16)
+    let dt = dat
     return moment().isSame(dt, 'day') ? moment(dt).format('h:mm a') : moment(dt).format("dddd, DD MMMM YYYY");
   }
 
@@ -251,37 +251,37 @@
             return link;
         }
       }, 
-      { field: "sales", headerName: 'Amount', valueFormatter: amountFormatter },  
+      { field: "createdAt", valueFormatter: dateFormatter },
+      { field: "sales", headerName: 'Amount', valueFormatter: amountFormatter }, 
       { field: "reason", headerName: 'Status', cellRendererSelector: params => {
           return {
               component: Status,
               params
           };
         }
-      }, 
-      { field: "issuedAt", valueFormatter: dateFormatter },       
-      { 
-        field: "id", 
-        headerName: 'Edit',
-        maxWidth: 80,
-        cellRendererSelector: params => {
-          return {
-              component: Edit,
-              params
-          };
-        } 
-      },  
-      { 
-        field: "id", 
-        headerName: 'View',
-        maxWidth: 85,
-        cellRendererSelector: params => {
-          return {
-              component: View,
-              params
-          };
-        } 
-      },       
+      },              
+      // { 
+      //   field: "id", 
+      //   headerName: 'Edit',
+      //   maxWidth: 80,
+      //   cellRendererSelector: params => {
+      //     return {
+      //         component: Edit,
+      //         params
+      //     };
+      //   } 
+      // },  
+      // { 
+      //   field: "id", 
+      //   headerName: 'View',
+      //   maxWidth: 85,
+      //   cellRendererSelector: params => {
+      //     return {
+      //         component: View,
+      //         params
+      //     };
+      //   } 
+      // },       
     ],
   });
 

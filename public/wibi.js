@@ -60,9 +60,11 @@ async function createWidget(n) {
 			//Hubspot
 			window.addEventListener('message', async event => { 
 					if(event.data.type === 'hsFormCallback' && event.data.eventName === 'onFormSubmit') { 
-							let msgtxt = "form_submit"
-							var Q = await fetch(`https://wibi.wilbertzgroup.com/wibi-action?id=${n}&c=3&ic=${msgtxt}&pg=${pg}&utk=${utk}`),
-							Y = await Q.json();
+						let msgtxt = "form_submit"
+						let pf = event.data?.data ? event.data.data.filter(a => a.name.includes('phone')) : '';
+						let ph = pf[0].value
+						var Q = await fetch(`https://wibi.wilbertzgroup.com/wibi-action?id=${n}&c=3&ic=${msgtxt}&pg=${pg}&utk=${utk}&ph=${ph}&msg=${c}`),
+						Y = await Q.json();
 					}
 			});
 
