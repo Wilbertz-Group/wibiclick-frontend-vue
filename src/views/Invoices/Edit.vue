@@ -101,10 +101,23 @@ function getSum(array){
   }
 }
 
-function deleteItem(i) {
-  invoice.value.items.splice(i, 1);
-  if(invoice.value.items){
+async function deleteItem(i, item) {
+  let payload = {
+    id: invoiceData.value.id,
+    item,
+    customerId: invoiceData.value.customerId
+  }
+
+  try {
+    loading.value = true
+    const response = await axios.post('remove-invoice-item?id='+ userStore.currentWebsite, payload);
+    toast.success(response.data.message)
+    loading.value = false
+    invoice.value.items.splice(i, 1);
     getSum(invoice.value.items)
+  } catch (error) {
+    console.log(error)
+    loading.value = false
   }
 }
 
@@ -687,7 +700,7 @@ watchEffect(() => {
               <div class="text-lg text-center content-center">{{invoice.company.currency_symbol + item.amount}}</div>
               <div class="text-lg text-center content-center">{{item.quantity}}</div>
               <div class="text-lg text-center content-center">{{invoice.company.currency_symbol + (Number(item.amount) * Number(item.quantity))}}</div>  
-              <div class="text-lg flex justify-items-center items-center"><svg class="project-delete ml-10" color="hsl(232, 23%, 61%)" viewBox="0 0 1024 1024" style="stroke: currentcolor; fill: currentcolor" @click="deleteItem(index)" > <path d="M837.312 227.584v682.624c0 62.848-50.88 113.792-113.728 113.792h-455.168c-62.81 0-113.728-50.918-113.728-113.728 0-0.023 0-0.045 0-0.068l-0 0.004v-682.624h682.624zM638.272 0l56.832 56.896h199.104v113.792h-796.416v-113.792h199.040l57.024-56.896h284.416z" ></path> </svg></div>          
+              <div class="text-lg flex justify-items-center items-center"><svg class="project-delete ml-10" color="hsl(232, 23%, 61%)" viewBox="0 0 1024 1024" style="stroke: currentcolor; fill: currentcolor" @click="deleteItem(index, item)" > <path d="M837.312 227.584v682.624c0 62.848-50.88 113.792-113.728 113.792h-455.168c-62.81 0-113.728-50.918-113.728-113.728 0-0.023 0-0.045 0-0.068l-0 0.004v-682.624h682.624zM638.272 0l56.832 56.896h199.104v113.792h-796.416v-113.792h199.040l57.024-56.896h284.416z" ></path> </svg></div>          
             </div>
 
             <!-- Add Line Item -->
