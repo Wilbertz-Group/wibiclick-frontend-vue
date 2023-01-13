@@ -46,11 +46,11 @@
 						</button>
 					</div>
 					<span class="ml-3 text-sm">
-						<span class="font-semibold normal-case"><span class="capitalize">{{ status }}</span> by <b>{{ user }}</b></span>
+						<span class="font-semibold normal-case"><span class="capitalize">{{ status ? status : note?.activities[0]?.status }}</span> by <b>{{ user ? user : note?.User?.firstName }}</b></span>
 					</span>
 				</span>
 				<div class="flex items-center">
-					<span class="ml-5 text-xs italic">{{ dateFormatter(created) }}</span>
+					<span class="ml-5 text-xs italic">{{ created ? dateFormatter(created) : dateFormatter(note?.createdAt) }}</span>
 					<svg class="w-6 h-6 shrink-0 rotate-180" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
 				</div>
 			</button>

@@ -1,5 +1,6 @@
 <script setup>
 	import axios from "axios";
+	import { uuid } from 'vue-uuid';
   import { onMounted, ref } from "vue";
   import { useToast } from 'vue-toast-notification';
   import { useRouter, useRoute } from "vue-router";
@@ -46,6 +47,8 @@
 	const router = useRouter()
   const userStore = useUserStore()
 	const timeline = ref(null)
+	const wkey = ref(0)
+	const nkey = ref(0)
 
 	async function fetchContacts() {
     try {
@@ -55,6 +58,12 @@
       );
 
       customer.value = response.data.customer
+
+			if(customer.value?.activities){
+				customer.value?.activities.forEach((a) => { 
+					a.uid = uuid.v1()
+				})
+			}
 
 			let items = []
 
@@ -73,7 +82,7 @@
 			lineItems.value = items
 
 			await whatsappModal(whatsapp, userStore.currentWebsite, customer.value.phone)
-			await noteModal(notes, userStore.currentWebsite, customer.value.id)
+			await noteModal(notes, userStore.currentWebsite, customer.value.id, reloadTimeline)
 
       loading.value = false;
     } catch (error) {
@@ -83,12 +92,19 @@
     }
   }
 
-	async function add(credentials) {
+	function reloadTimeline() {
+		fetchContacts();
+		wkey.value += 1
+		nkey.value += 1
+	}
+
+	async function updateCustomer(credentials) {
     try {
       loading.value = true
       const response = await axios.post('add-customer?id='+ userStore.currentWebsite, {data: credentials});
       loading.value = false
       toast.success("Customer updated successfully")
+			reloadTimeline()
     } catch (error) {
       console.log(error)
       loading.value = false
@@ -283,7 +299,7 @@
 			<!-- Contact Information Section -->
 			<section class="shadow sm:rounded-md sm:overflow-hidden mt-4">
 				<div class="p-2 sm:rounded-md sm:overflow-hidden">
-						<FormKit type="form" id="customer" submit-label="Add" @submit="add" :actions="false">
+						<FormKit type="form" id="customer" submit-label="Update" @submit="updateCustomer" :actions="false">
 							<span class="text-xl font-medium text-gray-900 dark:text-white border-b-4 border-gray-900">About contact</span>
 							<div class="mt-4">
 								<FormKit type="text" name="name" v-model="customer.name" label="Name" placeholder="--" inner-class="shadow-none" outer-class="text-left border-none" input-class="pl-0 hover:border-sky-500 hover:ring-1 hover:ring-sky-500" />
@@ -321,7 +337,7 @@
 			</div>
 			<div id="tabContentExample" class="h-[90%] overflow-y-scroll">
 					<div class="hidden p-4 rounded-lg bg-gray-50 dark:bg-gray-800" id="activity-el" role="tabpanel" aria-labelledby="activity-tab-el">
-						<div v-for="activity in customer?.activities" :key="activity.id">
+						<div v-for="activity in customer?.activities" :key="activity.uid">
 							<accordion v-if="activity.type == 'whatsapp'" :msgs="[activity?.whatsapp]"></accordion>
 							<accordion-notes v-if="activity.type == 'note'" :notes="[activity?.notes]" :status="activity?.status" :user="activity?.User?.firstName" :created="activity?.createdAt"></accordion-notes>
 							<accordion-invoice v-if="activity.type == 'invoice'" :invoices="[activity?.invoice]" :status="activity?.status" :user="activity?.User?.firstName" :created="activity?.createdAt"></accordion-invoice>
@@ -332,10 +348,10 @@
 						</div>
 					</div>
 					<div class="hidden p-4 rounded-lg bg-gray-50 dark:bg-gray-800" id="whatsapp-el" role="tabpanel" aria-labelledby="whatsapp-tab-el">
-						<accordion v-if="customer?.whatsapp" :msgs="customer?.whatsapp"></accordion>
+						<accordion v-if="customer?.whatsapp" :msgs="customer?.whatsapp" :key="wkey"></accordion>
 					</div>
 					<div class="hidden p-4 rounded-lg bg-gray-50 dark:bg-gray-800" id="notes-el" role="tabpanel" aria-labelledby="notes-tab-el">
-						<accordion-notes v-if="customer?.notes" :notes="customer?.notes"></accordion-notes>
+						<accordion-notes v-if="customer?.notes" :notes="customer?.notes" :key="nkey" status="" user="" created=""></accordion-notes>
 					</div>
 			</div>
 		</div>

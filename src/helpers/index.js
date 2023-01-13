@@ -52,7 +52,7 @@ const universalDateFormatter = (dat) => {
 
 const dateFormatter = (dat) => {
 	let dt = dat
-	return dat ? moment().isSame(dt, 'day') ? moment(dt).format('h:mm a') : moment(dt).format('MMM DD, YYYY - h:mm a') : '-';
+	return dat ? moment().isSame(dt, 'day') ? moment(dt).format('h:mm a') : moment(dt).format('ddd, DD MMM YYYY - h:mm a') : '-';
 }
 
 const universalTimeFormatter = (dat) => {
@@ -143,7 +143,7 @@ const tooltips = () => {
 	}
 }
 
-const noteModal = (modelValue, wid, id) => {
+const noteModal = (modelValue, wid, id, reloadTimeline) => {
 	const $buttonElement = document.querySelector('#tooltip-note-button');
 	const $modalElement = document.querySelector('#noteModal');
 	const $closeButton = document.querySelector('#noteModalClose');
@@ -163,6 +163,7 @@ const noteModal = (modelValue, wid, id) => {
 		let notes = modelValue.value
 
 		await axios.post(`add-notes?id=${wid}`, { id, notes });
+		reloadTimeline()
 		toast.success(`Notes have been successfully saved`)
 		modal.hide()
 	});

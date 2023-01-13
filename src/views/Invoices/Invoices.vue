@@ -316,11 +316,11 @@
     flex: 1,
   }
 
-  onMounted(() => {
-    if(userStore.currentWebsite && userStore.user){
-      fetchInvoices()  
-    }
-  })
+  // onMounted(() => {
+  //   if(userStore.currentWebsite && userStore.user){
+  //     fetchInvoices()  
+  //   }
+  // })
 
   watchEffect(() => {    
     if(userStore.currentWebsite){

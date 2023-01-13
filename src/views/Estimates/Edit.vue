@@ -111,7 +111,8 @@ function getSum(array){
 async function deleteItem(i, item) {
   let payload = {
     id: estimateData.value.id,
-    item
+    item,
+    customerId: estimateData.value.customerId
   }
 
   try {

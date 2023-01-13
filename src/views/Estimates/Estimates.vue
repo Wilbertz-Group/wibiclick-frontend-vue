@@ -314,11 +314,11 @@
     } 
   }
 
-  onMounted(() => {
-    if(userStore.currentWebsite && userStore.user){
-      fetchEstimates()  
-    }
-  })
+  // onMounted(() => {
+  //   if(userStore.currentWebsite && userStore.user){
+  //     fetchEstimates()  
+  //   }
+  // })
 
   watchEffect(() => {    
     if(userStore.currentWebsite){
