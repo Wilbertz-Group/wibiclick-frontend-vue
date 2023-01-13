@@ -198,11 +198,11 @@
     }
   }
 
-  onMounted(() => {
-    if(userStore.currentWebsite && userStore.user){
-      fetchVisitors()  
-    }
-  })
+  // onMounted(() => {
+  //   if(userStore.currentWebsite && userStore.user){
+  //     fetchVisitors()  
+  //   }
+  // })
 
   watchEffect(() => {    
     if(userStore.currentWebsite){

@@ -197,9 +197,9 @@
     }
   }
 
-  onMounted(() => {
-    fetchPages()
-  })
+  // onMounted(() => {
+  //   fetchPages()
+  // })
 
   watchEffect(() => {    
     if(userStore.currentWebsite){

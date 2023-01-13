@@ -258,12 +258,12 @@
     } 
   }
 
-  onMounted(() => {
-    if(userStore.currentWebsite && userStore.user){
-      fetchJobs()  
-      fetchEmployees()
-    }
-  })
+  // onMounted(() => {
+  //   if(userStore.currentWebsite && userStore.user){
+  //     fetchJobs()  
+  //     fetchEmployees()
+  //   }
+  // })
 
   watchEffect(() => {    
     if(userStore.currentWebsite){

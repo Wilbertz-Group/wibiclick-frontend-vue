@@ -396,12 +396,12 @@
     }
   }
 
-  onMounted(() => {
-    if(userStore.currentWebsite && userStore.user){
-      fetchJobs()  
-      getEmployees()
-    }
-  })
+  // onMounted(() => {
+  //   if(userStore.currentWebsite && userStore.user){
+  //     fetchJobs()  
+  //     getEmployees()
+  //   }
+  // })
 
   watchEffect(() => {    
     if(userStore.currentWebsite){

@@ -263,11 +263,11 @@
     } 
   }
 
-  onMounted(() => {
-    if(userStore.currentWebsite && userStore.user){
-      fetchContacts()  
-    }
-  })
+  // onMounted(() => {
+  //   if(userStore.currentWebsite && userStore.user){
+  //     fetchContacts()  
+  //   }
+  // })
 
   watchEffect(() => {    
     if(userStore.currentWebsite){
