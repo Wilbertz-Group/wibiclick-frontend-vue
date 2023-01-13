@@ -204,35 +204,6 @@ const whatsappModal = (modelValue, id, phone) => {
 	});
 }
 
-const timelineTabs = (modelValue, id, phone) => {
-	const tabElements = [
-		{
-				id: 'activity',
-				triggerEl: document.querySelector('#activity-tab-el'),
-				targetEl: document.querySelector('#activity-el')
-		},
-		{
-				id: 'whatsapp',
-				triggerEl: document.querySelector('#whatsapp-tab-el'),
-				targetEl: document.querySelector('#whatsapp-el')
-		},
-		{
-				id: 'notes',
-				triggerEl: document.querySelector('#notes-tab-el'),
-				targetEl: document.querySelector('#notes-el')
-		},
-	];
-
-	// options with default values
-	const options = {
-			defaultTabId: 'activity',
-			activeClasses: 'text-blue-600 border-b-2 hover:text-blue-600 dark:text-blue-500 dark:hover:text-blue-400 border-blue-700 dark:border-blue-500',
-			inactiveClasses: 'text-gray-500 hover:text-gray-600 dark:text-gray-400 border-gray-100 hover:border-gray-300 dark:border-gray-700 dark:hover:text-gray-300',
-	};
-
-	const tabs = new Tabs(tabElements, options);
-}
-
 export { 
 	generateBorder, 
 	generateTableRow, 
@@ -243,6 +214,5 @@ export {
 	tooltips,
 	noteModal,
 	whatsappModal,
-	dateTimestamp,
-	timelineTabs
+	dateTimestamp
 }
