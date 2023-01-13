@@ -1,6 +1,6 @@
 <script setup>
 	const props = defineProps(['params'])
-	const url_part = props.params.data?.portal ? props.params.data?.portal : props.params.data?.customer.portal
+	const url_part = props.params.data?.portal ? props.params.data?.portal : props.params.data?.customer?.portal ? props.params.data?.customer.portal : ''
 </script>
 
 <template>	

@@ -107,28 +107,28 @@
       { field: "address" }, 
       { field: "channel" },
       { field: "createdAt", valueFormatter: dateFormatter, maxWidth: 190 },  
-      { 
-        field: "Edit", 
-        headerName: 'Edit',
-        maxWidth: 80,
-        cellRendererSelector: params => {
-          return {
-              component: Edit,
-              params
-          };
-        } 
-      },
-      { 
-        field: "foreignID", 
-        headerName: "Hubspot", 
-        maxWidth: 114,
-        cellRendererSelector: params => {
-          return {
-              component: Hubspot,
-              params
-          };
-        }  
-      },  
+      // { 
+      //   field: "Edit", 
+      //   headerName: 'Edit',
+      //   maxWidth: 80,
+      //   cellRendererSelector: params => {
+      //     return {
+      //         component: Edit,
+      //         params
+      //     };
+      //   } 
+      // },
+      // { 
+      //   field: "foreignID", 
+      //   headerName: "Hubspot", 
+      //   maxWidth: 114,
+      //   cellRendererSelector: params => {
+      //     return {
+      //         component: Hubspot,
+      //         params
+      //     };
+      //   }  
+      // },  
     ],
   });
 

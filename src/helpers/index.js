@@ -141,6 +141,14 @@ const tooltips = () => {
 	if ($targetE9) {
 		new Tooltip($targetE9, $triggerE9, options);
 	}
+
+	// tooltip-view-in-hubspot
+	const $targetE10 = document.getElementById('tooltip-add-hubspot');
+	const $triggerE10 = document.getElementById('tooltip-add-hubspot-button');
+
+	if ($targetE10) {
+		new Tooltip($targetE10, $triggerE10, options);
+	}
 }
 
 const noteModal = (modelValue, wid, id, reloadTimeline) => {
