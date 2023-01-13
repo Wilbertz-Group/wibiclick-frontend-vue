@@ -1,8 +1,20 @@
 <script setup>
 import axios from "axios";
 import { useUserStore } from "@/stores/UserStore"
-import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
-import { MenuIcon, XIcon } from '@heroicons/vue/outline'
+import { 
+  Disclosure, 
+  DisclosureButton, 
+  DisclosurePanel, 
+  Menu, MenuButton, 
+  MenuItem, 
+  MenuItems,
+  Listbox,
+  ListboxLabel,
+  ListboxButton,
+  ListboxOptions,
+  ListboxOption,
+} from '@headlessui/vue'
+
 import { ref, onMounted, watchEffect } from "vue";
 import ScaleLoader from 'vue-spinner/src/ScaleLoader.vue'
 import { useToast } from 'vue-toast-notification';
@@ -25,6 +37,16 @@ const ably = new Ably.Realtime(userStore.ableyk);
 const opt = ref([
   { label: 'Select Website', value: 'default', attrs: { disabled: true } },
 ])
+
+const people = [
+    { id: 1, name: 'Durward Reynolds', unavailable: false },
+    { id: 2, name: 'Kenton Towne', unavailable: false },
+    { id: 3, name: 'Therese Wunsch', unavailable: false },
+    { id: 4, name: 'Benedict Kessler', unavailable: true },
+    { id: 5, name: 'Katelyn Rohan', unavailable: false },
+  ]
+
+const selectedPerson = ref(people[0])
 
 function logout() {
   userStore.$reset()
@@ -305,19 +327,67 @@ onMounted(() => {
           </div>
         </div>
         <div class="hidden md:block">
-          <div class="ml-4 flex items-center md:ml-6">
-            <box-icon @click="addModal = true" type='solid' name='plus-circle'
-              class="text-white cursor-pointer mx-2 h-6 w-6 rounded-full bg-white"></box-icon>
-            <div class="relative">
-              <FormKit type="select" name="website" placeholder="select website" inner-class="selectClass"
-                v-model="selectedWebsite" :options="opt">
-              </FormKit>
-              <font-awesome-icon icon="far fa-arrow-alt-circle-down" class="downarrow absolute" />
-            </div>
+          <div class="ml-4 flex items-center md:ml-6">            
+            <div class="relative w-52 mr-5">              
+              <Listbox v-model="selectedWebsite">
+              <div class="relative mt-1">
+                <ListboxButton
+                  class="relative w-full cursor-default rounded-lg bg-white py-1 pl-3 pr-3 text-left shadow-md focus:outline-none focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-opacity-75 focus-visible:ring-offset-2 focus-visible:ring-offset-orange-300 sm:text-sm"
+                >
+                  <span class="block truncate">{{ opt.filter(a => a.value == selectedWebsite)[0].label }}</span>
+                  <span
+                    class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2"
+                  >
+                    <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 15L12 18.75 15.75 15m-7.5-6L12 5.25 15.75 9" />
+                    </svg>
+                  </span>
+                </ListboxButton>
 
-            <router-link :to="{name: 'settings'}" v-if="userStore.user.permission == 'owner'" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium">
-              <box-icon color="white" type='solid' name='cog'></box-icon>
-            </router-link>
+                <transition
+                  leave-active-class="transition duration-100 ease-in"
+                  leave-from-class="opacity-100"
+                  leave-to-class="opacity-0"
+                >
+                  <ListboxOptions
+                    class="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm"
+                  >
+                    <ListboxOption
+                      v-slot="{ active, selected }"
+                      v-for="website in opt"
+                      :key="website.label"
+                      :value="website.value"
+                      as="template"
+                    >
+                      <li
+                        :class="[
+                          active ? 'bg-amber-100 text-amber-900' : 'text-gray-900',
+                          'relative cursor-default select-none py-2 pl-10 pr-4',
+                        ]"
+                      >
+                        <span
+                          :class="[
+                            selected ? 'font-medium' : 'font-normal',
+                            'block truncate',
+                          ]"
+                        >
+                          {{ website.label }}</span>
+                        <span
+                          v-if="selected"
+                          class="absolute inset-y-0 left-0 flex items-center pl-3 text-amber-600"
+                        >
+                          <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                          </svg>
+
+                        </span>
+                      </li>
+                    </ListboxOption>
+                  </ListboxOptions>
+                </transition>
+              </div>
+            </Listbox>
+            </div>            
 
             <p class="text-white text-sm">Hello, {{ userStore.user.firstName }}.</p>
 
@@ -352,6 +422,10 @@ onMounted(() => {
                       id="headlessui-menu-item-20" role="menuitem" tabindex="-1">Snippet</router-link>
                     <router-link :to="{name: 'feedback'}" class="block px-4 py-2 text-sm text-gray-700" disabled="false"
                       id="headlessui-menu-item-20" role="menuitem" tabindex="-1">Feedback</router-link>
+                    <router-link :to="{name: 'settings'}" v-if="userStore.user.permission == 'owner'" class="block px-4 py-2 text-sm text-gray-700" disabled="false"
+                      id="headlessui-menu-item-20" role="menuitem" tabindex="-1">Settings</router-link>
+                    <div @click="addModal = true" v-if="userStore.user.permission == 'owner'" class="block px-4 py-2 text-sm text-gray-700 cursor-pointer" disabled="false"
+                      id="headlessui-menu-item-20" role="menuitem" tabindex="-1">Add Website</div>                    
                     <a href="#" @click="logout" class="block px-4 py-2 text-sm text-gray-700" disabled="false"
                       id="headlessui-menu-item-22" role="menuitem" tabindex="-1">Sign out</a>
                   </div>
@@ -365,8 +439,13 @@ onMounted(() => {
           <DisclosureButton
             class="bg-gray-800 inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white">
             <span class="sr-only">Open main menu</span>
-            <MenuIcon v-if="!open" class="block h-6 w-6" aria-hidden="true" />
-            <XIcon v-else class="block h-6 w-6" aria-hidden="true" />
+            <svg v-if="!open" class="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+            </svg>
+
+            <svg v-else class="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 9.75l4.5 4.5m0-4.5l-4.5 4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
           </DisclosureButton>
         </div>
       </div>
