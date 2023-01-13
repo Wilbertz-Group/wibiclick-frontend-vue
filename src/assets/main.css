@@ -1033,11 +1033,10 @@ pre {
 .whatsapp-badge {
   border-radius: 50%;
   color: #fff;
-  font-size: 1.4em;
   height: 30px;
-  line-height: 28px;
   text-align: center;
   width: 30px;
+  padding: 4px 5px;
 }
 
 .timeline-title {

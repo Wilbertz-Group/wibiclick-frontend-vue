@@ -5,7 +5,7 @@
   import { useToast } from 'vue-toast-notification';
   import { useRouter, useRoute } from "vue-router";
   import { useUserStore } from "@/stores/UserStore"
-	import { tooltips, noteModal, whatsappModal, timelineTabs } from '../../helpers';
+	import { tooltips, noteModal, whatsappModal } from '../../helpers';
 	import JobVue from '@/components/jobs/Job.vue'
 	import VueQuill from '@/components/editor/VueQuill.vue'
 	import ItemVue from '@/components/line-items/item.vue'
@@ -19,6 +19,7 @@
 	import accordionInvoice from '@/components/invoices/accordion.vue'
 	import accordionEstimate from '@/components/estimates/accordion.vue'
 	import ScaleLoader from "vue-spinner/src/ScaleLoader.vue";
+	import { TabGroup, TabList, Tab, TabPanels, TabPanel } from '@headlessui/vue'
 
 	const loading = ref(false)
 	const lineItems = ref()
@@ -112,7 +113,6 @@
   }
 
 	onMounted(()=>{
-		timelineTabs()
   	fetchContacts();
 		tooltips();
 	})
@@ -321,39 +321,77 @@
 
 		</div>
 
-		<div class="h-full overflow-y-scroll col-span-2 md:col-span-2 bg-slate-100 p-2 shadow sm:rounded-md sm:overflow-hidden">
-			<div class="mb-4 border-b border-gray-200 dark:border-gray-700">
-					<ul class="flex flex-wrap -mb-px text-sm font-medium text-center text-gray-500 dark:text-gray-400" id="tabExample" role="tablist">
-							<li class="mr-2" role="presentation">
-									<button class="inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300" id="activity-tab-el" type="button" role="tab" aria-controls="activity-el" aria-selected="false">Activity</button>
-							</li>
-							<li class="mr-2" role="presentation">
-									<button class="inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300" id="whatsapp-tab-el" type="button" role="tab" aria-controls="whatsapp-el" aria-selected="false">Whatsapp</button>
-							</li>
-							<li class="mr-2" role="presentation">
-									<button class="inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300" id="notes-tab-el" type="button" role="tab" aria-controls="notes-el" aria-selected="false">Notes</button>
-							</li>
-					</ul>
-			</div>
-			<div id="tabContentExample" class="h-[90%] overflow-y-scroll">
-					<div class="hidden p-4 rounded-lg bg-gray-50 dark:bg-gray-800" id="activity-el" role="tabpanel" aria-labelledby="activity-tab-el">
-						<div v-for="activity in customer?.activities" :key="activity.uid">
-							<accordion v-if="activity.type == 'whatsapp'" :msgs="[activity?.whatsapp]"></accordion>
-							<accordion-notes v-if="activity.type == 'note'" :notes="[activity?.notes]" :status="activity?.status" :user="activity?.User?.firstName" :created="activity?.createdAt"></accordion-notes>
-							<accordion-invoice v-if="activity.type == 'invoice'" :invoices="[activity?.invoice]" :status="activity?.status" :user="activity?.User?.firstName" :created="activity?.createdAt"></accordion-invoice>
-							<accordion-estimate v-if="activity.type == 'estimate'" :estimates="[activity?.estimate]" :status="activity?.status" :user="activity?.User?.firstName" :created="activity?.createdAt"></accordion-estimate>
-							<accordion-job v-if="activity.type == 'job'" :jobs="[activity?.job]" :status="activity?.status" :user="activity?.User?.firstName" :created="activity?.createdAt"></accordion-job>
-							<accordion-customer v-if="activity.type == 'customer'" :customers="[activity?.customer]" :status="activity?.status" :user="activity?.User?.firstName" :created="activity?.createdAt"></accordion-customer>
-							<accordion-lineitem v-if="activity.type == 'line item'" :lineitems="[activity?.lineitem]" :status="activity?.status" :user="activity?.User?.firstName" :created="activity?.createdAt"></accordion-lineitem>
-						</div>
-					</div>
-					<div class="hidden p-4 rounded-lg bg-gray-50 dark:bg-gray-800" id="whatsapp-el" role="tabpanel" aria-labelledby="whatsapp-tab-el">
-						<accordion v-if="customer?.whatsapp" :msgs="customer?.whatsapp" :key="wkey"></accordion>
-					</div>
-					<div class="hidden p-4 rounded-lg bg-gray-50 dark:bg-gray-800" id="notes-el" role="tabpanel" aria-labelledby="notes-tab-el">
-						<accordion-notes v-if="customer?.notes" :notes="customer?.notes" :key="nkey" status="" user="" created=""></accordion-notes>
-					</div>
-			</div>
+		<div class="h-full overflow-y-scroll col-span-2 md:col-span-2 bg-slate-100 py-2 pl-2 shadow sm:rounded-md sm:overflow-hidden">
+			<TabGroup :defaultIndex="0">
+				<div class="h-full overflow-y-scroll pr-2">
+					<TabList class="flex space-x-1 rounded-xl bg-slate-900 p-1">		
+							<Tab 
+								as="template" 
+								v-slot="{ selected }"
+							>
+							<span
+								:class="[
+									selected
+										? 'bg-white shadow text-slate-900'
+										: 'text-blue-100 hover:bg-white/[0.12] hover:text-white',
+								]"
+								class="w-full cursor-pointer text-center rounded-lg py-2.5 text-sm font-medium leading-5 text-blue-700 ring-white ring-opacity-60 ring-offset-2 ring-offset-blue-400 focus:outline-none">	
+								Activity
+								</span>
+							</Tab>
+
+							<Tab 
+								as="template" 
+								v-slot="{ selected }"
+							>
+								<span
+									:class="[
+										selected
+											? 'bg-white shadow'
+											: 'text-blue-100 hover:bg-white/[0.12] hover:text-white',
+									]"
+									class="w-full cursor-pointer text-center rounded-lg py-2.5 text-sm font-medium leading-5 text-blue-700 ring-white ring-opacity-60 ring-offset-2 ring-offset-blue-400 focus:outline-none" >
+									Whatsapp
+								</span>
+							</Tab>
+
+							<Tab 
+								as="template" 
+								v-slot="{ selected }"
+							>
+								<span 
+									:class="[
+										selected
+											? 'bg-white shadow'
+											: 'text-blue-100 hover:bg-white/[0.12] hover:text-white',
+									]"
+									class="w-full cursor-pointer text-center rounded-lg py-2.5 text-sm font-medium leading-5 text-blue-700 ring-white ring-opacity-60 ring-offset-2 ring-offset-blue-400 focus:outline-none" >
+									Notes
+								</span>
+							</Tab>
+					</TabList>
+
+					<TabPanels class="mt-2 ">
+						<TabPanel>
+							<div v-for="activity in customer?.activities" :key="activity.uid">
+								<accordion v-if="activity.type == 'whatsapp'" :msgs="[activity?.whatsapp]"></accordion>
+								<accordion-notes v-if="activity.type == 'note'" :notes="[activity?.notes]" :status="activity?.status" :user="activity?.User?.firstName" :created="activity?.createdAt"></accordion-notes>
+								<accordion-invoice v-if="activity.type == 'invoice'" :invoices="[activity?.invoice]" :status="activity?.status" :user="activity?.User?.firstName" :created="activity?.createdAt"></accordion-invoice>
+								<accordion-estimate v-if="activity.type == 'estimate'" :estimates="[activity?.estimate]" :status="activity?.status" :user="activity?.User?.firstName" :created="activity?.createdAt"></accordion-estimate>
+								<accordion-job v-if="activity.type == 'job'" :jobs="[activity?.job]" :status="activity?.status" :user="activity?.User?.firstName" :created="activity?.createdAt"></accordion-job>
+								<accordion-customer v-if="activity.type == 'customer'" :customers="[activity?.customer]" :status="activity?.status" :user="activity?.User?.firstName" :created="activity?.createdAt"></accordion-customer>
+								<accordion-lineitem v-if="activity.type == 'line item'" :lineitems="[activity?.lineitem]" :status="activity?.status" :user="activity?.User?.firstName" :created="activity?.createdAt"></accordion-lineitem>
+							</div>
+						</TabPanel>
+						<TabPanel>
+							<accordion v-if="customer?.whatsapp" :msgs="customer?.whatsapp" :key="wkey"></accordion>
+						</TabPanel>
+						<TabPanel>
+							<accordion-notes v-if="customer?.notes" :notes="customer?.notes" :key="nkey" status="" user="" created=""></accordion-notes>
+						</TabPanel>
+					</TabPanels>
+				</div>
+			</TabGroup>
 		</div>
 
 		<div class="h-full overflow-y-scroll col-span-1 md:col-span-1 p-1">
