@@ -1,12 +1,10 @@
 <script setup>
 	import { uuid } from 'vue-uuid';
-	import { onMounted } from 'vue'
+	import { onMounted, ref } from 'vue'
 	import { dateFormatter, dateTimestamp } from '../../helpers';
 	import { Accordion } from 'flowbite'
 
-	const props = defineProps(['invoices', 'status', 'user'])
-
-	let uid;
+	const props = defineProps(['invoices', 'status', 'user', 'created'])
 
 	props.invoices.forEach((invoice) => { 
 		invoice.uid = uuid.v1()
@@ -54,14 +52,14 @@
 					</span>
 				</span>
 				<div class="flex items-center">
-					<span class="ml-5 text-xs italic">{{ dateFormatter(invoice.createdAt) }}</span>
+					<span class="ml-5 text-xs italic">{{ dateFormatter(created) }}</span>
 					<svg class="w-6 h-6 shrink-0 rotate-180" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
 				</div>
 			</button>
 		</h2> 
 		<div :id="'accordion-invoice-body-'+invoice.uid" class="hidden" aria-labelledby="accordion-arrow-icon-heading-2">
 			<div class="px-3 py-1 rounded-b-md font-light border border-b-0 border-gray-200 dark:border-gray-700">
-				<p class="mb-2 text-black dark:text-gray-400">#{{ invoice.number }}: {{ status }} by <b>{{ user }}</b> at {{ dateFormatter(invoice.createdAt) }}</p>
+				<p class="mb-2 text-black dark:text-gray-400">#{{ invoice.number }}: {{ status }} by <b>{{ user }}</b> at {{ dateFormatter(created) }}</p>
 			</div>
 		</div>
 	</div> 

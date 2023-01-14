@@ -421,7 +421,7 @@
 					</h5>
 
 					<!-- Job item -->
-					<JobVue v-for="job in customer?.jobs" :job="job" v-bind:key="job"></JobVue>
+					<JobVue v-for="job in customer?.jobs" :job="job" v-bind:key="job" @reload-timeline="reloadTimeline"></JobVue>
 				</div>
 			</section>
 
@@ -438,7 +438,7 @@
 					</h5>
 
 					<!-- Estimate item -->
-					<EstimateVue v-for="estimate in customer?.estimate" :estimate="estimate" v-bind:key="estimate"></EstimateVue>
+					<EstimateVue v-for="estimate in customer?.estimate" :estimate="estimate" v-bind:key="estimate" @reload-timeline="reloadTimeline"></EstimateVue>
 
 				</div>
 			</section>
@@ -456,7 +456,7 @@
 					</h5>
 
 					<!-- Invoice item -->
-					<InvoiceVue v-for="invoice in customer?.invoice" :invoice="invoice" v-bind:key="invoice"></InvoiceVue>
+					<InvoiceVue v-for="invoice in customer?.invoice" :invoice="invoice" v-bind:key="invoice" @reload-timeline="reloadTimeline"></InvoiceVue>
 				</div>
 			</section>
 
