@@ -195,13 +195,36 @@ async function saveInvoice(data) {
   let img;
 
   try {
-    await getBase64FromUrl(profile.value.estimate_logo).then((data) => {
-      img = data
-    })
+      var url = profile.value.estimate_logo;
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', url, true);
+
+      // Set responseType to 'arraybuffer', we want raw binary data buffer
+      xhr.responseType = 'arraybuffer';
+
+      xhr.onload = function() {
+        // Create an array of 8-bit unsigned integers
+        var arr = new Uint8Array(this.response);
+        
+        // String.fromCharCode returns a 'string' from the specified sequence of Unicode values
+        var raw = String.fromCharCode.apply(null, arr);
+        
+        //btoa() creates a base-64 encoded ASCII string from a String object 
+        var b64 = btoa(raw);
+        
+        var dataType = get_url_extension(url);
+        //ta-da your image data url!
+        var dataURL = 'data:image/' + dataType + ';base64,' + b64;
+
+        img = dataURL
+        createInvoice(invoice.value, invoice.value.customer.name + '.pdf');
+      };
+
+      xhr.send();    
   } catch (error) {
     img = imageHolder
-  }
-  
+    createInvoice(invoice.value, invoice.value.customer.name + '.pdf');
+  }  
 
   function generateHeader(doc, invoice) {
     doc
@@ -383,8 +406,6 @@ async function saveInvoice(data) {
       );
   }
 
-  
-
   function generateHr(doc, y) {
     doc.strokeColor("#aaaaaa").lineWidth(1).moveTo(50, y).lineTo(550, y).stroke();
   }
@@ -401,8 +422,6 @@ async function saveInvoice(data) {
 
     return year + "/" + month + "/" + day;
   }
-  
-  createInvoice(invoice.value, invoice.value.customer.name + '.pdf');
   
 }
 
