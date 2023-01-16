@@ -59,7 +59,7 @@ async function fetchWebsites(n) {
   try {
     loading.value = true
     const response = await axios.get('get-websites');
-    opt.value = [{ label: 'Select Website', value: 'default', attrs: { disabled: true } }].concat(response.data)
+    opt.value = [{ label: 'Select Website', value: 'default'}].concat(response.data)
     if (response.data.length && selectedWebsite.value != 'default') {
       userStore.updateWebsite(selectedWebsite.value)
       fetchWebsiteAnalytics(selectedWebsite.value);

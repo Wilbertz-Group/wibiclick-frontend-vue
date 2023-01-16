@@ -2,27 +2,30 @@
 	import { uuid } from 'vue-uuid';
 	import { onMounted } from 'vue'
 	import moment from 'moment'
+	import { AVWaveform } from 'vue-audio-visual'
 	import { dateFormatter, dateTimestamp } from '../../helpers';
 	import { Accordion } from 'flowbite'
+	import { VideoPlayer } from '@videojs-player/vue'
+  import 'video.js/dist/video-js.css'
 
 	const props = defineProps(['msgs'])
 
-	props.msgs.forEach((msg) => { 
+	props?.msgs[0] != null ? props.msgs.forEach((msg) => { 
 		msg.uid = uuid.v1()
-	})
+	}) : ''
 
 	onMounted(() => {
     // create an array of objects with the id, trigger element (eg. button), and the content element
     const accordionItems = [];
 
-		props.msgs.forEach((msg) => { 
+		props?.msgs[0] != null ? props.msgs.forEach((msg) => { 
 			accordionItems.push({
 				id: 'accordion-whatsapp-heading-'+ msg.uid,
 				triggerEl: document.querySelector('#accordion-whatsapp-heading-'+msg.uid),
 				targetEl: document.querySelector('#accordion-whatsapp-body-'+msg.uid),
 				active: true
 			})
-		})
+		}) : ''
 
     // options with default values
     const options = {
@@ -67,9 +70,34 @@
 			</button>
 		</h2> 
 		<div :id="'accordion-whatsapp-body-'+ msg.uid" class="hidden" aria-labelledby="accordion-arrow-icon-heading-2">
-			<div class="px-3 py-1 rounded-b-md font-light border border-b-0 border-gray-200 dark:border-gray-700">
-				<p class="mb-2 text-black dark:text-gray-400">{{ msg.text }}</p>
+			<div :class="msg?.text.match(/(.ogg)/) ? 'bg-slate-800 border-slate-500' : ''" class="px-3 py-1 rounded-b-md font-light border border-b-0 border-gray-200 dark:border-gray-700">				
+				<div class="text-center" v-if="msg?.text.match(/(.jpeg|.jpg|.tif|.tiff|.bmp|.gif|.png|.eps)/)">
+					<img :src="msg?.text" class="m-auto w-full" loading="lazy" height="" width="" alt="Invoice Logo">
+					<p class="mb-2 text-black dark:text-gray-400">{{ msg.message }}</p>
+				</div> 
+				<vue-pdf-embed v-else-if="msg?.text.match(/(.pdf)/)" :source="msg.text" />
+				<audio controls="" v-else-if="msg?.text.match(/(.ogg)/)" :src="msg.text.replace('; ', '%3B_')"></audio>
+				<video-player
+					v-else-if="msg?.text.match(/(.mp4)/)"
+					:src="msg?.text"					
+					class="video-player vjs-big-play-centered m-auto"
+					height="300px"
+					crossorigin="anonymous"
+    			playsinline
+					controls
+					:loop="false"
+					:volume="0.6"
+				/>
+				<p class="mb-2 text-black dark:text-gray-400" v-else>{{ msg.text }}</p>
+
 			</div>
 		</div>
 	</div> 
 </template>
+
+<style scoped>
+	.bg-slate-800.border-slate-500 > audio {
+    width: 100%;
+    margin: 3% 0;
+	}
+</style>
