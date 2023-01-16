@@ -16,9 +16,9 @@
 
 		props.customers.forEach((customer) => { 
 			accordionItems.push({
-				id: 'accordion-customer-heading-'+ customer.uid,
-				triggerEl: document.querySelector('#accordion-customer-heading-'+customer.uid),
-				targetEl: document.querySelector('#accordion-customer-body-'+customer.uid),
+				id: 'accordion-visitors-heading-'+ customer.uid,
+				triggerEl: document.querySelector('#accordion-visitors-heading-'+customer.uid),
+				targetEl: document.querySelector('#accordion-visitors-body-'+customer.uid),
 				active: true
 			})
 		})
@@ -37,18 +37,18 @@
 
 <template>
 	<div v-for="(customer) in customers" :key="customer.uid" :id="dateTimestamp(created)" class="shadow rounded-lg sm:overflow-hidden bg-white mb-4">
-		<h2 :id="'accordion-customer-heading-'+customer.uid">
+		<h2 :id="'accordion-visitors-heading-'+customer.uid">
 			<button type="button" class="flex items-center justify-between w-full px-3 py-1 border-white " data-accordion-target="#accordion-arrow-icon-body-2" aria-expanded="false" aria-controls="accordion-arrow-icon-body-2">
 				<span class="flex items-center">
 					<div class="flex items-center -space-x-4 hover:space-x-1" data-v-2fc82866-s="" data-v-2fb1486c-s="">
 						<button type="button" class="">
-							<svg id="tooltip-customer-button" data-tooltip-target="tooltip-customer" class="w-8 h-8 cursor-pointer rounded-full shadow-lg bg-slate-900 hover:bg-slate-700 p-2 text-white" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-								<path stroke-linecap="round" stroke-linejoin="round" d="M19 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zM4 19.235v-.11a6.375 6.375 0 0112.75 0v.109A12.318 12.318 0 0110.374 21c-2.331 0-4.512-.645-6.374-1.766z"></path>
+							<svg id="tooltip-visitors-button" data-tooltip-target="tooltip-visitors" class="w-8 h-8 cursor-pointer rounded-full shadow-lg bg-slate-900 hover:bg-slate-700 p-2 text-white" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+								<path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5m-9-6h.008v.008H12v-.008zM12 15h.008v.008H12V15zm0 2.25h.008v.008H12v-.008zM9.75 15h.008v.008H9.75V15zm0 2.25h.008v.008H9.75v-.008zM7.5 15h.008v.008H7.5V15zm0 2.25h.008v.008H7.5v-.008zm6.75-4.5h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008V15zm0 2.25h.008v.008h-.008v-.008zm2.25-4.5h.008v.008H16.5v-.008zm0 2.25h.008v.008H16.5V15z"></path>
 							</svg>
 						</button>
 					</div>
 					<span class="ml-3 text-sm">
-						<span class="font-semibold normal-case"><span class="capitalize">{{ status }}</span></span>
+						<span class="font-semibold normal-case"><span class="capitalize">{{ status }}</span> by <b>{{ user }}</b></span>
 					</span>
 				</span>
 				<div class="flex items-center">
@@ -57,9 +57,9 @@
 				</div>
 			</button>
 		</h2> 
-		<div :id="'accordion-customer-body-'+customer.uid" class="hidden" aria-labelledby="accordion-arrow-icon-heading-2">
+		<div :id="'accordion-visitors-body-'+customer.uid" class="hidden" aria-labelledby="accordion-arrow-icon-heading-2">
 			<div class="px-3 py-1 rounded-b-md font-light border border-b-0 border-gray-200 dark:border-gray-700">
-				<p class="mb-2 text-black dark:text-gray-400">{{ status }} by <b>{{ user }}</b> at {{ dateFormatter(created) }}</p>
+				<p class="mb-2 text-black dark:text-gray-400">{{ status }} by <b>{{ user }}</b></p>
 			</div>
 		</div>
 	</div> 

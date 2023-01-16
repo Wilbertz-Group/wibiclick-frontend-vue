@@ -13,6 +13,9 @@
 	import InvoiceVue from '@/components/invoices/Invoice.vue'
 	import accordionJob from '@/components/jobs/accordion.vue'
 	import accordionCustomer from '@/components/customers/accordion.vue'
+	import accordionView from '@/components/analytics/accordionView.vue'
+	import accordionClick from '@/components/analytics/accordionClick.vue'
+	import accordionForm from '@/components/analytics/accordionForm.vue'
 	import accordionLineitem from '@/components/line-items/accordion.vue'
 	import accordion from '@/components/whatsapp/accordion.vue'
 	import accordionNotes from '@/components/notes/accordion.vue'
@@ -280,7 +283,7 @@
 							</div>
 
 							<div>
-								<a id="tooltip-hubspot-button" data-tooltip-target="tooltip-hubspot" :href="customer.hubspotLink" target="_blank" >
+								<a id="tooltip-hubspot-button" data-tooltip-target="tooltip-hubspot" :href="'https://app.hubspot.com/contacts/'+customer.portal+'/contact/'+customer.foreignID" target="_blank" >
 									<svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10 cursor-pointer rounded-full shadow bg-slate-900 hover:bg-slate-900 p-2 text-white" x="0px" y="0px"
 										width="64" height="64"
 										viewBox="0,0,256,256">
@@ -394,6 +397,9 @@
 								<accordion-job v-if="activity.type == 'job'" :jobs="[activity?.job]" :status="activity?.status" :user="activity?.User?.firstName" :created="activity?.createdAt"></accordion-job>
 								<accordion-customer v-if="activity.type == 'customer'" :customers="[activity?.customer]" :status="activity?.status" :user="activity?.User?.firstName" :created="activity?.createdAt"></accordion-customer>
 								<accordion-lineitem v-if="activity.type == 'line item'" :lineitems="[activity?.lineitem]" :status="activity?.status" :user="activity?.User?.firstName" :created="activity?.createdAt"></accordion-lineitem>
+								<accordion-view v-if="activity.type == 'view'" :customer="activity?.customer?.name" :url="activity?.visitor?.views[0]?.page?.url" :title="activity?.visitor?.views[0]?.page?.title" :created="activity?.createdAt"></accordion-view>
+								<accordion-click v-if="activity.type == 'click' && activity?.visitor?.clicks[0]?.button != 'form'" :customer="activity?.customer?.name" :url="activity?.visitor?.clicks[0]?.page?.url" :title="activity?.visitor?.clicks[0]?.page?.title" :button="activity?.visitor?.clicks[0]?.button" :created="activity?.createdAt"></accordion-click>
+								<accordion-form v-if="activity.type == 'click' && activity?.visitor?.clicks[0]?.button == 'form'" :customer="activity?.customer?.name" :url="activity?.visitor?.clicks[0]?.page?.url" :title="activity?.visitor?.clicks[0]?.page?.title" :created="activity?.createdAt"></accordion-form>
 							</div>
 						</TabPanel>
 						<TabPanel>

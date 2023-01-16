@@ -4,24 +4,17 @@
 	import { dateFormatter, dateTimestamp } from '../../helpers';
 	import { Accordion } from 'flowbite'
 
-	const props = defineProps(['customers', 'status', 'user', 'created'])
-
-	props.customers.forEach((customer) => { 
-		customer.uid = uuid.v1()
-	})
+	const props = defineProps(['customer', 'url', 'title', 'created'])
+	const uid = uuid.v1()
 
 	onMounted(() => {
     // create an array of objects with the id, trigger element (eg. button), and the content element
-    const accordionItems = [];
-
-		props.customers.forEach((customer) => { 
-			accordionItems.push({
-				id: 'accordion-customer-heading-'+ customer.uid,
-				triggerEl: document.querySelector('#accordion-customer-heading-'+customer.uid),
-				targetEl: document.querySelector('#accordion-customer-body-'+customer.uid),
+    const accordionItems = [{
+				id: 'accordion-forms-heading-'+ uid,
+				triggerEl: document.querySelector('#accordion-forms-heading-'+uid),
+				targetEl: document.querySelector('#accordion-forms-body-'+uid),
 				active: true
-			})
-		})
+			}];
 
     // options with default values
     const options = {
@@ -36,19 +29,19 @@
 </script>
 
 <template>
-	<div v-for="(customer) in customers" :key="customer.uid" :id="dateTimestamp(created)" class="shadow rounded-lg sm:overflow-hidden bg-white mb-4">
-		<h2 :id="'accordion-customer-heading-'+customer.uid">
+	<div :key="uid" :id="dateTimestamp(created)" class="shadow rounded-lg sm:overflow-hidden bg-white mb-4">
+		<h2 :id="'accordion-forms-heading-'+uid">
 			<button type="button" class="flex items-center justify-between w-full px-3 py-1 border-white " data-accordion-target="#accordion-arrow-icon-body-2" aria-expanded="false" aria-controls="accordion-arrow-icon-body-2">
 				<span class="flex items-center">
 					<div class="flex items-center -space-x-4 hover:space-x-1" data-v-2fc82866-s="" data-v-2fb1486c-s="">
 						<button type="button" class="">
-							<svg id="tooltip-customer-button" data-tooltip-target="tooltip-customer" class="w-8 h-8 cursor-pointer rounded-full shadow-lg bg-slate-900 hover:bg-slate-700 p-2 text-white" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-								<path stroke-linecap="round" stroke-linejoin="round" d="M19 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zM4 19.235v-.11a6.375 6.375 0 0112.75 0v.109A12.318 12.318 0 0110.374 21c-2.331 0-4.512-.645-6.374-1.766z"></path>
+							<svg id="tooltip-forms-button" data-tooltip-target="tooltip-forms" class="w-8 h-8 cursor-pointer rounded-full shadow-lg bg-slate-900 hover:bg-slate-700 p-2 text-white" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+								<path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z"></path>
 							</svg>
 						</button>
 					</div>
 					<span class="ml-3 text-sm">
-						<span class="font-semibold normal-case"><span class="capitalize">{{ status }}</span></span>
+						<span class="font-semibold normal-case"><span class="capitalize">{{ customer }}</span> submitted a Website Form</span>
 					</span>
 				</span>
 				<div class="flex items-center">
@@ -57,9 +50,9 @@
 				</div>
 			</button>
 		</h2> 
-		<div :id="'accordion-customer-body-'+customer.uid" class="hidden" aria-labelledby="accordion-arrow-icon-heading-2">
+		<div :id="'accordion-forms-body-'+uid" class="hidden" aria-labelledby="accordion-arrow-icon-heading-2">
 			<div class="px-3 py-1 rounded-b-md font-light border border-b-0 border-gray-200 dark:border-gray-700">
-				<p class="mb-2 text-black dark:text-gray-400">{{ status }} by <b>{{ user }}</b> at {{ dateFormatter(created) }}</p>
+				<p class="mb-2 text-black dark:text-gray-400"><span class="capitalize">{{ customer }}</span> submitted a Website Form on <a target="_blank" class="text-blue-700" :href="url">{{ title }}</a></p>
 			</div>
 		</div>
 	</div> 

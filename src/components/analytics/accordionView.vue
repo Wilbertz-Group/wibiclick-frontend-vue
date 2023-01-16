@@ -4,24 +4,17 @@
 	import { dateFormatter, dateTimestamp } from '../../helpers';
 	import { Accordion } from 'flowbite'
 
-	const props = defineProps(['customers', 'status', 'user', 'created'])
-
-	props.customers.forEach((customer) => { 
-		customer.uid = uuid.v1()
-	})
+	const props = defineProps(['customer', 'url', 'title', 'created'])
+	const uid = uuid.v1()
 
 	onMounted(() => {
     // create an array of objects with the id, trigger element (eg. button), and the content element
-    const accordionItems = [];
-
-		props.customers.forEach((customer) => { 
-			accordionItems.push({
-				id: 'accordion-customer-heading-'+ customer.uid,
-				triggerEl: document.querySelector('#accordion-customer-heading-'+customer.uid),
-				targetEl: document.querySelector('#accordion-customer-body-'+customer.uid),
+    const accordionItems = [{
+				id: 'accordion-views-heading-'+ uid,
+				triggerEl: document.querySelector('#accordion-views-heading-'+uid),
+				targetEl: document.querySelector('#accordion-views-body-'+uid),
 				active: true
-			})
-		})
+			}];
 
     // options with default values
     const options = {
@@ -36,19 +29,20 @@
 </script>
 
 <template>
-	<div v-for="(customer) in customers" :key="customer.uid" :id="dateTimestamp(created)" class="shadow rounded-lg sm:overflow-hidden bg-white mb-4">
-		<h2 :id="'accordion-customer-heading-'+customer.uid">
+	<div :key="uid" :id="dateTimestamp(created)" class="shadow rounded-lg sm:overflow-hidden bg-white mb-4">
+		<h2 :id="'accordion-views-heading-'+uid">
 			<button type="button" class="flex items-center justify-between w-full px-3 py-1 border-white " data-accordion-target="#accordion-arrow-icon-body-2" aria-expanded="false" aria-controls="accordion-arrow-icon-body-2">
 				<span class="flex items-center">
 					<div class="flex items-center -space-x-4 hover:space-x-1" data-v-2fc82866-s="" data-v-2fb1486c-s="">
 						<button type="button" class="">
-							<svg id="tooltip-customer-button" data-tooltip-target="tooltip-customer" class="w-8 h-8 cursor-pointer rounded-full shadow-lg bg-slate-900 hover:bg-slate-700 p-2 text-white" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-								<path stroke-linecap="round" stroke-linejoin="round" d="M19 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zM4 19.235v-.11a6.375 6.375 0 0112.75 0v.109A12.318 12.318 0 0110.374 21c-2.331 0-4.512-.645-6.374-1.766z"></path>
+							<svg id="tooltip-views-button" data-tooltip-target="tooltip-views" class="w-8 h-8 cursor-pointer rounded-full shadow-lg bg-slate-900 hover:bg-slate-700 p-2 text-white" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+								<path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"></path>
+								<path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
 							</svg>
 						</button>
 					</div>
 					<span class="ml-3 text-sm">
-						<span class="font-semibold normal-case"><span class="capitalize">{{ status }}</span></span>
+						<span class="font-semibold normal-case"><span class="capitalize">{{ customer }}</span> viewed a page</span>
 					</span>
 				</span>
 				<div class="flex items-center">
@@ -57,9 +51,9 @@
 				</div>
 			</button>
 		</h2> 
-		<div :id="'accordion-customer-body-'+customer.uid" class="hidden" aria-labelledby="accordion-arrow-icon-heading-2">
+		<div :id="'accordion-views-body-'+uid" class="hidden" aria-labelledby="accordion-arrow-icon-heading-2">
 			<div class="px-3 py-1 rounded-b-md font-light border border-b-0 border-gray-200 dark:border-gray-700">
-				<p class="mb-2 text-black dark:text-gray-400">{{ status }} by <b>{{ user }}</b> at {{ dateFormatter(created) }}</p>
+				<p class="mb-2 text-black dark:text-gray-400"><span class="capitalize">{{ customer }}</span> viewed <a target="_blank" class="text-blue-700" :href="url">{{ title }}</a></p>
 			</div>
 		</div>
 	</div> 
