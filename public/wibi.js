@@ -7,13 +7,16 @@ async function createWidget(n) {
 			w = "",
 			v = [];
 	async function run() { 
+			var c_utk = localStorage.getItem("wibi_utk");
+			!c_utk ? c_utk = false : ''	
 			function checkTime() { var d = new Date(); var hours = d.getHours(); var mins = d.getMinutes(); var day = d.getDay(); return day >= 1 && day <= 5 && hours >= 9 && (hours < 13 || hours === 13 && mins <= 30); }
 			function getCookie(name) { var value = "; " + document.cookie; var parts = value.split("; " + name + "="); if (parts.length == 2) return parts.pop().split(";").shift(); }
-			var contact_utk = getCookie("hubspotutk") || ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c => (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)),
+			var utk = c_utk || getCookie("hubspotutk") || ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c => (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)),
 					pg = window.location.href,
-					utk = contact_utk || "",
 					P = await fetch(`https://wibi.wilbertzgroup.com/wibi-options?id=${n}&c=0&pg=${pg}&utk=${utk}`),
 					B = await P.json();
+			localStorage.setItem("wibi_utk", utk);
+			
 			m = B.name, f = B.designation, e = B.pnumber, pn = B.phoneText, t = B.wnumber, o = B.message, _ = B.messenger_url, y = B.color_code, b = B.profile_imgUrl, w = B.email, a = B.subject, i = B.body, c = B.whatsapp_message, p = B.telegram_num, l = B.viber_num, s = B.skype_nameemail, r = B.pnumber_sms, d = B.sms_body, h = B.label, g = B.position, v = B.custom_buttons, x = B.line, u = B.close_label, void 0 === h && (h = "Contact Us"), void 0 !== g && "" !== g || (g = "right");
 			var k = document.createElement("div");
 
