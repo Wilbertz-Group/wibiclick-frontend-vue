@@ -1168,3 +1168,26 @@ th.gridjs-th-sort:hover {
 }
 
 /* End Tables */
+
+.formkit-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  min-width: 15em;
+  background-color: white;
+  box-shadow: 0 0 0.5em rgb(0 0 0 / 10%);
+  margin: 0;
+  padding: 0;
+  list-style-type: none;
+  overflow: hidden;
+  border-radius: 0.25em;
+}
+.formkit-dropdown-item {
+  cursor: pointer;
+  padding: 0.5em;
+  border-bottom: 1px solid #e4e4e4;
+}
+.formkit-dropdown-item:hover {
+  background: #b4bdcc;
+  border: 1px solid #b4bdcc;
+}

@@ -7,6 +7,7 @@ import { onMounted, ref, watchEffect } from "vue";
 import { useToast } from "vue-toast-notification";
 import { useRoute, useRouter } from "vue-router";
 import { computed } from "@vue/reactivity";
+import { autocomplete } from "@/helpers/custom-input.js"
 import ScaleLoader from 'vue-spinner/src/ScaleLoader.vue'
 
 const loading = ref(false);
@@ -492,7 +493,23 @@ async function saveEstimate(data) {
 
 const lineItemTotal = computed(() => Number(lineItem.value.amount) * Number(lineItem.value.quantity))
 
+const searchLineItems = ref([])
+
+async function getLineItems() {
+  try {
+    const res = await axios.get(
+      `lineitems?id=${userStore.currentWebsite}`
+    );
+    
+    const data = await res.data
+    searchLineItems.value = data.names    
+  } catch (error) {
+    searchLineItems.value = []
+  }  
+}
+
 onMounted(()=>{
+  getLineItems();
   checkParams();
 
   let tag = document.createElement("script");
@@ -663,7 +680,7 @@ onMounted(()=>{
             <!-- Add Line Item -->
             <div class="grid grid-flow-col grid-rows-1 grid-cols-12 gap-4 mb-2 border-2 border-transparent border-b-[#11101e]">
               <div class="text-md col-span-8 pb-2">
-                <FormKit type="text" name="item_name" placeholder="Line Item Name" v-model="lineItem.name" :value="lineItem.name" input-class="p-1 m-0 bg-slate-100" :classes="{ outer: 'mb-0 ml-0 w-full', inner: { $reset: true, 'p-0 m-0': true } }" />
+                <FormKit :type="autocomplete" :options="searchLineItems" name="item_name" placeholder="Line Item Name" v-model="lineItem.name" input-class="p-1 m-0 bg-slate-100" :classes="{ outer: 'mb-0 ml-0 w-full', inner: { $reset: true, 'relative p-0 m-0': true } }" />
                 <p class="text-sm mt-2 ml-0">
                   <FormKit type="text" name="item_description" placeholder="Line Item Description" v-model="lineItem.description" :value="lineItem.description" input-class="p-1 m-0 bg-slate-100 ml-0" :classes="{ outer: 'mb-0 ml-0 w-full', inner: { $reset: true, 'p-0 m-0': true } }" />
                 </p>
@@ -747,8 +764,24 @@ onMounted(()=>{
   <div v-if="modalOpen" class="bg-gray-900 bg-opacity-50 dark:bg-opacity-80 fixed inset-0 z-40"></div>
 </template>
 
-
 <style scoped>
+  .formkit-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    min-width: 15em;
+    background-color: white;
+    box-shadow: 0 0 0.5em rgb(0 0 0 / 10%);
+    margin: 0;
+    padding: 0;
+    list-style-type: none;
+    overflow: hidden;
+    border-radius: 0.25em;
+  }
+  .formkit-dropdown-item {
+    padding: 0.5em;
+    border-bottom: 1px solid #e4e4e4;
+  }
   [data-invalid] .formkit-inner {
     border-color: red;
     box-shadow: 0 0 0 1px red;

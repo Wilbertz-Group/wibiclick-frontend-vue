@@ -7,6 +7,7 @@ import { onMounted, ref, watchEffect } from "vue";
 import { useToast } from "vue-toast-notification";
 import { useRoute, useRouter } from "vue-router";
 import { computed } from "@vue/reactivity";
+import { autocomplete } from "@/helpers/custom-input.js"
 import ScaleLoader from 'vue-spinner/src/ScaleLoader.vue'
 
 const loading = ref(false);
@@ -19,6 +20,7 @@ const toast = useToast();
 const router = useRouter();
 const route = useRoute()
 const modalOpen = ref(false)
+const searchLineItems = ref([])
 
 const userStore = useUserStore();
 const status = ref(userStore.status);
@@ -66,6 +68,19 @@ const lineItem = ref({
   amount: 1,
   quantity: 1,
 })
+
+async function getLineItems() {
+  try {
+    const res = await axios.get(
+      `lineitems?id=${userStore.currentWebsite}`
+    );
+    
+    const data = await res.data
+    searchLineItems.value = data.names    
+  } catch (error) {
+    searchLineItems.value = []
+  }  
+}
 
 function addItem() {
   if (lineItem.value.name && lineItem.value.amount && lineItem.value.quantity && lineItemTotal.value) {
@@ -498,6 +513,7 @@ async function saveInvoice(data) {
 const lineItemTotal = computed(() => Number(lineItem.value.amount) * Number(lineItem.value.quantity))
 
 onMounted(()=>{
+  getLineItems();
   checkParams();
   let tag = document.createElement("script");
   tag.setAttribute("src", "https://github.com/foliojs/pdfkit/releases/download/v0.12.1/pdfkit.standalone.js");
@@ -666,7 +682,7 @@ onMounted(()=>{
             <!-- Add Line Item -->
             <div class="grid grid-flow-col grid-rows-1 grid-cols-12 gap-4 mb-2 border-2 border-transparent border-b-[#11101e]">
               <div class="text-md col-span-8 pb-2">
-                <FormKit type="text" name="item_name" placeholder="Line Item Name" v-model="lineItem.name" :value="lineItem.name" input-class="p-1 m-0 bg-slate-100" :classes="{ outer: 'mb-0 ml-0 w-full', inner: { $reset: true, 'p-0 m-0': true } }" />
+                <FormKit :type="autocomplete" :options="searchLineItems" name="item_name" placeholder="Line Item Name" v-model="lineItem.name" input-class="p-1 m-0 bg-slate-100" :classes="{ outer: 'mb-0 ml-0 w-full', inner: { $reset: true, 'relative p-0 m-0': true } }" />
                 <p class="text-sm mt-2 ml-0">
                   <FormKit type="text" name="item_description" placeholder="Line Item Description" v-model="lineItem.description" :value="lineItem.description" input-class="p-1 m-0 bg-slate-100 ml-0" :classes="{ outer: 'mb-0 ml-0 w-full', inner: { $reset: true, 'p-0 m-0': true } }" />
                 </p>
