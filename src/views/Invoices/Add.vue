@@ -156,6 +156,19 @@ async function updateJob(data){
     }
   }
 
+  let invoice_number = 0;
+
+  try {
+    loading.value = true
+    const response = await axios.get('invoice_number?id='+ userStore.currentWebsite);
+    invoice_number = response.data.invoice_number
+    loading.value = false
+  } catch (error) {
+    console.log(error)
+    toast.warning("Failed to get invoice number")
+    loading.value = false
+  }
+
   invoice.value = {
     company: profile.value.company,
     customer: {
@@ -172,7 +185,7 @@ async function updateJob(data){
     status: "sent",
     name: "Invoice",
     notes: "",
-    invoice_nr: profile.value.invoice_number + 1,
+    invoice_nr: invoice_number + 1,
     invoice_date: moment().format('YYYY-MM-DD'),
     invoice_due_date: moment().add(1, 'days').format('YYYY-MM-DD'),
   }
@@ -180,11 +193,24 @@ async function updateJob(data){
 }
 
 async function saveInvoice(data) {
+  let invoice_number = 0;
+
+  try {
+    loading.value = true
+    const response = await axios.get('invoice_number?id='+ userStore.currentWebsite);
+    invoice_number = response.data.invoice_number
+    loading.value = false
+  } catch (error) {
+    console.log(error)
+    toast.warning("Failed to get invoice number")
+    loading.value = false
+  }
+
   let payload = {
     jobId: job.value.id,
     reason: invoice.value.status,
     name: invoice.value.customer.name + " " + invoice.value.name,
-    number: invoice.value.invoice_nr,
+    number: invoice_number + 1,
     issuedAt: moment(invoice.value.invoice_date,).toISOString(),
     dueAt: moment(invoice.value.invoice_due_date,).toISOString(),
     sales: invoice.value.subtotal,
@@ -280,7 +306,7 @@ async function saveInvoice(data) {
       .text("Invoice Details:", 50, bankingDetails)
       .font("Helvetica")
       .text("Invoice #:", 50, customerInformationTop + 15)		
-      .text(invoice.invoice_nr, invoiceSpace, customerInformationTop + 15)		
+      .text(invoice_number + 1, invoiceSpace, customerInformationTop + 15)		
       .text("Invoice Date:", 50, customerInformationTop + 30)
       .text(invoice.invoice_date, invoiceSpace, customerInformationTop + 30)
       .text("Invoice Due:", 50, customerInformationTop + 45)

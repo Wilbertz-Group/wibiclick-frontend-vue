@@ -152,6 +152,19 @@ async function updateEstimate(data){
     }
   }
 
+  let estimate_number = 0;
+
+  try {
+    loading.value = true
+    const response = await axios.get('estimate_number?id='+ userStore.currentWebsite);
+    estimate_number = response.data.estimate_number
+    loading.value = false
+  } catch (error) {
+    console.log(error)
+    toast.warning("Failed to get estimate number")
+    loading.value = false
+  }
+
   estimate.value = {
     company: profile.value.company,
     customer: {
@@ -168,7 +181,7 @@ async function updateEstimate(data){
     notes: "",
     status: "sent",
     name: "Estimate",
-    estimate_nr: profile.value.estimate_number + 1,
+    estimate_nr: estimate_number + 1,
     estimate_date: moment().format('YYYY-MM-DD'),
     estimate_due_date: moment().add(3, 'days').format('YYYY-MM-DD'),
   }
@@ -176,10 +189,23 @@ async function updateEstimate(data){
 }
 
 async function saveEstimate(data) {
+  let estimate_number = 0;
+
+  try {
+    loading.value = true
+    const response = await axios.get('estimate_number?id='+ userStore.currentWebsite);
+    estimate_number = response.data.estimate_number
+    loading.value = false
+  } catch (error) {
+    console.log(error)
+    toast.warning("Failed to get estimate number")
+    loading.value = false
+  }
+
   let payload = {
     reason: estimate.value.status,
     name: estimate.value.customer.name + " " + estimate.value.name,
-    number: estimate.value.estimate_nr,
+    number: estimate_number + 1,
     issuedAt: moment(estimate.value.estimate_date,).toISOString(),
     dueAt: moment(estimate.value.estimate_due_date,).toISOString(),
     sales: estimate.value.subtotal,
@@ -275,7 +301,7 @@ async function saveEstimate(data) {
       .text("Estimate Details:", 50, bankingDetails)
       .font("Helvetica")
       .text("Estimate #:", 50, customerInformationTop + 15)		
-      .text(estimate.estimate_nr, estimateSpace, customerInformationTop + 15)		
+      .text(estimate_number + 1, estimateSpace, customerInformationTop + 15)		
       .text("Estimate Date:", 50, customerInformationTop + 30)
       .text(estimate.estimate_date, estimateSpace, customerInformationTop + 30)
       .text("Estimate Due:", 50, customerInformationTop + 45)

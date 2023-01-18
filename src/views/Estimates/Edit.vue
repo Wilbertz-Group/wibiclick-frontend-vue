@@ -633,6 +633,19 @@ async function updateJob(data){
 }
 
 async function saveInvoice(data) {
+  let invoice_number = 0;
+
+  try {
+    loading.value = true
+    const response = await axios.get('invoice_number?id='+ userStore.currentWebsite);
+    invoice_number = response.data.invoice_number
+    loading.value = false
+  } catch (error) {
+    console.log(error)
+    toast.warning("Failed to get invoice number")
+    loading.value = false
+  }
+
   let payload = {
     jobId: job.value.id,
     reason: estimateData.value.reason,
@@ -646,7 +659,7 @@ async function saveInvoice(data) {
     employeeId: job.value.employee.id,
     websiteId: job.value.website.id,
     items: estimateData.value.lineItem,
-    number: profile.value.invoice_number + 1,
+    number: invoice_number + 1,
   }
 
   try {
