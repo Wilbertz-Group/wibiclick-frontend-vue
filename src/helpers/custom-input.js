@@ -82,7 +82,7 @@ const searchFeature = (node) => {
     const results = node.props.options.filter((option) =>
       option.toLowerCase().startsWith(value.toLowerCase())
     )
-    if (!results.length) results.push('No matches')
+    if (!results.length) results.push(value)
     node.props.matches = results
   })
 }

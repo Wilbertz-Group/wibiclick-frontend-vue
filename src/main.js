@@ -23,8 +23,8 @@ import { far } from '@fortawesome/free-regular-svg-icons'
 import { fab } from '@fortawesome/free-brands-svg-icons'
 library.add(fas, far, fab)
 
-axios.defaults.baseURL = "https://wibi.wilbertzgroup.com/"
-//axios.defaults.baseURL = "http://localhost:8080/"
+//axios.defaults.baseURL = "https://wibi.wilbertzgroup.com/"
+axios.defaults.baseURL = "http://localhost:8080/"
 
 const app = createApp(App)
 const pinia = createPinia()
