@@ -72,17 +72,17 @@
 			</h2> 
 
 			<div :id="'accordion-whatsapp-body-'+ msg.uid" class="hidden" aria-labelledby="accordion-arrow-icon-heading-2">
-				<div :class="msg?.text.match(/(.ogg)/) ? 'bg-slate-800' : ''" class="px-3 py-1 rounded-b-md font-light border border-b-0 border-gray-200 dark:border-gray-700">				
+				<div :class="msg?.text.match(/(.ogg)/) ? 'bg-white' : ''" class="px-3 py-1 rounded-b-md font-light border border-b-0 border-gray-200 dark:border-gray-700">				
 					<div class="text-center" v-if="msg?.text.match(/(.jpeg|.jpg|.tif|.tiff|.bmp|.gif|.png|.eps)/)">
 						<img :src="msg?.text" class="m-auto w-full" loading="lazy" height="" width="" alt="Invoice Logo">
-						<div class="px-3 py-1 rounded-b-md font-light border border-b-0 border-gray-200 dark:border-gray-700">
-							<p class="p-2 my-2 text-xs italic font-normal text-black border border-gray-200 rounded-lg dark:border-gray-500 dark:text-gray-300">
+						<div v-if="msg.message" class="px-3 py-1 rounded-b-md font-light border border-b-0 border-gray-200 dark:border-gray-700">
+							<p class="p-2 my-2 text-xs italic font-normal bg-white text-black border border-gray-200 rounded-lg dark:border-gray-500 dark:text-gray-300">
 								{{ msg.message }} 
 							</p>
 						</div>
 					</div> 
 					<vue-pdf-embed v-else-if="msg?.text.match(/(.pdf)/)" :source="msg.text" />
-					<audio controls="" v-else-if="msg?.text.match(/(.ogg)/)" :src="msg.text.replace('; ', '%3B_')"></audio>
+					<audio class="w-full my-2" controls="" v-else-if="msg?.text.match(/(.ogg)/)" :src="msg.text.replace('; ', '%3B_')"></audio>
 					<video-player
 						v-else-if="msg?.text.match(/(.mp4)/)"
 						:src="msg?.text"					
@@ -94,12 +94,11 @@
 						:loop="false"
 						:volume="0.6"
 					/>
-					<div class="py-1">
-						<p class="p-2 my-2 text-xs italic font-normal text-black border border-gray-200 rounded-lg dark:border-gray-500 dark:text-gray-300">
+					<div class="py-1" v-else>
+						<p class="p-2 my-2 text-xs italic font-normal bg-white text-black border border-gray-200 rounded-lg dark:border-gray-500 dark:text-gray-300">
 							{{ msg.text }} 
 						</p>
 					</div>
-
 				</div>
 			</div>
 
