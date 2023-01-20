@@ -227,6 +227,7 @@ onMounted(() => {
     <div class=" mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex items-center justify-between h-16">
         <div class="flex items-center">
+
           <div class="flex-shrink-0">
             <a href="#" aria-label="logo" class="flex space-x-2 items-center">
               <div aria-hidden="true" class="flex space-x-1">
@@ -235,88 +236,121 @@ onMounted(() => {
               <span class="text-base font-bold text-white">Wibi Click</span>
             </a>
           </div>
+
           <div class="hidden md:block">
             <div class="ml-10 flex items-center space-x-4">              
               
               <div class="relative">
-                <button @click="dropdownContacts = !dropdownContacts" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium relative" type="button">
-                  <box-icon color="white" class="mr-2" type="solid" name='user-circle'></box-icon>
-                  Contacts 
-                  <svg :class="dropdownContacts ? 'rotate-180': ''" class="ml-2 w-4 h-4 float-right right-0 relative" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                </button>
-                <!-- Dropdown menu -->
-                <div id="dropdown" v-show="dropdownContacts" @click="dropdownContacts = !dropdownContacts" class="absolute right-0 text-left ml-4 mt-3 z-10 bg-custom-gray divide-y divide-gray-100 shadow dark:bg-gray-700 block" data-popper-reference-hidden="" data-popper-escaped="" data-popper-placement="bottom" >
-                    <ul class="py-1 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDefault">
-                      <li>                        
-                        <router-link :to="{name: 'contacts'}" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium">
-                          <box-icon color="white" type='solid' name='user-detail'></box-icon>
+                <!-- Contacts dropdown -->
+                <Menu as="div" class="ml-3 relative">
+                  <div>
+                    <MenuButton>
+                      <div class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium relative">
+                        <box-icon color="white" class="mr-2" type="solid" name='user-circle'></box-icon>
+                        Contacts 
+                        <svg :class="dropdownContacts ? 'rotate-180': ''" class="ml-2 w-4 h-4 float-right right-0 relative" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                      </div>
+                    </MenuButton>
+                  </div>
+                  <transition enter-active-class="transition ease-out duration-100"
+                    enter-from-class="transform opacity-0 scale-95" enter-to-class="transform opacity-100 scale-100"
+                    leave-active-class="transition ease-in duration-75" leave-from-class="transform opacity-100 scale-100"
+                    leave-to-class="transform opacity-0 scale-95">
+                    <MenuItems>
+                      <div aria-labelledby="headlessui-menu-button-3" id="headlessui-menu-items-4" role="menu" tabindex="0"
+                        class="origin-top-right absolute right-0 mt-2 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none">
+                        <router-link :to="{name: 'contacts'}" class="flex items-center text-slate-900 px-3 py-2 rounded-md text-sm font-medium hover:underline">
+                          <box-icon color="black" type='solid' name='user-detail'></box-icon>
                           <span class="ml-2">Contacts</span>
                         </router-link>  
-                        <router-link :to="{name: 'employees'}" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium">
-                          <box-icon color="white" type='solid' name='user'></box-icon>
+                        <router-link :to="{name: 'employees'}" class="flex items-center text-slate-900 px-3 py-2 rounded-md text-sm font-medium hover:underline">
+                          <box-icon color="black" type='solid' name='user'></box-icon>
                           <span class="ml-2">Employees</span>
                         </router-link>                      
-                        <router-link :to="{name: 'users'}" v-if="userStore.user.role == 'admin' && userStore.user.permission == 'owner'" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium">
-                          <box-icon color="white" type="solid" name='user-account'></box-icon>
+                        <router-link :to="{name: 'users'}" v-if="userStore.user.role == 'admin' && userStore.user.permission == 'owner'" class="flex items-center text-slate-900 px-3 py-2 rounded-md text-sm font-medium hover:underline">
+                          <box-icon color="black" type="solid" name='user-account'></box-icon>
                           <span class="ml-2">Users</span>
                         </router-link>
-                      </li>
-                    </ul>
-                </div>
+                      </div>
+                    </MenuItems>
+                  </transition>
+                </Menu>                
               </div>
 
               <div class="relative" v-if="userStore.user.permission == 'owner'">
-                <button @click="dropdownMarketing = !dropdownMarketing" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium relative" type="button">
-                  <box-icon color="white" class="mr-2" type="solid" name='store'></box-icon>
-                  Marketing 
-                  <svg :class="dropdownMarketing ? 'rotate-180': ''" class="ml-2 w-4 h-4 float-right right-0 relative" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                </button>
-                <!-- Dropdown menu -->
-                <div id="dropdown" v-show="dropdownMarketing" @click="dropdownMarketing = !dropdownMarketing" class="absolute right-0 text-left ml-4 mt-3 z-10 bg-custom-gray divide-y divide-gray-100 shadow dark:bg-gray-700 block" data-popper-reference-hidden="" data-popper-escaped="" data-popper-placement="bottom" >
-                    <ul class="py-1 min-w-[110px] text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDefault">
-                      <li> 
-                        <router-link :to="{name: 'visitors'}" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium">
-                          <box-icon color="white" type='solid' name='user-check'></box-icon>
+                <!-- Marketing dropdown -->
+                <Menu as="div" class="ml-3 relative">
+                  <div>
+                    <MenuButton>
+                      <div class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium relative">
+                        <box-icon color="white" class="mr-2" type="solid" name='store'></box-icon>
+                        Marketing 
+                        <svg :class="dropdownMarketing ? 'rotate-180': ''" class="ml-2 w-4 h-4 float-right right-0 relative" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                      </div>
+                    </MenuButton>
+                  </div>
+                  <transition enter-active-class="transition ease-out duration-100"
+                    enter-from-class="transform opacity-0 scale-95" enter-to-class="transform opacity-100 scale-100"
+                    leave-active-class="transition ease-in duration-75" leave-from-class="transform opacity-100 scale-100"
+                    leave-to-class="transform opacity-0 scale-95">
+                    <MenuItems>
+                      <div aria-labelledby="headlessui-menu-button-3" id="headlessui-menu-items-4" role="menu" tabindex="0"
+                        class="origin-top-right absolute right-0 mt-2 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none">
+                        <router-link :to="{name: 'visitors'}" class="flex items-center text-slate-900 px-3 py-2 rounded-md text-sm font-medium hover:underline">
+                          <box-icon color="black" type='solid' name='user-check'></box-icon>
                           <span class="ml-2">Visitors</span>
                         </router-link>
-                        <router-link :to="{name: 'pages'}" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium">
-                          <box-icon color="white" type='solid' name='book-content'></box-icon>
+                        <router-link :to="{name: 'pages'}" class="flex items-center text-slate-900 px-3 py-2 rounded-md text-sm font-medium hover:underline">
+                          <box-icon color="black" type='solid' name='book-content'></box-icon>
                           <span class="ml-2">Pages</span>
                         </router-link>
-                        <router-link :to="{name: 'forms'}" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium">
-                          <box-icon color="white" type='solid' name='book'></box-icon>
+                        <router-link :to="{name: 'forms'}" class="flex items-center text-slate-900 px-3 py-2 rounded-md text-sm font-medium hover:underline">
+                          <box-icon color="black" type='solid' name='book'></box-icon>
                           <span class="ml-2">Forms</span>
                         </router-link>
-                      </li>
-                    </ul>
-                </div>
+                      </div>
+                    </MenuItems>
+                  </transition>
+                </Menu>
               </div>
 
               <div class="relative" >
-                <button @click="dropdownSales = !dropdownSales" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium relative" type="button">
-                  <box-icon color="white" class="mr-2" type="solid" name='cart-download'></box-icon>
-                  Sales
-                  <svg :class="dropdownSales ? 'rotate-180': ''" class="ml-2 w-4 h-4 float-right right-0 relative" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                </button>
-                <!-- Dropdown menu -->
-                <div id="dropdown" v-show="dropdownSales" @click="dropdownSales = !dropdownSales" class="absolute right-0 text-left ml-4 mt-3 z-10 bg-custom-gray divide-y divide-gray-100 shadow dark:bg-gray-700 block" data-popper-reference-hidden="" data-popper-escaped="" data-popper-placement="bottom" >
-                    <ul class="py-1 min-w-[110px] text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDefault">
-                      <li>
-                        <router-link :to="{name: 'jobs'}" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium">
-                          <box-icon color="white" type='solid' name='business'></box-icon>
+                <!-- Sales dropdown -->
+                <Menu as="div" class="ml-3 relative">
+                  <div>
+                    <MenuButton>
+                      <div class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium relative">
+                        <box-icon color="white" class="mr-2" type="solid" name='cart-download'></box-icon>
+                        Sales
+                        <svg :class="dropdownSales ? 'rotate-180': ''" class="ml-2 w-4 h-4 float-right right-0 relative" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                      </div>
+                    </MenuButton>
+                  </div>
+                  <transition enter-active-class="transition ease-out duration-100"
+                    enter-from-class="transform opacity-0 scale-95" enter-to-class="transform opacity-100 scale-100"
+                    leave-active-class="transition ease-in duration-75" leave-from-class="transform opacity-100 scale-100"
+                    leave-to-class="transform opacity-0 scale-95">
+                    <MenuItems>
+                      <div aria-labelledby="headlessui-menu-button-3" id="headlessui-menu-items-4" role="menu" tabindex="0"
+                        class="origin-top-right absolute right-0 mt-2 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none">
+                        <router-link :to="{name: 'jobs'}" class="flex items-center text-slate-900 px-3 py-2 rounded-md text-sm font-medium hover:underline">
+                          <box-icon color="black" type='solid' name='business'></box-icon>
                           <span class="ml-2">Jobs</span>
                         </router-link>
-                        <router-link :to="{name: 'estimates'}" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium">
-                          <box-icon color="white" name='receipt'></box-icon>
+                        <router-link :to="{name: 'estimates'}" class="flex items-center text-slate-900 px-3 py-2 rounded-md text-sm font-medium hover:underline">
+                          <box-icon color="black" name='receipt'></box-icon>
                           <span class="ml-2">Estimates</span>
                         </router-link>
-                        <router-link :to="{name: 'invoices'}" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium">
-                          <box-icon color="white" type='solid' name='receipt'></box-icon>
+                        <router-link :to="{name: 'invoices'}" class="flex items-center text-slate-900 px-3 py-2 rounded-md text-sm font-medium hover:underline">
+                          <box-icon color="black" type='solid' name='receipt'></box-icon>
                           <span class="ml-2">Invoices</span>
                         </router-link>
-                      </li>
-                    </ul>
-                </div>
+                      </div>
+                    </MenuItems>
+                  </transition>
+                </Menu> 
+
+                
               </div>
 
               <router-link :to="{name: 'dashboard'}" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium">
@@ -326,6 +360,7 @@ onMounted(() => {
             </div>
           </div>
         </div>
+
         <div class="hidden md:block">
           <div class="ml-4 flex items-center md:ml-6">            
             <div class="relative w-52 mr-5">              
@@ -434,6 +469,7 @@ onMounted(() => {
             </Menu>
           </div>
         </div>
+
         <div class="-mr-2 flex md:hidden">
           <!-- Mobile menu button -->
           <DisclosureButton
