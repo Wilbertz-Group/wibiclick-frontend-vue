@@ -1191,3 +1191,38 @@ th.gridjs-th-sort:hover {
   background: #b4bdcc;
   border: 1px solid #b4bdcc;
 }
+
+.tag-content-style {
+  position: absolute;
+  right: -0.5px;
+  bottom: -0.5px;
+  width: 20px;
+  height: 20px;
+  border-top-left-radius: 69px;
+  border-bottom-right-radius: 10px;
+  cursor: pointer;
+}
+
+.tag-content-whatsapp {
+  background-color: #51bb25;
+}
+
+.tag-content-invoice {
+  background-color: #1C64F2;
+}
+
+.tag-content-job {
+  background-color: #bb258c;
+}
+
+.tag-content-line-item {
+  background-color: #17bac0;
+}
+
+.tag-content-note {
+  background-color: #f0b60a;
+}
+
+.tag-content-estimate {
+  background-color: #7E3AF2;
+}
