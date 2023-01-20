@@ -389,24 +389,35 @@
 
 					<TabPanels class="mt-2 ">
 						<TabPanel>
-							<div v-for="activity in customer?.activities" :key="activity.uid">
-								<accordion v-if="activity.type == 'whatsapp'" :msgs="[activity?.whatsapp]"></accordion>
-								<accordion-notes v-if="activity.type == 'note'" :notes="[activity?.notes]" :status="activity?.status" :user="activity?.User?.firstName" :created="activity?.createdAt"></accordion-notes>
-								<accordion-invoice v-if="activity.type == 'invoice'" :invoices="[activity?.invoice]" :status="activity?.status" :user="activity?.User?.firstName" :created="activity?.createdAt"></accordion-invoice>
-								<accordion-estimate v-if="activity.type == 'estimate'" :estimates="[activity?.estimate]" :status="activity?.status" :user="activity?.User?.firstName" :created="activity?.createdAt"></accordion-estimate>
-								<accordion-job v-if="activity.type == 'job'" :jobs="[activity?.job]" :status="activity?.status" :user="activity?.User?.firstName" :created="activity?.createdAt"></accordion-job>
-								<accordion-customer v-if="activity.type == 'customer'" :customers="[activity?.customer]" :status="activity?.status" :user="activity?.User?.firstName" :created="activity?.createdAt"></accordion-customer>
-								<accordion-lineitem v-if="activity.type == 'line item'" :lineitems="[activity?.lineitem]" :status="activity?.status" :user="activity?.User?.firstName" :created="activity?.createdAt"></accordion-lineitem>
-								<accordion-view v-if="activity.type == 'view'" :customer="activity?.customer?.name" :url="activity?.visitor?.views[0]?.page?.url" :title="activity?.visitor?.views[0]?.page?.title" :created="activity?.createdAt"></accordion-view>
-								<accordion-click v-if="activity.type == 'click' && activity?.visitor?.clicks[0]?.button != 'form'" :customer="activity?.customer?.name" :url="activity?.visitor?.clicks[0]?.page?.url" :title="activity?.visitor?.clicks[0]?.page?.title" :button="activity?.visitor?.clicks[0]?.button" :created="activity?.createdAt"></accordion-click>
-								<accordion-form v-if="activity.type == 'click' && activity?.visitor?.clicks[0]?.button == 'form'" :customer="activity?.customer?.name" :url="activity?.visitor?.clicks[0]?.page?.url" :title="activity?.visitor?.clicks[0]?.page?.title" :created="activity?.createdAt"></accordion-form>
-							</div>
+							<ol class="relative border-l max-w-full ml-5 border-gray-200 dark:border-gray-700">       
+								<li v-for="activity in customer?.activities" :key="activity.uid" class="mb-10 ml-6">
+									<accordion v-if="activity.type == 'whatsapp'" :msgs="[activity?.whatsapp]"></accordion>
+									<accordion-notes v-if="activity.type == 'note'" :notes="[activity?.notes]" :status="activity?.status" :user="activity?.User?.firstName" :created="activity?.createdAt"></accordion-notes>
+									<accordion-invoice v-if="activity.type == 'invoice'" :invoices="[activity?.invoice]" :status="activity?.status" :user="activity?.User?.firstName" :created="activity?.createdAt"></accordion-invoice>
+									<accordion-estimate v-if="activity.type == 'estimate'" :estimates="[activity?.estimate]" :status="activity?.status" :user="activity?.User?.firstName" :created="activity?.createdAt"></accordion-estimate>
+									<accordion-job v-if="activity.type == 'job'" :jobs="[activity?.job]" :status="activity?.status" :user="activity?.User?.firstName" :created="activity?.createdAt"></accordion-job>
+									<accordion-customer v-if="activity.type == 'customer'" :customers="[activity?.customer]" :status="activity?.status" :user="activity?.User?.firstName" :created="activity?.createdAt"></accordion-customer>
+									<accordion-lineitem v-if="activity.type == 'line item'" :lineitems="[activity?.lineitem]" :status="activity?.status" :user="activity?.User?.firstName" :created="activity?.createdAt"></accordion-lineitem>
+									<accordion-view v-if="activity.type == 'view'" :customer="activity?.customer?.name" :url="activity?.visitor?.views.filter(p => p.pageId == activity?.pageId)[0].page?.url" :title="activity?.visitor?.views.filter(p => p.pageId == activity?.pageId)[0].page?.title" :created="activity?.createdAt"></accordion-view>
+									<accordion-click v-if="activity.type == 'click' && activity?.visitor?.clicks.filter(p => p.pageId == activity?.pageId)[0].button != 'form'" :customer="activity?.customer?.name" :url="activity?.visitor?.clicks.filter(p => p.pageId == activity?.pageId)[0].page?.url" :title="activity?.visitor?.clicks.filter(p => p.pageId == activity?.pageId)[0].page?.title" :button="activity?.visitor?.clicks.filter(p => p.pageId == activity?.pageId)[0].button" :created="activity?.createdAt"></accordion-click>
+									<accordion-form v-if="activity.type == 'click' && activity?.visitor?.clicks.filter(p => p.pageId == activity?.pageId)[0].button == 'form'" :customer="activity?.customer?.name" :url="activity?.visitor?.clicks.filter(p => p.pageId == activity?.pageId)[0].page?.url" :title="activity?.visitor?.clicks.filter(p => p.pageId == activity?.pageId)[0].page?.title" :created="activity?.createdAt"></accordion-form>
+								</li>
+							</ol>
+							
 						</TabPanel>
 						<TabPanel>
-							<accordion v-if="customer?.whatsapp" :msgs="customer?.whatsapp" :key="wkey"></accordion>
+							<ol class="relative border-l max-w-full ml-5 border-gray-200 dark:border-gray-700">
+								<li class="mb-10 ml-6">
+									<accordion v-if="customer?.whatsapp" :msgs="customer?.whatsapp" :key="wkey"></accordion>
+								</li>								
+							</ol>
 						</TabPanel>
 						<TabPanel>
-							<accordion-notes v-if="customer?.notes" :notes="customer?.notes" :key="nkey" status="" user="" created=""></accordion-notes>
+							<ol class="relative border-l max-w-full ml-5 border-gray-200 dark:border-gray-700">
+								<li class="mb-10 ml-6">
+									<accordion-notes v-if="customer?.notes" :notes="customer?.notes" :key="nkey" status="" user="" created=""></accordion-notes>
+								</li>								
+							</ol>							
 						</TabPanel>
 					</TabPanels>
 				</div>
