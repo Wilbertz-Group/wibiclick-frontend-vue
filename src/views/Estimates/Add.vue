@@ -107,6 +107,31 @@ async function checkParams() {
     toast.warning("Contact id is required to create an estimate")
     getContacts()
   }
+  
+  if( route.query?.contact_id ){ 
+    try {
+      loading.value = true
+      const response = await axios.get(`customers?id=${userStore.currentWebsite}&limit=1000&offset=0`);
+
+      let contacts = {};
+
+      for (const contact of response.data.customers) {
+        contacts[contact.id] = contact.name
+      }
+
+      dbContacts.value = contacts
+      all_contacts.value = response.data.customers
+
+      updateEstimate({contact: route.query?.contact_id})
+
+      loading.value = false
+    } catch (error) {
+      console.log(error)
+      loading.value = false
+      toast.error("Error getting contacts data")
+    }
+    
+  }
 } 
 
 async function getContacts() {
