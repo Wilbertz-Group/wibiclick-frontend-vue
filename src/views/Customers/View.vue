@@ -465,7 +465,7 @@
 				<div class="p-3 sm:rounded-md sm:overflow-hidden">
 					<h5 class="border-b-4 border-gray-900 flex justify-between">
 						<span class="text-xl font-medium text-gray-900 dark:text-white">Invoices</span>
-						<div id="tooltip-add-invoice-button" @click="router.push({name: 'add-invoice'})" data-tooltip-target="tooltip-add-invoice" data-tooltip-placement="top" class="cursor-pointer">+ Add</div>
+						<div id="tooltip-add-invoice-button" @click="router.push({name: 'add-invoice', query: { job_id: customer?.jobs.length ? customer?.jobs[customer?.jobs.length - 1]?.id : '', contact_id: customer?.id } })" data-tooltip-target="tooltip-add-invoice" data-tooltip-placement="top" class="cursor-pointer">+ Add</div>
 						<div id="tooltip-add-invoice" role="tooltip" class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white transition-opacity duration-300 bg-gray-900 rounded-lg shadow-sm opacity-0 tooltip dark:bg-gray-700">
 								Add Invoice
 								<div class="tooltip-arrow" data-popper-arrow></div>

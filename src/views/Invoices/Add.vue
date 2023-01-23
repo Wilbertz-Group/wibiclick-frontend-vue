@@ -119,7 +119,28 @@ function deleteItem(i) {
 
 async function checkParams() {
   if( route.query.job_id ){    
-    toast.success("You have successfully provided job id")
+    try {
+      loading.value = true
+      const response = await axios.get(
+        `jobs?id=${userStore.currentWebsite}&limit=1500&offset=0`
+      );
+
+      all_jobs.value = response.data.jobs
+      let jobs = {};
+
+      for (const job of response.data.jobs) {
+        jobs[job.id] = job.name
+      }
+
+      jobsData.value = jobs
+      loading.value = false
+
+      updateJob({job: route.query?.job_id})
+    } catch (error) {
+      console.log(error);
+      loading.value = false
+      toast.error("Error getting jobs data")
+    }
   } else {
     toast.warning("Job id is required to create an invoice")
     fetchJobs()
