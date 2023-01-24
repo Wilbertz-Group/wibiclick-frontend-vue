@@ -21,6 +21,7 @@
   const issue = ref('issue')
   const customer = ref('Select Customer')
   const userStore = useUserStore()
+  const route = useRoute()
 
   async function add(credentials) {
     try {
@@ -57,7 +58,21 @@
       response.data.customers ? response.data.customers.map(e => { b[e.id] = e.name}) : ''
       customers.value = b
       dbContacts.value = response.data.customers
-      autofillForm(response.data.customers[0])
+
+      if( route.query?.contact_id ){ 
+        loading.value = true
+        const cres = await axios.get('customer?id='+ userStore.currentWebsite+'&custId='+route.query?.contact_id);
+        let contact_data = cres.data.customer
+        let newd = customers.value
+        newd[contact_data.id] = contact_data.name
+        customers.value = newd
+        customer.value = ""
+        autofillForm(contact_data)
+        customer.value = contact_data.id
+      } else {
+        autofillForm(response.data.customers[0])
+      }
+
       loading.value = false
     } catch (error) {
       console.log(error)

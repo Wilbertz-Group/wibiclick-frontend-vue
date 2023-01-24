@@ -179,16 +179,13 @@ async function updateJob(data){
   if(!profile.value){
     try {
       loading.value = true
-      modalOpen.value = false
       const response = await axios.get('profile?id='+ userStore.currentWebsite);
       profile.value = response.data
       loading.value = false
-      modalOpen.value = true
     } catch (error) {
       console.log(error)
       toast.warning("Failed to get Company Data")
       loading.value = false
-      modalOpen.value = true
     }
   }
 
