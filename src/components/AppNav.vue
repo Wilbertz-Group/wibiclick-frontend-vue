@@ -372,7 +372,7 @@ onMounted(() => {
                         class="origin-top-right absolute right-0 mt-2 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none">
                         <router-link :to="{name: 'insurance-reports'}" class="flex items-center text-slate-900 px-3 py-2 rounded-md text-sm font-medium hover:underline">
                           <box-icon color="black" type='solid' name='business'></box-icon>
-                          <span class="ml-2">Reports</span>
+                          <span class="ml-2">Insurance</span>
                         </router-link>
                         <router-link :to="{name: 'dashboard'}" class="flex items-center text-slate-900 px-3 py-2 rounded-md text-sm font-medium">
                           <box-icon type='solid' color="black" name='dashboard'></box-icon>
