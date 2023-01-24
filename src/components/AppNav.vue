@@ -357,7 +357,7 @@ onMounted(() => {
                   <div>
                     <MenuButton>
                       <div class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium relative">
-                        <box-icon color="white" class="mr-2" type="solid" name='cart-download'></box-icon>
+                        <box-icon color="white" class="mr-2" type="solid" name='analyse'></box-icon>
                         Reports
                         <svg :class="dropdownSales ? 'rotate-180': ''" class="ml-2 w-4 h-4 float-right right-0 relative" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                       </div>
@@ -374,16 +374,17 @@ onMounted(() => {
                           <box-icon color="black" type='solid' name='business'></box-icon>
                           <span class="ml-2">Reports</span>
                         </router-link>
+                        <router-link :to="{name: 'dashboard'}" class="flex items-center text-slate-900 px-3 py-2 rounded-md text-sm font-medium">
+                          <box-icon type='solid' color="black" name='dashboard'></box-icon>
+                          <span class="ml-2">Analytics</span>
+                        </router-link>
                       </div>
                     </MenuItems>
                   </transition>
                 </Menu>  
               </div>
 
-              <router-link :to="{name: 'dashboard'}" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium">
-                <box-icon type='solid' color="white" name='dashboard'></box-icon>
-                <span class="ml-2">Analytics</span>
-              </router-link>
+              
             </div>
           </div>
         </div>
