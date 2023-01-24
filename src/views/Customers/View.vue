@@ -10,6 +10,7 @@
 	import VueQuill from '@/components/editor/VueQuill.vue'
 	import ItemVue from '@/components/line-items/item.vue'
 	import EstimateVue from '@/components/estimates/Estimate.vue'
+	import InsuranceVue from '@/components/insurance/Insurance.vue'
 	import InvoiceVue from '@/components/invoices/Invoice.vue'
 	import accordionJob from '@/components/jobs/accordion.vue'
 	import accordionCustomer from '@/components/customers/accordion.vue'
@@ -21,6 +22,7 @@
 	import accordionNotes from '@/components/notes/accordion.vue'
 	import accordionInvoice from '@/components/invoices/accordion.vue'
 	import accordionEstimate from '@/components/estimates/accordion.vue'
+	import accordionInsurance from '@/components/insurance/accordion.vue'
 	import ScaleLoader from "vue-spinner/src/ScaleLoader.vue";
 	import { TabGroup, TabList, Tab, TabPanels, TabPanel } from '@headlessui/vue'
 
@@ -395,6 +397,7 @@
 									<accordion-notes v-if="activity.type == 'note'" :notes="[activity?.notes]" :status="activity?.status" :user="activity?.User?.firstName" :created="activity?.createdAt"></accordion-notes>
 									<accordion-invoice v-if="activity.type == 'invoice'" :invoices="[activity?.invoice]" :status="activity?.status" :user="activity?.User?.firstName" :created="activity?.createdAt"></accordion-invoice>
 									<accordion-estimate v-if="activity.type == 'estimate'" :estimates="[activity?.estimate]" :status="activity?.status" :user="activity?.User?.firstName" :created="activity?.createdAt"></accordion-estimate>
+									<accordion-insurance v-if="activity.type == 'insurance'" :insurances="[activity?.insurance]" :status="activity?.status" :user="activity?.User?.firstName" :created="activity?.createdAt"></accordion-insurance>
 									<accordion-job v-if="activity.type == 'job'" :jobs="[activity?.job]" :status="activity?.status" :user="activity?.User?.firstName" :created="activity?.createdAt"></accordion-job>
 									<accordion-customer v-if="activity.type == 'customer'" :customers="[activity?.customer]" :status="activity?.status" :user="activity?.User?.firstName" :created="activity?.createdAt"></accordion-customer>
 									<accordion-lineitem v-if="activity.type == 'line item'" :lineitems="[activity?.lineitem]" :status="activity?.status" :user="activity?.User?.firstName" :created="activity?.createdAt"></accordion-lineitem>
@@ -474,6 +477,24 @@
 
 					<!-- Invoice item -->
 					<InvoiceVue v-for="invoice in customer?.invoice" :invoice="invoice" v-bind:key="invoice" @reload-timeline="reloadTimeline"></InvoiceVue>
+				</div>
+			</section>
+
+			<!-- Insurance Section -->
+			<section class="shadow sm:rounded-md sm:overflow-hidden mt-4">
+				<div class="p-3 sm:rounded-md sm:overflow-hidden">
+					<h5 class="border-b-4 border-gray-900 flex justify-between">
+						<span class="text-xl font-medium text-gray-900 dark:text-white">Insurance Reports</span>
+						<div id="tooltip-add-insurance-button" @click="router.push({name: 'add-insurance-report', query: { job_id: customer?.jobs.length ? customer?.jobs[customer?.jobs.length - 1]?.id : '', contact_id: customer?.id } })" data-tooltip-target="tooltip-add-insurance" data-tooltip-placement="top" class="cursor-pointer">+ Add</div>
+						<div id="tooltip-add-insurance" role="tooltip" class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white transition-opacity duration-300 bg-gray-900 rounded-lg shadow-sm opacity-0 tooltip dark:bg-gray-700">
+								Add Report
+								<div class="tooltip-arrow" data-popper-arrow></div>
+						</div>
+					</h5>
+
+					<!-- Insurance item -->
+					<InsuranceVue v-for="insurance in customer?.insurance" :insurance="insurance" v-bind:key="insurance" @reload-timeline="reloadTimeline"></InsuranceVue>
+
 				</div>
 			</section>
 

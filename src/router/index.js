@@ -30,6 +30,10 @@ import Billing from '@/views/Billing.vue'
 import Settings from '@/views/Settings.vue'
 import Authenticate from '@/views/Authenticate.vue'
 import { useUserStore } from "@/stores/UserStore" 
+import Reports from '@/views/Insurance/Reports.vue'
+import AddReport from '@/views/Insurance/Add.vue'
+import ViewReport from '@/views/Insurance/View.vue'
+import EditReport from '@/views/Insurance/Edit.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -189,6 +193,26 @@ const router = createRouter({
       name: 'forms',
       component: Forms,
       meta: { permission: ['owner', 'admin']}
+    },
+    {
+      path: '/insurance-reports',
+      name: 'insurance-reports',
+      component: Reports 
+    },
+    {
+      path: '/add-insurance-report',
+      name: 'add-insurance-report',
+      component: AddReport
+    },
+    {
+      path: '/view-insurance-report',
+      name: 'view-insurance-report',
+      component: ViewReport
+    },
+    {
+      path: '/edit-insurance-report',
+      name: 'edit-insurance-report',
+      component: EditReport
     },
   ]
 })

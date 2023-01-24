@@ -215,7 +215,7 @@ async function saveEstimateOnly(data) {
   let payload = {
     id: estimateData.value.id,
     reason: data.estimate_status,
-    name: estimate.value.customer.name + " " +  estimate.value.name,
+    name: estimate.value.name,
     number: data.estimate_number,
     issuedAt: moment(data.estimate_date).toISOString(),
     dueAt: moment(data.estimate_due_date,).toISOString(),
@@ -252,7 +252,7 @@ async function saveestimate(data) {
   let payload = {
     id: estimateData.value.id,
     reason: data.estimate_status,
-    name: estimate.value.customer.name + " " +  estimate.value.name,
+    name: estimate.value.name,
     number: data.estimate_number,
     issuedAt: moment(data.estimate_date).toISOString(),
     dueAt: moment(data.estimate_due_date,).toISOString(),

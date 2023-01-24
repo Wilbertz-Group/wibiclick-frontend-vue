@@ -348,9 +348,36 @@ onMounted(() => {
                       </div>
                     </MenuItems>
                   </transition>
-                </Menu> 
+                </Menu>  
+              </div>
 
-                
+              <div class="relative" >
+                <!-- Reports dropdown -->
+                <Menu as="div" class="ml-3 relative">
+                  <div>
+                    <MenuButton>
+                      <div class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium relative">
+                        <box-icon color="white" class="mr-2" type="solid" name='cart-download'></box-icon>
+                        Reports
+                        <svg :class="dropdownSales ? 'rotate-180': ''" class="ml-2 w-4 h-4 float-right right-0 relative" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                      </div>
+                    </MenuButton>
+                  </div>
+                  <transition enter-active-class="transition ease-out duration-100"
+                    enter-from-class="transform opacity-0 scale-95" enter-to-class="transform opacity-100 scale-100"
+                    leave-active-class="transition ease-in duration-75" leave-from-class="transform opacity-100 scale-100"
+                    leave-to-class="transform opacity-0 scale-95">
+                    <MenuItems>
+                      <div aria-labelledby="headlessui-menu-button-3" id="headlessui-menu-items-4" role="menu" tabindex="0"
+                        class="origin-top-right absolute right-0 mt-2 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none">
+                        <router-link :to="{name: 'insurance-reports'}" class="flex items-center text-slate-900 px-3 py-2 rounded-md text-sm font-medium hover:underline">
+                          <box-icon color="black" type='solid' name='business'></box-icon>
+                          <span class="ml-2">Reports</span>
+                        </router-link>
+                      </div>
+                    </MenuItems>
+                  </transition>
+                </Menu>  
               </div>
 
               <router-link :to="{name: 'dashboard'}" class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium">

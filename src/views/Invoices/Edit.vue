@@ -208,7 +208,7 @@ async function saveInvoiceOnly(data) {
   let payload = {
     id: invoiceData.value.id,
     reason: data.invoice_status,
-    name: invoice.value.customer.name + " " +  invoice.value.name,
+    name: invoice.value.name,
     number: data.invoice_number,
     issuedAt: moment(data.invoice_date).toISOString(),
     dueAt: moment(data.invoice_due_date,).toISOString(),
@@ -244,7 +244,7 @@ async function saveInvoice(data) {
   let payload = {
     id: invoiceData.value.id,
     reason: data.invoice_status,
-    name: invoice.value.customer.name + " " +  invoice.value.name,
+    name: invoice.value.name,
     number: data.invoice_number,
     issuedAt: moment(data.invoice_date).toISOString(),
     dueAt: moment(data.invoice_due_date,).toISOString(),
