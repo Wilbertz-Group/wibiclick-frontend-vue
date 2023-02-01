@@ -1,5 +1,6 @@
 <script setup>
 import axios from "axios";
+import notifications from "./notification/notifications.vue";
 import { useUserStore } from "@/stores/UserStore"
 import { 
   Disclosure, 
@@ -390,7 +391,8 @@ onMounted(() => {
         </div>
 
         <div class="hidden md:block">
-          <div class="ml-4 flex items-center md:ml-6">            
+          <div class="ml-4 flex items-center md:ml-6">  
+                    
             <div class="relative w-52 mr-5">              
               <Listbox v-model="selectedWebsite">
               <div class="relative mt-1">
@@ -450,7 +452,9 @@ onMounted(() => {
                 </transition>
               </div>
             </Listbox>
-            </div>            
+            </div>    
+            
+            <notifications></notifications>  
 
             <p class="text-white text-sm">Hello, {{ userStore.user.firstName }}.</p>
 
@@ -621,8 +625,7 @@ onMounted(() => {
     </div>
   </div>
 
-  <div v-if="addModal" class="bg-gray-900 bg-opacity-50 dark:bg-opacity-80 fixed inset-0 z-40"></div>
-  <div v-if="loading" class="bg-gray-900 bg-opacity-50 dark:bg-opacity-80 fixed inset-0 z-40"></div>
+  <div v-if="loading || addModal" class="bg-gray-900 bg-opacity-50 dark:bg-opacity-80 fixed inset-0 z-40"></div>
 </template>
 
 <style>

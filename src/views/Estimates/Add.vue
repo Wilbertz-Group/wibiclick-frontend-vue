@@ -252,7 +252,13 @@ async function saveEstimate(data) {
   }
 
   function createestimate(estimate, path) {
-    let doc = new PDFDocument({ size: "A4", margin: 50 });
+    let doc;
+
+    try {
+      doc = new PDFDocument({ size: "A4", margin: 50 });
+    } catch (error) {
+      toast.error("Failed failed to initialize the pdf generation, Reload you page and try again!!")
+    }
 
     // pipe the document to a blob
     const stream = doc.pipe(blobStream());
@@ -289,6 +295,10 @@ async function saveEstimate(data) {
       download();
     });
 
+  }
+
+  function get_url_extension( url ) {
+    return url.split(/[#?]/)[0].split('.').pop().trim();
   }
 
   let img;

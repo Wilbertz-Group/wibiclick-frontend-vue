@@ -178,7 +178,13 @@ async function saveinsurance(data) {
   }
 
   function createinsurance(insurance, path) {
-    let doc = new PDFDocument({ size: "A4", margin: 50 });
+    let doc;
+
+    try {
+      doc = new PDFDocument({ size: "A4", margin: 50 });
+    } catch (error) {
+      toast.error("Failed failed to initialize the pdf generation, Reload you page and try again!!")
+    }
 
     // pipe the document to a blob
     const stream = doc.pipe(blobStream());
