@@ -73,8 +73,8 @@ function addItem() {
     estimate.value.items.push({
 			item: lineItem.value.name,
 			description: lineItem.value.description,
-			quantity: lineItem.value.quantity,
-			amount: lineItem.value.amount,
+			quantity: parseFloat(lineItem.value.quantity),
+			amount: parseFloat(lineItem.value.amount),
 		})
 
     lineItem.value = {

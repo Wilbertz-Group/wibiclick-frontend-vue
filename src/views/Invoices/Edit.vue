@@ -77,12 +77,12 @@ function addItem() {
     invoice.value.items.push({
 			item: lineItem.value.name,
 			description: lineItem.value.description,
-			quantity: lineItem.value.quantity,
-			amount: lineItem.value.amount,
+			quantity: parseFloat(lineItem.value.quantity),
+			amount: parseFloat(lineItem.value.amount),
 		})
 
     lineItem.value = {
-      name: 'Installation Labour',
+      name: '',
       description: '',
       amount: 1,
       quantity: 1,
