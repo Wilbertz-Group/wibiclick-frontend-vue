@@ -582,7 +582,7 @@ async function saveInvoice(data) {
   
 }
 
-const lineItemTotal = computed(() => Number(lineItem.value.amount) * Number(lineItem.value.quantity))
+const lineItemTotal = computed(() => (Number(lineItem.value.amount) * Number(lineItem.value.quantity)).toFixed(2))
 
 onMounted(()=>{
   getLineItems();
