@@ -297,6 +297,19 @@ async function saveEstimate(data) {
 
   }
 
+  if(!profile.value){
+    try {
+      loading.value = true
+      const response = await axios.get('profile?id='+ userStore.currentWebsite);
+      profile.value = response.data
+      loading.value = false
+    } catch (error) {
+      console.log(error)
+      toast.warning("Failed to get profile data")
+      loading.value = false
+    }
+  }
+
   function get_url_extension( url ) {
     return url.split(/[#?]/)[0].split('.').pop().trim();
   }
