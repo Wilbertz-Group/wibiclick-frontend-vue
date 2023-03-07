@@ -60,7 +60,7 @@ async function checkParams() {
   if( route.query?.contact_id ){ 
     try {
       loading.value = true
-      const response = await axios.get(`customers?id=${userStore.currentWebsite}&limit=1000&offset=0`);
+      const response = await axios.get(`customers?id=${userStore.currentWebsite}&limit=10000&offset=0`);
 
       let contacts = {};
 
@@ -86,7 +86,7 @@ async function checkParams() {
 async function getContacts() {
   try {
     loading.value = true
-    const response = await axios.get(`customers?id=${userStore.currentWebsite}&limit=1000&offset=0`);
+    const response = await axios.get(`customers?id=${userStore.currentWebsite}&limit=10000&offset=0`);
 
     let contacts = {};
 

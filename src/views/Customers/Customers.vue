@@ -142,7 +142,7 @@
     try {
       loading.value = true;
       const response = await axios.get(
-        `customers?id=${userStore.currentWebsite}&limit=1000&offset=0`
+        `customers?id=${userStore.currentWebsite}&limit=10000&offset=0`
       );
 
       rowData.value = response.data.customers
