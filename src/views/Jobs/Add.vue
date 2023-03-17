@@ -24,6 +24,10 @@
   const route = useRoute()
 
   async function add(credentials) {
+    if(credentials.employeeId == "test") {
+      toast.error("Please select an employee")
+      return
+    }
     try {
       loading.value = true
       const response = await axios.post('add-job?id='+ userStore.currentWebsite, credentials);
@@ -42,6 +46,12 @@
       const response = await axios.get('employees?id='+ userStore.currentWebsite);
       let b = {}
       response.data.employees ? response.data.employees.map(e => { b[e.id] = e.firstName + ' ' + e.lastName }) : ''
+      const newItem = { test: "Select Employee" }
+      b = {
+        ...newItem,
+        ...b,
+      }
+
       employees.value = b
       loading.value = false
     } catch (error) {
@@ -145,7 +155,7 @@
                       <FormKit type="select" name="slotTime" label="Job Duration" :options="['1hr', '2hrs', '3hrs', '4hrs']" validation="required" />
                     </div>
 
-                    <FormKit type="select" name="employeeId" label="Employee" :options="employees" validation="required" />
+                    <FormKit type="select" name="employeeId" label="Employee" :options="employees" validation="required|not:test" />
 
                     <FormKit type="textarea" v-model="issue" :value="issue" name="issue" label="Issue" placeholder="Issue" outer-class="text-left" validation="required" />
 
