@@ -34,6 +34,8 @@ import Reports from '@/views/Insurance/Reports.vue'
 import AddReport from '@/views/Insurance/Add.vue'
 import ViewReport from '@/views/Insurance/View.vue'
 import EditReport from '@/views/Insurance/Edit.vue'
+import Suppliers from '@/views/Suppliers/Suppliers.vue'
+import AddSuppliers from '@/views/Suppliers/Add.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -213,6 +215,16 @@ const router = createRouter({
       path: '/edit-insurance-report',
       name: 'edit-insurance-report',
       component: EditReport
+    },
+    {
+      path: '/suppliers',
+      name: 'suppliers',
+      component: Suppliers 
+    },
+    {
+      path: '/add-supplier',
+      name: 'add-supplier',
+      component: AddSuppliers
     },
   ]
 })
