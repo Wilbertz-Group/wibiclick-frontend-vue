@@ -259,28 +259,28 @@
           };
         }
       },              
-      // { 
-      //   field: "id", 
-      //   headerName: 'Edit',
-      //   maxWidth: 80,
-      //   cellRendererSelector: params => {
-      //     return {
-      //         component: Edit,
-      //         params
-      //     };
-      //   } 
-      // },  
-      // { 
-      //   field: "id", 
-      //   headerName: 'View',
-      //   maxWidth: 85,
-      //   cellRendererSelector: params => {
-      //     return {
-      //         component: View,
-      //         params
-      //     };
-      //   } 
-      // },       
+      { 
+        field: "id", 
+        headerName: 'Edit',
+        maxWidth: 80,
+        cellRendererSelector: params => {
+          return {
+              component: Edit,
+              params
+          };
+        } 
+      },  
+      { 
+        field: "id", 
+        headerName: 'View',
+        maxWidth: 85,
+        cellRendererSelector: params => {
+          return {
+              component: View,
+              params
+          };
+        } 
+      },       
     ],
   });
 
