@@ -20,7 +20,7 @@ function login(credentials) {
     })
     .then((data) => {
       loading.value = false;
-      router.push({ name: "dashboard" });
+      router.push({ name: "jobs" });
     })
     .catch((err) => {
       loading.value = false;

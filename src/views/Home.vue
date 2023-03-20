@@ -21,7 +21,7 @@ function toggleMenu(flag) {
   }
 }
 
-userStore.user ? router.push({ name: "dashboard" }) : "";
+userStore.user ? router.push({ name: "jobs" }) : "";
 
 onMounted(() => {
   var url = 'https://www.wibi.co.za/wibi.js';
