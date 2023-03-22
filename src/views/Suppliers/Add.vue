@@ -51,26 +51,26 @@
                     <hr />
 
                     <div class="double mt-8">
-                      <FormKit type="text" name="name" label="Supplier Name" placeholder="Smeg SA" outer-class="text-left"  />
-                      <FormKit type="email" name="email" label="Supplier Email" placeholder="jane@smegsa.co.za" outer-class="text-left" /> 
+                      <FormKit type="text" name="name" label="Supplier Name" placeholder="Smeg SA" validation="required" outer-class="text-left"  />
+                      <FormKit type="email" name="email" label="Supplier Email" placeholder="jane@smegsa.co.za" validation="required" outer-class="text-left" /> 
                     </div>
 
                     <div class="double">
                       <FormKit type="tel" name="phone" label="Phone Number" placeholder="0210002314" outer-class="text-left" validation="required|phone" />
-                      <FormKit type="text" name="address" label="Address" placeholder="12 Woodstock, Cape Town" outer-class="text-left"  />
+                      <FormKit type="text" name="address" label="Address" placeholder="12 Woodstock, Cape Town" validation="required" outer-class="text-left"  />
                     </div>
 
                     <div class="double">
-                      <FormKit type="text" name="city" label="City" placeholder="Cape Town" outer-class="text-left"  />
-                      <FormKit type="text" name="state" label="Province" placeholder="Western Cape" outer-class="text-left"  />
+                      <FormKit type="text" name="city" label="City" placeholder="Cape Town" validation="required" outer-class="text-left"  />
+                      <FormKit type="text" name="state" label="Province" placeholder="Western Cape" validation="required" outer-class="text-left"  />
                     </div>
 
                     <div class="double">
-                      <FormKit type="text" name="zip" label="Zip" placeholder="7441" outer-class="text-left"  />
-                      <FormKit type="text" name="country" label="Country" placeholder="South Africa" outer-class="text-left"  />
+                      <FormKit type="text" name="zip" label="Zip" placeholder="7441" validation="required" outer-class="text-left"  />
+                      <FormKit type="text" name="country" label="Country" placeholder="South Africa" validation="required" outer-class="text-left"  />
                     </div>
 
-                    <FormKit type="text" name="contactPerson" label="Contact Person" placeholder="7441" outer-class="text-left"  />
+                    <FormKit type="text" name="contactPerson" label="Contact Person" placeholder="7441" validation="required" outer-class="text-left"  />
 
                     <FormKit type="submit" label="Add Supplier" />
 
