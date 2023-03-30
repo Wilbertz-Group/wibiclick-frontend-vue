@@ -10,6 +10,8 @@ import { computed } from "@vue/reactivity";
 import { autocomplete } from "@/helpers/custom-input.js"
 import ScaleLoader from 'vue-spinner/src/ScaleLoader.vue'
 import imageHolder from '@/helpers/logo.js'
+import modal from "@/components/misc/modalInsuranceAttachment.vue"
+import FormData from 'form-data';
 
 const loading = ref(false);
 const all_contacts = ref();
@@ -50,6 +52,12 @@ const insurance = ref({
 	insurance_date: moment().format('YYYY-MM-DD'),
 	insurance_due_date: moment().add(3, 'days').format('YYYY-MM-DD'),  
 });
+
+const blob = ref();
+const isOpen = ref(false)
+const client = ref(insurance.value.customer.name) 
+const sender = ref(profile.value.firstName) 
+const company = ref(profile.value?.company?.company_name)
 
 async function checkParams() {
   if( !route.query?.job_id ){   
@@ -366,6 +374,211 @@ async function saveInsurance(data) {
   
 }
 
+async function sendAttachment(data) {
+  let insurance_number = 0;
+  client.value = insurance.value?.customer?.name 
+  sender.value = profile.value?.firstName 
+  company.value = profile.value?.company?.company_name
+
+  if(!profile.value){
+    try {
+      loading.value = true
+      const response = await axios.get('profile?id='+ userStore.currentWebsite);
+      profile.value = response.data
+      loading.value = false
+    } catch (error) {
+      console.log(error)
+      toast.warning("Failed to get profile data")
+      loading.value = false
+    }
+  }
+
+  try {
+    loading.value = true
+    const response = await axios.get('insurance_report_number?id='+ userStore.currentWebsite);
+    insurance_number = response.data.insurance_number
+    loading.value = false
+  } catch (error) {
+    console.log(error)
+    toast.warning("Failed to get insurance number")
+    loading.value = false
+  }
+
+  let payload = {
+    status: insurance.value.status,
+    name: insurance.value.name,
+    number: insurance_number + 1,
+    issuedAt: moment(insurance.value.insurance_date,).toISOString(),
+    dueAt: moment(insurance.value.insurance_due_date,).toISOString(),
+    notes: insurance.value.notes,
+    customerId: insurance.value.customer.id
+  }
+
+  try {
+    loading.value = true
+    const response = await axios.post('add-insurance-report?id='+ userStore.currentWebsite, payload);
+    toast.success(response.data.message)
+    loading.value = false
+    modalOpen.value = false
+    //router.push({ name: 'insurance-reports' })
+  } catch (error) {
+    console.log(error)
+    loading.value = false
+  }
+
+  function createinsurance(insurance, path) {
+    let doc;
+
+    try {
+      doc = new PDFDocument({ size: "A4", margin: 50 });
+    } catch (error) {
+      toast.error("Failed failed to initialize the pdf generation, Reload you page and try again!!")
+    }
+
+    // pipe the document to a blob
+    const stream = doc.pipe(blobStream());
+
+    // add your content to the document here, as usual
+    generateHeader(doc, insurance);
+    generateCustomerInformation(doc, insurance);
+    generateNotes(doc, insurance);
+    generateFooter(doc);
+
+    doc.end();
+
+    const a = document.createElement("a");
+    document.body.appendChild(a);
+    a.style = "display: none";
+
+    let attachment;
+
+    stream.on("finish", function() {
+      // get a blob you can do whatever you like with
+      attachment = stream.toBlob("application/pdf");
+
+      //Send to client on whatsapp
+      blob.value = attachment
+      isOpen.value = true
+    })
+
+  }
+
+  function get_url_extension( url ) {
+    return url.split(/[#?]/)[0].split('.').pop().trim();
+  }
+
+  let img, notestart;
+  
+  try {
+    var url = profile.value.estimate_logo;
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', url, true);
+
+    // Set responseType to 'arraybuffer', we want raw binary data buffer
+    xhr.responseType = 'arraybuffer';
+
+    xhr.onload = function() {
+      // Create an array of 8-bit unsigned integers
+      var arr = new Uint8Array(this.response);
+      
+      // String.fromCharCode returns a 'string' from the specified sequence of Unicode values
+      var raw = String.fromCharCode.apply(null, arr);
+      
+      //btoa() creates a base-64 encoded ASCII string from a String object 
+      var b64 = btoa(raw);
+      
+      var dataType = get_url_extension(url);
+      //ta-da your image data url!
+      var dataURL = 'data:image/' + dataType + ';base64,' + b64;
+
+      img = dataURL
+      createinsurance(insurance.value, insurance.value.customer.name + '.pdf');
+    };
+
+    xhr.send();    
+  } catch (error) {
+    img = imageHolder
+    createinsurance(insurance.value, insurance.value.customer.name + '.pdf');
+  }
+
+  function generateHeader(doc, insurance) {
+    doc
+      .image(img, 50, 45, { width: 50 })
+      // .image("lg.png", 50, 45, { width: 50 })
+      .fillColor("#444444")
+      .fontSize(14)
+      .text(insurance.company.name, 110, 57)		
+      .fontSize(10)
+      .text(insurance.company.slogan, 110, 75)
+      .text(insurance.company.name, 200, 50, { align: "right" })
+      .text(insurance.company.address1, 200, 65, { align: "right" })
+      .text(insurance.company.address2 + " " + insurance.company.city, 200, 80, { align: "right" })
+      .text(insurance.company.state + ", " + insurance.company.country, 200, 95, { align: "right" })
+      .text(insurance.company.postal_code, 200, 110, { align: "right" })
+      .text("Email: "+insurance.company.email, 200, 130, { align: "right" })
+      .moveDown();
+  }
+
+  function generateCustomerInformation(doc, insurance) {
+    doc.fillColor("#444444").fontSize(20).text("Insurance Report", 50, 160);
+
+    generateHr(doc, 185);
+
+    //Issued to
+    let billed_to = 200
+    doc	
+    .fontSize(12)
+    .font("Helvetica-Bold")
+    .text("Issued to:", 50, billed_to)
+    .fontSize(11)
+    .font("Helvetica")
+    .text("Name:", 50, billed_to + 15)
+    .text(insurance.customer.name, 130, billed_to + 15)
+    .text("Address:", 50, billed_to + 30)
+    .text(insurance.customer.address, 130, billed_to + 30)
+    .text("Phone:", 50, billed_to + 45)
+    .text(insurance.customer.phone, 130, billed_to + 45)
+    .text("VAT:", 50, billed_to + 60)
+    .text(insurance.customer.vat, 130, billed_to + 60)
+    .moveDown();
+
+    notestart = billed_to + 90
+  }
+
+  function generateNotes(doc, insurance) {
+    if(insurance.notes){
+      doc
+        .fontSize(12)
+        .font("Helvetica-Bold")
+        .text("Report Details:", 50, notestart + 10, "Report Details")
+        .fontSize(11)
+        .font("Helvetica")
+        .text(
+          insurance.notes,
+          50,
+          notestart + 30,
+          { align: "left", width: 500 }
+        );
+    }
+  }
+
+  function generateFooter(doc) {
+    doc
+      .fontSize(10)
+      .text(
+        "Thank you for your business.",
+        50,
+        780,
+        { align: "center", width: 500 }
+      );
+  }
+
+  function generateHr(doc, y) {
+    doc.strokeColor("#aaaaaa").lineWidth(1).moveTo(50, y).lineTo(550, y).stroke();
+  }
+  
+}
+
 onMounted(()=>{
   checkParams();
 
@@ -389,6 +602,7 @@ onMounted(()=>{
   <div class="mx-auto py-6 sm:px-6 lg:px-8">
     <div class="px-4 py-6 sm:px-0">
       <main class="detail">
+        <modal v-if="isOpen" :website="userStore.currentWebsite" :body="body" :isOpen="isOpen" :blob="blob" :client="client" :sender="sender" :company="company" :phone="insurance.customer.phone" name="Damage Report" @close-modal="closeModal"></modal>
         <FormKit
           type="form"
           id="edit"
@@ -410,7 +624,8 @@ onMounted(()=>{
               input-class="bg-[#0275ff] text-white m-0"
             />
 
-            <div class="btn-container">
+            <div class="btn-container flex">
+              <div @click="sendAttachment()" class="text-white cursor-pointer inline-block bg-green-500 hover:bg-green-600 bg-gradient-to-r focus:outline-none focus:ring-4 focus:ring-green-300 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center mb-5 mr-10"><svg class="svg-inline--fa fa-whatsapp w-6 h-6 inline-block" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="whatsapp" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path class="" fill="currentColor" d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l117.7-30.9c32.4 17.7 68.9 27 106.1 27h.1c122.3 0 224.1-99.6 224.1-222 0-59.3-25.2-115-67.1-157zm-157 341.6c-33.2 0-65.7-8.9-94-25.7l-6.7-4-69.8 18.3L72 359.2l-4.4-7c-18.5-29.4-28.2-63.3-28.2-98.2 0-101.7 82.8-184.5 184.6-184.5 49.3 0 95.6 19.2 130.4 54.1 34.8 34.9 56.2 81.2 56.1 130.5 0 101.8-84.9 184.6-186.6 184.6zm101.2-138.2c-5.5-2.8-32.8-16.2-37.9-18-5.1-1.9-8.8-2.8-12.5 2.8-3.7 5.6-14.3 18-17.6 21.8-3.2 3.7-6.5 4.2-12 1.4-32.6-16.3-54-29.1-75.5-66-5.7-9.8 5.7-9.1 16.3-30.3 1.8-3.7 .9-6.9-.5-9.7-1.4-2.8-12.5-30.1-17.1-41.2-4.5-10.8-9.1-9.3-12.5-9.5-3.2-.2-6.9-.2-10.6-.2-3.7 0-9.7 1.4-14.8 6.9-5.1 5.6-19.4 19-19.4 46.3 0 27.3 19.9 53.7 22.6 57.4 2.8 3.7 39.1 59.7 94.8 83.8 35.2 15.2 49 16.5 66.6 13.9 10.7-1.6 32.8-13.4 37.4-26.4 4.6-13 4.6-24.1 3.2-26.4-1.3-2.5-5-3.9-10.5-6.6z"></path></svg> Whatsapp</div>
               <FormKit type="submit" @click="save_type = 'download'" class="btn btn-mark" outer-class="mb-0" label="Save & Download" suffix-icon="download" />
             </div>
           </div>
@@ -419,7 +634,8 @@ onMounted(()=>{
             <!-- Insurance Header -->
             <div class="grid grid-flow-col grid-rows-1 grid-cols-2 gap-8">
               <div class="flex items-center">
-                <img src="@/assets/images/lg.png" class="w-24 pr-2" loading="lazy" height="" width="" alt="Insurance Logo">
+                <img id="tux" v-if="profile.estimate_logo" crossOrigin="anonymous" :src="profile.estimate_logo" class="w-24 pr-2" loading="lazy" height="" width="" alt="Invoice Logo">
+                <img id="tux" v-else crossOrigin="anonymous" src="@/assets/images/lg.png" class="w-24 pr-2" loading="lazy" height="" width="" alt="Invoice Logo">
                 <div>
                   <h3 class="text-3xl">{{ insurance.company.name }}</h3> 
                   <h3 class="text-xl">{{ insurance.company.slogan }}</h3> 
