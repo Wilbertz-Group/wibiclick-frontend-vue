@@ -12,6 +12,7 @@ export const useUserStore = defineStore("UserStore", {
       events: '',
       newUser: true,
       analytics: {},
+      notifications: [],
       currentWebsite: "default",
       settings: {},
       status: [ 
@@ -121,6 +122,15 @@ export const useUserStore = defineStore("UserStore", {
     updateWebsite(a) {
       this.currentWebsite = a;
       this.ableyk = '58qyVA.CKD0Qg:iOOkt2jKULP5UGOH';
+    },
+    addnotification(notification) {
+      this.notifications.unshift(notification);
+    },
+    removenotification(index) {
+      this.notifications.splice(index, 1);
+    },
+		clearnotification() {
+      this.notifications = [];
     },
   },
   persist: {
