@@ -15,6 +15,7 @@ import 'vue-toast-notification/dist/theme-sugar.css';
 import VueHighlightJS from 'vue-highlightjs'
 import { QuillEditor } from '@vueup/vue-quill'
 import '@vueup/vue-quill/dist/vue-quill.snow.css';
+import 'sweetalert2/dist/sweetalert2.min.css'
 
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { library } from '@fortawesome/fontawesome-svg-core'
@@ -23,6 +24,10 @@ import { far } from '@fortawesome/free-regular-svg-icons'
 import { fab } from '@fortawesome/free-brands-svg-icons'
 library.add(fas, far, fab)
 
+import Popper from "vue3-popper";
+import PerfectScrollbar from 'vue3-perfect-scrollbar'
+import 'vue3-perfect-scrollbar/dist/vue3-perfect-scrollbar.css'
+
 axios.defaults.baseURL = "https://wibi.wilbertzgroup.com/"
 //axios.defaults.baseURL = "http://localhost:8080/"
 
@@ -30,8 +35,10 @@ const app = createApp(App)
 const pinia = createPinia()
 pinia.use(piniaPluginPersistedstate)
 
+app.component("Popper", Popper);
 app.component('font-awesome-icon', FontAwesomeIcon)
 app.component('QuillEditor', QuillEditor)
+app.use(PerfectScrollbar)
 app.use(VueHighlightJS)
 app.use(ToastPlugin);
 app.use(VueApexCharts);

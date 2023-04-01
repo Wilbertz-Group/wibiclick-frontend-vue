@@ -1,3 +1,6 @@
+@import 'css/tailwind.css';
+/* @import 'css/sweetalert2.css'; */
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -20,12 +23,13 @@
   }
 }
 
+
 div#headlessui-menu-items-4 {
   z-index: 9;
 }
 .bg-custom-gray {
   --tw-bg-opacity: 1;
-  background-color: #11101d;
+  background-color: #101728;
 }
 .bg-blueGray-800 {
   --tw-bg-opacity: 1;

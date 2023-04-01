@@ -8,6 +8,7 @@ export const useUserStore = defineStore("UserStore", {
   state: () => {
     return {
       user: null,
+      rtlClass: 'ltr',
       ableyk: '58qyVA.CKD0Qg:iOOkt2jKULP5UGOH',
       events: '',
       newUser: true,

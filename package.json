@@ -17,7 +17,7 @@
     "@headlessui/vue": "^1.6.7",
     "@heroicons/vue": "^2.0.13",
     "@videojs-player/vue": "^1.0.0",
-    "@vueup/vue-quill": "^1.0.1",
+    "@vueup/vue-quill": "^1.1.1",
     "@vueuse/core": "^9.0.0",
     "ably": "^1.2.31",
     "ag-grid-community": "^28.1.1",
@@ -35,6 +35,7 @@
     "pinia": "^2.0.14",
     "pinia-plugin-persistedstate": "^1.6.1",
     "quill-paste-smart": "^1.4.10",
+    "sweetalert2": "^11.4.8",
     "swiper": "^8.3.2",
     "video.js": "^7.20.3",
     "vue": "^3.2.37",
@@ -47,7 +48,9 @@
     "vue-uuid": "^3.0.0",
     "vue3-apexcharts": "^1.4.1",
     "vue3-draggable": "^2.0.9",
-    "vue3-loading-overlay": "0.0.0"
+    "vue3-loading-overlay": "0.0.0",
+    "vue3-popper": "^1.5.0",
+    "vue3-perfect-scrollbar": "^1.6.1"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^2.3.3",
