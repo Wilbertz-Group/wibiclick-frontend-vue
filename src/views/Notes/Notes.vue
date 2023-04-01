@@ -926,7 +926,7 @@
 																											<option value="pending">Pending</option>
 																											<option value="attention">Need Attention</option>
 																											<option value="general">General</option>
-																											<option value="green">Done</option>
+																											<option value="done">Done</option>
 																											<option value="important">Important</option>
 																									</select>
 																							</div>
