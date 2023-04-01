@@ -177,8 +177,8 @@
 
 	const updateNote = async (n) => {
 		try {
-			const response = await axios.post(`update-note?id=${store.currentWebsite}`, n);
-			searchNotes();
+			await axios.post(`update-note?id=${store.currentWebsite}`, n);
+			fetchNotes();
 		} catch (error) {
 			console.log(error)
 			showMessage('Error updating notes data', 'error');
@@ -481,7 +481,7 @@
 																	class="panel pb-12 note-card"
 																	:class="getCardClass(note)"																	
 															>
-																	<div class="min-h-[142px]">
+																	<div class="min-h-[142px] pb-6">
 																			<div class="flex justify-between">
 																					<div class="flex items-center w-max">
 																							<div class="flex-none">
@@ -646,11 +646,15 @@
 																					</div>
 																			</div>
 																			<div>
-																					<h4 class="text-lg font-semibold mb-2 text-gray-800 mt-4">Author: {{ note.author }}</h4>
+																					<h4 class="text-lg font-semibold mb-2 text-gray-800 mt-4">{{ note.title }}</h4>
 																					<p class="mt-2 font-nunito text-sm text-gray-700" v-html="note.description"></p>
 																			</div>
 																	</div>
 																	<div class="absolute bottom-5 left-0 w-full px-5">
+																			<div class="py-4 border-b">
+																				<span class="text-xs text-gray-500"></span>
+																				<span class="text-xs text-gray-500 float-right">by: {{ note.author }}</span>
+																			</div>
 																			<div class="flex items-center justify-between mt-2">
 																					<div class="dropdown">
 																							<Popper :placement="store.rtlClass === 'rtl' ? 'bottom-start' : 'bottom-end'" offsetDistance="0">
