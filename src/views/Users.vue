@@ -15,8 +15,11 @@
   const selectedUser = ref(null)
   const paginationPageSize = ref(6)
   const modalOpen = ref(false)
+  const websitesModalOpen = ref(false)
   const loading = ref(false);
   const toast = useToast();
+  const allWebsites = ref()
+  const allUserWebsites = ref()
 
   const userStore = useUserStore()
 
@@ -74,6 +77,17 @@
           };
         } 
       },  
+      { 
+        field: "id", 
+        headerName: 'Connect',
+        maxWidth: 180,
+        cellRendererSelector: params => {
+          return {
+              component: Edit,
+              params
+          };
+        } 
+      },  
     ],
   });
 
@@ -95,13 +109,50 @@
       console.log(error)
       loading.value = false
     }
+    loading.value = false;
   }
 
-  const toggleEditModal = (event) => {
-    if( event.value === undefined ){
+  const toggleEditModal = async (event) => {
+    if( event.colDef.field === 'Edit' ){
       selectedUser.value = event.data
       modalOpen.value = !modalOpen.value
     } 
+
+    if( event.colDef.field === 'id' ){
+      selectedUser.value = event.data
+      await fetchUserWebsites(event.data.id)
+      websitesModalOpen.value = !websitesModalOpen.value
+    } 
+  }
+
+  async function fetchWebsites() {
+    try {
+      loading.value = true
+      const response = await axios.get('get-websites');
+      allWebsites.value = response.data
+      loading.value = false      
+    } catch (error) {
+      console.log(error)
+      toast.error("Error getting websites")
+      loading.value = false;
+    }
+
+    loading.value = false;
+  }
+
+  async function fetchUserWebsites(id) {
+    try {
+      loading.value = true
+      const response = await axios.get('get-websites-for-user?id='+ id);
+      allUserWebsites.value = response.data
+      loading.value = false
+    } catch (error) {
+      console.log(error)
+      toast.error("Error getting user websites")
+      loading.value = false;
+    }
+
+    loading.value = false;
   }
 
   async function fetchUsers() {
@@ -113,15 +164,57 @@
 
       rowData.value = response.data.users
       loading.value = false;
+      fetchWebsites()
     } catch (error) {
       console.log(error);
       loading.value = false;
       toast.error("Error getting jobs data")
     }
+
+    loading.value = false;
   }
+
+  async function connectUserToWebsite(userId, websiteId) {
+    try {
+      loading.value = true
+      const { data } = await axios.post('connect-user-to-website', { userId, websiteId });
+      loading.value = false
+      toast.success("User connected to the website.")
+      websitesModalOpen.value = !websitesModalOpen.value
+      fetchUsers()
+    } catch (error) {
+      console.log(error)
+      loading.value = false
+    }
+    loading.value = false;
+  }
+
+  async function disconnectUserFromWebsite(userId, websiteId) {
+    try {
+      loading.value = true
+      const { data } = await axios.post('disconnect-user-from-website', { userId, websiteId });
+      loading.value = false
+      toast.success("User disconnected from the website.")
+      websitesModalOpen.value = !websitesModalOpen.value
+      fetchUsers()
+    } catch (error) {
+      console.log(error)
+      loading.value = false
+    }
+    loading.value = false;
+  }
+
+  function objectExistsById(id) {
+    return allUserWebsites.value.some(obj => obj.value === id);
+  }
+
 
   onMounted(() => {
     fetchUsers()
+  })
+
+  watchEffect(() => {
+    let b = selectedUser.value ? selectedUser.value.id : 0
   })
 
 </script>
@@ -215,5 +308,57 @@
     </div>
   </div>
 
-  <div v-if="modalOpen" class="bg-gray-900 bg-opacity-50 dark:bg-opacity-80 fixed inset-0 z-40"></div>
+  <div id="websitesModalOpen" tabindex="-1" :class="{ flex: websitesModalOpen, hidden: !websitesModalOpen }" class="overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 w-full md:inset-0 h-modal md:h-full justify-center items-center">
+    <div class="relative p-4 w-full max-w-5xl h-full md:h-auto">
+      <!-- Modal content -->
+      <div class="relative bg-white rounded-lg shadow dark:bg-gray-700">
+        <!-- Modal header -->
+        <div class="flex justify-between items-start p-4 rounded-t border-b dark:border-gray-600">
+          <h3 class="text-xl text-center font-semibold text-gray-900 dark:text-white">
+            Connect or Disconnect websites for {{ selectedUser?.firstName }} {{ selectedUser?.lastName }}
+          </h3>
+          <button ref="closeDefaultModal" type="button"
+            class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center dark:hover:bg-gray-600 dark:hover:text-white"
+            @click="websitesModalOpen = false">
+            <svg aria-hidden="true" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"
+              xmlns="http://www.w3.org/2000/svg">
+              <path fill-rule="evenodd"
+                d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                clip-rule="evenodd"></path>
+            </svg>
+            <span class="sr-only">Close modal</span>
+          </button>
+        </div>
+        <!-- Modal body -->
+        <div class="p-6 space-y-6">
+          <ul class="list-none grid grid-cols-4 gap-4" v-if="allUserWebsites">
+            <li v-for="website in allWebsites" :key="website.value" class="mb-1">
+              <div class="text-center">
+                <span v-if="website.label.length > 23">{{ website.label.slice(0, 23) + '...' }}</span>
+                <span v-else>{{ website.label }}</span>
+                <div>
+                  <button
+                    v-if="!objectExistsById(website.value)"
+                    @click="connectUserToWebsite(selectedUser.id, website.value)"
+                    class="bg-green-500 text-white font-semibold py-1 px-2 rounded-md hover:bg-green-600"
+                  >
+                    Connect
+                  </button>
+                  <button
+                    v-else
+                    @click="disconnectUserFromWebsite(selectedUser.id, website.value)"
+                    class="bg-red-500 text-white font-semibold py-1 px-2 rounded-md ml-2 hover:bg-red-600"
+                  >
+                    Disconnect
+                  </button>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div v-if="modalOpen || websitesModalOpen" class="bg-gray-900 bg-opacity-50 dark:bg-opacity-80 fixed inset-0 z-40"></div>
 </template>
