@@ -1003,7 +1003,7 @@ const lineItemTotal = computed(() => (Number(lineItem.value.amount) * Number(lin
 
 onMounted(()=>{
   status.value = userStore.status
-  getLineItems();
+  //getLineItems();
   checkParams();
   let tag = document.createElement("script");
   tag.setAttribute("src", "https://github.com/foliojs/pdfkit/releases/download/v0.12.1/pdfkit.standalone.js");
@@ -1019,6 +1019,25 @@ onMounted(()=>{
     getSum(estimate.value.items)
   }
 })
+
+watchEffect(() => {
+  if (estimate.value.items) {
+    getSum(estimate.value.items)
+  }
+})
+
+const addItemm = () => {
+  estimate.value.items.push({
+      name: '',
+      description: '',
+      quantity: 0,
+      amount: 0,
+  });
+};
+
+const removeItemm = (item = null) => {
+  estimate.value.items = estimate.value.items.filter((d) => d.name != item.name && d.description != item.description && d.quantity != item.quantity && d.amount != item.amount);
+};
 
 </script>
 
@@ -1164,19 +1183,19 @@ onMounted(()=>{
               </div>
             </div>
 
-            <div class="border-4 border-b-[#11101e] mt-5 mb-20"></div>
+            <div class="border-4 border-b-[#11101e] mt-5 mb-2"></div>
 
             <!-- Line Items Heading -->
-            <div class="grid grid-flow-col grid-rows-1 grid-cols-12 gap-4 mb-2 border-2 border-transparent border-b-[#11101e]">
+            <!-- <div class="grid grid-flow-col grid-rows-1 grid-cols-12 gap-4 mb-2 border-2 border-transparent border-b-[#11101e]">
               <div class="text-lg font-bold col-span-8">Item</div>
               <div class="text-lg font-bold text-center">Unit Cost</div>
               <div class="text-lg font-bold text-center">Quantity</div>
               <div class="text-lg font-bold text-center">Total</div>
               <div class="text-lg font-bold text-center">Action</div>
-            </div>
+            </div> -->
 
             <!-- Line Items -->
-            <div v-for="item, index in estimate.items" :key="index" class="grid grid-flow-col grid-rows-1 grid-cols-12 gap-4 mb-2 border-2 border-transparent border-b-[#11101e]">
+            <!-- <div v-for="item, index in estimate.items" :key="index" class="grid grid-flow-col grid-rows-1 grid-cols-12 gap-4 mb-2 border-2 border-transparent border-b-[#11101e]">
               <div class="text-lg col-span-8 pb-2">
                 {{item.name || item.item}}
                 <p class="text-sm">{{item.description}}</p>
@@ -1185,10 +1204,10 @@ onMounted(()=>{
               <div class="text-lg text-center content-center">{{item.quantity}}</div>
               <div class="text-lg text-center content-center">{{estimate.company.currency_symbol + (Number(item.amount) * Number(item.quantity))}}</div>  
               <div class="text-lg flex justify-items-center items-center"><svg class="project-delete ml-10" color="hsl(232, 23%, 61%)" viewBox="0 0 1024 1024" style="stroke: currentcolor; fill: currentcolor" @click="deleteItem(index, item)" > <path d="M837.312 227.584v682.624c0 62.848-50.88 113.792-113.728 113.792h-455.168c-62.81 0-113.728-50.918-113.728-113.728 0-0.023 0-0.045 0-0.068l-0 0.004v-682.624h682.624zM638.272 0l56.832 56.896h199.104v113.792h-796.416v-113.792h199.040l57.024-56.896h284.416z" ></path> </svg></div>          
-            </div>
+            </div> -->
 
             <!-- Add Line Item -->
-            <div class="grid grid-flow-col grid-rows-1 grid-cols-12 gap-4 mb-2 border-2 border-transparent border-b-[#11101e]">
+            <!-- <div class="grid grid-flow-col grid-rows-1 grid-cols-12 gap-4 mb-2 border-2 border-transparent border-b-[#11101e]">
               <div class="text-md col-span-8 pb-2">
                 <FormKit :type="autocomplete" :options="searchLineItems" name="item_name" placeholder="Line Item Name" v-model="lineItem.name" input-class="p-1 m-0 bg-slate-100" :classes="{ outer: 'mb-0 ml-0 w-full', inner: { $reset: true, 'relative p-0 m-0': true } }" />
                 <p class="text-sm mt-2 ml-0">
@@ -1207,7 +1226,64 @@ onMounted(()=>{
               <div class="text-md text-center content-center">
                 <span class="symbol" @click="addItem">+</span>
               </div>           
-            </div> 
+            </div>  -->
+
+            <div class="table-responsive">
+              <table>
+                  <thead>
+                      <tr class="text-left pl-3 w-full">
+                          <th>Item</th>
+                          <th class="w-1">Quantity</th>
+                          <th class="w-1">Price</th>
+                          <th class="w-1">Total</th>
+                          <th class="w-1"></th>
+                      </tr>
+                  </thead>
+                  <tbody>
+                      <template v-if="estimate.items.length <= 0">
+                          <tr>
+                              <td colspan="5" class="!text-center font-semibold">No Item Available</td>
+                          </tr>
+                      </template>
+                      <template v-for="(item, i) in estimate.items" :key="i">
+                          <tr class="align-top">
+                              <td>
+                                  <input type="text" class="form-input min-w-[200px]" placeholder="Enter Item Name" v-model="item.name" />
+                                  <textarea class="form-textarea mt-4" placeholder="Enter Description" v-model="item.description"></textarea>
+                              </td>
+                              <td><input type="number" class="form-input w-32" placeholder="Quantity" v-model="item.quantity" min="0"/></td>
+                              <td><input type="number" class="form-input w-32" placeholder="Price" v-model="item.amount" min="0"/></td>
+                              <td>{{estimate.company.currency_symbol}}{{ item.amount * item.quantity }}</td>
+                              <td>
+                                  <button type="button" @click="removeItemm(item)">
+                                      <svg
+                                          xmlns="http://www.w3.org/2000/svg"
+                                          width="24px"
+                                          height="24px"
+                                          viewBox="0 0 24 24"
+                                          fill="none"
+                                          stroke="currentColor"
+                                          stroke-width="1.5"
+                                          stroke-linecap="round"
+                                          stroke-linejoin="round"
+                                          class="w-5 h-5"
+                                      >
+                                          <line x1="18" y1="6" x2="6" y2="18"></line>
+                                          <line x1="6" y1="6" x2="18" y2="18"></line>
+                                      </svg>
+                                  </button>
+                              </td>
+                          </tr>
+                      </template>
+                  </tbody>
+              </table>
+            </div>
+
+            <div class="flex justify-between sm:flex-row flex-col mt-6 px-4">
+              <div class="sm:mb-0 mb-6">
+                  <button type="button" class="btn btn-primary" style="background-color: #0c3142;" @click="addItemm()">Add Item</button>
+              </div>
+            </div>
 
             <!-- Notes -->
             <div class="mt-24 mb-24">
