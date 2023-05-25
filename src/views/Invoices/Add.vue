@@ -245,7 +245,7 @@ async function saveInvoice(data) {
   try {
     loading.value = true
     const response = await axios.get('invoice_number?id='+ userStore.currentWebsite);
-    invoice_number = response.data.invoice_number
+    invoice_number = Number(response.data.invoice_number)
     loading.value = false
   } catch (error) {
     console.log(error)
@@ -604,7 +604,7 @@ async function sendAttachment(data) {
   try {
     loading.value = true
     const response = await axios.get('invoice_number?id='+ userStore.currentWebsite);
-    invoice_number = response.data.invoice_number
+    invoice_number = Number(response.data.invoice_number)
     loading.value = false
   } catch (error) {
     console.log(error)
