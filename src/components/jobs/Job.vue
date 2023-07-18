@@ -29,6 +29,18 @@
 		{ value: "invoiced", name: "Invoiced" },
 		{ value: "follow-up", name: "Follow-up" },
 		{ value: "done", name: "Done" },
+		{ value: "paid", name: "Paid" },
+		{ value: "to order parts", name: "To order parts" },
+		{ value: "parts ordered", name: "Parts ordered" },
+		{ value: "parts arrived", name: "Parts arrived" },
+		{ value: "parts installed", name: "Parts installed" },
+		{ value: "parts paid", name: "Parts paid" },
+		{ value: "parts not paid", name: "Parts not paid" },
+		{ value: "parts not installed", name: "Parts not installed" },
+		{ value: "parts not ordered", name: "Parts not ordered" },
+		{ value: "parts not available", name: "Parts not available" },
+		{ value: "parts not needed", name: "Parts not needed" },
+		{ value: "parts not found", name: "Parts not found" },
   ]
 
 	const currentStatus = statuses.filter(a => a.value == props.job.jobStatus)?.length && props.job?.jobStatus ? statuses.filter(a => a.value == props.job.jobStatus) : ''

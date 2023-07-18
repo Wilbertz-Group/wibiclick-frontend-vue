@@ -104,12 +104,12 @@
       });
 
       Object.keys(fJobs).forEach((itm) => {
-        //if(itm != 'done' && itm != "cancelled" && itm != "no parts"){
+        if(itm != 'done' && itm != "cancelled" && itm != "no parts" && itm != "parts not paid" && itm != "parts not installed" && itm != "parts not ordered" && itm != "parts not available" && itm != "parts not needed" && itm != "parts not found"){
           tempJobs.push({
             title: itm,
             jobs: fJobs[itm]
           })
-        //}
+        }
       });
 
       let jobAp = []
@@ -151,6 +151,61 @@
           case "done":
             jobAp[8] = itm
           break;
+
+          case "paid":
+            jobAp[9] = itm
+          break;
+
+          case "to order parts":
+            jobAp[10] = itm
+          break;
+
+          case "parts ordered":
+            jobAp[11] = itm
+          break;
+
+          case "parts arrived":
+            jobAp[12] = itm
+          break;
+
+          case "parts installed":
+            jobAp[13] = itm
+          break;
+
+          case "parts paid":
+            jobAp[14] = itm
+          break;
+
+          case "parts not paid":
+            jobAp[15] = itm
+          break;
+
+          case "parts not installed":
+            jobAp[16] = itm
+          break;
+
+          case "parts not ordered":
+            jobAp[17] = itm
+          break;
+
+          case "parts not available":
+            jobAp[18] = itm
+          break;
+
+          case "parts not needed":
+            jobAp[19] = itm
+          break;
+
+          case "parts not found":
+            jobAp[20] = itm
+          break;
+
+          case "follow-up":
+            jobAp[21] = itm
+          break;
+
+          default:
+            break;
         }
       });
 
