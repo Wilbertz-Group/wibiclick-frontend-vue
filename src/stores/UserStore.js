@@ -26,7 +26,19 @@ export const useUserStore = defineStore("UserStore", {
         'pending',
         'invoiced',
         'follow-up',
-        'done'    
+        'done',
+        'paid',
+        'to order parts',
+        'parts ordered',
+        'parts arrived',
+        'parts installed',
+        'parts paid',
+        'parts not paid',
+        'parts not installed',
+        'parts not ordered',
+        'parts not available',
+        'parts not needed',
+        'parts not found'  
       ]
     };
   },
