@@ -9,6 +9,18 @@ const jobStatusColors = {
 	"no parts": "bg-yellow-500",
 	invoiced: "bg-green-800",
 	paid: "bg-blue-600",
+	"to order parts": "bg-yellow-500",
+	"parts ordered": "bg-yellow-400",
+	"parts arrived": "bg-yellow-300",
+	"parts installed": "bg-yellow-200",
+	"parts paid": "bg-yellow-100",
+	"parts not paid": "bg-red-100",
+	"parts not installed": "bg-red-200",
+	"parts not ordered": "bg-red-300",
+	"parts not available": "bg-red-400",
+	"parts not needed": "bg-red-500",
+	"parts not found": "bg-red-600",
+	"follow-up": "bg-yellow-800"
 }
 
 export { jobStatusColors }
