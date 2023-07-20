@@ -1032,11 +1032,12 @@ const addItemm = () => {
       description: '',
       quantity: 0,
       amount: 0,
+      id: Date.now()
   });
 };
 
-const removeItemm = (item = null) => {
-  estimate.value.items = estimate.value.items.filter((d) => d.name != item.name && d.description != item.description && d.quantity != item.quantity && d.amount != item.amount);
+const removeItemm = (item) => {
+  estimate.value.items = estimate.value.items.filter((d) => d.id != item.id);
 };
 
 </script>

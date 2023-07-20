@@ -978,11 +978,12 @@ const addItemm = () => {
       description: '',
       quantity: 0,
       amount: 0,
+      id: Date.now()
   });
 };
 
 const removeItemm = (item = null) => {
-  invoice.value.items = invoice.value.items.filter((d) => d.name != item.name && d.description != item.description && d.quantity != item.quantity && d.amount != item.amount);
+  invoice.value.items = invoice.value.items.filter((d) => d.id != item.id);
 };
 
 </script>
