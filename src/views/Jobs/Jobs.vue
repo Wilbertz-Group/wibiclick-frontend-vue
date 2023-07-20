@@ -352,9 +352,9 @@
       }, 
       { field: "issue" }, 
       { field: "location", maxWidth: 150 },
-      { field: "callout", maxWidth: 120 },       
+      { field: "callout", maxWidth: 100 },       
       { field: "employee", maxWidth: 130, valueFormatter: nameFormatter }, 
-      { field: "jobStatus", maxWidth: 130, cellRendererSelector: params => {
+      { field: "jobStatus", maxWidth: 160, cellRendererSelector: params => {
           return {
               component: Status,
               params
