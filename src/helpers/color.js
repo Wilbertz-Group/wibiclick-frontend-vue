@@ -21,10 +21,10 @@ const jobStatusColors = {
 	"parts not needed": "bg-red-500",
 	"parts not found": "bg-red-600",
 	"follow-up": "bg-yellow-800",
-	"waiting for price": "bg-gray-100",
-	"waiting for parts": "bg-gray-200",
-	"waiting for customer": "bg-gray-300",
-	"waiting for payment": "bg-gray-400"
+	"waiting for price": "bg-gray-600",
+	"waiting for parts": "bg-gray-700",
+	"waiting for customer": "bg-gray-800",
+	"waiting for payment": "bg-gray-900"
 }
 
 export { jobStatusColors }
