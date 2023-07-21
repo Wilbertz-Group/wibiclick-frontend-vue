@@ -38,7 +38,11 @@ export const useUserStore = defineStore("UserStore", {
         'parts not ordered',
         'parts not available',
         'parts not needed',
-        'parts not found'  
+        'parts not found',
+        'waiting for price',
+        'waiting for parts',
+        'waiting for customer',
+        'waiting for payment'
       ]
     };
   },

@@ -104,7 +104,7 @@
       });
 
       Object.keys(fJobs).forEach((itm) => {
-        if(itm != 'done' && itm != "cancelled" && itm != "no parts" && itm != "parts not paid" && itm != "parts not installed" && itm != "parts not ordered" && itm != "parts not available" && itm != "parts not needed" && itm != "parts not found"){
+        if(itm != 'done' && itm != "cancelled" && itm != "no parts" && itm != "parts not paid" && itm != "parts not installed" && itm != "parts not available" && itm != "parts not needed" && itm != "parts not found"){
           tempJobs.push({
             title: itm,
             jobs: fJobs[itm]
@@ -202,6 +202,22 @@
 
           case "follow-up":
             jobAp[21] = itm
+          break;
+
+          case "waiting for price":
+            jobAp[22] = itm
+          break;
+
+          case "waiting for parts":
+            jobAp[23] = itm
+          break;
+
+          case "waiting for customer":
+            jobAp[24] = itm
+          break;
+
+          case "waiting for payment":
+            jobAp[25] = itm
           break;
 
           default:

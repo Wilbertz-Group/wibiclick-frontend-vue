@@ -41,6 +41,10 @@
 		{ value: "parts not available", name: "Parts not available" },
 		{ value: "parts not needed", name: "Parts not needed" },
 		{ value: "parts not found", name: "Parts not found" },
+		{ value: "waiting for price", name: "waiting for price"},
+		{ value: "waiting for parts", name: "waiting for parts"},
+		{ value: "waiting for customer", name: "waiting for customer"},
+		{ value: "waiting for payment", name: "waiting for payment"}
   ]
 
 	const currentStatus = statuses.filter(a => a.value == props.job.jobStatus)?.length && props.job?.jobStatus ? statuses.filter(a => a.value == props.job.jobStatus) : ''
