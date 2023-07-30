@@ -331,18 +331,25 @@
   const rowData = reactive([]); 
 
   const dateFormatter = (params) => {
-    let dt = params.value
-    return params.value ? moment().isSame(dt, 'day') ? moment(dt).format('h:mm a') : moment(dt).format('MMM DD, YYYY h:mm a') : '-';
+    let dt = params.value;
+    console.log(dt, " --- ", moment.utc(dt).format('MMM DD, YYYY h:mm a'));
+    return params.value 
+        ? moment.utc().isSame(dt, 'day') 
+            ? moment.utc(dt).format('h:mm a') 
+            : moment.utc(dt).format('MMM DD, YYYY h:mm a') 
+        : '-';
   }
+
+
 
   const universalDateFormatter = (dat) => {
     let dt = dat
-    return moment().isSame(dt, 'day') ? "Today" : moment(dt).format("dddd, DD MMM YYYY");
+    return moment().isSame(dt, 'day') ? "Today" : moment.utc(dt).format("dddd, DD MMM YYYY");
   }
 
   const universalTimeFormatter = (dat) => {
     let dt = dat
-    return moment().isSame(dt, 'day') ? moment(dt).format('h:mm a') : moment(dt).format("h:mm a");
+    return moment().isSame(dt, 'day') ? moment.utc(dt).format('h:mm a') : moment.utc(dt).format("h:mm a");
   }
 
   const nameFormatter = (params) => {
