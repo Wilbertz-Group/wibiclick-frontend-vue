@@ -9,7 +9,7 @@ export const useUserStore = defineStore("UserStore", {
     return {
       user: null,
       rtlClass: 'ltr',
-      ableyk: '58qyVA.CKD0Qg:iOOkt2jKULP5UGOH',
+      ableyk: '58qyVA.oZmMMA:EFhE0xzGmbBhHdWDNYcu-qD2UjuKNYj2wcotHQo1FiY',
       events: '',
       newUser: true,
       analytics: {},
