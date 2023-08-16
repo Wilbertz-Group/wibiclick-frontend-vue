@@ -85,6 +85,15 @@ async function createWidget(n) {
 						//Google Aalytics
 						window.dataLayer = window.dataLayer || [];
 						window.dataLayer.push({ contactUs: text, event: "wibiclick" });
+
+						// Google Ads Conversion Tracking
+						B.gads_track ? trackGoogleAdsConversion(B.gads_id, B.gads_label) : "";
+					}
+
+					function trackGoogleAdsConversion(id, label) {				
+						// Google Ads Conversion script
+						var image = new Image(1, 1);
+						image.src = "https://www.googleadservices.com/pagead/conversion/" + id + "/?label=" + label + "&script=0";
 					}
 			}
 
