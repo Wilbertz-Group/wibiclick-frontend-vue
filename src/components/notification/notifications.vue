@@ -126,7 +126,7 @@ function iniABLY(){
 
 onMounted(async () => {
   if (userStore.currentWebsite && userStore.user) {
-    //iniABLY();
+    iniABLY();
   }
 })
 </script>
