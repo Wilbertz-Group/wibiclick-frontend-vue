@@ -23,6 +23,7 @@ const email = ref(false)
 const telegram = ref(false)
 const viber = ref(false)
 const skype = ref(false)
+const gads_conversion = ref(false)
 
 let options = { key: 'rSP4cA.1NFKaQ:tVDlfYABKtG3vcm3' };
 let client = new Ably.Realtime(options); 
@@ -55,6 +56,7 @@ function toggleMenu() {
   telegram.value = false
   viber.value = false
   skype.value = false
+  gads_conversion.value = false
 }
 
 
@@ -157,7 +159,17 @@ function toggleMenu() {
             <font-awesome-icon icon="fab fa-whatsapp" />
             Connect Whatsapp Web
           </a>
-        </li>  
+        </li> 
+        <li class="w-full mb-2 mt-2">
+            <a href="#"
+                @click="toggleMenu(); gads_conversion=!gads_conversion"
+                :class="!gads_conversion ? 'bg-white' : 'bg-sky-100 text-sky-600 rounded-t-lg border-b-2 border-sky-600'"
+                class="btn-air-light text-center font-semibold inline-block p-4 w-full text-gray-900 rounded-lg focus:ring-4 focus:ring-blue-300 active focus:outline-none dark:bg-gray-700 dark:text-white"
+                aria-current="page">
+                <font-awesome-icon icon="fas fa-ad" />
+                Google Ads Conversion
+            </a>
+        </li> 
       </ul>
 
       <div class="col-span-1 md:col-span-2 shadow sm:rounded-md sm:overflow-hidden mt-2 btn-air-light">
@@ -320,6 +332,25 @@ function toggleMenu() {
 
           </div>
         </FormKit>
+
+        <!-- Google Ads Conversion Tab -->
+        <FormKit type="form" v-if="gads_conversion" :form-class="gads_conversion ? 'w-full' : 'show w-full'"  submit-label="Update"
+          @submit="settingsUpdate" :actions="false" >
+          <div class="px-4 py-5 bg-white space-y-6 sm:p-6">
+            <h3 class="text-2xl font-semibold text-gray-700">Google Ads Conversion Tracking</h3>
+            <div class="w-full">
+                <FormKit v-model="userStore.settings.gads_track" type="checkbox" label="Enable Tracking" name="gads_track" />
+
+                <FormKit type="text" name="gads_id" label="Conversion ID" :validation="userStore.settings.gads_track ? 'required' : ''" label-class="text-left" v-model="userStore.settings.gads_id" />
+                
+                <FormKit type="text" name="gads_label" label="Conversion Label" :validation="userStore.settings.gads_track ? 'required' : ''" label-class="text-left" v-model="userStore.settings.gads_label" />
+            </div>
+          </div>
+          <div class="px-4 py-3 text-right sm:px-6">
+            <FormKit type="submit" label="Update" />
+          </div>
+        </FormKit>
+
       </div>
 
       <div>
