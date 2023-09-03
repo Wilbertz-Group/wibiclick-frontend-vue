@@ -117,7 +117,7 @@ const goBack = () => {
   }
 };
 
-const brands = ['Brand A', 'Brand B', 'Brand C']; // Replace this with actual brand options
+const brands = ['SMeg', 'Bosch', 'Samsung', 'Whirpool']; // Replace this with actual brand options
 
 const submitForm = async () => {
   const formData = {
@@ -171,7 +171,7 @@ watch([step, applianceCategory], ([newStep, newApplianceCategory]) => {
         <section v-if="step === 1" class="mb-4">
           <label class="block text-gray-700 text-sm font-bold mb-2">What type of appliance needs repairing?</label>
           <div class="flex flex-wrap gap-4 w-full">
-            <div v-for="option in applianceCategoryOptions" :key="option.value" class="w-[23%] p-2 bg-sky-50 hover:bg-sky-100 rounded shadow">
+            <div v-for="option in applianceCategoryOptions" :key="option.value" class="w-[23%] p-2 hover:bg-[deepskyblue] active:bg-[deepskyblue] rounded shadow appliance-options">
               <input type="radio" :id="option.value" :value="option.value" v-model="applianceCategory" class="" />
               <label :for="option.value" class="flex flex-col items-center cursor-pointer">
                 <img :src="option.image" alt="" class="w-16 h-16">
@@ -185,7 +185,7 @@ watch([step, applianceCategory], ([newStep, newApplianceCategory]) => {
         <section v-if="step === 2" class="mb-4">
           <label class="block text-gray-700 text-sm font-bold mb-2">Select Appliance</label>
           <div class="flex flex-wrap gap-4 w-full">
-            <div v-for="option in applianceOptions" :key="option.value" class="w-[23%] p-2 bg-sky-50 hover:bg-sky-100 rounded shadow">
+            <div v-for="option in applianceOptions" :key="option.value" class="w-[23%] p-2 hover:bg-sky-100 rounded shadow appliance-options">
               <input type="radio" :id="option.value" :value="option.value" v-model="applianceType" class="" />
               <label :for="option.value" class="flex flex-col items-center cursor-pointer">
                 <img :src="option.image" alt="" class="w-16 h-16">
@@ -268,3 +268,11 @@ watch([step, applianceCategory], ([newStep, newApplianceCategory]) => {
   </div>
 </template>
 
+<style scoped>
+  .appliance-options {
+    border-radius: 0.4rem;
+    box-shadow: -5px 25px 17px -20px rgba(0, 0, 0, .5);
+    border: 1px solid darkmagenta;
+  }
+
+</style>
