@@ -26,6 +26,12 @@ import fullSizeImage from '@/assets/images/forms/full-size.png';
 import slimLineImage from '@/assets/images/forms/slim-line.png';
 import tabletopImage from '@/assets/images/forms/tabletop.png';
 
+import electricImage from '@/assets/images/forms/electric.png';
+import gasImage from '@/assets/images/forms/gas.png';
+import dualImage from '@/assets/images/forms/dual.png';
+
+import freestandingImage from '@/assets/images/forms/freestanding.png';
+import integratedImage from '@/assets/images/forms/integrated.png';
 
 const step = ref(1);
 const applianceCategory = ref('');
@@ -45,7 +51,15 @@ const userDetails = ref({
 const preferredDateTime = ref('');
 const errors = ref({});
 
-const fuelOptions = ['Electric', 'Gas', 'Dual Fuel'];
+const fuelOptions = [
+  { label: 'Electric', value: 'Electric', image: electricImage },
+  { label: 'Gas', value: 'Gas', image: gasImage },
+  { label: 'Dual Fuel', value: 'Dual Fuel', image: dualImage }
+];
+const fittingOptions = [
+  { label: 'Freestanding', value: 'Freestanding', image: freestandingImage },
+  { label: 'Integrated', value: 'Integrated', image: integratedImage }
+];
 const formData = ref({});
 const direction = ref('forward');
 
@@ -117,7 +131,7 @@ const goBack = () => {
   }
 };
 
-const brands = ['SMeg', 'Bosch', 'Samsung', 'Whirpool']; // Replace this with actual brand options
+const brands = ['Smeg', 'Bosch', 'Samsung', 'Whirpool', 'Defy', 'Indesit', 'AEG', 'Beko', 'Hisense', 'Grandig', 'LG', 'Miele', 'Neff', 'Siemens', 'Zanussi', 'Russell Hobbs', 'Hotpoint', 'Hoover', 'Candy', 'Electrolux', 'Gorenje', 'Panasonic', 'Sharp', 'Daewoo', 'Kenwood', 'Breville', 'Morphy Richards', 'DeLonghi', 'Tefal', 'Philips', 'Dyson', 'Vax', 'Di', 'Other'];
 
 const submitForm = async () => {
   const formData = {
@@ -198,7 +212,15 @@ watch([step, applianceCategory], ([newStep, newApplianceCategory]) => {
         <!-- Step 3: Fuel Type -->
         <div v-if="step === 3" class="mb-4">
           <label v-if="['Oven', 'Cooker', 'Hob', 'CookerHood'].includes(applianceType)" class="block text-gray-700 text-sm font-bold mb-2">Fuel Type</label>
-          <FormKit type="radio" v-if="['Oven', 'Cooker', 'Hob', 'CookerHood'].includes(applianceType)" v-model="fuelType" class="w-full p-2 border rounded" :options="fuelOptions"></FormKit>
+          <div class="flex flex-wrap gap-4 w-full">
+            <div v-for="option in fuelOptions" :key="option.value" class="w-[23%] p-2 hover:bg-sky-100 rounded shadow appliance-options">
+              <input type="radio" :id="option.value" :value="option.value" v-model="fuelType" class="" v-if="['Oven', 'Cooker', 'Hob', 'CookerHood'].includes(applianceType)" />
+              <label :for="option.value" v-if="['Oven', 'Cooker', 'Hob', 'CookerHood'].includes(applianceType)" class="flex flex-col items-center cursor-pointer">
+                <img :src="option.image" alt="" class="w-16 h-16">
+                <span class="mt-2 text-center">{{ option.label }}</span>
+              </label>
+            </div>
+          </div>
 
           <label v-if="applianceType === 'Microwave' ? step++ : ''" class="block text-gray-700 text-sm font-bold mb-2">How is the appliance fitted?</label>
           <FormKit type="radio" v-if="applianceType === 'Microwave'" v-model="fittingType" :options="['Freestanding', 'Integrated']" class="w-full p-2 border rounded"></FormKit>
@@ -208,7 +230,15 @@ watch([step, applianceCategory], ([newStep, newApplianceCategory]) => {
         <!-- Step 4: How is the Appliance Fitted? -->
         <section v-if="step === 4" class="mb-4">
           <label class="block text-gray-700 text-sm font-bold mb-2">How is the appliance fitted?</label>
-          <FormKit type="radio" v-model="fittingType" :options="['Freestanding', 'Integrated']" class="w-full p-2 border rounded" />          
+          <div class="flex flex-wrap gap-4 w-full">
+            <div v-for="option in fittingOptions" :key="option.value" class="w-[23%] p-2 hover:bg-sky-100 rounded shadow appliance-options">
+              <input type="radio" :id="option.value" :value="option.value" v-model="fittingType" class="" />
+              <label :for="option.value" class="flex flex-col items-center cursor-pointer">
+                <img :src="option.image" alt="" class="w-16 h-16">
+                <span class="mt-2 text-center">{{ option.label }}</span>
+              </label>
+            </div>
+          </div>         
         </section>
 
         <!-- Step 5: Appliance Brand -->
