@@ -1,39 +1,26 @@
 function openForm(url) {
-	// Dynamically load jQuery if it's not already loaded
-	if (typeof jQuery === 'undefined') {
-			var script = document.createElement('script');
-			script.type = 'text/javascript';
-			script.src = 'http://ajax.googleapis.com/ajax/libs/jquery/1.4/jquery.min.js';
-			script.onload = function() {
-					loadFancybox(url);
-			};
-			document.head.appendChild(script);
-	} else {
-			loadFancybox(url);
-	}
-}
+		var script = document.createElement('script');
+		script.type = 'text/javascript';
+		script.src = 'https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.umd.js';
+		script.onload = function() {
+			Fancybox.show([
+				{
+					src: url,
+					type: "iframe",
+					preload: false,
+					width: 900,
+					height: 500,
+				},
+			]);			
+		};
+		document.head.appendChild(script);
 
-function loadFancybox(url) {
-	// Dynamically load Fancybox CSS
-	var link = document.createElement('link');
-	link.rel = 'stylesheet';
-	link.type = 'text/css';
-	link.href = 'https://cdn2.hubspot.net/hub/9315358/hub_generated/template_assets/133446363997/1693951136618/fancybox.min.css';
-	document.head.appendChild(link);
-
-	// Dynamically load Fancybox script
-	var script = document.createElement('script');
-	script.type = 'text/javascript';
-	script.src = '/fancybox/jquery.fancybox-1.3.4.pack.js';
-	script.onload = function() {
-			// Initialize Fancybox and open the URL
-			$.fancybox({
-					'href': url,
-					'type': 'iframe',
-					'title': 'Book A Technician'
-			});
-	};
-	document.head.appendChild(script);
+		// Dynamically load Fancybox CSS
+		var link = document.createElement('link');
+		link.rel = 'stylesheet';
+		link.type = 'text/css';
+		link.href = 'https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.css';
+		document.head.appendChild(link);
 }
 
 
