@@ -155,6 +155,21 @@ toggleView.value = true
               <div class="chatPopup__phoneText">Email Us</div>
             </a>
 
+            <!-- Book a Form Button to open popup with jotform url-->
+            <a v-if="wibiclick.book_a_technician_show"
+              class="chatPopup__formNow btn-pill btn-air-light" id="chatPopup__formNow">
+              <div class="chatPopup__formIcon">
+                <svg aria-hidden="true" focusable="false" data-prefix="fas" data-icon="file-alt"
+                  class="svg-inline--fa fa-file-alt fa-w-12" role="img" xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 384 512">
+                  <path fill="currentColor"
+                    d="M368 160H16c-8.8 0-16 7.2-16 16v256c0 8.8 7.2 16 16 16h352c8.8 0 16-7.2 16-16V176c0-8.8-7.2-16-16-16zM24 184h336v48H24v-48zm336 240H24V240h336v184z">
+                  </path>
+                </svg>
+              </div>
+              <div class="chatPopup__phoneText">Book a Technician</div>
+            </a>
+
           </div>
         </div>
 
