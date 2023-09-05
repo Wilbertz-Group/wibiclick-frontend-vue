@@ -373,7 +373,7 @@ toggleView.value = true
   margin-bottom: 0px !important;
 }
 
-.chatPopup__callNow {
+.chatPopup__callNow, .chatPopup__book_a_technician {
   background-color: #0f130f;
   color: white;
   display: flex;

@@ -1,7 +1,41 @@
-
 function openForm(url) {
-	window.open(url, 'Book A Technician', 'width=800,height=600');
+	// Dynamically load jQuery if it's not already loaded
+	if (typeof jQuery === 'undefined') {
+			var script = document.createElement('script');
+			script.type = 'text/javascript';
+			script.src = 'http://ajax.googleapis.com/ajax/libs/jquery/1.4/jquery.min.js';
+			script.onload = function() {
+					loadFancybox(url);
+			};
+			document.head.appendChild(script);
+	} else {
+			loadFancybox(url);
+	}
 }
+
+function loadFancybox(url) {
+	// Dynamically load Fancybox CSS
+	var link = document.createElement('link');
+	link.rel = 'stylesheet';
+	link.type = 'text/css';
+	link.href = 'https://cdn2.hubspot.net/hub/9315358/hub_generated/template_assets/133446363997/1693951136618/fancybox.min.css';
+	document.head.appendChild(link);
+
+	// Dynamically load Fancybox script
+	var script = document.createElement('script');
+	script.type = 'text/javascript';
+	script.src = '/fancybox/jquery.fancybox-1.3.4.pack.js';
+	script.onload = function() {
+			// Initialize Fancybox and open the URL
+			$.fancybox({
+					'href': url,
+					'type': 'iframe',
+					'title': 'Book A Technician'
+			});
+	};
+	document.head.appendChild(script);
+}
+
 
 async function createWidget(n) {
 	var e, t, o, a, i, c, p, l, s, r, d, h, u, g, x, m = "",
