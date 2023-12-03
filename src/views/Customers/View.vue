@@ -19,6 +19,7 @@
 	import accordionForm from '@/components/analytics/accordionForm.vue'
 	import accordionLineitem from '@/components/line-items/accordion.vue'
 	import accordion from '@/components/whatsapp/accordion.vue'
+	import accordionEmail from '@/components/email/accordion.vue'
 	import accordionNotes from '@/components/notes/accordion.vue'
 	import accordionInvoice from '@/components/invoices/accordion.vue'
 	import accordionEstimate from '@/components/estimates/accordion.vue'
@@ -394,6 +395,7 @@
 							<ol class="relative border-l max-w-full ml-5 border-gray-200 dark:border-gray-700">       
 								<li v-for="activity in customer?.activities" :key="activity.uid" class="mb-10 ml-6">
 									<accordion v-if="activity.type == 'whatsapp'" :msgs="[activity?.whatsapp]"></accordion>
+									<accordion-email v-if="activity.type == 'email'" :msgs="[activity?.email]"></accordion-email>
 									<accordion-notes v-if="activity.type == 'note'" :notes="[activity?.notes]" :status="activity?.status" :user="activity?.User?.firstName" :created="activity?.createdAt"></accordion-notes>
 									<accordion-invoice v-if="activity.type == 'invoice'" :invoices="[activity?.invoice]" :status="activity?.status" :user="activity?.User?.firstName" :created="activity?.createdAt"></accordion-invoice>
 									<accordion-estimate v-if="activity.type == 'estimate'" :estimates="[activity?.estimate]" :status="activity?.status" :user="activity?.User?.firstName" :created="activity?.createdAt"></accordion-estimate>

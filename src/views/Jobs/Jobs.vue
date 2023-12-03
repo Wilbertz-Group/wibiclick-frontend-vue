@@ -332,7 +332,7 @@
 
   const dateFormatter = (params) => {
     let dt = params.value;
-    console.log(dt, " --- ", moment.utc(dt).format('MMM DD, YYYY h:mm a'));
+    //console.log(dt, " --- ", moment.utc(dt).format('MMM DD, YYYY h:mm a'));
     return params.value 
         ? moment.utc().isSame(dt, 'day') 
             ? moment.utc(dt).format('h:mm a') 
