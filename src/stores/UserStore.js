@@ -17,6 +17,7 @@ export const useUserStore = defineStore("UserStore", {
       currentWebsite: "default",
       settings: {},
       status: [ 
+        'AI-Draft',
         'scheduled',
         'quoting', 
         'quoted', 

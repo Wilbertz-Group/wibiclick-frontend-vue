@@ -117,6 +117,19 @@
     }
   }
 
+	async function aiBookJob(customerId){
+		try {
+      loading.value = true
+      await axios.post('ai-booking?id='+ userStore.currentWebsite, {data: customerId});
+      loading.value = false
+      toast.success("Customer job booked successfully")
+			reloadTimeline()
+    } catch (error) {
+      console.log(error)
+      loading.value = false
+    }
+	}
+
 	onMounted(()=>{
   	fetchContacts();
 		tooltips();
@@ -436,6 +449,9 @@
 					<h5 class="border-b-4 border-gray-900 flex justify-between">
 						<span class="text-xl font-medium text-gray-900 dark:text-white">Jobs</span>
 						<div id="tooltip-add-job-button" @click="router.push({name: 'add-job', query: { contact_id: customer?.id } })" data-tooltip-target="tooltip-add-job" data-tooltip-placement="left" class="cursor-pointer">+ Add</div>
+						<div id="tooltip-ai" role="tooltip" class="">
+							<img src="@/assets/images/sparkle.gif" @click="aiBookJob(customer?.id)" alt="image" loading="lazy" width="26" height="26" class="cursor-pointer" />
+						</div>
 						<div id="tooltip-add-job" role="tooltip" class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white transition-opacity duration-300 bg-gray-900 rounded-lg shadow-sm opacity-0 tooltip dark:bg-gray-700">
 								Add Job
 								<div class="tooltip-arrow" data-popper-arrow></div>
