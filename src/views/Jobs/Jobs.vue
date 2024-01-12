@@ -221,6 +221,7 @@
           break;
 
           default:
+            jobAp[26] = itm
             break;
         }
       });
