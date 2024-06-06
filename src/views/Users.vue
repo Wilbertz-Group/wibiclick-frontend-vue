@@ -205,7 +205,7 @@
   }
 
   function objectExistsById(id) {
-    return allUserWebsites.value.some(obj => obj.value === id);
+    return allUserWebsites.value ? allUserWebsites.value.some(obj => obj.value === id) : false;
   }
 
 
@@ -331,26 +331,29 @@
         </div>
         <!-- Modal body -->
         <div class="p-6 space-y-6">
-          <ul class="list-none grid grid-cols-4 gap-4" v-if="allUserWebsites">
+          <ul class="list-none grid grid-cols-4 gap-4">
             <li v-for="website in allWebsites" :key="website.value" class="mb-1">
               <div class="text-center">
                 <span v-if="website.label.length > 23">{{ website.label.slice(0, 23) + '...' }}</span>
                 <span v-else>{{ website.label }}</span>
-                <div>
+                <div>                  
                   <button
-                    v-if="!objectExistsById(website.value)"
-                    @click="connectUserToWebsite(selectedUser.id, website.value)"
-                    class="bg-green-500 text-white font-semibold py-1 px-2 rounded-md hover:bg-green-600"
-                  >
-                    Connect
-                  </button>
-                  <button
-                    v-else
+                    v-if="objectExistsById(website.value)"
                     @click="disconnectUserFromWebsite(selectedUser.id, website.value)"
                     class="bg-red-500 text-white font-semibold py-1 px-2 rounded-md ml-2 hover:bg-red-600"
                   >
                     Disconnect
                   </button>
+                  
+                  <button
+                    v-else-if="userStore.user.role == 'admin' && userStore.user.permission == 'owner'"
+                    @click="connectUserToWebsite(selectedUser.id, website.value)"
+                    class="bg-green-500 text-white font-semibold py-1 px-2 rounded-md hover:bg-green-600"
+                  >
+                    Connect
+                  </button>
+
+                  <div>{{ userStore.user.role }} {{ userStore.user.permission }}</div>
                 </div>
               </div>
             </li>

@@ -59,7 +59,8 @@ function logout() {
 async function fetchWebsites(n) {
   try {
     loading.value = true
-    const response = await axios.get('get-websites');
+    const id = userStore.user.id;
+    const response = await axios.get('get-websites-for-user?id='+ id);
     opt.value = [{ label: 'Select Website', value: 'default'}].concat(response.data)
     if (response.data.length && selectedWebsite.value != 'default') {
       userStore.updateWebsite(selectedWebsite.value)
