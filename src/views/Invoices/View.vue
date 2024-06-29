@@ -15,6 +15,7 @@ import FormData from 'form-data';
 
 const loading = ref(false);
 const invoiceData = ref({});
+const all_invoices = ref();
 const profile = ref(false);
 const selectedJob = ref();
 const invoicesData = ref({invoice: 'Select Invoice'});
@@ -96,6 +97,7 @@ async function fetchInvoices() {
       `invoices?id=${userStore.currentWebsite}&limit=1500&offset=0`
     );
 
+    all_invoices.value = response.data.invoices
     let invoices = {};
 
     for (const invoice of response.data.invoices) {
@@ -113,10 +115,8 @@ async function fetchInvoices() {
 }
 
 async function updateInvoice(data){
-  let invoice_data = await axios.get(
-      `invoice?id=${data.invoice}`
-    );
-  invoiceData.value = invoice_data.invoice
+  let invoice_data = all_invoices.value.filter(e => { return e.id == data.invoice })[0]
+  invoiceData.value = invoice_data
 
   if(!profile.value){
     try {
@@ -210,20 +210,6 @@ async function saveInvoice(data) {
     return url.split(/[#?]/)[0].split('.').pop().trim();
   }
 
-  function formatDateTwo(dateString) {
-      // Create a new Date object from the date string
-      const date = new Date(dateString);
-      
-      // Options for formatting the date
-      const options = { day: 'numeric', month: 'short' };
-      
-      // Create a formatter with the desired options
-      const formatter = new Intl.DateTimeFormat('en-GB', options);
-      
-      // Format the date
-      return formatter.format(date);
-  }
-
   let img;
 
   try {
@@ -249,13 +235,13 @@ async function saveInvoice(data) {
         var dataURL = 'data:image/' + dataType + ';base64,' + b64;
 
         img = dataURL
-        createInvoice(invoice.value, '#'+ invoice.value.invoice_nr + ' - ' + formatDateTwo(invoice.value.invoice_date) + '.pdf');
+        createInvoice(invoice.value, invoice.value.customer.name + '.pdf');
       };
 
       xhr.send();    
   } catch (error) {
     img = imageHolder
-    createInvoice(invoice.value, '#'+ invoice.value.invoice_nr + ' - ' + formatDateTwo(invoice.value.invoice_date) + '.pdf');
+    createInvoice(invoice.value, invoice.value.customer.name + '.pdf');
   }  
 
   function generateHeader(doc, invoice) {
@@ -530,13 +516,13 @@ async function sendAttachment(data) {
         var dataURL = 'data:image/' + dataType + ';base64,' + b64;
 
         img = dataURL
-        createInvoice(invoice.value, '#'+ invoice.value.invoice_nr + ' - ' + formatDateTwo(invoice.value.invoice_date) + '.pdf');
+        createInvoice(invoice.value, invoice.value.customer.name + '.pdf');
       };
 
       xhr.send();    
   } catch (error) {
     img = imageHolder
-    createInvoice(invoice.value, '#'+ invoice.value.invoice_nr + ' - ' + formatDateTwo(invoice.value.invoice_date) + '.pdf');
+    createInvoice(invoice.value, invoice.value.customer.name + '.pdf');
   }  
 
   function generateHeader(doc, invoice) {

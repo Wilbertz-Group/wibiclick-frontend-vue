@@ -314,7 +314,7 @@
 
           formData.append('id', to); 
           formData.append('filename', estimate.value.customer.name);
-          formData.append('file', blob, '#'+ estimate.value.estimate_nr + ' - ' + formatDateTwo(estimate.value.estimate_date) + '.pdf');
+          formData.append('file', blob, estimate.value.customer.name+'.pdf');
 
           const response = axios.post(`send-whatsapp-document?id=${userStore.currentWebsite}`, formData, {
             headers: {
@@ -342,20 +342,6 @@
       return url.split(/[#?]/)[0].split('.').pop().trim();
     }
 
-    function formatDateTwo(dateString) {
-        // Create a new Date object from the date string
-        const date = new Date(dateString);
-        
-        // Options for formatting the date
-        const options = { day: 'numeric', month: 'short' };
-        
-        // Create a formatter with the desired options
-        const formatter = new Intl.DateTimeFormat('en-GB', options);
-        
-        // Format the date
-        return formatter.format(date);
-    }
-
     let img;
 
     try {
@@ -381,13 +367,13 @@
         var dataURL = 'data:image/' + dataType + ';base64,' + b64;
 
         img = dataURL
-        createestimate(estimate.value, '#'+ estimate.value.estimate_nr + ' - ' + formatDateTwo(estimate.value.estimate_date) + '.pdf');
+        createestimate(estimate.value, estimate.value.customer.name + '.pdf');
       };
 
       xhr.send();    
     } catch (error) {
       img = imageHolder
-      createestimate(estimate.value, '#'+ estimate.value.estimate_nr + ' - ' + formatDateTwo(estimate.value.estimate_date) + '.pdf');
+      createestimate(estimate.value, estimate.value.customer.name + '.pdf');
     }
 
     function generateHeader(doc, estimate) {
@@ -662,13 +648,13 @@
         var dataURL = 'data:image/' + dataType + ';base64,' + b64;
 
         img = dataURL
-        createestimate(estimate.value, '#'+ estimate.value.estimate_nr + ' - ' + formatDateTwo(estimate.value.estimate_date) + '.pdf');
+        createestimate(estimate.value, estimate.value.customer.name + '.pdf');
       };
 
       xhr.send();    
     } catch (error) {
       img = imageHolder
-      createestimate(estimate.value, '#'+ estimate.value.estimate_nr + ' - ' + formatDateTwo(estimate.value.estimate_date) + '.pdf');
+      createestimate(estimate.value, estimate.value.customer.name + '.pdf');
     }
 
     function generateHeader(doc, estimate) {
