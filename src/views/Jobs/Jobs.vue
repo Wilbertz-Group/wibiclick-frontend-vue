@@ -447,6 +447,9 @@
       let data = event.data
       let ntime = moment(data.slotStart).subtract(2, 'hours')
       data.slotStart = moment(ntime).format('YYYY-MM-DDTHH:MM')
+
+      console.log(Intl.DateTimeFormat().resolvedOptions().timeZone)
+
       selectedJob.value = data      
       modalOpen.value = !modalOpen.value
     } 
