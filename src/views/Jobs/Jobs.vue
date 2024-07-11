@@ -446,9 +446,7 @@
     if( event.value === undefined ){
       let data = event.data
       let ntime = moment(data.slotStart).subtract(2, 'hours')
-      data.slotStart = moment(ntime).format('YYYY-MM-DDTHH:MM')
-
-      console.log(Intl.DateTimeFormat().resolvedOptions().timeZone)
+      data.slotStart = moment(ntime).format('YYYY-MM-DDTHH:mm')
 
       selectedJob.value = data      
       modalOpen.value = !modalOpen.value
@@ -655,7 +653,10 @@
               <FormKit type="select" v-model="selectedJob.slotTime" name="slotTime" label="Job Duration" :options="['1hr', '2hrs', '3hrs', '4hrs']" />
             </div>
 
-            <FormKit type="select" v-model="selectedJob.employee.id" name="employeeId" label="Employee" :options="employees" />
+            <div class="double">
+              <FormKit type="select" v-model="selectedJob.employee.id" name="employeeId" label="Employee" :options="employees" />              
+              <FormKit type="text" v-model="selectedJob.to_do" :value="to_do" name="to_do" label="To Do" placeholder="To Do" outer-class="text-left"  />
+            </div>            
 
             <FormKit type="textarea" v-model="selectedJob.issue" :value="issue" name="issue" label="Issue" placeholder="Issue" outer-class="text-left"  />
 
