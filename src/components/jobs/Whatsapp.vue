@@ -9,12 +9,7 @@
 	const userStore = useUserStore()
 
 	async function whatsapp(job) {
-		let to = job.employee.phone + '@s.whatsapp.net'
-		let ntime = moment(job.slotStart).subtract(2, 'hours')
-		let time = moment(ntime).format('dddd DD MMMM YYYY h:mm a')
-		let message = `--------------------\nName: ${job?.name}\nPhone: ${job?.phone}\nCallout: ${job?.callout}\nDate: ${time}\nAddress: ${job?.address}\nIssue: ${job?.issue}\n--------------------`
-
-		await axios.post(`send-whatsapp?id=${userStore.currentWebsite}`, { to, message });
+		await axios.post(`send-job-to-technician`, { job });
 		toast.success(`${job.name}'s job have been sent to technician on whatsapp`)
 	}
 </script>
