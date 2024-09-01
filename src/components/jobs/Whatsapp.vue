@@ -1,12 +1,9 @@
 <script setup>
 	import axios from "axios";
-	import moment from 'moment'
 	import { useToast } from 'vue-toast-notification';
-	import { useUserStore } from "@/stores/UserStore"
 
 	const props = defineProps(['params'])
 	const toast = useToast();
-	const userStore = useUserStore()
 
 	async function whatsapp(job) {
 		await axios.post(`send-job-to-technician`, { job });

@@ -37,6 +37,10 @@ import EditReport from '@/views/Insurance/Edit.vue'
 import Suppliers from '@/views/Suppliers/Suppliers.vue'
 import AddSuppliers from '@/views/Suppliers/Add.vue'
 import Notes from '@/views/Notes/Notes.vue'
+import PaymentsList from '@/views/payments/PaymentsList.vue'
+import AddPayment from '@/views/payments/AddPayment.vue'
+import EditPayment from '@/views/payments/EditPayment.vue'
+import ViewPayment from '@/views/payments/ViewPayment.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -232,8 +236,28 @@ const router = createRouter({
       name: 'notes',
       component: Notes
     },
+    {
+      path: '/payments',
+      name: 'payments-list',
+      component: PaymentsList,
+    },
+    {
+      path: '/add-payment',
+      name: 'add-payment',
+      component: AddPayment,
+    },
+    {
+      path: '/edit-payment',
+      name: 'edit-payment',
+      component: EditPayment,
+    },
+    {
+      path: '/view-payment',
+      name: 'view-payment',
+      component: ViewPayment,
+    },
   ]
-})
+}) 
 
 router.beforeEach((to, from, next) => {
   // redirect to login page if user is not logged in and trying to access a restricted page

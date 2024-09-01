@@ -342,7 +342,7 @@ onMounted(() => {
                 </Menu>
               </div>
 
-              <div class="relative" >
+              <div class="relative">
                 <!-- Sales dropdown -->
                 <Menu as="div" class="ml-3 relative">
                   <div>
@@ -372,6 +372,11 @@ onMounted(() => {
                         <router-link :to="{name: 'invoices'}" class="flex items-center text-slate-900 px-3 py-2 rounded-md text-sm font-medium hover:underline">
                           <box-icon color="black" type='solid' name='receipt'></box-icon>
                           <span class="ml-2">Invoices</span>
+                        </router-link>
+                        <!-- Add new Payment menu item -->
+                        <router-link :to="{name: 'payments-list'}" class="flex items-center text-slate-900 px-3 py-2 rounded-md text-sm font-medium hover:underline">
+                          <box-icon color="black" type='solid' name='credit-card'></box-icon>
+                          <span class="ml-2">Payments</span>
                         </router-link>
                       </div>
                     </MenuItems>
@@ -560,6 +565,10 @@ onMounted(() => {
           Employees </router-link>
         <router-link :to="{name: 'users'}" v-if="userStore.user.role == 'admin'" disabled="false" class="text-white block px-3 py-2 rounded-md text-base font-medium">
           Users </router-link>
+        <router-link :to="{name: 'payments-list'}" disabled="false"
+          class="text-white block px-3 py-2 rounded-md text-base font-medium">
+          Payments
+        </router-link>
         <!-- <a disabled="false" href="#" class="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium">FAQ</a> -->
       </div>
 

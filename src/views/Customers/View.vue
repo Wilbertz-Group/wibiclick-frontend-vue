@@ -12,6 +12,8 @@
 	import EstimateVue from '@/components/estimates/Estimate.vue'
 	import InsuranceVue from '@/components/insurance/Insurance.vue'
 	import InvoiceVue from '@/components/invoices/Invoice.vue'
+	import PaymentVue from '@/components/payments/Payment.vue'
+	import accordionPayment from '@/components/payments/PaymentAccordion.vue'
 	import accordionJob from '@/components/jobs/accordion.vue'
 	import accordionCustomer from '@/components/customers/accordion.vue'
 	import accordionView from '@/components/analytics/accordionView.vue'
@@ -59,12 +61,12 @@
 	async function fetchContacts() {
     try {
       loading.value = true;
-      const response = await axios.get(
-        `customer?id=${userStore.currentWebsite}&custId=${route.query.customer_id}`
-      );
+			const response = await axios.get(
+				`customer?id=${userStore.currentWebsite}&custId=${route.query.customer_id}`
+			);
 
-      customer.value = response.data.customer
-
+			customer.value = response.data.customer
+			
 			if(customer.value?.activities){
 				customer.value?.activities.forEach((a) => { 
 					a.uid = uuid.v1()
@@ -85,6 +87,11 @@
 				} 
       }		
 
+			// Add this to include payments in the customer data
+			if (Array.isArray(response.data.customer?.payments)) {
+				customer.value.payments = response.data.customer.payments;
+			}
+
 			lineItems.value = items
 
 			await whatsappModal(whatsapp, userStore.currentWebsite, customer.value.phone)
@@ -102,6 +109,7 @@
 		fetchContacts();
 		wkey.value += 1
 		nkey.value += 1
+		customer.value.payments = [...customer.value.payments]
 	}
 
 	async function updateCustomer(credentials) {
@@ -408,6 +416,7 @@
 							<ol class="relative border-l max-w-full ml-5 border-gray-200 dark:border-gray-700">       
 								<li v-for="activity in customer?.activities" :key="activity.uid" class="mb-10 ml-6">
 									<accordion v-if="activity.type == 'whatsapp'" :msgs="[activity?.whatsapp]"></accordion>
+									<accordion-payment v-if="activity.type == 'payment'" :payments="[activity?.payment]" :status="activity?.status" :user="activity?.User?.firstName" :created="activity?.createdAt"></accordion-payment>
 									<accordion-email v-if="activity.type == 'email'" :msgs="[activity?.email]"></accordion-email>
 									<accordion-notes v-if="activity.type == 'note'" :notes="[activity?.notes]" :status="activity?.status" :user="activity?.User?.firstName" :created="activity?.createdAt"></accordion-notes>
 									<accordion-invoice v-if="activity.type == 'invoice'" :invoices="[activity?.invoice]" :status="activity?.status" :user="activity?.User?.firstName" :created="activity?.createdAt"></accordion-invoice>
@@ -495,6 +504,23 @@
 
 					<!-- Invoice item -->
 					<InvoiceVue v-for="invoice in customer?.invoice" :invoice="invoice" v-bind:key="invoice" @reload-timeline="reloadTimeline"></InvoiceVue>
+				</div>
+			</section>
+
+			<!-- Payments Section -->
+			<section class="shadow sm:rounded-md sm:overflow-hidden mt-4">
+				<div class="p-3 sm:rounded-md sm:overflow-hidden">
+					<h5 class="border-b-4 border-gray-900 flex justify-between">
+						<span class="text-xl font-medium text-gray-900 dark:text-white">Payments</span>
+						<div id="tooltip-add-payment-button" @click="router.push({name: 'add-payment', query: { customer_id: customer?.id } })" data-tooltip-target="tooltip-add-payment" data-tooltip-placement="top" class="cursor-pointer">+ Add</div>
+						<div id="tooltip-add-payment" role="tooltip" class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white transition-opacity duration-300 bg-gray-900 rounded-lg shadow-sm opacity-0 tooltip dark:bg-gray-700">
+							Add Payment
+							<div class="tooltip-arrow" data-popper-arrow></div>
+						</div>
+					</h5>
+
+					<!-- Payment item -->
+					<PaymentVue v-for="payment in customer?.payments" :payment="payment" v-bind:key="payment" @reload-timeline="reloadTimeline"></PaymentVue>
 				</div>
 			</section>
 
