@@ -77,10 +77,12 @@ async function fetchJobs(customerId) {
   }
 }
 
-async function fetchInvoices(customerId) {
+async function fetchInvoices(customerId, jobId = null) {
   try {
     loading.value = true;
-    const response = await axios.get(`invoices?id=${userStore.currentWebsite}&customerId=${customerId}`);
+    let url = `invoices?id=${userStore.currentWebsite}&customerId=${customerId}`;
+    if (jobId) url += `&jobId=${jobId}`;
+    const response = await axios.get(url);
     invoices.value = response.data.invoices.map(invoice => ({
       value: invoice.id,
       label: `Invoice #${invoice.number} - ${invoice.reason} - R${invoice.sales}`,
@@ -88,8 +90,26 @@ async function fetchInvoices(customerId) {
     }));
     loading.value = false;
   } catch (error) {
-    console.log(error);
+    console.error(error);
     toast.error("Error fetching invoices");
+    loading.value = false;
+  }
+}
+
+async function fetchEstimates(customerId, jobId = null) {
+  try {
+    loading.value = true;
+    let url = `estimates?id=${userStore.currentWebsite}&customerId=${customerId}`;
+    if (jobId) url += `&jobId=${jobId}`;
+    const response = await axios.get(url);
+    estimates.value = response.data.estimates.map(estimate => ({
+      value: estimate.id,
+      label: `Estimate #${estimate.number} - ${estimate.reason} - R${estimate.sales}`
+    }));
+    loading.value = false;
+  } catch (error) {
+    console.error(error);
+    toast.error("Error fetching estimates");
     loading.value = false;
   }
 }
@@ -101,19 +121,14 @@ function handleInvoiceSelection(selectedInvoiceId) {
   }
 }
 
-async function fetchEstimates(customerId) {
-  try {
-    loading.value = true;
-    const response = await axios.get(`estimates?id=${userStore.currentWebsite}&customerId=${customerId}`);
-    estimates.value = response.data.estimates.map(estimate => ({
-      value: estimate.id,
-      label: `Estimate #${estimate.number} - ${estimate.reason} - R${estimate.sales}`
-    }));
-    loading.value = false;
-  } catch (error) {
-    console.log(error);
-    toast.error("Error fetching estimates");
-    loading.value = false;
+function handleJobSelection(selectedJobId) {
+  payment.value.jobId = selectedJobId.target.value;
+  if (selectedJobId.target.value && payment.value.customerId) {
+    fetchInvoices(payment.value.customerId, selectedJobId.target.value);
+    fetchEstimates(payment.value.customerId, selectedJobId.target.value);
+  } else {
+    invoices.value = [];
+    estimates.value = [];
   }
 }
 
@@ -133,9 +148,22 @@ async function savePayment(data) {
 
 watch(() => payment.value.customerId, (newCustomerId) => {
   if (newCustomerId) {
-    fetchCustomerData(newCustomerId);
+    fetchJobs(newCustomerId);
+    payment.value.jobId = ""; // Reset job selection
+    invoices.value = [];
+    estimates.value = [];
   } else {
     jobs.value = [];
+    invoices.value = [];
+    estimates.value = [];
+  }
+});
+
+watch(() => payment.value.jobId, (newJobId) => {
+  if (newJobId && payment.value.customerId) {
+    fetchInvoices(payment.value.customerId, newJobId);
+    fetchEstimates(payment.value.customerId, newJobId);
+  } else {
     invoices.value = [];
     estimates.value = [];
   }
@@ -209,6 +237,7 @@ onMounted(() => {
                     :options="[{ value: null, label: 'Select Job' }, ...jobs]"
                     v-model="payment.jobId"
                     :disabled="!payment.customerId"
+                    @change="handleJobSelection"
                   />
                   <FormKit
                     type="select"
