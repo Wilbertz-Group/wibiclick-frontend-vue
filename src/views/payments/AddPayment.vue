@@ -83,13 +83,21 @@ async function fetchInvoices(customerId) {
     const response = await axios.get(`invoices?id=${userStore.currentWebsite}&customerId=${customerId}`);
     invoices.value = response.data.invoices.map(invoice => ({
       value: invoice.id,
-      label: `Invoice #${invoice.number} - ${invoice.reason} - R${invoice.sales}`
+      label: `Invoice #${invoice.number} - ${invoice.reason} - R${invoice.sales}`,
+      amount: invoice.sales * 100 // Store the amount in cents
     }));
     loading.value = false;
   } catch (error) {
     console.log(error);
     toast.error("Error fetching invoices");
     loading.value = false;
+  }
+}
+
+function handleInvoiceSelection(selectedInvoiceId) {
+  const selectedInvoice = invoices.value.find(invoice => invoice.value === selectedInvoiceId);
+  if (selectedInvoice) {
+    payment.value.amountInCents = selectedInvoice.amount;
   }
 }
 
@@ -209,6 +217,7 @@ onMounted(() => {
                     :options="[{ value: null, label: 'Select Invoice' }, ...invoices]"
                     v-model="payment.invoiceId"
                     :disabled="!payment.customerId"
+                    @change="handleInvoiceSelection"
                   />
                 </div>
 
