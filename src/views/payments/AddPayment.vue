@@ -94,8 +94,8 @@ async function fetchInvoices(customerId) {
   }
 }
 
-function handleInvoiceSelection(selectedInvoiceId) {
-  const selectedInvoice = invoices.value.find(invoice => invoice.value === selectedInvoiceId);
+function handleInvoiceSelection(selectedInvoiceId) {  
+  const selectedInvoice = invoices.value.find(invoice => invoice.value === selectedInvoiceId.target.value);
   if (selectedInvoice) {
     payment.value.amountInCents = selectedInvoice.amount;
   }
