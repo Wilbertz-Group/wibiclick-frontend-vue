@@ -5,12 +5,13 @@ import Header from "@/components/Header.vue";
 import { useUserStore } from "@/stores/UserStore";
 import { onMounted, ref, watch } from "vue";
 import { useToast } from "vue-toast-notification";
-import { useRouter } from "vue-router";
+import { useRouter, useRoute } from "vue-router";
 import ScaleLoader from 'vue-spinner/src/ScaleLoader.vue'
 
 const loading = ref(false);
 const toast = useToast();
 const router = useRouter();
+const route = useRoute();
 const userStore = useUserStore();
 
 const customers = ref([]);
@@ -38,11 +39,26 @@ async function fetchCustomers() {
       label: customer.name
     }));
     loading.value = false;
+
+    // Check if customer_id is provided in the query params
+    const customerIdFromQuery = route.query.customer_id;
+    if (customerIdFromQuery) {
+      payment.value.customerId = customerIdFromQuery;
+      await fetchCustomerData(customerIdFromQuery);
+    }
   } catch (error) {
     console.log(error);
     toast.error("Error fetching customers");
     loading.value = false;
   }
+}
+
+async function fetchCustomerData(customerId) {
+  await Promise.all([
+    fetchJobs(customerId),
+    fetchInvoices(customerId),
+    fetchEstimates(customerId)
+  ]);
 }
 
 async function fetchJobs(customerId) {
@@ -109,9 +125,7 @@ async function savePayment(data) {
 
 watch(() => payment.value.customerId, (newCustomerId) => {
   if (newCustomerId) {
-    fetchJobs(newCustomerId);
-    fetchInvoices(newCustomerId);
-    fetchEstimates(newCustomerId);
+    fetchCustomerData(newCustomerId);
   } else {
     jobs.value = [];
     invoices.value = [];
@@ -145,7 +159,7 @@ onMounted(() => {
                     type="select"
                     name="customerId"
                     label="Customer"
-                    :options="customers"
+                    :options="[{ value: null, label: 'Select Customer' }, ...customers]"
                     v-model="payment.customerId"
                     validation="required"
                   />
@@ -184,7 +198,7 @@ onMounted(() => {
                     type="select"
                     name="jobId"
                     label="Job"
-                    :options="[{ value: null, label: 'No Job' }, ...jobs]"
+                    :options="[{ value: null, label: 'Select Job' }, ...jobs]"
                     v-model="payment.jobId"
                     :disabled="!payment.customerId"
                   />
@@ -192,7 +206,7 @@ onMounted(() => {
                     type="select"
                     name="invoiceId"
                     label="Invoice (Optional)"
-                    :options="[{ value: null, label: 'No Invoice' }, ...invoices]"
+                    :options="[{ value: null, label: 'Select Invoice' }, ...invoices]"
                     v-model="payment.invoiceId"
                     :disabled="!payment.customerId"
                   />
@@ -203,7 +217,7 @@ onMounted(() => {
                     type="select"
                     name="estimateId"
                     label="Estimate (Optional)"
-                    :options="[{ value: null, label: 'No Estimate' }, ...estimates]"
+                    :options="[{ value: null, label: 'Select Estimate' }, ...estimates]"
                     v-model="payment.estimateId"
                     :disabled="!payment.customerId"
                   />
@@ -212,8 +226,8 @@ onMounted(() => {
                     name="status"
                     label="Payment Status"
                     :options="[
-                      { label: 'Pending', value: 'pending' },
                       { label: 'Successful', value: 'successful' },
+                      { label: 'Pending', value: 'pending' },                      
                       { label: 'Failed', value: 'failed' }
                     ]"
                     v-model="payment.status"
