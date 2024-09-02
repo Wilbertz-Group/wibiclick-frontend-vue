@@ -373,10 +373,14 @@ onMounted(() => {
                           <box-icon color="black" type='solid' name='receipt'></box-icon>
                           <span class="ml-2">Invoices</span>
                         </router-link>
-                        <!-- Add new Payment menu item -->
                         <router-link :to="{name: 'payments-list'}" class="flex items-center text-slate-900 px-3 py-2 rounded-md text-sm font-medium hover:underline">
                           <box-icon color="black" type='solid' name='credit-card'></box-icon>
                           <span class="ml-2">Payments</span>
+                        </router-link>
+                        <!-- New Expenses menu item -->
+                        <router-link :to="{name: 'expenses-list'}" class="flex items-center text-slate-900 px-3 py-2 rounded-md text-sm font-medium hover:underline">
+                          <box-icon color="black" type='solid' name='wallet'></box-icon>
+                          <span class="ml-2">Expenses</span>
                         </router-link>
                       </div>
                     </MenuItems>

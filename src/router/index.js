@@ -41,6 +41,10 @@ import PaymentsList from '@/views/payments/PaymentsList.vue'
 import AddPayment from '@/views/payments/AddPayment.vue'
 import EditPayment from '@/views/payments/EditPayment.vue'
 import ViewPayment from '@/views/payments/ViewPayment.vue'
+import ExpensesList from '@/views/Expenses/ExpensesList.vue'
+import AddExpense from '@/views/Expenses/AddExpense.vue'
+import EditExpense from '@/views/Expenses/EditExpense.vue'
+import ViewExpense from '@/views/Expenses/ViewExpense.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -255,6 +259,26 @@ const router = createRouter({
       path: '/view-payment',
       name: 'view-payment',
       component: ViewPayment,
+    },
+    {
+      path: '/expenses',
+      name: 'expenses-list',
+      component: ExpensesList,
+    },
+    {
+      path: '/add-expense',
+      name: 'add-expense',
+      component: AddExpense,
+    },
+    {
+      path: '/edit-expense',
+      name: 'edit-expense',
+      component: EditExpense,
+    },
+    {
+      path: '/view-expense',
+      name: 'view-expense',
+      component: ViewExpense,
     },
   ]
 }) 

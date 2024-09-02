@@ -14,6 +14,7 @@
 	import InvoiceVue from '@/components/invoices/Invoice.vue'
 	import PaymentVue from '@/components/payments/Payment.vue'
 	import accordionPayment from '@/components/payments/PaymentAccordion.vue'
+	import ExpenseVue from '@/components/expenses/Expense.vue'
 	import accordionJob from '@/components/jobs/accordion.vue'
 	import accordionCustomer from '@/components/customers/accordion.vue'
 	import accordionView from '@/components/analytics/accordionView.vue'
@@ -90,6 +91,11 @@
 			// Add this to include payments in the customer data
 			if (Array.isArray(response.data.customer?.payments)) {
 				customer.value.payments = response.data.customer.payments;
+			}
+
+			// Add this to include expenses in the customer data
+			if (Array.isArray(response.data.customer?.expenses)) {
+				customer.value.expenses = response.data.customer.expenses;
 			}
 
 			lineItems.value = items
@@ -521,6 +527,23 @@
 
 					<!-- Payment item -->
 					<PaymentVue v-for="payment in customer?.payments" :payment="payment" v-bind:key="payment" @reload-timeline="reloadTimeline"></PaymentVue>
+				</div>
+			</section>
+
+			<!-- New Expenses Section -->
+			<section class="shadow sm:rounded-md sm:overflow-hidden mt-4">
+				<div class="p-3 sm:rounded-md sm:overflow-hidden">
+					<h5 class="border-b-4 border-gray-900 flex justify-between">
+						<span class="text-xl font-medium text-gray-900 dark:text-white">Expenses</span>
+						<div id="tooltip-add-expense-button" @click="router.push({name: 'add-expense', query: { customer_id: customer?.id } })" data-tooltip-target="tooltip-add-expense" data-tooltip-placement="top" class="cursor-pointer">+ Add</div>
+						<div id="tooltip-add-expense" role="tooltip" class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white transition-opacity duration-300 bg-gray-900 rounded-lg shadow-sm opacity-0 tooltip dark:bg-gray-700">
+							Add Expense
+							<div class="tooltip-arrow" data-popper-arrow></div>
+						</div>
+					</h5>
+
+					<!-- Expense item -->
+					<ExpenseVue v-for="expense in customer?.expenses" :expense="expense" v-bind:key="expense" @reload-timeline="reloadTimeline"></ExpenseVue>
 				</div>
 			</section>
 

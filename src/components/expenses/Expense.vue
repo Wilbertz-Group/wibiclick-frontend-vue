@@ -1,0 +1,106 @@
+<script setup>
+import axios from "axios";
+import { useToast } from 'vue-toast-notification';
+import { watch, ref } from "vue";
+import modal from "../misc/modal.vue";
+import { useUserStore } from "@/stores/UserStore"
+import { universalDateFormatter, dateFormatter, universalTimeFormatter } from '../../helpers';
+import { 
+  Listbox,
+  ListboxLabel,
+  ListboxButton,
+  ListboxOptions,
+  ListboxOption,
+} from '@headlessui/vue'
+
+const emit = defineEmits(['reloadTimeline'])
+const props = defineProps(['expense'])
+const userStore = useUserStore()
+const toast = useToast() 
+
+const expenseTypes = [
+  { value: "FUEL", name: "Fuel" },
+  { value: "PARTS", name: "Parts" },
+  { value: "BONUS", name: "Bonus" },
+  { value: "OTHER", name: "Other" },
+]
+
+const currentType = expenseTypes.filter(a => a.value == props.expense.type)?.length && props.expense?.type ? expenseTypes.filter(a => a.value == props.expense.type) : ''
+const selectedType = ref(currentType[0])
+const body = ref()
+const heading = ref()
+const isOpen = ref(false)
+
+function closeModal() {
+  isOpen.value = false
+  emit('reloadTimeline')
+}
+
+watch(selectedType, async (n, o) => {
+  toast.success('Updating the type of the expense')
+  body.value = `Expense type changed from <b>${o.name}</b> to <b>${n.name}</b>`
+  heading.value = "Expense type"
+  
+  const data = { 
+    id: props.expense.id, 
+    type: n.value, 
+    employeeId: props.expense.employeeId
+  }
+
+  try {
+    const response = await axios.put(`expense/${props.expense.id}?id=${userStore.currentWebsite}`, data);
+    toast.success(response.data.message)
+    isOpen.value = true
+  } catch (error) {
+    toast.error('Failed to update the expense type, please contact the administrator')
+    console.log(error)
+  }
+})
+</script>
+
+<template>
+  <div class="shadow rounded-xl px-3 pt-3 pb-1 mt-3 cursor-move w-full">
+    <div class="mb-2 p-0">
+      <modal :heading="heading" :body="body" :isOpen="isOpen" @close-modal="closeModal"></modal>
+      <div class="flex justify-between mb-2">    
+        <div class="flex flex-col justify-center">
+          <p class="text-lg text-black" ></p>
+        </div>  
+        <div class="relative">
+          <Listbox v-model="selectedType">
+            <ListboxButton class="relative w-full py-2 pl-3 pr-10 text-left bg-white rounded-lg shadow-md cursor-default focus:outline-none focus-visible:ring-2 focus-visible:ring-opacity-75 focus-visible:ring-white focus-visible:ring-offset-orange-300 focus-visible:ring-offset-2 focus-visible:border-indigo-500 sm:text-sm">
+              <span class="block truncate">{{ selectedType.name }}</span>
+            </ListboxButton>
+            <ListboxOptions class="absolute w-full py-1 mt-1 overflow-auto text-base bg-white rounded-md shadow-lg max-h-60 ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+              <ListboxOption v-for="type in expenseTypes" :key="type.value" :value="type" v-slot="{ active, selected }">
+                <div :class="[active ? 'text-amber-900 bg-amber-100' : 'text-gray-900', 'cursor-default select-none relative py-2 pl-10 pr-4']">
+                  <span :class="[selected ? 'font-medium' : 'font-normal', 'block truncate']">{{ type.name }}</span>
+                </div>
+              </ListboxOption>
+            </ListboxOptions>
+          </Listbox>
+        </div>
+      </div>      
+      <div class="flex justify-between" >
+        <p class="text-sm font-bold text-black" >Date</p>
+        <p class="text-sm text-black" >{{ universalDateFormatter(expense.date) }}</p>
+      </div>
+      <div class="flex justify-between">
+        <p class="text-sm font-bold text-black" >Amount</p>
+        <p class="text-sm text-black" >R{{ expense.amount }}</p>
+      </div>
+      <div class="flex justify-between">
+        <p class="text-sm font-bold text-black" >Type</p>
+        <p class="text-sm text-black" >{{ expense.type }}</p>
+      </div>
+      <div class="flex justify-between">
+        <p class="text-sm font-bold text-black" >Description</p>
+        <p class="text-sm text-black" >{{ expense.description }}</p>
+      </div>
+    </div>
+    <div class="flex mt-4 mb-1 justify-between items-center" >
+      <router-link :to="{ name: 'edit-expense', query:{ expense_id: expense.id } }" class="text-white cursor-pointer inline-block bg-slate-900 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-gray-300 dark:focus:ring-gray-800 shadow-lg shadow-gray-500/50 dark:shadow-lg dark:shadow-gray-800/80 font-medium rounded-lg text-sm px-3 py-1 text-center"> Edit </router-link>
+      <router-link :to="{ name: 'view-expense', query:{ expense_id: expense.id } }" class="text-white cursor-pointer inline-block bg-slate-900 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-gray-300 dark:focus:ring-gray-800 shadow-lg shadow-gray-500/50 dark:shadow-lg dark:shadow-gray-800/80 font-medium rounded-lg text-sm px-3 py-1 text-center"> View </router-link>
+    </div>
+  </div>
+</template>
