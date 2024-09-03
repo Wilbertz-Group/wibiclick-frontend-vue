@@ -18,6 +18,7 @@ const customers = ref([]);
 const jobs = ref([]);
 const invoices = ref([]);
 const estimates = ref([]);
+const technicians = ref([]);
 
 const payment = ref({
   type: "INVOICE",
@@ -28,7 +29,25 @@ const payment = ref({
   jobId: "",
   invoiceId: null,
   estimateId: null,
+  employeeId: "", // New field for technician
 });
+
+
+async function fetchTechnicians() {
+  try {
+    loading.value = true;
+    const response = await axios.get(`employees?id=${userStore.currentWebsite}`);
+    technicians.value = response.data.employees.map(technician => ({
+      value: technician.id,
+      label: `${technician.firstName} ${technician.lastName}`
+    }));
+    loading.value = false;
+  } catch (error) {
+    console.error(error);
+    toast.error("Error fetching technicians");
+    loading.value = false;
+  }
+}
 
 async function fetchCustomers() {
   try {
@@ -172,6 +191,7 @@ watch(() => payment.value.jobId, (newJobId) => {
 onMounted(() => {
   if (userStore.currentWebsite) {
     fetchCustomers();
+    fetchTechnicians(); // Add this line
   }
 });
 </script>
@@ -269,6 +289,17 @@ onMounted(() => {
                       { label: 'Failed', value: 'failed' }
                     ]"
                     v-model="payment.status"
+                    validation="required"
+                  />
+                </div>
+
+                <div class="">
+                  <FormKit
+                    type="select"
+                    name="employeeId"
+                    label="Technician"
+                    :options="[{ value: null, label: 'Select Technician' }, ...technicians]"
+                    v-model="payment.employeeId"
                     validation="required"
                   />
                 </div>

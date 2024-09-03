@@ -18,6 +18,7 @@ const customers = ref([]);
 const jobs = ref([]);
 const invoices = ref([]);
 const estimates = ref([]);
+const technicians = ref([]);
 
 const payment = ref({
   id: '',
@@ -29,7 +30,24 @@ const payment = ref({
   jobId: "",
   invoiceId: null,
   estimateId: null,
+  employeeId: "",
 });
+
+async function fetchTechnicians() {
+  try {
+    loading.value = true;
+    const response = await axios.get(`employees?id=${userStore.currentWebsite}`);
+    technicians.value = response.data.employees.map(technician => ({
+      value: technician.id,
+      label: `${technician.firstName} ${technician.lastName}`
+    }));
+    loading.value = false;
+  } catch (error) {
+    console.error(error);
+    toast.error("Error fetching technicians");
+    loading.value = false;
+  }
+}
 
 async function fetchPayment(paymentId) {
   try {
@@ -147,6 +165,7 @@ onMounted(() => {
     const paymentId = route.query.payment_id;
     if (paymentId) {
       fetchPayment(paymentId);
+      fetchTechnicians(); // Add this line
     } else {
       toast.error("No payment ID provided");
       router.push({ name: 'payments-list' });
@@ -246,6 +265,17 @@ onMounted(() => {
                       { label: 'Failed', value: 'failed' }
                     ]"
                     v-model="payment.status"
+                    validation="required"
+                  />
+                </div>
+
+                <div class="">
+                  <FormKit
+                    type="select"
+                    name="employeeId"
+                    label="Technician"
+                    :options="[{ value: null, label: 'Select Technician' }, ...technicians]"
+                    v-model="payment.employeeId"
                     validation="required"
                   />
                 </div>

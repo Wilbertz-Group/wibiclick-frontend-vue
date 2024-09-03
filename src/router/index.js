@@ -45,6 +45,8 @@ import ExpensesList from '@/views/Expenses/ExpensesList.vue'
 import AddExpense from '@/views/Expenses/AddExpense.vue'
 import EditExpense from '@/views/Expenses/EditExpense.vue'
 import ViewExpense from '@/views/Expenses/ViewExpense.vue'
+import OverviewDashboard from '@/views/Transactions/OverviewDashboard.vue'
+import TechnicianDashboard from '@/views/Transactions/TechnicianDashboard.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -280,6 +282,18 @@ const router = createRouter({
       name: 'view-expense',
       component: ViewExpense,
     },
+    {
+      path: '/admin-dashboard',
+      name: 'admin-dashboard',
+      component: OverviewDashboard,
+      meta: { permission: ['owner', 'admin'] }
+    },
+    {
+      path: '/technician-dashboard',
+      name: 'technician-dashboard',
+      component: TechnicianDashboard,
+      meta: { permission: ['technician', 'employee'] }
+    },
   ]
 }) 
 
@@ -295,6 +309,17 @@ router.beforeEach((to, from, next) => {
     localStorage.removeItem('user')
     localStorage.removeItem('UserStore')
     return next('/authenticate')
+  }
+
+  if (to.path === '/dashboard') {
+    const userStore = useUserStore()
+    const userRole = userStore.user.permission
+
+    if (['owner', 'admin'].includes(userRole)) {
+      return next('/admin-dashboard')
+    } else if (['technician', 'employee'].includes(userRole)) {
+      return next('/technician-dashboard')
+    }
   }
 
   if (to.meta?.permission != undefined){
