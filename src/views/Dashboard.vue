@@ -19,7 +19,6 @@ const loading = ref(false);
 const userStore = useUserStore()
 const toast = useToast();
 const items = ref([])
-const employees = ref([])
 
 const buttons = {
   whatsapp: {
@@ -359,27 +358,11 @@ async function checkParams() {
   }
 } 
 
-async function fetchEmployees() {
-  try {
-    loading.value = true;
-    const response = await axios.get(
-      "employees?id=" + userStore.currentWebsite
-    );
-    employees.value = response.data.employees;
-    loading.value = false;
-  } catch (error) {
-    console.log(error);
-    loading.value = false;
-    toast.error("Error getting employee data")
-  }
-}
-
 onMounted(async () => { 
   checkParams();
   if(userStore.currentWebsite && userStore.user){
     fetchClicks()  
     fetchRecentClicks()  
-    fetchEmployees() 
   }
   if(!userStore.user){
     toast.error("Please add billing information")
@@ -395,7 +378,6 @@ watchEffect(() => {
     fetchClicks()
     //fetchViews()
     fetchRecentClicks()
-    fetchEmployees() 
   }
 })
 
@@ -524,51 +506,6 @@ watchEffect(() => {
                 </i>
               </span>
             </div>
-          </div>
-        </div>
-
-        <div class="w-full grid py-8 md:grid-cols-4 sm:grid-cols-1 gap-3">
-          <!-- Existing cards -->
-          <div class="rounded-lg border border-gray-200 shadow-md divide-y divide-gray-300/50">
-            <div class="space-y-6 pt-8 pb-16 text-center leading-7 text-black-600 relative">
-              <div class="grid px-4 md:grid-cols-2 gap-3">
-                <span class="text-left text-sm tracking-tight font-bold">Total Employees <br>
-                  <span class="text-4xl grid md:grid-cols-2 ">{{ employees.length }} <i data-v-4d521fc4="" data-name="trending-up"
-                      data-tags="" data-type="trending-up" class="text-purple-600 font-bold"><svg data-v-4d521fc4=""
-                        xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                        class="feather feather-trending-up feather__content">
-                        <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
-                        <polyline points="17 6 23 6 23 12"></polyline>
-                      </svg></i></span>
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- New section for employee details -->
-        <div class="w-full mt-8">
-          <h2 class="text-2xl font-bold mb-4">Employee Information</h2>
-          <div class="overflow-x-auto">
-            <table class="min-w-full bg-white">
-              <thead>
-                <tr>
-                  <th class="py-2 px-4 border-b">Name</th>
-                  <th class="py-2 px-4 border-b">Email</th>
-                  <th class="py-2 px-4 border-b">Total Earnings</th>
-                  <th class="py-2 px-4 border-b">Total Expenses</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="employee in employees" :key="employee.id">
-                  <td class="py-2 px-4 border-b">{{ employee.firstName }} {{ employee.lastName }}</td>
-                  <td class="py-2 px-4 border-b">{{ employee.email }}</td>
-                  <td class="py-2 px-4 border-b">R{{ employee.totalEarnings }}</td>
-                  <td class="py-2 px-4 border-b">R{{ employee.totalExpenses }}</td>
-                </tr>
-              </tbody>
-            </table>
           </div>
         </div>
 

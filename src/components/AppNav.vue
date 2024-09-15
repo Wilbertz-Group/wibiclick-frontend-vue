@@ -32,7 +32,7 @@ const dropdownContacts = ref(false)
 const dropdownMarketing = ref(false)
 const dropdownSales = ref(false)
 const unreadNotifications = ref([]);
-const ably = new Ably.Realtime(userStore.ableyk);
+//const ably = new Ably.Realtime(userStore.ableyk);
 
 
 const opt = ref([
@@ -209,7 +209,7 @@ onMounted(() => {
   if (!userStore.user) {
     logout()
   } else {
-    iniABLY();
+    //iniABLY();
     fetchWebsites();
   }
 }),

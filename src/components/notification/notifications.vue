@@ -59,7 +59,7 @@ const buttons = {
     color: "bg-rose-500 hover:bg-rose-600",
   },
 };
-const ably = new Ably.Realtime(userStore.ableyk);
+//const ably = new Ably.Realtime(userStore.ableyk);
 
 const removeNotification = (index) => {
   userStore.removenotification(index);
@@ -126,7 +126,7 @@ function iniABLY(){
 
 onMounted(async () => {
   if (userStore.currentWebsite && userStore.user) {
-    iniABLY();
+    //iniABLY();
   }
 })
 </script>

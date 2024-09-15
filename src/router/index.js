@@ -311,16 +311,16 @@ router.beforeEach((to, from, next) => {
     return next('/authenticate')
   }
 
-  if (to.path === '/dashboard') {
-    const userStore = useUserStore()
-    const userRole = userStore.user.permission
+  // if (to.path === '/dashboard') {
+  //   const userStore = useUserStore()
+  //   const userRole = userStore.user.permission
 
-    if (['owner', 'admin'].includes(userRole)) {
-      return next('/admin-dashboard')
-    } else if (['technician', 'employee'].includes(userRole)) {
-      return next('/technician-dashboard')
-    }
-  }
+  //   if (['owner', 'admin'].includes(userRole)) {
+  //     return next('/admin-dashboard')
+  //   } else if (['technician', 'employee'].includes(userRole)) {
+  //     return next('/technician-dashboard')
+  //   }
+  // }
 
   if (to.meta?.permission != undefined){
     if (to.meta?.permission.includes('owner') && userStore.user.permission != 'owner') {
