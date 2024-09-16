@@ -1,679 +1,736 @@
-<script setup>
-  import axios from "axios";
-  import Header from "@/components/Header.vue";  
-  import { useUserStore } from "@/stores/UserStore"
-  import { onMounted, ref, reactive, watchEffect } from "vue";
-  import moment from 'moment'
-  import { useRouter } from "vue-router";
-  import _ from 'lodash';
-  import { useToast } from 'vue-toast-notification';
-  import ScaleLoader from 'vue-spinner/src/ScaleLoader.vue'
+<template>
+  <div :class="{ 'dark': isDarkMode }" class="min-h-screen bg-gray-100 dark:bg-gray-900 transition-colors duration-300">
+    <div class="container mx-auto px-4 py-8">
+      <div class="flex justify-between items-center mb-8">
+        <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-800">Jobs</h1>
+        <button @click="toggleDarkMode" class="p-2 rounded-full bg-gray-200 dark:bg-gray-700 transition-colors duration-300">
+          <font-awesome-icon :icon="isDarkMode ? 'sun' : 'moon'" class="text-yellow-500 dark:text-blue-300" />
+        </button>
+      </div>
 
-  import { AgGridVue } from "ag-grid-vue3";
-  import "ag-grid-community/styles/ag-grid.css"; // Core grid CSS, always needed
-  import "ag-grid-community/styles/ag-theme-alpine.css"; // Optional theme CSS
-  import Edit from "@/components/Edit.vue";
-  import Whatsapp from "@/components/jobs/Whatsapp.vue";
-  import Status from "@/components/jobs/Status.vue";
-  import Hubspot from "@/components/customers/Hubspot.vue";
-  import Draggable from "vue3-draggable";
-  import { jobStatusColors } from "@/helpers/color.js"
+      <div class="mb-6 flex flex-wrap gap-4 items-center">
+        <div class="relative w-64">
+          <Listbox v-model="selectedWebsite">
+            <div class="relative mt-1">
+              <ListboxButton
+                class="relative w-full cursor-default rounded-lg bg-white dark:bg-gray-700 py-2 pl-3 pr-10 text-left shadow-md focus:outline-none focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-opacity-75 focus-visible:ring-offset-2 focus-visible:ring-offset-orange-300 sm:text-sm"
+              >
+                <span class="block truncate text-gray-700 dark:text-white">
+                  {{ opt.find(a => a.value === selectedWebsite)?.label || 'Select Website' }}
+                </span>
+                <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
+                  <font-awesome-icon icon="chevron-down" class="h-5 w-5 text-gray-400" aria-hidden="true" />
+                </span>
+              </ListboxButton>
 
-  const userStore = useUserStore()
-  const toast = useToast();
-  const loading = ref(false)
-  const options = ref()
-  const series = ref()
-  const router = useRouter()
-  const colors = ref(jobStatusColors)
+              <transition
+                leave-active-class="transition duration-100 ease-in"
+                leave-from-class="opacity-100"
+                leave-to-class="opacity-0"
+              >
+                <ListboxOptions
+                  class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white dark:bg-gray-700 py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm"
+                >
+                  <ListboxOption
+                    v-for="website in opt"
+                    :key="website.value"
+                    :value="website.value"
+                    v-slot="{ active, selected }"
+                  >
+                    <li
+                      :class="[
+                        active ? 'bg-amber-100 dark:bg-amber-600 text-amber-900 dark:text-white' : 'text-gray-900 dark:text-gray-300',
+                        'relative cursor-default select-none py-2 pl-10 pr-4',
+                      ]"
+                    >
+                      <span :class="[selected ? 'font-medium' : 'font-normal', 'block truncate']">
+                        {{ website.label }}
+                      </span>
+                      <span v-if="selected" class="absolute inset-y-0 left-0 flex items-center pl-3 text-amber-600 dark:text-amber-300">
+                        <font-awesome-icon icon="check" class="h-5 w-5" aria-hidden="true" />
+                      </span>
+                    </li>
+                  </ListboxOption>
+                </ListboxOptions>
+              </transition>
+            </div>
+          </Listbox>
+        </div>
+        <button @click="openAddJobModal" class="btn-primary-custom">
+          Add Job
+        </button>
+      </div>
 
-  const employees = ref({})
-  const selectedJob = ref(null)
-  const paginationPageSize = ref(12)
-  const modalOpen = ref(false)
-  const status = ref(userStore.status)
-  const jobsApi = ref([])
-  const jobsStatusesApi = ref([])
-
-  options.value = {
-    chart: {
-      height: 350,
-      type: 'bar'
-    },
-    dataLabels: {
-      enabled: false
-    },
-    stroke: {
-      curve: 'smooth'
-    },
-    xaxis: {
-      type: 'datetime',
-      labels: {
-      datetimeUTC: false
-    },
-      categories: []
-    },
-    tooltip: {
-      x: {
-        format: 'dd MMM yyyy'
-      },
-    },
-  },
-
-  series.value = [{
-      name: 'jobs',
-      data: []
-  }]
-
-  const groups = (() => {
-      const byDay = (item) => moment(item.x).format('MMM DD YYYY'),
-          byHour = (item) => moment(byDay(item) + ' ' + moment(item.x).format('hh a'), "dd MMM yyyy").toISOString(),
-          by6Hour = (item) => {
-              const m = moment(item.x);
-              return byDay(item) + ' ' + ['first', 'second', 'third', 'fourth'][Number(m.format('k')) % 6] + ' 6 hours';
-          },
-          byMonth = (item) => moment(item.x).format('MMM YYYY'),
-          byWeek = (item) => byMonth(item) + ' ' + moment(item.x).format('ww');
-      return {
-          byDay,
-          byHour,
-          by6Hour,
-          byMonth,
-          byWeek,
-      };
-  })();
-
-  async function fetchJobs() {
-    try {
-      loading.value = true;
-      const response = await axios.get(
-        `jobs?id=${userStore.currentWebsite}&limit=1500&offset=0`
-      );
-
-      rowData.value = response.data.jobs
-
-      let fJobs = {};
-      let tempJobs = []
-
-      response.data.jobs.forEach((itm) => {
-        if (fJobs[itm.jobStatus]) {
-          fJobs[itm.jobStatus].push(itm);
-        } else {
-          fJobs[itm.jobStatus] = [itm];
-        }
-      });
-
-      Object.keys(fJobs).forEach((itm) => {
-        if(itm != 'done' && itm != "cancelled" && itm != "no parts" && itm != "parts not paid" && itm != "parts not installed" && itm != "parts not available" && itm != "parts not needed" && itm != "parts not found"){
-          tempJobs.push({
-            title: itm,
-            jobs: fJobs[itm]
-          })
-        }
-      });
-
-      let jobAp = []
-
-      tempJobs.forEach((itm) => {
-        switch (itm.title) {
-          case "scheduled":
-            jobAp[0] = itm
-          break;
-
-          case "quoting":
-            jobAp[1] = itm
-          break;
-
-          case "quoted":
-            jobAp[2] = itm
-          break;
-
-          case "accepted":
-            jobAp[3] = itm
-          break;
-
-          case "cancelled":
-            jobAp[4] = itm
-          break;
-
-          case "no parts":
-            jobAp[5] = itm
-          break;
-
-          case "pending":
-            jobAp[6] = itm
-          break;
-
-          case "invoiced":
-            jobAp[7] = itm
-          break;
-
-          case "done":
-            jobAp[8] = itm
-          break;
-
-          case "paid":
-            jobAp[9] = itm
-          break;
-
-          case "to order parts":
-            jobAp[10] = itm
-          break;
-
-          case "parts ordered":
-            jobAp[11] = itm
-          break;
-
-          case "parts arrived":
-            jobAp[12] = itm
-          break;
-
-          case "parts installed":
-            jobAp[13] = itm
-          break;
-
-          case "parts paid":
-            jobAp[14] = itm
-          break;
-
-          case "parts not paid":
-            jobAp[15] = itm
-          break;
-
-          case "parts not installed":
-            jobAp[16] = itm
-          break;
-
-          case "parts not ordered":
-            jobAp[17] = itm
-          break;
-
-          case "parts not available":
-            jobAp[18] = itm
-          break;
-
-          case "parts not needed":
-            jobAp[19] = itm
-          break;
-
-          case "parts not found":
-            jobAp[20] = itm
-          break;
-
-          case "follow-up":
-            jobAp[21] = itm
-          break;
-
-          case "waiting for price":
-            jobAp[22] = itm
-          break;
-
-          case "waiting for parts":
-            jobAp[23] = itm
-          break;
-
-          case "waiting for customer":
-            jobAp[24] = itm
-          break;
-
-          case "waiting for payment":
-            jobAp[25] = itm
-          break;
-
-          default:
-            jobAp[26] = itm
-            break;
-        }
-      });
-
-      jobsApi.value = jobAp.filter(e => e);
-
-      jobsStatusesApi.value = Object.keys(fJobs)
-
-      let jobss = [];
-
-      for (const job of response.data.jobs) {
-        jobss.push({
-          x: job.slotStart,
-          y: 1,
-        });
-      }
-
-      const data = _.sortBy(jobss, 'x')
-
-      const currentGroup = 'byDay';
-      const grouped = _.groupBy(data, groups[currentGroup])
-      const seriesData = Object.values(grouped).map( a => a.length )
-      const optionsData = Object.keys(grouped)
+      <div class="bg-white dark:bg-gray-700 dark:sm:bg-gray-800 rounded-lg shadow-md overflow-hidden transition-colors duration-300 p-6">
+        <div class="">
+          <h2 class="text-2xl font-semibold mb-4 text-gray-800 dark:text-white">Job List</h2>
           
-      options.value = {
-          chart: {
-            height: 350,
-            type: 'bar',
-            toolbar: {
-              autoSelected: "pan",
-              show: false
-            } 
-          },
-          dataLabels: {
-            enabled: false
-          },
-          stroke: {
-            curve: 'smooth'
-          },
-          xaxis: {
-            type: 'datetime',
-            labels: {
-      datetimeUTC: false
-    },
-            categories: optionsData,
-            labels: {
-              style: {
-                colors: '#FFFFFF'
-              }
-            }
-          },
-          yaxis: {
-            min: 0,
-            tickAmount: 4,
-            labels: {
-              style: {
-                colors: '#FFFFFF'
-              }
-            }
-          },
-          fill: {
-            gradient: {
-              enabled: true,
-              opacityFrom: 0.55,
-              opacityTo: 0
-            }
-          },
-          grid: {
-            borderColor: "#fff",
-            strokeDashArray: 2,
-            clipMarkers: false,
-            yaxis: {
-              lines: {
-                show: true
-              }
-            }
-          },
-          markers: {
-            size: 5,
-            colors: ["#ffffff"],
-            strokeColor: "#00BAEC",
-            strokeWidth: 3
-          },
-          tooltip: {
-            theme: "dark",
-            x: {
-              format: 'dd MMM yyyy'
-            },
-          },
-      }
-      series.value = [{
-        name: 'jobs',
-        data: seriesData
-      }]
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+            <div class="relative">
+              <input v-model="filters.search" placeholder="Search jobs..." class="form-input pl-10">
+              <font-awesome-icon icon="search" class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            </div>
+            <select v-model="filters.status" class="form-select">
+              <option value="">All Statuses</option>
+              <option v-for="status in jobStatuses" :key="status" :value="status">{{ status }}</option>
+            </select>
+            <select v-model="filters.technician" class="form-select">
+              <option value="">All Technicians</option>
+              <option v-for="tech in technicians" :key="tech.id" :value="tech.id">{{ tech.firstName }} {{ tech.lastName }}</option>
+            </select>
+            <div class="relative">
+              <input v-model="filters.location" placeholder="Filter by location" class="form-input pl-10">
+              <font-awesome-icon icon="map-marker-alt" class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            </div>
+            <div class="relative">
+              <input 
+                :value="formatDateForInput(filters.date)" 
+                @input="updateDateFilter" 
+                type="date" 
+                placeholder="Filter by date" 
+                class="form-input pl-10"
+              >
+              <font-awesome-icon icon="calendar" class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            </div>
+            <div class="relative">
+              <input 
+                :value="formatDateTimeForInput(filters.slotStart)" 
+                @input="updateSlotStartFilter" 
+                type="datetime-local" 
+                placeholder="Filter by slot start" 
+                class="form-input pl-10"
+              >
+              <font-awesome-icon icon="clock" class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            </div>
+          </div>
+        </div>
 
-      loading.value = false;
-    } catch (error) {
-      console.log(error);
-      loading.value = false;
-      toast.error("Error getting jobs data")
-    }
-  }
+        <!-- Job List (Mobile Card View) -->
+        <div class="md:hidden space-y-4">
+          <div v-for="job in paginatedJobs" :key="job.id" class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 border border-gray-200 dark:border-gray-700">
+            <div class="flex justify-between items-start mb-2">
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ job.name }}</h3>
+              <span :class="getStatusClass(job.jobStatus)" class="px-2 py-1 text-xs font-semibold rounded-full">
+                {{ job.jobStatus }}
+              </span>
+            </div>
+            <p class="text-sm text-gray-600 dark:text-gray-300 mb-2">
+              <span class="font-semibold">Issue:</span> 
+              {{ job.issue.length > 100 ? job.issue.slice(0, 100) + '...' : job.issue }}
+              <button v-if="job.issue.length > 100" @click="toggleIssue(job)" class="text-blue-600 dark:text-blue-400 ml-1">
+                {{ job.showFullIssue ? 'View less' : 'View more' }}
+              </button>
+            </p>
+            <p v-if="job.showFullIssue" class="text-sm text-gray-600 dark:text-gray-300 mb-2">
+              {{ job.issue }}
+            </p>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">
+              <font-awesome-icon icon="calendar" class="mr-2" />{{ formatDate(job.slotStart) }}
+            </p>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">
+              <font-awesome-icon icon="user" class="mr-2" />{{ job.employee?.firstName }} {{ job.employee?.lastName }}
+            </p>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">
+              <font-awesome-icon icon="map-marker-alt" class="mr-2" />{{ job.location }}
+            </p>
+            <div class="flex justify-end space-x-2">
+              <button @click="editJob(job)" class="btn-secondary">Edit</button>
+              <button @click="notifyTechnician(job)" class="btn-secondary">Notify</button>
+            </div>
+          </div>
+        </div>
 
-  const gridApi = ref(null); 
-  const onGridReady = (params) => {
-    gridApi.value = params.api;
-  };
-  const rowData = reactive([]); 
+        <!-- Job Table (Desktop View) -->
+        <div class="hidden md:block overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+            <thead class="bg-gray-50 dark:bg-gray-700">
+              <tr>
+                <th v-for="header in tableHeaders" :key="header" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  {{ header }}
+                </th>
+              </tr>
+            </thead>
+            <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+              <tr v-for="job in paginatedJobs" :key="job.id" class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150">
+                <td data-label="Customer Name" class="px-6 py-4 whitespace-nowrap">
+                  <div class="text-sm font-medium text-gray-900 dark:text-white">{{ job.name }}</div>
+                </td>
+                <td class="px-6 py-4">
+                  <div class="text-sm text-gray-500 dark:text-gray-300">
+                    <p>
+                      {{ job.issue.length > 45 ? job.issue.slice(0, 45) + '...' : job.issue }}
+                      <button v-if="job.issue.length > 45" @click="toggleIssue(job)" class="text-blue-600 dark:text-blue-400 ml-1 text-xs underline hover:no-underline">
+                        {{ job.showFullIssue ? 'View less' : 'View more' }}
+                      </button>
+                    </p>
+                    <p v-if="job.showFullIssue" class="mt-2">
+                      {{ job.issue }}
+                    </p>
+                  </div>
+                </td>
+                <td data-label="Status" class="px-6 py-4 whitespace-nowrap">
+                  <span :class="getStatusClass(job.jobStatus)" class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full">
+                    {{ job.jobStatus }}
+                  </span>
+                </td>
+                <td data-label="Date" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+                  {{ formatDate(job.slotStart) }}
+                </td>
+                <td data-label="Technician" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+                  {{ job.employee?.firstName }} {{ job.employee?.lastName }}
+                </td>
+                <td data-label="Location" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+                  {{ job.location }}
+                </td>
+                <td data-label="Actions" class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  <button @click="editJob(job)" class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-200 mr-2">Edit</button>
+                  <button @click="notifyTechnician(job)" class="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-200">Notify</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
 
-  const dateFormatter = (params) => {
-    let dt = params.value;
-    //console.log(dt, " --- ", moment.utc(dt).format('MMM DD, YYYY h:mm a'));
-    return params.value 
-        ? moment.utc().isSame(dt, 'day') 
-            ? moment.utc(dt).format('h:mm a') 
-            : moment.utc(dt).format('MMM DD, YYYY h:mm a') 
-        : '-';
-  }
+        <div class="p-4 flex justify-between items-center bg-gray-50 dark:bg-gray-700">
+          <div class="text-sm text-gray-700 dark:text-gray-300">
+            Showing {{ startIndex + 1 }} to {{ endIndex }} of {{ totalJobs }} results
+          </div>
+          <div>
+            <button :disabled="currentPage === 1" @click="prevPage" class="btn-secondary mr-2">&laquo; Previous</button>
+            <button :disabled="currentPage === totalPages" @click="nextPage" class="btn-secondary">Next &raquo;</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
+  <!-- Job Form Modal -->
+  <transition name="modal">
+    <div v-if="showJobModal" class="fixed z-10 inset-0 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+      <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" @click="closeJobModal"></div>
 
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
 
-  const universalDateFormatter = (dat) => {
-    let dt = dat
-    return moment().isSame(dt, 'day') ? "Today" : moment.utc(dt).format("dddd, DD MMM YYYY");
-  }
+        <div class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+          <div class="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+            <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">{{ editingJob ? 'Edit Job' : 'Add New Job' }}</h3>
+            <form @submit.prevent="submitJob">
+              <div class="grid grid-cols-1 gap-4">
+                <div class="form-group">
+                  <label for="customerId">Customer</label>
+                  <select id="customerId" v-model="jobForm.customerId" required class="form-select">
+                    <option value="">Select a customer</option>
+                    <option v-for="customer in customerOptions" :key="customer.value" :value="customer.value">
+                      {{ customer.label }}
+                    </option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="name">Job Name</label>
+                  <input type="text" id="name" v-model="jobForm.name" required class="form-input">
+                </div>
+                <div class="form-group">
+                  <label for="issue">Issue</label>
+                  <textarea id="issue" v-model="jobForm.issue" required class="form-textarea"></textarea>
+                </div>
+                <div class="form-group">
+                  <label for="jobStatus">Status</label>
+                  <select id="jobStatus" v-model="jobForm.jobStatus" required class="form-select">
+                    <option v-for="status in jobStatuses" :key="status" :value="status">{{ status }}</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="slotStart">Start Date</label>
+                  <input type="datetime-local" id="slotStart" v-model="jobForm.slotStart" required class="form-input">
+                </div>
+                <div class="form-group">
+                  <label for="employeeId">Technician</label>
+                  <select id="employeeId" v-model="jobForm.employeeId" required class="form-select">
+                    <option v-for="tech in technicians" :key="tech.id" :value="tech.id">
+                      {{ tech.firstName }} {{ tech.lastName }}
+                    </option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="location">Location</label>
+                  <input type="text" id="location" v-model="jobForm.location" required class="form-input">
+                </div>
+                <div class="form-group">
+                  <label for="callout">Callout Fee</label>
+                  <input type="text" id="callout" v-model="jobForm.callout" required class="form-input">
+                </div>
+                <div class="form-group">
+                  <label class="inline-flex items-center">
+                    <input type="checkbox" v-model="jobForm.notify" class="form-checkbox">
+                    <span class="ml-2">Notify Technician</span>
+                  </label>
+                </div>
+              </div>
+            </form>
+          </div>
+          <div class="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+            <button @click="submitJob" class="btn-primary-custom w-full sm:w-auto sm:ml-3">
+              {{ editingJob ? 'Update' : 'Add' }} Job
+            </button>
+            <button @click="closeJobModal" class="btn-secondary w-full sm:w-auto sm:mt-3 sm:mt-0">
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </transition>
 
-  const universalTimeFormatter = (dat) => {
-    let dt = dat
-    return moment().isSame(dt, 'day') ? moment.utc(dt).format('h:mm a') : moment.utc(dt).format("h:mm a");
-  }
+  <!-- Loading Overlay -->
+  <div v-if="loading" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <ScaleLoader color="#ffffff" />
+  </div>
+</template>
 
-  const nameFormatter = (params) => {
-    return  params.data.employee.firstName + ' ' + params.data.employee.lastName
-  }
+<script setup>
+import { ref, computed, onMounted, watchEffect, reactive } from 'vue'
+import axios from 'axios'
+import moment from 'moment'
+import { useUserStore } from '@/stores/UserStore'
+import { useToast } from 'vue-toast-notification'
+import ScaleLoader from 'vue-spinner/src/ScaleLoader.vue'
+import { storeToRefs } from 'pinia'
+import { 
+  Listbox,
+  ListboxButton,
+  ListboxOptions,
+  ListboxOption,
+} from '@headlessui/vue'
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+import { library } from '@fortawesome/fontawesome-svg-core'
+import { 
+  faSun, faMoon, faCalendar, faUser, faMapMarkerAlt, 
+  faChevronDown, faCheck, faSearch, faClock 
+} from '@fortawesome/free-solid-svg-icons'
 
-  const columnDefs = reactive({
-    value: [
-      { 
-        field: "name", 
-        maxWidth: 130,
-        cellRenderer: (params) => {
-            const link = document.createElement("a");
-            link.href = './jobs';
-            link.classList.add("text-blue-600", "hover:underline", "dark:text-blue-500");
-            link.innerText = params.value;
-            link.addEventListener("click", e => {
-              e.preventDefault();
-              router.push({ path: '/contact', query: { customer_id: params.data.customer.id } })
-            });
-            return link;
-        }
-      }, 
-      { field: "issue" }, 
-      { field: "location", maxWidth: 150 },
-      { field: "callout", maxWidth: 120 },       
-      { field: "employee", maxWidth: 130, valueFormatter: nameFormatter }, 
-      { field: "jobStatus", maxWidth: 160, cellRendererSelector: params => {
-          return {
-              component: Status,
-              params
-          };
-        }
-      },  
-      { field: "slotStart", maxWidth: 200, valueFormatter: dateFormatter },
-      {
-        field: "Edit", 
-        headerName: 'Edit',
-        maxWidth: 80,
-        cellRendererSelector: params => {
-          return {
-              component: Edit,
-              params
-          };
-        } 
-      },
-      // { 
-      //   field: "customer.foreignID", 
-      //   headerName: "Hubspot", 
-      //   maxWidth: 114,
-      //   cellRendererSelector: params => {
-      //     return {
-      //         component: Hubspot,
-      //         params
-      //     };
-      //   }  
-      // },      
-      { 
-        field: "id", 
-        headerName: "Notify", 
-        maxWidth: 95,
-        cellRendererSelector: params => {
-          return {
-              component: Whatsapp,
-              params
-          };
-        }  
-      },
-    ],
-  });
+library.add(faSun, faMoon, faCalendar, faUser, faMapMarkerAlt, faChevronDown, faCheck, faSearch, faClock)
 
-  const defaultColDef = {
-    sortable: true,
-    filter: true,
-    flex: 1,
-  }
+const userStore = useUserStore()
+const toast = useToast()
+const { currentWebsite, websites } = storeToRefs(userStore)
 
-  async function update(credentials) {
-    try {
-      loading.value = true
-      const response = await axios.post('add-job?id='+ userStore.currentWebsite, credentials);
-      loading.value = false
-      modalOpen.value = false
-      fetchJobs() 
-      toast.success("Successfully updated job details")
-    } catch (error) {
-      console.log(error)
-      loading.value = false
-    }
-  }
+const isDarkMode = ref(localStorage.getItem('darkMode') === 'true')
+const loading = ref(false)
+const jobs = ref([])
+const showJobModal = ref(false)
+const editingJob = ref(null)
+const currentPage = ref(1)
+const itemsPerPage = 10
+const technicians = ref([])
+const customerOptions = ref([])
+const tableHeaders = ['Customer Name', 'Issue', 'Status', 'Date', 'Technician', 'Location', 'Actions']
 
-  const toggleEditModal = (event) => {
-    if( event.value === undefined ){
-      let data = event.data
-      let ntime = moment(data.slotStart).subtract(2, 'hours')
-      data.slotStart = moment(ntime).format('YYYY-MM-DDTHH:mm')
+const jobForm = reactive({
+  customerId: '',
+  name: '',
+  issue: '',
+  jobStatus: '',
+  slotStart: '',
+  employeeId: '',
+  location: '',
+  callout: '',
+  notify: false
+})
 
-      selectedJob.value = data      
-      modalOpen.value = !modalOpen.value
-    } 
-  }
+const filters = reactive({
+  search: '',
+  status: '',
+  technician: '',
+  location: '',
+  date: null,
+  slotStart: null
+})
 
-  async function getEmployees() {
-    try {
-      loading.value = true
-      const response = await axios.get('employees?id='+ userStore.currentWebsite);
-      let b = {}
-      response.data.employees ? response.data.employees.map(e => { b[e.id] = e.firstName + ' ' + e.lastName }) : ''
-      employees.value = b
-      loading.value = false
-    } catch (error) {
-      console.log(error)
-      loading.value = false
-    }
-  }
+const selectedWebsite = computed({
+  get: () => currentWebsite.value,
+  set: (value) => userStore.updateWebsite(value)
+})
 
-  // onMounted(() => {
-  //   if(userStore.currentWebsite && userStore.user){
-  //     fetchJobs()  
-  //     getEmployees()
-  //   }
-  // })
+const opt = computed(() => [
+  { label: 'Select Website', value: 'default', attrs: { disabled: true } },
+  ...websites.value
+])
 
-  watchEffect(() => {    
-    if(userStore.currentWebsite){
-      fetchJobs()  
-      getEmployees()
-    }
+const jobStatuses = computed(() => [...new Set(jobs.value.map(job => job.jobStatus))])
+
+const filteredJobs = computed(() => {
+  return jobs.value.filter(job => {
+    const matchesSearch = (job.name?.toLowerCase().includes(filters.search.toLowerCase()) || 
+                           job.issue?.toLowerCase().includes(filters.search.toLowerCase())) ?? true
+    const matchesStatus = !filters.status || job.jobStatus === filters.status
+    const matchesTechnician = !filters.technician || job.employee?.id === filters.technician
+    const matchesLocation = !filters.location || job.location?.toLowerCase().includes(filters.location.toLowerCase())
+    const matchesDate = !filters.date || moment(job.slotStart).isSame(filters.date, 'day')
+    const matchesSlotStart = !filters.slotStart || moment(job.slotStart).isSame(filters.slotStart)
+
+    return matchesSearch && matchesStatus && matchesTechnician && matchesLocation && matchesDate && matchesSlotStart
   })
+})
 
+const paginatedJobs = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage
+  const end = start + itemsPerPage
+  return filteredJobs.value.slice(start, end)
+})
+
+const totalJobs = computed(() => filteredJobs.value.length)
+const totalPages = computed(() => Math.ceil(totalJobs.value / itemsPerPage))
+const startIndex = computed(() => (currentPage.value - 1) * itemsPerPage)
+const endIndex = computed(() => Math.min(startIndex.value + itemsPerPage, totalJobs.value))
+
+const toggleDarkMode = () => {
+  isDarkMode.value = !isDarkMode.value
+  localStorage.setItem('darkMode', isDarkMode.value)
+}
+
+const fetchJobs = async () => {
+  try {
+    loading.value = true
+    const response = await axios.get(`jobs?id=${currentWebsite.value}&limit=1500&offset=0`)
+    jobs.value = response.data.jobs
+    loading.value = false
+  } catch (error) {
+    console.error('Error fetching jobs:', error)
+    toast.error('Error getting jobs data')
+    loading.value = false
+  }
+}
+
+const fetchCustomers = async () => {
+  try {
+    const response = await axios.get(`customers?id=${currentWebsite.value}`)
+    customerOptions.value = response.data.customers.map(customer => ({
+      label: customer.name,
+      value: customer.id
+    }))
+  } catch (error) {
+    console.error('Error fetching customers:', error)
+    toast.error('Error fetching customers')
+  }
+}
+
+const fetchTechnicians = async () => {
+  try {
+    const response = await axios.get(`employees?id=${currentWebsite.value}`)
+    technicians.value = response.data.employees
+  } catch (error) {
+    console.error('Error fetching technicians:', error)
+    toast.error('Error fetching technicians')
+  }
+}
+
+const openAddJobModal = () => {
+  editingJob.value = null
+  resetJobForm()
+  showJobModal.value = true
+}
+
+const editJob = (job) => {
+  editingJob.value = job
+  Object.assign(jobForm, {
+    customerId: job.customer.id,
+    name: job.name,
+    issue: job.issue,
+    jobStatus: job.jobStatus,
+    slotStart: moment(job.slotStart).format('YYYY-MM-DDTHH:mm'),
+    employeeId: job.employee?.id,
+    location: job.location,
+    callout: job.callout,
+    notify: false
+  })
+  showJobModal.value = true
+}
+
+const closeJobModal = () => {
+  showJobModal.value = false
+  editingJob.value = null
+  resetJobForm()
+}
+
+const resetJobForm = () => {
+  Object.assign(jobForm, {
+    customerId: '',
+    name: '',
+    issue: '',
+    jobStatus: '',
+    slotStart: '',
+    employeeId: '',
+    location: '',
+    callout: '',
+    notify: false
+  })
+}
+
+const submitJob = async () => {
+  try {
+    loading.value = true
+    const jobData = {
+      ...jobForm,
+      websiteId: currentWebsite.value,
+      id: editingJob.value?.id
+    }
+    const response = await axios.post('add-job?id=' + currentWebsite.value, jobData)
+    toast.success(editingJob.value ? 'Job updated successfully' : 'Job added successfully')
+    closeJobModal()
+    fetchJobs()
+  } catch (error) {
+    console.error('Error submitting job:', error)
+    toast.error('Error submitting job')
+  } finally {
+    loading.value = false
+  }
+}
+
+const notifyTechnician = async (job) => {
+  try {
+    loading.value = true
+    const jobData = {
+      id: job.id,
+      name: job.name,
+      callout: job.callout,
+      paid: job.paid,
+      phone: job.phone,
+      location: job.location,
+      payment: job.payment,
+      address: job.address,
+      issue: job.issue,
+      slotStart: job.slotStart,
+      slotEnd: job.slotEnd,
+      slotTime: job.slotTime,
+      jobStatus: job.jobStatus,
+      parts: job.parts,
+      to_do: job.to_do,
+      techAmount: job.techAmount,
+      companyAmount: job.companyAmount,
+      estimate: job.estimate,
+      invoice: job.invoice,
+      employee: {
+        id: job.employee.id,
+        firstName: job.employee.firstName,
+        lastName: job.employee.lastName,
+        phone: job.employee.phone
+      },
+      customer: {
+        id: job.customer.id,
+        name: job.customer.name,
+        foreignID: job.customer.foreignID,
+        portal: job.customer.portal,
+        address: job.customer.address,
+        phone: job.customer.phone
+      },
+      website: {
+        id: currentWebsite.value,
+        url: websites.value.find(w => w.value === currentWebsite.value)?.label,
+        userId: userStore.user.id,
+        settingId: job.website?.settingId,
+        createdAt: job.website?.createdAt,
+        updatedAt: job.website?.updatedAt
+      },
+      createdAt: job.createdAt,
+      updatedAt: job.updatedAt,
+      fuelExpense: job.fuelExpense || "0",
+      partsExpense: job.partsExpense || "0",
+      calloutFee: job.calloutFee || "0",
+      expenses: job.expenses || []
+    }
+
+    await axios.post('send-job-to-technician', { job: jobData })
+    toast.success('Technician notified successfully')
+  } catch (error) {
+    console.error('Error notifying technician:', error)
+    toast.error('Error notifying technician')
+  } finally {
+    loading.value = false
+  }
+}
+
+const formatDate = (date) => {
+  return moment(date).format('MMM DD, YYYY HH:mm')
+}
+
+const formatDateForInput = (date) => {
+  return date ? moment(date).format('YYYY-MM-DD') : ''
+}
+
+const formatDateTimeForInput = (dateTime) => {
+  return dateTime ? moment(dateTime).format('YYYY-MM-DDTHH:mm') : ''
+}
+
+const updateDateFilter = (event) => {
+  filters.date = event.target.value ? new Date(event.target.value) : null
+}
+
+const updateSlotStartFilter = (event) => {
+  filters.slotStart = event.target.value ? new Date(event.target.value) : null
+}
+
+const getStatusClass = (status) => {
+  const baseClasses = 'px-2 inline-flex text-xs leading-5 font-semibold rounded-full '
+  switch (status) {
+    case 'scheduled': return baseClasses + 'bg-blue-100 text-blue-800 dark:bg-blue-700 dark:text-blue-100'
+    case 'in progress': return baseClasses + 'bg-yellow-100 text-yellow-800 dark:bg-yellow-700 dark:text-yellow-100'
+    case 'completed': return baseClasses + 'bg-green-100 text-green-800 dark:bg-green-700 dark:text-green-100'
+    case 'cancelled': return baseClasses + 'bg-red-100 text-red-800 dark:bg-red-700 dark:text-red-100'
+    case 'accepted': return baseClasses + 'bg-blue-600 text-white dark:bg-blue-800 dark:text-blue-100'
+    case 'quoted': return baseClasses + 'bg-purple-600 text-white dark:bg-purple-800 dark:text-purple-100'
+    case 'done': return baseClasses + 'bg-green-500 text-white dark:bg-green-700 dark:text-green-100'
+    case 'no parts': return baseClasses + 'bg-yellow-500 text-white dark:bg-yellow-700 dark:text-yellow-100'
+    case 'quoting': return baseClasses + 'bg-blue-400 text-white dark:bg-blue-600 dark:text-blue-100'
+    case 'pending': return baseClasses + 'bg-gray-800 text-white dark:bg-gray-900 dark:text-gray-100'
+    case 'invoiced': return baseClasses + 'bg-green-800 text-white dark:bg-green-900 dark:text-green-100'
+    case 'follow-up': return baseClasses + 'bg-yellow-800 text-white dark:bg-yellow-900 dark:text-yellow-100'
+    case 'paid': return baseClasses + 'bg-green-500 text-white dark:bg-green-700 dark:text-green-100'
+    case 'to order parts': return baseClasses + 'bg-yellow-500 text-white dark:bg-yellow-700 dark:text-yellow-100'
+    case 'parts ordered': return baseClasses + 'bg-yellow-400 text-white dark:bg-yellow-600 dark:text-yellow-100'
+    case 'parts arrived': return baseClasses + 'bg-yellow-300 text-white dark:bg-yellow-500 dark:text-yellow-100'
+    case 'parts installed': return baseClasses + 'bg-yellow-200 text-white dark:bg-yellow-400 dark:text-yellow-100'
+    case 'parts paid': return baseClasses + 'bg-yellow-100 text-white dark:bg-yellow-300 dark:text-yellow-100'
+    case 'parts not paid': return baseClasses + 'bg-red-100 text-white dark:bg-red-300 dark:text-red-100'
+    case 'parts not installed': return baseClasses + 'bg-red-200 text-white dark:bg-red-400 dark:text-red-100'
+    case 'parts not ordered': return baseClasses + 'bg-red-300 text-white dark:bg-red-500 dark:text-red-100'
+    case 'parts not available': return baseClasses + 'bg-red-400 text-white dark:bg-red-600 dark:text-red-100'
+    case 'parts not needed': return baseClasses + 'bg-red-500 text-white dark:bg-red-700 dark:text-red-100'
+    case 'parts not found': return baseClasses + 'bg-red-600 text-white dark:bg-red-800 dark:text-red-100'
+    case 'waiting for price': return baseClasses + 'bg-gray-600 text-white dark:bg-gray-700 dark:text-gray-100'
+    case 'waiting for parts': return baseClasses + 'bg-gray-700 text-white dark:bg-gray-800 dark:text-gray-100'
+    case 'waiting for customer': return baseClasses + 'bg-gray-800 text-white dark:bg-gray-900 dark:text-gray-100'
+    case 'waiting for payment': return baseClasses + 'bg-gray-900 text-white dark:bg-gray-600 dark:text-gray-100'
+    default: return baseClasses + 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-100'
+  }
+}
+
+const prevPage = () => {
+  if (currentPage.value > 1) {
+    currentPage.value--
+  }
+}
+
+const nextPage = () => {
+  if (currentPage.value < totalPages.value) {
+    currentPage.value++
+  }
+}
+
+const toggleIssue = (job) => {
+  job.showFullIssue = !job.showFullIssue;
+}
+
+onMounted(() => {
+  if (currentWebsite.value) {
+    fetchJobs()
+    fetchCustomers()
+    fetchTechnicians()
+  }
+})
+
+watchEffect(() => {
+  if (currentWebsite.value) {
+    fetchJobs()
+    fetchCustomers()
+    fetchTechnicians()
+  }
+})
 </script>
 
-<template>
-  <Header title="Jobs" /> 
-  <scale-loader :loading="loading" color="#23293b" height="50px" class="vld-overlay is-active is-full-page" width="6px"></scale-loader>
-  <div class="mx-auto py-6 sm:px-6 lg:px-8">
-    <div class="px-2 py-6 sm:px-0">
-      <div>
-        <div class="">
-          <div class="md:col-span-1">
-               
-          </div>
-          <div class="mt-3 md:col-span-2">
-              <div v-if="userStore.currentWebsite" class="shadow p-10 sm:rounded-md sm:overflow-hidden">
 
-                <div class="grid gap-3 text-right lg:grid-cols-3 md:grid-cols-2 sm:grid-cols-1">
-                  <div><h2 class="text-xl font-semibold text-left">All Jobs</h2> </div>
-                  <div class="relative text-right"></div>
-                  <div class="relative text-right">
-                    <router-link :to="{name: 'add-job'}" class="text-white bg-gray-800 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-gray-300 dark:focus:ring-gray-800 shadow-lg shadow-gray-500/50 dark:shadow-lg dark:shadow-gray-800/80 font-medium rounded-lg text-sm px-5 py-2.5 text-center mb-5 w-56">Add Job <svg class="w-6 h-6 inline pb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></router-link> 
-                  </div>
-                </div> 
+<style scoped>
+/* Base styles */
+.form-input,
+.form-select,
+.form-textarea {
+  @apply block w-full mt-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50;
+}
 
-                <ag-grid-vue
-                    class="ag-theme-alpine"
-                    style="height: 605px"
-                    :columnDefs="columnDefs.value"
-                    :rowData="rowData.value"
-                    :defaultColDef="defaultColDef"
-                    :pagination="true"
-                    :paginationPageSize="paginationPageSize"
-                    rowSelection="multiple"
-                    animateRows="true"
-                    @grid-ready="onGridReady"
-                    @cell-clicked="toggleEditModal"
-                  >
-                </ag-grid-vue>     
+.dark .form-input,
+.dark .form-select,
+.dark .form-textarea {
+  @apply bg-gray-700 border-gray-600 text-white;
+}
 
-                <div class="grid gap-3 text-right lg:grid-cols-3 md:grid-cols-2 sm:grid-cols-1 mx-auto py-6">
-                  <div> </div>
-                  <div class="relative text-right"></div>
-                  <div class="relative text-right">
-                    
-                  </div>
-                </div> 
-                <div class="w-full mb-24">    
-                  <div class="min-h-[70vh] flex overflow-x-scroll overflow-y-scroll shadow bg-slate-100 mx-auto py-6 sm:px-6 lg:px-8 max-h-40">
-                  
-                    <div
-                        v-for="column in jobsApi"
-                        :key="column.title"
-                        class="rounded-lg px-3 py-3 column-width mr-4 max-h-40"
-                      >
-                      <p :class="colors[column.title]" class="text-white font-bold font-sans tracking-wide text-xl rounded-lg capitalize px-3 py-3">{{column.title}}</p>
+.btn-primary-custom {
+  @apply px-4 py-2 font-semibold text-sm rounded-lg shadow-md;
+  @apply text-white bg-gray-800 hover:bg-gray-700;
+  @apply focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-opacity-75;
+}
 
-                      <draggable v-model="column.jobs">
-                          <template v-slot:item="{item}">
-                              <div class="bg-white shadow rounded px-3 pt-3 pb-1 border border-white mt-3 cursor-move w-80">
-                                <div class="flex justify-between mb-0">
-                                  <p class="text-black font-bold font-sans tracking-wide text-xl capitalize">{{item.name}}</p>
+.btn-primary {
+  @apply w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors duration-200;
+}
 
-                                  <p :class="colors[column.title]" class="text-sm text-white rounded-full shadow-md px-3 py-1.5 my-1 w-fit">{{item.jobStatus}}</p>
-                                </div>
+.btn-secondary {
+  @apply w-full bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-opacity-50 transition-colors duration-200 mt-2;
+}
 
-                                <p class="text-lg text-black -mt-3 mb-3">{{item.employee?.firstName + ' ' + item.employee?.lastName}}</p> 
+.dark .btn-secondary {
+  @apply bg-gray-600 text-gray-200 hover:bg-gray-500;
+}
 
-                                <div class="mt-3 mb-4 p-2 shadow bg-slate-100">
-                                  <div class="flex justify-between">
-                                    <p class="text-md font-bold text-black">Location:</p>
-                                    <p class="text-md text-black">{{item.location}}</p>                                  
-                                  </div>                                 
+/* Modal animation */
+.modal-enter-active,
+.modal-leave-active {
+  transition: opacity 0.3s ease;
+}
 
-                                  <div class="flex justify-between">
-                                    <p class="text-md font-bold text-black">Date:</p>
-                                    <p class="text-md text-black">{{universalDateFormatter(item.slotStart)}}</p>                                  
-                                  </div>
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
+}
 
-                                  <div class="flex justify-between">
-                                    <p class="text-md font-bold text-black">Time:</p>
-                                    <p class="text-md text-black">{{universalTimeFormatter(item.slotStart)}}</p>                                  
-                                  </div>
+/* Custom scrollbar styles */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
 
-                                  <div class="mt-3">
-                                    <p class="text-md font-bold text-black">Issue: </p>
-                                    <p class="text-md text-black">{{item.issue.slice(0, 80) + '...'}}</p>                                  
-                                  </div>
-                                </div>
-                                                  
-                                <div class="flex mt-2 mb-1 justify-between items-center ">
-                                  <Whatsapp :params="{ data: item }"></Whatsapp>
-                                  <Edit @click="toggleEditModal({ data: item, value: undefined })"></Edit>
-                                  <Hubspot :params="{ data: item, value: item.customer.foreignID }"></Hubspot>
-                                </div>
-                              </div>
-                          </template>
-                      </draggable>
-                    </div>
+::-webkit-scrollbar-track {
+  @apply bg-gray-200 dark:bg-gray-700;
+}
 
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-400 dark:bg-gray-600 rounded;
+}
 
-                  </div>
-                </div>
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-500 dark:bg-gray-500;
+}
 
-                           
+/* Custom styles for date and time inputs */
+input[type="date"],
+input[type="datetime-local"] {
+  @apply appearance-none;
+}
 
-                <div class="text-center mt-10 mb-10 pb-6 pr-3 shadow-lg rounded-lg bg-blueGray-800">
-                  <div class="rounded-t mb-0 px-4 py-3 bg-transparent">
-                    <div class="flex flex-wrap items-center">
-                      <div class="relative w-full max-w-full flex-grow flex-1 text-left">
-                        <h6 class="uppercase mb-1 text-xs font-semibold text-blueGray-200">
-                          Overview
-                        </h6>
-                        <h2 class="text-xl font-semibold text-white">Last booked jobs</h2>
-                      </div>
-                    </div>
-                  </div>
-                  <apexchart type="bar" height="450" :options="options" :series="series"></apexchart>
-                </div>                
-              </div>
-              <div v-else class="shadow p-10 sm:rounded-md sm:overflow-hidden">Please select website on the navigation first</div>
-          </div>
-        </div>
-      </div>
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  @apply filter dark:invert;
+}
 
-    </div>
-  </div>
+/* Job status colors */
+.status-scheduled { @apply bg-blue-100 text-blue-800 dark:bg-blue-700 dark:text-blue-100; }
+.status-in-progress { @apply bg-yellow-100 text-yellow-800 dark:bg-yellow-700 dark:text-yellow-100; }
+.status-completed { @apply bg-green-100 text-green-800 dark:bg-green-700 dark:text-green-100; }
+.status-cancelled { @apply bg-red-100 text-red-800 dark:bg-red-700 dark:text-red-100; }
 
-  
+/* Transition for dark mode */
+.transition-dark-mode {
+  @apply transition-colors duration-300;
+}
 
-  <div id="modalOpen" tabindex="-1" :class="{ flex: modalOpen, hidden: !modalOpen }" class="overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 w-full md:inset-0 h-modal md:h-full justify-center items-center">
-    <div class="relative p-4 w-full max-w-2xl h-full md:h-auto">
-      <!-- Modal content -->
-      <div class="relative bg-white rounded-lg shadow dark:bg-gray-700">
-        <!-- Modal header -->
-        <div class="flex justify-between items-start p-4 rounded-t border-b dark:border-gray-600">
-          <h3 class="text-xl font-semibold text-gray-900 dark:text-white">
-            Update Job Details
-          </h3>
-          <button ref="closeDefaultModal" type="button"
-            class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center dark:hover:bg-gray-600 dark:hover:text-white"
-            @click="modalOpen = false">
-            <svg aria-hidden="true" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"
-              xmlns="http://www.w3.org/2000/svg">
-              <path fill-rule="evenodd"
-                d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                clip-rule="evenodd"></path>
-            </svg>
-            <span class="sr-only">Close modal</span>
-          </button>
-        </div>
-        <!-- Modal body -->
-        <div class="p-6 space-y-6">
-          <FormKit type="form" v-if="selectedJob" id="job" submit-label="Add" @submit="update" :actions="false" >
-            <div class="double">                
-              <FormKit type="text" v-model="selectedJob.name" :value="name" name="name" label="Customer Name" placeholder="Customer Name" outer-class="text-left"  />                     
-              <FormKit type="select" v-model="selectedJob.jobStatus" label="Job Status" name="jobStatus" :options="status" placeholder="Job Status" outer-class="text-left"  />
-            </div>
+/* Media query for larger screens */
+@media (min-width: 768px) {
+  .btn-primary,
+  .btn-secondary {
+    @apply w-auto;
+  }
 
-            <div class="double">
-              <FormKit type="text" v-model="selectedJob.callout" name="callout" label="Callout Fee" placeholder="Callout Fee" value="R300" outer-class="text-left"  />
-              <FormKit type="text" v-model="selectedJob.location" name="location" label="Location" placeholder="Location" outer-class="text-left"  />            
-            </div>
-
-            <div class="double">
-              <FormKit type="text" v-model="selectedJob.address" :value="address" name="address" label="Customer address" placeholder="Customer address" outer-class="text-left"  />
-              <FormKit type="tel" v-model="selectedJob.phone" :value="phone" name="phone" label="Customer Phone" placeholder="021 000 0000" outer-class="text-left" validation="required|phone" />
-            </div>                    
-
-            <div class="double">
-              <FormKit type="datetime-local" v-model="selectedJob.slotStart" name="slotStart" label="Job Start Date" placeholder="Job Start" outer-class="text-left"  />
-              <FormKit type="select" v-model="selectedJob.slotTime" name="slotTime" label="Job Duration" :options="['1hr', '2hrs', '3hrs', '4hrs']" />
-            </div>
-
-            <div class="double">
-              <FormKit type="select" v-model="selectedJob.employee.id" name="employeeId" label="Employee" :options="employees" />              
-              <FormKit type="text" v-model="selectedJob.to_do" :value="to_do" name="to_do" label="To Do" placeholder="To Do" outer-class="text-left"  />
-            </div>            
-
-            <FormKit type="textarea" v-model="selectedJob.issue" :value="issue" name="issue" label="Issue" placeholder="Issue" outer-class="text-left"  />
-
-            <FormKit type="checkbox" label="Notify Employee" name="notify" outer-class="text-left" />
-
-            <FormKit type="hidden" v-model="selectedJob.customer.id" name="customerId" />
-
-            <FormKit type="hidden" v-model="selectedJob.id" name="id" />
-
-            <FormKit type="submit" label="Update job" />
-
-          </FormKit>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div v-if="modalOpen" class="bg-gray-900 bg-opacity-50 dark:bg-opacity-80 fixed inset-0 z-40"></div>
-
-</template>
+  .btn-secondary {
+    @apply mt-0 ml-2;
+  }
+}
+</style>
