@@ -1,6 +1,6 @@
 <template>
   <div :class="{ 'dark': isDarkMode }" class="min-h-screen bg-gray-100 dark:bg-gray-900 transition-colors duration-300">
-    <div class="container mx-auto px-4 py-8">
+    <div class="container mx-auto px-4 md:px-2 md:py-4 py-8">
       <div class="flex justify-between items-center mb-8">
         <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-800">Dashboard</h1>
         <button @click="toggleDarkMode" class="p-2 rounded-full bg-gray-200 dark:bg-gray-700 transition-colors duration-300">
@@ -31,29 +31,29 @@
 
       <!-- Financial Overview Section -->
       <section v-if="financialOverview" class="mb-8">
-        <h2 class="text-2xl font-semibold mb-4 text-gray-800 dark:text-gray-800">Financial Overview</h2>
+        <h2 class="text-2xl font-semibold mb-4 text-gray-800">Financial Overview</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 transition-colors duration-300">
             <div class="grid grid-cols-2 gap-4">
               <div v-for="(data, key) in financialOverview" :key="key" class="text-center">
                 <h3 class="font-semibold text-gray-600 dark:text-gray-400 capitalize">{{ formatTitle(key) }}</h3>
                 <p class="text-2xl font-bold mt-2 text-gray-800 dark:text-white">
-                  {{ formatCurrency(data.current) }}
+                  {{ key === 'profitMargin' ? formatPercentage(data.current) : formatCurrency(data.current) }}
                 </p>
-                <p class="text-sm mt-1" :class="key === 'totalExpenses' ? getExpenseComparisonClass(data.current, data.previous) : getComparisonClass(data.current, data.previous)">
-                  <font-awesome-icon :icon="key === 'totalExpenses' ? getExpenseComparisonIcon(data.current, data.previous) : getComparisonIcon(data.current, data.previous)" />
+                <p class="text-sm mt-1" :class="getComparisonClass(data, key)">
+                  <font-awesome-icon :icon="getComparisonIcon(data, key)" />
                   {{ getPercentageChange(data.current, data.previous) }}% from last month
                 </p>
               </div>
             </div>
           </div>
           <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 transition-colors duration-300">
-            <h3 class="text-xl font-semibold mb-4 text-gray-800 dark:text-white">Earnings Comparison</h3>
+            <h3 class="text-xl font-semibold mb-4 text-gray-800 dark:text-white">Earnings Distribution</h3>
             <apexchart
-              :options="earningsComparisonOptions"
-              :series="earningsComparisonSeries"
-              type="bar"
+              type="pie"
               height="300"
+              :options="earningsDistributionOptions"
+              :series="earningsDistributionSeries"
             ></apexchart>
           </div>
         </div>
@@ -213,7 +213,7 @@
                             interaction.fromMe ? 'bg-blue-500' : 'bg-green-500']">
                 <font-awesome-icon :icon="interaction.fromMe ? 'paper-plane' : 'user'" class="text-white" />
               </div>
-              <div class="flex-grow">
+              <div class="flex-grow overflow-hidden">
                 <div class="flex justify-between items-center mb-2">
                   <span class="font-semibold text-gray-800 dark:text-white">{{ interaction.customer?.name || interaction.remoteJid }}</span>
                   <span class="text-sm text-gray-500 dark:text-gray-400">{{ formatDateDist(interaction.createdAt) }}</span>
@@ -423,7 +423,28 @@ const fetchFinancialOverview = async () => {
     const response = await axios.get('/financial-overview', {
       params: { year: year.value, month: month.value, id: selectedWebsite.value }
     })
-    financialOverview.value = response.data
+    const data = response.data
+
+    // Calculate technician and company earnings
+    const netProfit = data.netProfit.current
+    const technicianEarnings = netProfit * 0.2
+    const companyEarnings = netProfit * 0.8
+
+    financialOverview.value = {
+      ...data,
+      technicianEarnings: {
+        current: technicianEarnings,
+        previous: data.netProfit.previous * 0.2
+      },
+      companyEarnings: {
+        current: companyEarnings,
+        previous: data.netProfit.previous * 0.8
+      },
+      profitMargin: {
+        current: (netProfit / data.totalEarnings.current) * 100,
+        previous: (data.netProfit.previous / data.totalEarnings.previous) * 100
+      }
+    }
   } catch (error) {
     console.error('Error fetching financial overview:', error)
     toast.error('Error fetching financial overview')
@@ -545,18 +566,6 @@ const getPercentageChange = (current, previous) => {
   return (((current - previous) / previous) * 100).toFixed(2)
 }
 
-const getComparisonClass = (current, previous) => {
-  if (current > previous) return 'text-green-500'
-  if (current < previous) return 'text-red-500'
-  return 'text-gray-500'
-}
-
-const getComparisonIcon = (current, previous) => {
-  if (current > previous) return 'arrow-up'
-  if (current < previous) return 'arrow-down'
-  return 'minus'
-}
-
 const getProgressWidth = (current, previous) => {
   const max = Math.max(current, previous, 1)
   return ((current / max) * 100).toFixed(2)
@@ -596,6 +605,52 @@ const getExpenseComparisonIcon = (current, previous) => {
   if (current > previous) return 'arrow-up'
   return 'minus'
 }
+
+const formatPercentage = (value) => {
+  return value.toFixed(2) + '%'
+}
+
+const getComparisonClass = (data, key) => {
+  if (key === 'totalExpenses') {
+    return getExpenseComparisonClass(data.current, data.previous)
+  }
+  return data.current > data.previous ? 'text-green-500' : data.current < data.previous ? 'text-red-500' : 'text-gray-500'
+}
+
+const getComparisonIcon = (data, key) => {
+  if (key === 'totalExpenses') {
+    return getExpenseComparisonIcon(data.current, data.previous)
+  }
+  return data.current > data.previous ? 'arrow-up' : data.current < data.previous ? 'arrow-down' : 'minus'
+}
+
+const earningsDistributionOptions = computed(() => ({
+  chart: {
+    type: 'pie',
+    foreColor: isDarkMode.value ? '#fff' : '#000',
+  },
+  labels: ['Company Earnings', 'Technician Earnings'],
+  theme: { mode: isDarkMode.value ? 'light' : 'light' },
+  responsive: [{
+    breakpoint: 480,
+    options: {
+      chart: {
+        width: 200
+      },
+      legend: {
+        position: 'bottom'
+      }
+    }
+  }]
+}))
+
+const earningsDistributionSeries = computed(() => {
+  if (!financialOverview.value) return []
+  return [
+    financialOverview.value.companyEarnings.current,
+    financialOverview.value.technicianEarnings.current
+  ]
+})
 
 // Watchers and lifecycle hooks
 watch(selectedWebsite, (newValue) => {

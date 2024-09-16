@@ -16,16 +16,18 @@ import {
   ListboxOption,
 } from '@headlessui/vue'
 
-import { ref, onMounted, watchEffect } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
+import { storeToRefs } from 'pinia'
 import ScaleLoader from 'vue-spinner/src/ScaleLoader.vue'
 import { useToast } from 'vue-toast-notification';
 import Ably from "ably";
 
 const toast = useToast();
 const userStore = useUserStore()
+const { currentWebsite, websites } = storeToRefs(userStore)
+
 const addModal = ref(false)
 const submitted = ref(false)
-const selectedWebsite = ref(userStore.currentWebsite)
 const loading = ref(false)
 const analytics = ref({})
 const dropdownContacts = ref(false)
@@ -34,9 +36,14 @@ const dropdownSales = ref(false)
 const unreadNotifications = ref([]);
 //const ably = new Ably.Realtime(userStore.ableyk);
 
+const selectedWebsite = computed({
+  get: () => currentWebsite.value,
+  set: (value) => userStore.updateWebsite(value)
+})
 
-const opt = ref([
+const opt = computed(() => [
   { label: 'Select Website', value: 'default', attrs: { disabled: true } },
+  ...websites.value
 ])
 
 const people = [
@@ -56,21 +63,23 @@ function logout() {
   location.reload()
 }
 
-async function fetchWebsites(n) {
+async function fetchWebsites() {
   try {
     loading.value = true
-    const id = userStore.user.id;
-    const response = await axios.get('get-websites-for-user?id='+ id);
-    opt.value = [{ label: 'Select Website', value: 'default'}].concat(response.data)
-    if (response.data.length && selectedWebsite.value != 'default') {
-      userStore.updateWebsite(selectedWebsite.value)
-      fetchWebsiteAnalytics(selectedWebsite.value);
-      fetchSettings(selectedWebsite.value);
+    const response = await axios.get(`get-websites-for-user?id=${userStore.user.id}`);
+    const formattedWebsites = response.data.map(site => ({
+      label: site.label,
+      value: site.value
+    }));
+    userStore.setWebsites(formattedWebsites);
+    if (formattedWebsites.length > 0 && userStore.currentWebsite === "default") {
+      userStore.updateWebsite(formattedWebsites[0].value);
     }
     loading.value = false
   } catch (error) {
-    console.log(error)
-    toast.error("Error getting website data")
+    console.error('Error fetching websites:', error);
+    toast.error("Error getting website data");
+    loading.value = false
   }
 }
 
@@ -84,6 +93,7 @@ async function fetchWebsiteAnalytics(id) {
   } catch (error) {
     console.log(error)
     toast.error("Error getting website analytics data")
+    loading.value = false
   }
 }
 
@@ -96,6 +106,7 @@ async function fetchSettings(id) {
   } catch (error) {
     console.log(error)
     toast.error("Error getting website settings")
+    loading.value = false
   }
 }
 
@@ -110,6 +121,7 @@ async function addWebsite(credentials) {
   } catch (error) {
     console.log(error)
     toast.error('Error Adding website')
+    loading.value = false
   }
 }
 
@@ -212,11 +224,14 @@ onMounted(() => {
     //iniABLY();
     fetchWebsites();
   }
-}),
+})
 
-  watchEffect(() => {
-    fetchWebsites(selectedWebsite.value)
-  })
+watch(selectedWebsite, (newValue) => {
+  if (newValue && newValue !== 'default') {
+    fetchWebsiteAnalytics(newValue)
+    fetchSettings(newValue)
+  }
+})
 </script>
 
 <template>

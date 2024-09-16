@@ -16,6 +16,7 @@ export const useUserStore = defineStore("UserStore", {
       notifications: [],
       currentWebsite: "default",
       settings: {},
+      websites: [],
       status: [ 
         'AI-Draft',
         'scheduled',
@@ -124,6 +125,9 @@ export const useUserStore = defineStore("UserStore", {
       } catch (error) {
         toast.error(error?.message);
       }
+    },
+    setWebsites(websites) {
+      this.websites = websites;
     },
     isNewUser(newUser) {
       this.newUser = newUser;

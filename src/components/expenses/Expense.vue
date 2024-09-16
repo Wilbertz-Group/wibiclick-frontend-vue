@@ -61,26 +61,7 @@ watch(selectedType, async (n, o) => {
 <template>
   <div class="shadow rounded-xl px-3 pt-3 pb-1 mt-3 cursor-move w-full">
     <div class="mb-2 p-0">
-      <modal :heading="heading" :body="body" :isOpen="isOpen" @close-modal="closeModal"></modal>
-      <div class="flex justify-between mb-2">    
-        <div class="flex flex-col justify-center">
-          <p class="text-lg text-black" ></p>
-        </div>  
-        <div class="relative">
-          <Listbox v-model="selectedType">
-            <ListboxButton class="relative w-full py-2 pl-3 pr-10 text-left bg-white rounded-lg shadow-md cursor-default focus:outline-none focus-visible:ring-2 focus-visible:ring-opacity-75 focus-visible:ring-white focus-visible:ring-offset-orange-300 focus-visible:ring-offset-2 focus-visible:border-indigo-500 sm:text-sm">
-              <span class="block truncate">{{ selectedType.name }}</span>
-            </ListboxButton>
-            <ListboxOptions class="absolute w-full py-1 mt-1 overflow-auto text-base bg-white rounded-md shadow-lg max-h-60 ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
-              <ListboxOption v-for="type in expenseTypes" :key="type.value" :value="type" v-slot="{ active, selected }">
-                <div :class="[active ? 'text-amber-900 bg-amber-100' : 'text-gray-900', 'cursor-default select-none relative py-2 pl-10 pr-4']">
-                  <span :class="[selected ? 'font-medium' : 'font-normal', 'block truncate']">{{ type.name }}</span>
-                </div>
-              </ListboxOption>
-            </ListboxOptions>
-          </Listbox>
-        </div>
-      </div>      
+      <modal :heading="heading" :body="body" :isOpen="isOpen" @close-modal="closeModal"></modal>     
       <div class="flex justify-between" >
         <p class="text-sm font-bold text-black" >Date</p>
         <p class="text-sm text-black" >{{ universalDateFormatter(expense.date) }}</p>
@@ -93,9 +74,9 @@ watch(selectedType, async (n, o) => {
         <p class="text-sm font-bold text-black" >Type</p>
         <p class="text-sm text-black" >{{ expense.type }}</p>
       </div>
-      <div class="flex justify-between">
+      <div class=""> 
         <p class="text-sm font-bold text-black" >Description</p>
-        <p class="text-sm text-black" >{{ expense.description }}</p>
+        <p class="text-xs text-black" >{{ expense.description }}</p>
       </div>
     </div>
     <div class="flex mt-4 mb-1 justify-between items-center" >
