@@ -465,7 +465,10 @@ const fetchJobs = async () => {
   try {
     loading.value = true
     const response = await axios.get(`jobs?id=${currentWebsite.value}&limit=1500&offset=0`)
-    jobs.value = response.data.jobs
+    jobs.value = response.data.jobs.map(job => ({
+      ...job,
+      slotStart: moment.utc(job.slotStart).format()
+    }))
     loading.value = false
   } catch (error) {
     console.error('Error fetching jobs:', error)
@@ -514,7 +517,7 @@ const editJob = (job) => {
     location: job.location,
     address: job.address,
     phone: job.phone,
-    slotStart: moment(job.slotStart).format('YYYY-MM-DDTHH:mm'),
+    slotStart: moment.utc(job.slotStart).local().format('YYYY-MM-DDTHH:mm'),
     slotTime: job.slotTime,
     employeeId: job.employee?.id,
     to_do: job.to_do,
@@ -549,6 +552,7 @@ const submitJob = async () => {
     loading.value = true;
     const jobData = {
       ...jobForm,
+      slotStart: moment(jobForm.slotStart).utc().format(),
       websiteId: currentWebsite.value,
     };
 
@@ -664,22 +668,19 @@ const notifyTechnician = async (job) => {
 }
 
 const formatDate = (date) => {
-  const jobDate = moment(date);
-  const now = moment();
-
-  // Function to format time with AM/PM
-  const formatTime = (momentDate) => momentDate.format('h:mm A');
+  const jobDate = moment.utc(date);
+  const now = moment.utc();
 
   if (jobDate.isSame(now, 'day')) {
-    return `${formatTime(jobDate)}`;
+    return jobDate.local().format('h:mm A');
   } else if (jobDate.isSame(now.clone().add(1, 'day'), 'day')) {
-    return `Tomorrow at ${formatTime(jobDate)}`;
+    return `Tomorrow at ${jobDate.local().format('h:mm A')}`;
   } else if (jobDate.isSame(now.clone().subtract(1, 'day'), 'day')) {
-    return `Yesterday at ${formatTime(jobDate)}`;
+    return `Yesterday at ${jobDate.local().format('h:mm A')}`;
   } else {
-    return jobDate.format('MMM DD, YYYY h:mm A');
+    return jobDate.local().format('MMM DD, YYYY h:mm A');
   }
-}
+};
 
 const formatDateForInput = (date) => {
   return date ? moment(date).format('YYYY-MM-DD') : ''
