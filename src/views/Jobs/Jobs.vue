@@ -159,7 +159,17 @@
             <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
               <tr v-for="job in paginatedJobs" :key="job.id" class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150">
                 <td data-label="Customer Name" class="px-6 py-2 whitespace-nowrap">
-                  <div class="text-md font-medium text-gray-900 dark:text-white">{{ job.name }}</div>
+                  <div class="text-md font-medium text-gray-900 dark:text-white">
+                    <router-link 
+                      :to="{
+                        name: 'contact',
+                        query: { customer_id: job.customer?.id }
+                      }"
+                      class="flex items-center text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200 transition duration-150 ease-in-out"
+                    >
+                      <span>{{ job.name }}</span>
+                    </router-link>
+                  </div>
                 </td>
                 <td class="px-6 py-2">
                   <div class="text-md text-gray-500 dark:text-gray-300">
@@ -541,13 +551,49 @@ const submitJob = async () => {
       ...jobForm,
       websiteId: currentWebsite.value,
     };
+
+    // Optimistic update
+    if (editingJob.value) {
+      const index = jobs.value.findIndex(job => job.id === jobData.id);
+      if (index !== -1) {
+        jobs.value[index] = { ...jobs.value[index], ...jobData };
+      }
+    } else {
+      // For new jobs, we'll add a temporary id
+      const tempJob = { ...jobData, id: 'temp-' + Date.now() };
+      jobs.value.unshift(tempJob);
+    }
+
+    // Send request to server
     const response = await axios.post('add-job?id=' + currentWebsite.value, jobData);
+
+    // Update with server response
+    if (editingJob.value) {
+      const index = jobs.value.findIndex(job => job.id === jobData.id);
+      if (index !== -1) {
+        jobs.value[index] = response.data.job;
+      }
+    } else {
+      const index = jobs.value.findIndex(job => job.id === 'temp-' + Date.now());
+      if (index !== -1) {
+        jobs.value[index] = response.data.job;
+      }
+    }
+
     toast.success(editingJob.value ? 'Job updated successfully' : 'Job added successfully');
     closeJobModal();
-    fetchJobs();
   } catch (error) {
     console.error('Error submitting job:', error);
     toast.error('Error submitting job');
+    // Revert optimistic update
+    if (editingJob.value) {
+      const index = jobs.value.findIndex(job => job.id === jobForm.id);
+      if (index !== -1) {
+        jobs.value[index] = editingJob.value;
+      }
+    } else {
+      jobs.value = jobs.value.filter(job => job.id !== 'temp-' + Date.now());
+    }
   } finally {
     loading.value = false;
   }
