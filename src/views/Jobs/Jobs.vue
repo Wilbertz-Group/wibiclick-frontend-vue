@@ -438,8 +438,8 @@ const filteredJobs = computed(() => {
     const matchesStatus = !filters.status || job.jobStatus === filters.status
     const matchesTechnician = !filters.technician || job.employee?.id === filters.technician
     const matchesLocation = !filters.location || job.location?.toLowerCase().includes(filters.location.toLowerCase())
-    const matchesDate = !filters.date || moment(job.slotStart).isSame(filters.date, 'day')
-    const matchesSlotStart = !filters.slotStart || moment(job.slotStart).isSame(filters.slotStart)
+    const matchesDate = !filters.date || moment.utc(job.slotStart).isSame(moment.utc(filters.date), 'day')
+    const matchesSlotStart = !filters.slotStart || moment.utc(job.slotStart).isSame(moment.utc(filters.slotStart), 'day')
 
     return matchesSearch && matchesStatus && matchesTechnician && matchesLocation && matchesDate && matchesSlotStart
   })
@@ -694,7 +694,7 @@ const updateDateFilter = (event) => {
 }
 
 const updateSlotStartFilter = (event) => {
-  filters.slotStart = event.target.value ? new Date(event.target.value) : null
+  filters.slotStart = event.target.value ? moment.utc(event.target.value).startOf('day').toDate() : null;
 }
 
 const getStatusClass = (status) => {
