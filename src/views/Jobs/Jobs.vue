@@ -582,6 +582,7 @@ const submitJob = async () => {
 
     toast.success(editingJob.value ? 'Job updated successfully' : 'Job added successfully');
     closeJobModal();
+    fetchJobs()
   } catch (error) {
     console.error('Error submitting job:', error);
     toast.error('Error submitting job');
