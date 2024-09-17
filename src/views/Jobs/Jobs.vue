@@ -517,7 +517,7 @@ const editJob = (job) => {
     location: job.location,
     address: job.address,
     phone: job.phone,
-    slotStart: moment.utc(job.slotStart).local().format('YYYY-MM-DDTHH:mm'),
+    slotStart: moment.utc(job.slotStart).format('YYYY-MM-DDTHH:mm'),
     slotTime: job.slotTime,
     employeeId: job.employee?.id,
     to_do: job.to_do,
@@ -552,7 +552,6 @@ const submitJob = async () => {
     loading.value = true;
     const jobData = {
       ...jobForm,
-      slotStart: moment(jobForm.slotStart).utc().format(),
       websiteId: currentWebsite.value,
     };
 
@@ -672,13 +671,13 @@ const formatDate = (date) => {
   const now = moment.utc();
 
   if (jobDate.isSame(now, 'day')) {
-    return jobDate.local().format('h:mm A');
+    return jobDate.format('h:mm A');
   } else if (jobDate.isSame(now.clone().add(1, 'day'), 'day')) {
-    return `Tomorrow at ${jobDate.local().format('h:mm A')}`;
+    return `Tomorrow at ${jobDate.format('h:mm A')}`;
   } else if (jobDate.isSame(now.clone().subtract(1, 'day'), 'day')) {
-    return `Yesterday at ${jobDate.local().format('h:mm A')}`;
+    return `Yesterday at ${jobDate.format('h:mm A')}`;
   } else {
-    return jobDate.local().format('MMM DD, YYYY h:mm A');
+    return jobDate.format('MMM DD, YYYY h:mm A');
   }
 };
 
