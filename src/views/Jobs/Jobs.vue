@@ -3,9 +3,15 @@
     <div class="container mx-auto px-4 py-8">
       <div class="flex justify-between items-center mb-8">
         <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-800">Jobs</h1>
-        <button @click="toggleDarkMode" class="p-2 rounded-full bg-gray-200 dark:bg-gray-700 transition-colors duration-300">
-          <font-awesome-icon :icon="isDarkMode ? 'sun' : 'moon'" class="text-yellow-500 dark:text-blue-300" />
-        </button>
+        <div>          
+          <button @click="reloadJobs" class="btn-secondary-custom ml-2">
+            <font-awesome-icon icon="sync" class="mr-2" :class="{ 'fa-spin': loading }" />
+            Reload Jobs
+          </button>
+          <button @click="toggleDarkMode" class="px-3 py-2 ml-2 rounded-full bg-gray-200 dark:bg-gray-700 transition-colors duration-300">
+            <font-awesome-icon :icon="isDarkMode ? 'sun' : 'moon'" class="text-yellow-500 dark:text-blue-300" />
+          </button>
+        </div>
       </div>
 
       <div class="mb-6 flex flex-wrap gap-4 items-center">
@@ -72,7 +78,7 @@
             </div>
             <select v-model="filters.status" class="form-select">
               <option value="">All Statuses</option>
-              <option v-for="status in jobStatuses" :key="status" :value="status">{{ status }}</option>
+              <option v-for="status in JOB_STATUSES" :key="status" :value="status">{{ status }}</option>
             </select>
             <select v-model="filters.technician" class="form-select">
               <option value="">All Technicians</option>
@@ -212,7 +218,7 @@
   </div>
 
   <!-- Job Form Modal -->
-  <transition name="modal">
+  <transition :class="{ 'dark': isDarkMode }" name="modal">
     <div v-if="showJobModal" class="fixed z-10 inset-0 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
       <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
         <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" @click="closeJobModal"></div>
@@ -221,66 +227,75 @@
 
         <div class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
           <div class="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-            <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">{{ editingJob ? 'Edit Job' : 'Add New Job' }}</h3>
+            <h3 class="text-lg font-medium leading-6 text-gray-900 dark:text-white mb-4">{{ editingJob ? 'Edit Job' : 'Add New Job' }}</h3>
             <form @submit.prevent="submitJob">
-              <div class="grid grid-cols-1 gap-4">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div class="form-group">
-                  <label for="customerId">Customer</label>
-                  <select id="customerId" v-model="jobForm.customerId" required class="form-select">
-                    <option value="">Select a customer</option>
-                    <option v-for="customer in customerOptions" :key="customer.value" :value="customer.value">
-                      {{ customer.label }}
-                    </option>
+                  <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Customer Name</label>
+                  <input type="text" id="name" v-model="jobForm.name" required class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white">
+                </div>
+                <div class="form-group">
+                  <label for="jobStatus" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Job Status</label>
+                  <select id="jobStatus" v-model="jobForm.jobStatus" required class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white dark:bg-gray-700 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:text-white">
+                    <option v-for="status in JOB_STATUSES" :key="status" :value="status">{{ status }}</option>
                   </select>
                 </div>
                 <div class="form-group">
-                  <label for="name">Job Name</label>
-                  <input type="text" id="name" v-model="jobForm.name" required class="form-input">
+                  <label for="callout" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Callout Fee</label>
+                  <input type="text" id="callout" v-model="jobForm.callout" required class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white">
                 </div>
                 <div class="form-group">
-                  <label for="issue">Issue</label>
-                  <textarea id="issue" v-model="jobForm.issue" required class="form-textarea"></textarea>
+                  <label for="location" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Location</label>
+                  <input type="text" id="location" v-model="jobForm.location" required class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white">
                 </div>
                 <div class="form-group">
-                  <label for="jobStatus">Status</label>
-                  <select id="jobStatus" v-model="jobForm.jobStatus" required class="form-select">
-                    <option v-for="status in jobStatuses" :key="status" :value="status">{{ status }}</option>
+                  <label for="address" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Customer Address</label>
+                  <input type="text" id="address" v-model="jobForm.address" required class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white">
+                </div>
+                <div class="form-group">
+                  <label for="phone" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Customer Phone</label>
+                  <input type="tel" id="phone" v-model="jobForm.phone" required class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white">
+                </div>
+                <div class="form-group">
+                  <label for="slotStart" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Job Start Date</label>
+                  <input type="datetime-local" id="slotStart" v-model="jobForm.slotStart" required class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white">
+                </div>
+                <div class="form-group">
+                  <label for="slotTime" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Job Duration</label>
+                  <select id="slotTime" v-model="jobForm.slotTime" required class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white dark:bg-gray-700 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:text-white">
+                    <option v-for="duration in ['1hr', '2hrs', '3hrs', '4hrs']" :key="duration" :value="duration">{{ duration }}</option>
                   </select>
                 </div>
                 <div class="form-group">
-                  <label for="slotStart">Start Date</label>
-                  <input type="datetime-local" id="slotStart" v-model="jobForm.slotStart" required class="form-input">
-                </div>
-                <div class="form-group">
-                  <label for="employeeId">Technician</label>
-                  <select id="employeeId" v-model="jobForm.employeeId" required class="form-select">
+                  <label for="employeeId" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Employee</label>
+                  <select id="employeeId" v-model="jobForm.employeeId" required class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white dark:bg-gray-700 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:text-white">
                     <option v-for="tech in technicians" :key="tech.id" :value="tech.id">
                       {{ tech.firstName }} {{ tech.lastName }}
                     </option>
                   </select>
                 </div>
                 <div class="form-group">
-                  <label for="location">Location</label>
-                  <input type="text" id="location" v-model="jobForm.location" required class="form-input">
+                  <label for="to_do" class="block text-sm font-medium text-gray-700 dark:text-gray-300">To Do</label>
+                  <input type="text" id="to_do" v-model="jobForm.to_do" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white">
                 </div>
-                <div class="form-group">
-                  <label for="callout">Callout Fee</label>
-                  <input type="text" id="callout" v-model="jobForm.callout" required class="form-input">
-                </div>
-                <div class="form-group">
-                  <label class="inline-flex items-center">
-                    <input type="checkbox" v-model="jobForm.notify" class="form-checkbox">
-                    <span class="ml-2">Notify Technician</span>
-                  </label>
-                </div>
+              </div>
+              <div class="form-group mt-4">
+                <label for="issue" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Issue</label>
+                <textarea id="issue" v-model="jobForm.issue" required rows="3" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white"></textarea>
+              </div>
+              <div class="form-group mt-4">
+                <label class="inline-flex items-center">
+                  <input type="checkbox" v-model="jobForm.notify" class="form-checkbox rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-offset-0 focus:ring-indigo-200 focus:ring-opacity-50 dark:border-gray-600 dark:bg-gray-700">
+                  <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Notify Employee</span>
+                </label>
               </div>
             </form>
           </div>
           <div class="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-            <button @click="submitJob" class="btn-primary-custom w-full sm:w-auto sm:ml-3">
+            <button @click="submitJob" type="button" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm">
               {{ editingJob ? 'Update' : 'Add' }} Job
             </button>
-            <button @click="closeJobModal" class="btn-secondary w-full sm:w-auto sm:mt-3 sm:mt-0">
+            <button @click="closeJobModal" type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white dark:bg-gray-800 text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
               Cancel
             </button>
           </div>
@@ -316,10 +331,10 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { library } from '@fortawesome/fontawesome-svg-core'
 import { 
   faSun, faMoon, faCalendar, faUser, faMapMarkerAlt, 
-  faChevronDown, faCheck, faSearch, faClock 
+  faChevronDown, faCheck, faSearch, faClock, faSync 
 } from '@fortawesome/free-solid-svg-icons'
 
-library.add(faSun, faMoon, faCalendar, faUser, faMapMarkerAlt, faChevronDown, faCheck, faSearch, faClock)
+library.add(faSun, faMoon, faCalendar, faUser, faMapMarkerAlt, faChevronDown, faCheck, faSearch, faClock, faSync)
 
 const userStore = useUserStore()
 const toast = useToast()
@@ -338,16 +353,50 @@ const jobBookingTrendChart = ref(null)
 const tableHeaders = ['Customer Name', 'Issue', 'Status', 'Date', 'Technician', 'Location', 'Actions']
 
 const jobForm = reactive({
+  id: '',
   customerId: '',
   name: '',
-  issue: '',
   jobStatus: '',
-  slotStart: '',
-  employeeId: '',
+  callout: 'R350',
   location: '',
-  callout: '',
+  address: '',
+  phone: '',
+  slotStart: '',
+  slotTime: '',
+  employeeId: '',
+  to_do: '',
+  issue: '',
   notify: false
-})
+});
+
+const JOB_STATUSES = [
+  'scheduled',
+  'quoting',
+  'quoted',
+  'accepted',
+  'cancelled',
+  'no parts',
+  'pending',
+  'invoiced',
+  'done',
+  'paid',
+  'to order parts',
+  'parts ordered',
+  'parts arrived',
+  'parts installed',
+  'parts paid',
+  'parts not paid',
+  'parts not installed',
+  'parts not ordered',
+  'parts not available',
+  'parts not needed',
+  'parts not found',
+  'follow-up',
+  'waiting for price',
+  'waiting for parts',
+  'waiting for customer',
+  'waiting for payment'
+];
 
 Chart.register(annotationPlugin)
 
@@ -370,7 +419,7 @@ const opt = computed(() => [
   ...websites.value
 ])
 
-const jobStatuses = computed(() => [...new Set(jobs.value.map(job => job.jobStatus))])
+const jobStatuses = JOB_STATUSES
 
 const filteredJobs = computed(() => {
   return jobs.value.filter(job => {
@@ -445,19 +494,24 @@ const openAddJobModal = () => {
 }
 
 const editJob = (job) => {
-  editingJob.value = job
+  editingJob.value = job;
   Object.assign(jobForm, {
+    id: job.id,
     customerId: job.customer.id,
     name: job.name,
-    issue: job.issue,
     jobStatus: job.jobStatus,
-    slotStart: moment(job.slotStart).format('YYYY-MM-DDTHH:mm'),
-    employeeId: job.employee?.id,
+    callout: job.callout || 'R350', 
     location: job.location,
-    callout: job.callout,
+    address: job.address,
+    phone: job.phone,
+    slotStart: moment(job.slotStart).format('YYYY-MM-DDTHH:mm'),
+    slotTime: job.slotTime,
+    employeeId: job.employee?.id,
+    to_do: job.to_do,
+    issue: job.issue,
     notify: false
-  })
-  showJobModal.value = true
+  });
+  showJobModal.value = true;
 }
 
 const closeJobModal = () => {
@@ -482,21 +536,20 @@ const resetJobForm = () => {
 
 const submitJob = async () => {
   try {
-    loading.value = true
+    loading.value = true;
     const jobData = {
       ...jobForm,
       websiteId: currentWebsite.value,
-      id: editingJob.value?.id
-    }
-    const response = await axios.post('add-job?id=' + currentWebsite.value, jobData)
-    toast.success(editingJob.value ? 'Job updated successfully' : 'Job added successfully')
-    closeJobModal()
-    fetchJobs()
+    };
+    const response = await axios.post('add-job?id=' + currentWebsite.value, jobData);
+    toast.success(editingJob.value ? 'Job updated successfully' : 'Job added successfully');
+    closeJobModal();
+    fetchJobs();
   } catch (error) {
-    console.error('Error submitting job:', error)
-    toast.error('Error submitting job')
+    console.error('Error submitting job:', error);
+    toast.error('Error submitting job');
   } finally {
-    loading.value = false
+    loading.value = false;
   }
 }
 
@@ -621,7 +674,7 @@ const getStatusClass = (status) => {
     case 'no parts': return baseClasses + 'bg-yellow-200 text-yellow-800 dark:bg-yellow-700 dark:text-yellow-200'
     case 'to order parts': return baseClasses + 'bg-yellow-300 text-yellow-800 dark:bg-yellow-600 dark:text-yellow-100'
     case 'parts ordered': return baseClasses + 'bg-yellow-400 text-yellow-800 dark:bg-yellow-500 dark:text-yellow-100'
-    case 'parts arrived': return baseClasses + 'bg-yellow-500 text-white dark:bg-yellow-600 dark:text-yellow-100'
+    case 'parts arrived': return baseClasses + 'bg-yellow-600 text-white dark:bg-yellow-800 dark:text-yellow-100'
     case 'parts installed': return baseClasses + 'bg-green-300 text-green-800 dark:bg-green-600 dark:text-green-100'
     case 'parts paid': return baseClasses + 'bg-green-400 text-green-800 dark:bg-green-500 dark:text-green-100'
     
@@ -822,7 +875,21 @@ const processBookingData = (jobs, yearOffset = 0) => {
   }
 
   return { data };
-};
+}
+
+const reloadJobs = async () => {
+  try {
+    loading.value = true;
+    await fetchJobs();
+    createCharts(); // Recreate charts with updated data
+    toast.success('Jobs reloaded successfully');
+  } catch (error) {
+    console.error('Error reloading jobs:', error);
+    toast.error('Error reloading jobs');
+  } finally {
+    loading.value = false;
+  }
+}
 
 onMounted(() => {
   if (currentWebsite.value) {
@@ -927,6 +994,33 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator {
 /* Transition for dark mode */
 .transition-dark-mode {
   @apply transition-colors duration-300;
+}
+
+.btn-secondary-custom {
+  @apply px-4 py-2 font-semibold text-sm rounded-lg shadow-md;
+  @apply text-gray-800 bg-gray-200 hover:bg-gray-300;
+  @apply dark:text-white dark:bg-gray-700 dark:hover:bg-gray-600;
+  @apply focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-opacity-75;
+}
+
+.modal-enter-active,
+.modal-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
+}
+
+.modal-enter-active .modal-container,
+.modal-leave-active .modal-container {
+  transition: all 0.3s ease;
+}
+
+.modal-enter-from .modal-container,
+.modal-leave-to .modal-container {
+  transform: scale(1.1);
 }
 
 /* Media query for larger screens */
