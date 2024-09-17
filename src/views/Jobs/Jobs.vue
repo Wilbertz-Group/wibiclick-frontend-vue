@@ -600,35 +600,50 @@ const updateSlotStartFilter = (event) => {
 const getStatusClass = (status) => {
   const baseClasses = 'px-2 inline-flex text-xs leading-5 font-semibold rounded-full '
   switch (status) {
-    case 'scheduled': return baseClasses + 'bg-blue-100 text-blue-800 dark:bg-blue-700 dark:text-blue-100'
-    case 'in progress': return baseClasses + 'bg-yellow-100 text-yellow-800 dark:bg-yellow-700 dark:text-yellow-100'
-    case 'completed': return baseClasses + 'bg-green-100 text-green-800 dark:bg-green-700 dark:text-green-100'
-    case 'cancelled': return baseClasses + 'bg-red-100 text-red-800 dark:bg-red-700 dark:text-red-100'
-    case 'accepted': return baseClasses + 'bg-blue-600 text-white dark:bg-blue-800 dark:text-blue-100'
-    case 'quoted': return baseClasses + 'bg-purple-600 text-white dark:bg-purple-800 dark:text-purple-100'
-    case 'done': return baseClasses + 'bg-green-500 text-white dark:bg-green-700 dark:text-green-100'
-    case 'no parts': return baseClasses + 'bg-yellow-500 text-white dark:bg-yellow-700 dark:text-yellow-100'
-    case 'quoting': return baseClasses + 'bg-blue-400 text-white dark:bg-blue-600 dark:text-blue-100'
-    case 'pending': return baseClasses + 'bg-gray-800 text-white dark:bg-gray-900 dark:text-gray-100'
-    case 'invoiced': return baseClasses + 'bg-green-800 text-white dark:bg-green-900 dark:text-green-100'
-    case 'follow-up': return baseClasses + 'bg-yellow-800 text-white dark:bg-yellow-900 dark:text-yellow-100'
+    // Initial stages
+    case 'pending': return baseClasses + 'bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
+    case 'quoting': return baseClasses + 'bg-blue-200 text-blue-800 dark:bg-blue-700 dark:text-blue-200'
+    case 'quoted': return baseClasses + 'bg-blue-300 text-blue-800 dark:bg-blue-600 dark:text-blue-100'
+    case 'accepted': return baseClasses + 'bg-indigo-300 text-indigo-800 dark:bg-indigo-600 dark:text-indigo-100'
+    
+    // Scheduling and progress
+    case 'scheduled': return baseClasses + 'bg-emerald-200 text-emerald-800 dark:bg-emerald-700 dark:text-emerald-200'
+    case 'in progress': return baseClasses + 'bg-yellow-300 text-yellow-800 dark:bg-yellow-600 dark:text-yellow-100'
+    case 'follow-up': return baseClasses + 'bg-orange-300 text-orange-800 dark:bg-orange-600 dark:text-orange-100'
+    
+    // Completion stages
+    case 'completed': return baseClasses + 'bg-green-300 text-green-800 dark:bg-green-600 dark:text-green-100'
+    case 'done': return baseClasses + 'bg-green-400 text-green-800 dark:bg-green-500 dark:text-green-100'
+    case 'invoiced': return baseClasses + 'bg-purple-300 text-purple-800 dark:bg-purple-600 dark:text-purple-100'
     case 'paid': return baseClasses + 'bg-green-500 text-white dark:bg-green-700 dark:text-green-100'
-    case 'to order parts': return baseClasses + 'bg-yellow-500 text-white dark:bg-yellow-700 dark:text-yellow-100'
-    case 'parts ordered': return baseClasses + 'bg-yellow-400 text-white dark:bg-yellow-600 dark:text-yellow-100'
-    case 'parts arrived': return baseClasses + 'bg-yellow-300 text-white dark:bg-yellow-500 dark:text-yellow-100'
-    case 'parts installed': return baseClasses + 'bg-yellow-200 text-white dark:bg-yellow-400 dark:text-yellow-100'
-    case 'parts paid': return baseClasses + 'bg-yellow-100 text-white dark:bg-yellow-300 dark:text-yellow-100'
-    case 'parts not paid': return baseClasses + 'bg-red-100 text-white dark:bg-red-300 dark:text-red-100'
-    case 'parts not installed': return baseClasses + 'bg-red-200 text-white dark:bg-red-400 dark:text-red-100'
-    case 'parts not ordered': return baseClasses + 'bg-red-300 text-white dark:bg-red-500 dark:text-red-100'
-    case 'parts not available': return baseClasses + 'bg-red-400 text-white dark:bg-red-600 dark:text-red-100'
-    case 'parts not needed': return baseClasses + 'bg-red-500 text-white dark:bg-red-700 dark:text-red-100'
-    case 'parts not found': return baseClasses + 'bg-red-600 text-white dark:bg-red-800 dark:text-red-100'
-    case 'waiting for price': return baseClasses + 'bg-gray-600 text-white dark:bg-gray-700 dark:text-gray-100'
-    case 'waiting for parts': return baseClasses + 'bg-gray-700 text-white dark:bg-gray-800 dark:text-gray-100'
-    case 'waiting for customer': return baseClasses + 'bg-gray-800 text-white dark:bg-gray-900 dark:text-gray-100'
-    case 'waiting for payment': return baseClasses + 'bg-gray-900 text-white dark:bg-gray-600 dark:text-gray-100'
-    default: return baseClasses + 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-100'
+    
+    // Parts-related statuses
+    case 'no parts': return baseClasses + 'bg-yellow-200 text-yellow-800 dark:bg-yellow-700 dark:text-yellow-200'
+    case 'to order parts': return baseClasses + 'bg-yellow-300 text-yellow-800 dark:bg-yellow-600 dark:text-yellow-100'
+    case 'parts ordered': return baseClasses + 'bg-yellow-400 text-yellow-800 dark:bg-yellow-500 dark:text-yellow-100'
+    case 'parts arrived': return baseClasses + 'bg-yellow-500 text-white dark:bg-yellow-600 dark:text-yellow-100'
+    case 'parts installed': return baseClasses + 'bg-green-300 text-green-800 dark:bg-green-600 dark:text-green-100'
+    case 'parts paid': return baseClasses + 'bg-green-400 text-green-800 dark:bg-green-500 dark:text-green-100'
+    
+    // Negative parts statuses
+    case 'parts not paid': return baseClasses + 'bg-red-200 text-red-800 dark:bg-red-700 dark:text-red-200'
+    case 'parts not installed': return baseClasses + 'bg-red-300 text-red-800 dark:bg-red-600 dark:text-red-100'
+    case 'parts not ordered': return baseClasses + 'bg-red-400 text-white dark:bg-red-500 dark:text-red-100'
+    case 'parts not available': return baseClasses + 'bg-red-500 text-white dark:bg-red-600 dark:text-red-100'
+    case 'parts not needed': return baseClasses + 'bg-orange-400 text-white dark:bg-orange-500 dark:text-orange-100'
+    case 'parts not found': return baseClasses + 'bg-red-600 text-white dark:bg-red-700 dark:text-red-100'
+    
+    // Waiting statuses
+    case 'waiting for price': return baseClasses + 'bg-cyan-300 text-cyan-800 dark:bg-cyan-600 dark:text-cyan-100'
+    case 'waiting for parts': return baseClasses + 'bg-amber-300 text-amber-800 dark:bg-amber-600 dark:text-amber-100'
+    case 'waiting for customer': return baseClasses + 'bg-indigo-300 text-indigo-800 dark:bg-indigo-600 dark:text-indigo-100'
+    case 'waiting for payment': return baseClasses + 'bg-violet-300 text-violet-800 dark:bg-violet-600 dark:text-violet-100'
+    
+    // Cancelled
+    case 'cancelled': return baseClasses + 'bg-red-300 text-red-800 dark:bg-red-600 dark:text-red-100'
+    
+    // Default
+    default: return baseClasses + 'bg-gray-300 text-gray-800 dark:bg-gray-600 dark:text-gray-100'
   }
 }
 
