@@ -27,6 +27,8 @@
     "boxicons": "^2.1.2",
     "buffer": "^6.0.3",
     "chart.js": "^4.4.4",
+    "chartjs-adapter-moment": "^1.0.1",
+    "chartjs-plugin-annotation": "^3.0.1",
     "date-fns": "^3.6.0",
     "esbuild": "^0.15.13",
     "flowbite": "^1.6.0",

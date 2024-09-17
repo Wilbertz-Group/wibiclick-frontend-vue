@@ -152,11 +152,11 @@
             </thead>
             <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
               <tr v-for="job in paginatedJobs" :key="job.id" class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150">
-                <td data-label="Customer Name" class="px-6 py-4 whitespace-nowrap">
-                  <div class="text-sm font-medium text-gray-900 dark:text-white">{{ job.name }}</div>
+                <td data-label="Customer Name" class="px-6 py-2 whitespace-nowrap">
+                  <div class="text-md font-medium text-gray-900 dark:text-white">{{ job.name }}</div>
                 </td>
-                <td class="px-6 py-4">
-                  <div class="text-sm text-gray-500 dark:text-gray-300">
+                <td class="px-6 py-2">
+                  <div class="text-md text-gray-500 dark:text-gray-300">
                     <p>
                       {{ job.issue.length > 45 ? job.issue.slice(0, 45) + '...' : job.issue }}
                       <button v-if="job.issue.length > 45" @click="toggleIssue(job)" class="text-blue-600 dark:text-blue-400 ml-1 text-xs underline hover:no-underline">
@@ -168,21 +168,21 @@
                     </p>
                   </div>
                 </td>
-                <td data-label="Status" class="px-6 py-4 whitespace-nowrap">
-                  <span :class="getStatusClass(job.jobStatus)" class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full">
+                <td data-label="Status" class="px-6 py-2 whitespace-nowrap">
+                  <span :class="getStatusClass(job.jobStatus)" class="w-full justify-center text-center px-3 py-2 inline-flex text-[16px] leading-5 font-semibold rounded-full">
                     {{ job.jobStatus }}
                   </span>
                 </td>
-                <td data-label="Date" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+                <td data-label="Date" class="px-6 py-2 whitespace-nowrap text-md text-gray-500 dark:text-gray-300">
                   {{ formatDate(job.slotStart) }}
                 </td>
-                <td data-label="Technician" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+                <td data-label="Technician" class="px-6 py-2 whitespace-nowrap text-md text-gray-500 dark:text-gray-300">
                   {{ job.employee?.firstName }} {{ job.employee?.lastName }}
                 </td>
-                <td data-label="Location" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+                <td data-label="Location" class="px-6 py-2 whitespace-nowrap text-md text-gray-500 dark:text-gray-300">
                   {{ job.location }}
                 </td>
-                <td data-label="Actions" class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                <td data-label="Actions" class="px-6 py-2 whitespace-nowrap text-right text-md font-medium">
                   <button @click="editJob(job)" class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-200 mr-2">Edit</button>
                   <button @click="notifyTechnician(job)" class="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-200">Notify</button>
                 </td>
@@ -199,6 +199,13 @@
             <button :disabled="currentPage === 1" @click="prevPage" class="btn-secondary mr-2">&laquo; Previous</button>
             <button :disabled="currentPage === totalPages" @click="nextPage" class="btn-secondary">Next &raquo;</button>
           </div>
+        </div>
+      </div>
+
+      <div class="bg-white dark:bg-gray-700 dark:sm:bg-gray-800 rounded-lg shadow-md overflow-hidden transition-colors duration-300 p-6 mt-7">
+        <h3 class="text-2xl font-semibold mb-4 text-gray-800 dark:text-white">Job Booking Trend</h3>
+        <div class="relative w-full">
+          <canvas ref="jobBookingTrendChart"></canvas>
         </div>
       </div>
     </div>
@@ -292,6 +299,9 @@
 import { ref, computed, onMounted, watchEffect, reactive } from 'vue'
 import axios from 'axios'
 import moment from 'moment'
+import Chart from 'chart.js/auto'
+import annotationPlugin from 'chartjs-plugin-annotation'
+import 'chartjs-adapter-moment';
 import { useUserStore } from '@/stores/UserStore'
 import { useToast } from 'vue-toast-notification'
 import ScaleLoader from 'vue-spinner/src/ScaleLoader.vue'
@@ -324,6 +334,7 @@ const currentPage = ref(1)
 const itemsPerPage = 10
 const technicians = ref([])
 const customerOptions = ref([])
+const jobBookingTrendChart = ref(null)
 const tableHeaders = ['Customer Name', 'Issue', 'Status', 'Date', 'Technician', 'Location', 'Actions']
 
 const jobForm = reactive({
@@ -337,6 +348,8 @@ const jobForm = reactive({
   callout: '',
   notify: false
 })
+
+Chart.register(annotationPlugin)
 
 const filters = reactive({
   search: '',
@@ -551,7 +564,21 @@ const notifyTechnician = async (job) => {
 }
 
 const formatDate = (date) => {
-  return moment(date).format('MMM DD, YYYY HH:mm')
+  const jobDate = moment(date);
+  const now = moment();
+
+  // Function to format time with AM/PM
+  const formatTime = (momentDate) => momentDate.format('h:mm A');
+
+  if (jobDate.isSame(now, 'day')) {
+    return `${formatTime(jobDate)}`;
+  } else if (jobDate.isSame(now.clone().add(1, 'day'), 'day')) {
+    return `Tomorrow at ${formatTime(jobDate)}`;
+  } else if (jobDate.isSame(now.clone().subtract(1, 'day'), 'day')) {
+    return `Yesterday at ${formatTime(jobDate)}`;
+  } else {
+    return jobDate.format('MMM DD, YYYY h:mm A');
+  }
 }
 
 const formatDateForInput = (date) => {
@@ -621,9 +648,172 @@ const toggleIssue = (job) => {
   job.showFullIssue = !job.showFullIssue;
 }
 
+const createCharts = () => {
+  const ctx = jobBookingTrendChart.value.getContext('2d');
+  const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+  gradient.addColorStop(0, 'rgba(54, 162, 235, 0.5)');
+  gradient.addColorStop(1, 'rgba(54, 162, 235, 0.1)');
+
+  const currentYearData = processBookingData(jobs.value, 0);
+  const lastYearData = processBookingData(jobs.value, 1);
+  const movingAverageData = calculateMovingAverage(currentYearData.data, 30);
+
+  // Ensure data starts from January 2024
+  const startDate = moment('2024-01-01').startOf('month');
+  const endDate = moment().endOf('month');
+  const labels = [];
+  let currentDate = startDate.clone();
+
+  while (currentDate <= endDate) {
+    labels.push(currentDate.format('YYYY-MM-DD'));
+    currentDate.add(1, 'month');
+  }
+
+  new Chart(jobBookingTrendChart.value, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: 'Current Year Bookings',
+          data: currentYearData.data,
+          borderColor: 'rgb(54, 162, 235)', 
+          backgroundColor: 'rgba(54, 162, 235, 0.2)',
+          fill: true,
+          tension: 0.4,
+        },
+        {
+          label: 'Last Year Bookings',
+          data: lastYearData.data,
+          borderColor: 'rgb(255, 99, 132)',
+          backgroundColor: gradient,
+          fill: true,
+          tension: 0.4,
+        },
+        {
+          label: '30-Day Moving Average',
+          data: movingAverageData,
+          borderColor: 'rgb(75, 192, 192)',
+          borderDash: [5, 5],
+          fill: false,
+          tension: 0.4,
+          pointRadius: 0,
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      aspectRatio: 2,
+      scales: {
+        x: {
+          type: 'time',
+          time: {
+            unit: 'month',
+            displayFormats: {
+              month: 'MMM YYYY'
+            },
+          },
+          min: '2024-01-01',
+          max: endDate.format('YYYY-MM-DD'),
+          grid: {
+            display: true,
+            color: 'rgba(200, 200, 200, 0.3)',
+          },
+          title: {
+            display: true,
+            text: 'Date',
+            font: { size: 14, weight: 'bold' }
+          },
+          ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 12 },
+        },
+        y: {
+          beginAtZero: true,
+          position: 'left',
+          grid: {
+            display: true,
+            color: 'rgba(200, 200, 200, 0.3)',
+          },
+          title: {
+            display: true,
+            text: 'Number of Jobs',
+            font: { size: 14, weight: 'bold' }
+          },
+          ticks: { 
+            precision: 0,
+            stepSize: 5,
+          },
+        }
+      },
+      plugins: {
+        legend: { 
+          display: true,
+          position: 'top',
+        },
+        tooltip: {
+          mode: 'index',
+          intersect: false,
+          callbacks: {
+            title: (tooltipItems) => moment(tooltipItems[0].parsed.x).format('MMMM YYYY')
+          }
+        }
+      },
+      interaction: { intersect: false, mode: 'index' },
+      layout: {
+        padding: {
+          left: 10,
+          right: 10,
+          top: 20,
+          bottom: 10
+        }
+      },
+    }
+  });
+};
+
+const calculateMovingAverage = (data, windowSize) => {
+  const result = [];
+  for (let i = 0; i < data.length; i++) {
+    if (i < windowSize - 1) {
+      result.push(null);
+    } else {
+      const windowSum = data.slice(Math.max(0, i - windowSize + 1), i + 1).reduce((sum, num) => sum + num, 0);
+      result.push(windowSum / Math.min(windowSize, i + 1));
+    }
+  }
+  return result;
+};
+
+const processBookingData = (jobs, yearOffset = 0) => {
+  const targetYear = moment().subtract(yearOffset, 'years').year();
+  const startDate = moment(`${targetYear}-01-01`).startOf('month');
+  const endDate = moment().endOf('month');
+  
+  const groupedJobs = jobs
+    .filter(job => moment(job.createdAt).isBetween(startDate, endDate, null, '[]'))
+    .reduce((acc, job) => {
+      const date = moment(job.createdAt).startOf('month').format('YYYY-MM-DD');
+      acc[date] = (acc[date] || 0) + 1;
+      return acc;
+    }, {});
+
+  const data = [];
+  let currentDate = startDate.clone();
+
+  while (currentDate <= endDate) {
+    const dateKey = currentDate.format('YYYY-MM-DD');
+    data.push(groupedJobs[dateKey] || 0);
+    currentDate.add(1, 'month');
+  }
+
+  return { data };
+};
+
 onMounted(() => {
   if (currentWebsite.value) {
-    fetchJobs()
+    fetchJobs().then(() => {
+      createCharts()
+    })
     fetchCustomers()
     fetchTechnicians()
   }
@@ -631,7 +821,9 @@ onMounted(() => {
 
 watchEffect(() => {
   if (currentWebsite.value) {
-    fetchJobs()
+    fetchJobs().then(() => {
+      createCharts()
+    })
     fetchCustomers()
     fetchTechnicians()
   }
