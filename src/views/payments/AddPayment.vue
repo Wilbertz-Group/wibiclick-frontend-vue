@@ -29,9 +29,8 @@ const payment = ref({
   jobId: "",
   invoiceId: null,
   estimateId: null,
-  employeeId: "", // New field for technician
+  employeeId: "",
 });
-
 
 async function fetchTechnicians() {
   try {
@@ -59,7 +58,6 @@ async function fetchCustomers() {
     }));
     loading.value = false;
 
-    // Check if customer_id is provided in the query params
     const customerIdFromQuery = route.query.customer_id;
     if (customerIdFromQuery) {
       payment.value.customerId = customerIdFromQuery;
@@ -86,8 +84,19 @@ async function fetchJobs(customerId) {
     const response = await axios.get(`jobs-for-contact?id=${userStore.currentWebsite}&contactId=${customerId}`);
     jobs.value = response.data.jobs.map(job => ({
       value: job.id,
-      label: `Job #${job.jobStatus} - ${job.slotStart.split('T')[0]}`
-    }));
+      label: `Job #${job.jobStatus} - ${job.slotStart.split('T')[0]}`,
+      slotStart: job.slotStart,
+      employeeId: job.employee?.id
+    })).sort((a, b) => new Date(b.slotStart) - new Date(a.slotStart));
+
+    if (jobs.value.length > 0) {
+      const mostRecentJob = jobs.value[0];
+      payment.value.jobId = mostRecentJob.value;
+      payment.value.employeeId = mostRecentJob.employeeId;
+      await fetchInvoices(customerId, mostRecentJob.value);
+      await fetchEstimates(customerId, mostRecentJob.value);
+    }
+
     loading.value = false;
   } catch (error) {
     console.log(error);
@@ -105,7 +114,7 @@ async function fetchInvoices(customerId, jobId = null) {
     invoices.value = response.data.invoices.map(invoice => ({
       value: invoice.id,
       label: `Invoice #${invoice.number} - ${invoice.reason} - R${invoice.sales}`,
-      amount: invoice.sales * 100 // Store the amount in cents
+      amount: invoice.sales * 100
     }));
     loading.value = false;
   } catch (error) {
@@ -142,6 +151,10 @@ function handleInvoiceSelection(selectedInvoiceId) {
 
 function handleJobSelection(selectedJobId) {
   payment.value.jobId = selectedJobId.target.value;
+  const selectedJob = jobs.value.find(job => job.value === selectedJobId.target.value);
+  if (selectedJob) {
+    payment.value.employeeId = selectedJob.employeeId;
+  }
   if (selectedJobId.target.value && payment.value.customerId) {
     fetchInvoices(payment.value.customerId, selectedJobId.target.value);
     fetchEstimates(payment.value.customerId, selectedJobId.target.value);
@@ -165,16 +178,16 @@ async function savePayment(data) {
   }
 }
 
-watch(() => payment.value.customerId, (newCustomerId) => {
+watch(() => payment.value.customerId, async (newCustomerId) => {
   if (newCustomerId) {
-    fetchJobs(newCustomerId);
-    payment.value.jobId = ""; // Reset job selection
-    invoices.value = [];
-    estimates.value = [];
+    await fetchJobs(newCustomerId);
+    // The most recent job and technician are now auto-selected in fetchJobs
   } else {
     jobs.value = [];
     invoices.value = [];
     estimates.value = [];
+    payment.value.jobId = "";
+    payment.value.employeeId = "";
   }
 });
 
@@ -191,7 +204,7 @@ watch(() => payment.value.jobId, (newJobId) => {
 onMounted(() => {
   if (userStore.currentWebsite) {
     fetchCustomers();
-    fetchTechnicians(); // Add this line
+    fetchTechnicians();
   }
 });
 </script>
