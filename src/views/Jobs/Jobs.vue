@@ -714,7 +714,7 @@ const getStatusClass = (status) => {
     // Completion stages
     case 'completed': return baseClasses + 'bg-green-300 text-green-800 dark:bg-green-600 dark:text-green-100'
     case 'done': return baseClasses + 'bg-green-400 text-green-800 dark:bg-green-500 dark:text-green-100'
-    case 'invoiced': return baseClasses + 'bg-purple-300 text-purple-800 dark:bg-purple-600 dark:text-purple-100'
+    case 'invoiced': return baseClasses + 'bg-green-900 text-white dark:bg-green-900 dark:text-green-100'
     case 'paid': return baseClasses + 'bg-green-500 text-white dark:bg-green-700 dark:text-green-100'
     
     // Parts-related statuses
