@@ -88,7 +88,17 @@
               <tbody>
                 <tr v-for="invoice in accountsReceivable.outstandingInvoices" :key="invoice.id" class="border-b border-gray-200 dark:border-gray-700">
                   <td class="px-4 py-2 text-gray-800 dark:text-white">{{ invoice.number }}</td>
-                  <td class="px-4 py-2 text-gray-800 dark:text-white">{{ invoice.customer.name }}</td>
+                  <td class="px-4 py-2 text-gray-800 dark:text-white">
+                    <router-link 
+                      :to="{
+                        name: 'contact',
+                        query: { customer_id: invoice.customer?.id }
+                      }"
+                      class="flex items-center text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200 transition duration-150 ease-in-out"
+                    >
+                      <span>{{ invoice.customer.name }}</span>
+                    </router-link>
+                  </td>
                   <td class="px-4 py-2 text-gray-800 dark:text-white">{{ formatDate(invoice.issuedAt) }}</td>
                   <td class="px-4 py-2 text-gray-800 dark:text-white">{{ formatDate(invoice.dueAt) }}</td>
                   <td class="px-4 py-2 text-gray-800 dark:text-white">{{ formatCurrency(invoice.sales) }}</td>
