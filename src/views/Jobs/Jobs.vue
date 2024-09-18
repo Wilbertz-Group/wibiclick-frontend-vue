@@ -703,7 +703,7 @@ const getStatusClass = (status) => {
     // Initial stages
     case 'pending': return baseClasses + 'bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
     case 'quoting': return baseClasses + 'bg-blue-200 text-blue-800 dark:bg-blue-700 dark:text-blue-200'
-    case 'quoted': return baseClasses + 'bg-blue-300 text-blue-800 dark:bg-blue-600 dark:text-blue-100'
+    case 'quoted': return baseClasses + 'bg-blue-800 text-white dark:bg-blue-800 dark:text-blue-100'
     case 'accepted': return baseClasses + 'bg-indigo-300 text-indigo-800 dark:bg-indigo-600 dark:text-indigo-100'
     
     // Scheduling and progress
