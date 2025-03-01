@@ -248,6 +248,7 @@ import { ref, onMounted, watch, computed } from 'vue'
 import axios from 'axios'
 import moment from 'moment'
 import { useUserStore } from '@/stores/UserStore'
+import { storeToRefs } from 'pinia' // Import storeToRefs
 import { useToast } from 'vue-toast-notification'
 import ScaleLoader from 'vue-spinner/src/ScaleLoader.vue'
 import VueApexCharts from 'vue3-apexcharts'
@@ -261,11 +262,11 @@ import { library } from '@fortawesome/fontawesome-svg-core'
 library.add(faArrowUp, faArrowDown, faMinus, faPaperPlane, faUser, faSun, faMoon)
 
 const userStore = useUserStore()
+// Use storeToRefs to make Pinia store properties reactive
+const { currentWebsite, websites } = storeToRefs(userStore)
 const toast = useToast()
 
 const loading = ref(false)
-const websites = ref([])
-const selectedWebsite = ref(null)
 const year = ref(moment().year())
 const month = ref(moment().month() + 1)
 const currentYear = moment().year()
@@ -276,6 +277,12 @@ const customerMetrics = ref(null)
 const websitePerformance = ref(null)
 const accountsReceivable = ref(null)
 const whatsappInteractions = ref(null)
+
+// Use computed to access the selected website from the Pinia store
+const selectedWebsite = computed({
+  get: () => currentWebsite.value,
+  set: (value) => userStore.updateWebsite(value)
+})
 
 const isDarkMode = ref(true)
 
@@ -410,24 +417,10 @@ const websitePerformanceChartSeries = computed(() => {
 })
 
 // Fetch functions
-const fetchWebsites = async () => {
-  try {
-    loading.value = true
-    const response = await axios.get(`/get-websites-for-user?id=${userStore.user.id}`)
-    websites.value = response.data
-    if (websites.value.length > 0) {
-      selectedWebsite.value = websites.value[0].value
-    }
-  } catch (error) {
-    console.error('Error fetching websites:', error)
-    toast.error('Error fetching websites')
-  } finally {
-    loading.value = false
-  }
-}
+// No need for fetchWebsites since we're using the Pinia store
 
 const fetchFinancialOverview = async () => {
-  if (!selectedWebsite.value) return
+  if (!selectedWebsite.value || selectedWebsite.value === 'default') return
   try {
     loading.value = true
     const response = await axios.get('/financial-overview', {
@@ -464,7 +457,7 @@ const fetchFinancialOverview = async () => {
 }
 
 const fetchTechnicianPerformance = async () => {
-  if (!selectedWebsite.value) return
+  if (!selectedWebsite.value || selectedWebsite.value === 'default') return
   try {
     loading.value = true
     const response = await axios.get('/technician-performance', {
@@ -480,7 +473,7 @@ const fetchTechnicianPerformance = async () => {
 }
 
 const fetchJobAnalytics = async () => {
-  if (!selectedWebsite.value) return
+  if (!selectedWebsite.value || selectedWebsite.value === 'default') return
   try {
     loading.value = true
     const response = await axios.get('/job-analytics', {
@@ -496,7 +489,7 @@ const fetchJobAnalytics = async () => {
 }
 
 const fetchCustomerMetrics = async () => {
-  if (!selectedWebsite.value) return
+  if (!selectedWebsite.value || selectedWebsite.value === 'default') return
   try {
     loading.value = true
     const response = await axios.get('/customer-metrics', {
@@ -512,7 +505,7 @@ const fetchCustomerMetrics = async () => {
 }
 
 const fetchWebsitePerformance = async () => {
-  if (!selectedWebsite.value) return
+  if (!selectedWebsite.value || selectedWebsite.value === 'default') return
   try {
     loading.value = true
     const response = await axios.get('/website-performance', {
@@ -528,7 +521,7 @@ const fetchWebsitePerformance = async () => {
 }
 
 const fetchAccountsReceivable = async () => {
-  if (!selectedWebsite.value) return
+  if (!selectedWebsite.value || selectedWebsite.value === 'default') return
   try {
     loading.value = true
     const response = await axios.get('/outstanding-invoices', {
@@ -544,7 +537,7 @@ const fetchAccountsReceivable = async () => {
 }
 
 const fetchWhatsappInteractions = async () => {
-  if (!selectedWebsite.value) return
+  if (!selectedWebsite.value || selectedWebsite.value === 'default') return
   try {
     loading.value = true
     const response = await axios.get('/recent-whatsapp-interactions', {
@@ -662,9 +655,10 @@ const earningsDistributionSeries = computed(() => {
   ]
 })
 
-// Watchers and lifecycle hooks
-watch(selectedWebsite, (newValue) => {
-  if (newValue) {
+// Watchers
+// Monitor for changes to selectedWebsite, month, or year
+watch([selectedWebsite, month, year], () => {
+  if (selectedWebsite.value && selectedWebsite.value !== 'default') {
     fetchFinancialOverview()
     fetchTechnicianPerformance()
     fetchJobAnalytics()
@@ -673,18 +667,7 @@ watch(selectedWebsite, (newValue) => {
     fetchAccountsReceivable()
     fetchWhatsappInteractions()
   }
-})
-
-watch([month, year], () => {
-  if (selectedWebsite.value) {
-    fetchFinancialOverview()
-    fetchTechnicianPerformance()
-    fetchJobAnalytics()
-    fetchCustomerMetrics()
-    fetchWebsitePerformance()
-    fetchAccountsReceivable()
-  }
-})
+}, { immediate: true }) // Add immediate: true to fetch data on component mount
 
 watch(isDarkMode, () => {
   // This will trigger a re-computation of the chart options
@@ -692,8 +675,9 @@ watch(isDarkMode, () => {
 })
 
 onMounted(() => {
-  if (userStore.user) {
-    fetchWebsites()
+  // Check if user is logged in
+  if (!userStore.user) {
+    router.push({ name: 'login' })
   }
   
   // Check for saved dark mode preference
