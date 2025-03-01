@@ -4,9 +4,18 @@
       <!-- Header -->
       <div class="flex justify-between items-center mb-8">
         <h1 class="text-3xl font-bold text-gray-800 dark:text-black">Payment Overview</h1>
-        <button @click="toggleDarkMode" class="p-2 rounded-full bg-gray-200 dark:bg-gray-700 transition-colors duration-300">
-          <font-awesome-icon :icon="isDarkMode ? 'sun' : 'moon'" class="text-yellow-500 dark:text-blue-300" />
-        </button>
+        <div class="flex items-center">
+          <button 
+            @click="router.push({ name: 'add-payment' })" 
+            class="ml-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md shadow-sm transition-colors duration-200"
+          >
+            <font-awesome-icon icon="plus" class="mr-2" />
+            Add Payment
+          </button>
+          <button @click="toggleDarkMode" class="ml-4 p-2 rounded-full bg-gray-200 dark:bg-gray-700 transition-colors duration-300">
+            <font-awesome-icon :icon="isDarkMode ? 'sun' : 'moon'" class="text-yellow-500 dark:text-blue-300" />
+          </button>
+        </div>
       </div>
 
       <!-- Filters -->
@@ -45,7 +54,7 @@
         </div>
       </section>
 
-      <div class="grid grid-cols-2 gap-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <!-- Payment Trends Over Time -->
         <section class="mb-8">
           <h2 class="text-2xl font-semibold mb-4 text-gray-800">Payment Trends Over Time</h2>
@@ -168,25 +177,32 @@ import { ref, computed, onMounted, watch } from 'vue';
 import axios from 'axios';
 import moment from 'moment';
 import { useUserStore } from '@/stores/UserStore';
+import { storeToRefs } from 'pinia'; // Import storeToRefs
 import { useRouter } from 'vue-router';
 import { useToast } from 'vue-toast-notification';
 import ScaleLoader from 'vue-spinner/src/ScaleLoader.vue';
 import VueApexCharts from 'vue3-apexcharts';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { faArrowUp, faArrowDown, faMinus, faSun, faMoon } from '@fortawesome/free-solid-svg-icons';
+import { faArrowUp, faArrowDown, faMinus, faSun, faMoon, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { library } from '@fortawesome/fontawesome-svg-core';
 
-library.add(faArrowUp, faArrowDown, faMinus, faSun, faMoon);
+library.add(faArrowUp, faArrowDown, faMinus, faSun, faMoon, faPlus);
 
 const userStore = useUserStore();
+// Use storeToRefs to make Pinia store properties reactive
+const { currentWebsite, websites } = storeToRefs(userStore);
 const toast = useToast();
 const router = useRouter();
+
+// Use computed to access the selected website from the Pinia store
+const selectedWebsite = computed({
+  get: () => currentWebsite.value,
+  set: (value) => userStore.updateWebsite(value)
+});
 
 // State
 const loading = ref(false);
 const isDarkMode = ref(localStorage.getItem('darkMode') === 'true');
-const websites = ref([]);
-const selectedWebsite = ref(null);
 const year = ref(moment().year());
 const month = ref(moment().month() + 1);
 const currentYear = moment().year();
@@ -435,24 +451,12 @@ const paymentTrendChartSeries = computed(() => [
 ]);
 
 // API calls
-const fetchWebsites = async () => {
-  try {
-    loading.value = true;
-    const response = await axios.get(`/get-websites-for-user?id=${userStore.user.id}`);
-    websites.value = response.data;
-    if (websites.value.length > 0) {
-      selectedWebsite.value = websites.value[0].value;
-    }
-  } catch (error) {
-    console.error('Error fetching websites:', error);
-    toast.error('Error fetching websites');
-  } finally {
-    loading.value = false;
-  }
-};
+// No need to fetch websites since we're using the Pinia store
 
 const fetchPayments = async () => {
-  if (!selectedWebsite.value) return;
+  // Add check for valid website selection
+  if (!selectedWebsite.value || selectedWebsite.value === 'default') return;
+  
   try {
     loading.value = true;
     const response = await axios.get('/payments', {
@@ -508,7 +512,8 @@ const calculatePaymentSummary = () => {
 
 // Fetch payment trends
 const fetchPaymentTrends = async () => {
-  if (!selectedWebsite.value) return;
+  if (!selectedWebsite.value || selectedWebsite.value === 'default') return;
+  
   try {
     loading.value = true;
 
@@ -535,12 +540,12 @@ const fetchPaymentTrends = async () => {
   }
 };
 
-// Watchers
+// Watchers - monitor for changes to selectedWebsite, month, or year
 watch([selectedWebsite, month, year], () => {
-  if (selectedWebsite.value) {
+  if (selectedWebsite.value && selectedWebsite.value !== 'default') {
     fetchPayments();
   }
-});
+}, { immediate: true }); // Add immediate: true to fetch data on component mount
 
 watch(payments, fetchPaymentTrends);
 
@@ -548,11 +553,13 @@ watch(isDarkMode, () => {
   // Trigger chart options recomputation when dark mode changes
 });
 
-// Lifecycle hooks
+// Lifecycle hooks - no need to fetch websites anymore
 onMounted(() => {
-  if (userStore.user) {
-    fetchWebsites();
+  // Check if user is logged in
+  if (!userStore.user) {
+    router.push({ name: 'login' });
   }
+  // No need to call fetchWebsites() since we're using the Pinia store
 });
 </script>
 
