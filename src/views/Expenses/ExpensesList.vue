@@ -4,9 +4,21 @@
       <!-- Header -->
       <div class="flex justify-between items-center mb-8">
         <h1 class="text-3xl font-bold text-gray-800 dark:text-black">Expense Overview</h1>
-        <button @click="toggleDarkMode" class="p-2 rounded-full bg-gray-200 dark:bg-gray-700 transition-colors duration-300">
-          <font-awesome-icon :icon="isDarkMode ? 'sun' : 'moon'" class="text-yellow-500 dark:text-blue-300" />
-        </button>
+        <div class="flex items-center">
+          <button 
+            @click="router.push({ name: 'add-expense' })" 
+            class="ml-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md shadow-sm transition-colors duration-200"
+          >
+            <font-awesome-icon icon="plus" class="mr-2" />
+            Add Expense
+          </button>
+          <button 
+            @click="toggleDarkMode" 
+            class="ml-4 p-2 rounded-full bg-gray-200 dark:bg-gray-700 transition-colors duration-300"
+          >
+            <font-awesome-icon :icon="isDarkMode ? 'sun' : 'moon'" class="text-yellow-500 dark:text-blue-300" />
+          </button>
+        </div>
       </div>
 
       <!-- Filters -->
@@ -172,10 +184,10 @@ import { useToast } from 'vue-toast-notification'
 import ScaleLoader from 'vue-spinner/src/ScaleLoader.vue'
 import VueApexCharts from 'vue3-apexcharts'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
-import { faArrowUp, faArrowDown, faMinus, faSun, faMoon } from '@fortawesome/free-solid-svg-icons'
+import { faArrowUp, faArrowDown, faMinus, faSun, faMoon, faPlus } from '@fortawesome/free-solid-svg-icons'
 import { library } from '@fortawesome/fontawesome-svg-core'
 
-library.add(faArrowUp, faArrowDown, faMinus, faSun, faMoon)
+library.add(faArrowUp, faArrowDown, faMinus, faSun, faMoon, faPlus)
 
 const userStore = useUserStore()
 const toast = useToast()

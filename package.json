@@ -20,10 +20,10 @@
     "@vueup/vue-quill": "^1.1.1",
     "@vueuse/core": "^9.0.0",
     "ably": "^1.2.31",
-    "ag-grid-community": "^28.1.1",
-    "ag-grid-vue3": "^28.1.1",
+    "ag-grid-community": "^32.2.0",
+    "ag-grid-vue3": "^32.2.0",
     "apexcharts": "^3.35.3",
-    "axios": "^0.27.2",
+    "axios": "^1.7.7",
     "boxicons": "^2.1.2",
     "buffer": "^6.0.3",
     "chart.js": "^4.4.4",
@@ -33,8 +33,10 @@
     "esbuild": "^0.15.13",
     "flowbite": "^1.6.0",
     "form-data": "^4.0.0",
-    "formkit": "^0.19.3",
+    "formkit": "^1.6.7",
     "gridjs": "^5.0.2",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^2.5.2",
     "lodash": "^4.17.21",
     "moment": "^2.29.4",
     "moment-timezone": "^0.5.45",
@@ -57,13 +59,13 @@
     "vue3-apexcharts": "^1.4.1",
     "vue3-draggable": "^2.0.9",
     "vue3-loading-overlay": "0.0.0",
-    "vue3-perfect-scrollbar": "^1.6.1",
+    "vue3-perfect-scrollbar": "^2.0.0",
     "vue3-popper": "^1.5.0"
   },
   "devDependencies": {
-    "@vitejs/plugin-vue": "^2.3.3",
+    "@vitejs/plugin-vue": "^5.1.4",
     "autoprefixer": "^10.4.7",
     "tailwindcss": "^3.1.6",
-    "vite": "^2.9.14"
+    "vite": "^5.4.8"
   }
 }
