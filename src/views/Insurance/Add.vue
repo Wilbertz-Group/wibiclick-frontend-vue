@@ -4,6 +4,8 @@ import moment from 'moment'
 import Header from "@/components/Header.vue";
 import { useUserStore } from "@/stores/UserStore";
 import { onMounted, ref, watchEffect } from "vue";
+import { QuillEditor } from '@vueup/vue-quill';
+import '@vueup/vue-quill/dist/vue-quill.snow.css';
 import { useToast } from "vue-toast-notification";
 import { useRoute, useRouter } from "vue-router";
 import { computed } from "@vue/reactivity";
@@ -12,6 +14,20 @@ import ScaleLoader from 'vue-spinner/src/ScaleLoader.vue'
 import imageHolder from '@/helpers/logo.js'
 import modal from "@/components/misc/modalInsuranceAttachment.vue"
 import FormData from 'form-data';
+
+// Quill editor configuration
+const editorOptions = {
+  modules: {
+    toolbar: [
+      ['bold', 'italic', 'underline', 'strike'],
+      [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+      [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+      [{ 'color': [] }, { 'background': [] }],
+      ['clean']
+    ]
+  },
+  theme: 'snow'
+};
 
 const loading = ref(false);
 const all_contacts = ref();
@@ -319,41 +335,258 @@ async function saveInsurance(data) {
 
     generateHr(doc, 185);
 
-    //Issued to
-    let billed_to = 200
-    doc	
-    .fontSize(12)
-    .font("Helvetica-Bold")
-    .text("Issued to:", 50, billed_to)
-    .fontSize(11)
-    .font("Helvetica")
-    .text("Name:", 50, billed_to + 15)
-    .text(insurance.customer.name, 130, billed_to + 15)
-    .text("Address:", 50, billed_to + 30)
-    .text(insurance.customer.address, 130, billed_to + 30)
-    .text("Phone:", 50, billed_to + 45)
-    .text(insurance.customer.phone, 130, billed_to + 45)
-    .text("VAT:", 50, billed_to + 60)
-    .text(insurance.customer.vat, 130, billed_to + 60)
-    .moveDown();
+    // Issued to section
+    let billed_to = 200;
+    let currentY = billed_to;
 
-    notestart = billed_to + 90
+    doc
+        .fontSize(12)
+        .font("Helvetica-Bold")
+        .text("Issued to:", 50, currentY);
+
+    currentY += 20; // Space after "Issued to:"
+
+    doc
+        .fontSize(11)
+        .font("Helvetica")
+        .text("Name:", 50, currentY)
+        .text(insurance.customer.name, 130, currentY);
+
+    currentY += 20; // Space for next field
+
+    doc.text("Address:", 50, currentY);
+
+    // Define the maximum width for the address (assuming page width 595, margins 50)
+    const addressWidth = 415; // 595 - 50 (left margin) - 130 (start x) - 50 (right margin)
+
+    // Calculate the height of the address text with wrapping
+    const addressHeight = doc.heightOfString(insurance.customer.address, { width: addressWidth });
+
+    // Render the address with wrapping
+    doc.text(insurance.customer.address, 130, currentY, { width: addressWidth });
+
+    // Adjust currentY based on the height of the address plus some spacing
+    currentY += addressHeight + 10;
+
+    doc
+        .text("Phone:", 50, currentY)
+        .text(insurance.customer.phone, 130, currentY);
+
+    currentY += 20; // Space for next field
+
+    doc
+        .text("VAT:", 50, currentY)
+        .text(insurance.customer.vat, 130, currentY);
+
+    currentY += 20; // Space for next section
+
+    notestart = currentY; // Set the starting position for the next section
   }
 
   function generateNotes(doc, insurance) {
-    if(insurance.notes){
-      doc
-        .fontSize(12)
-        .font("Helvetica-Bold")
-        .text("Report Details:", 50, notestart + 10, "Report Details")
-        .fontSize(11)
+    // Exit if no notes are provided
+    if (!insurance.notes) return;
+
+    // Set the "Report Details" header
+    doc
+      .fontSize(12)
+      .font("Helvetica-Bold")
+      .text("Report Details:", 50, notestart + 10);
+
+    try {
+      // Parse the HTML content from insurance.notes
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = insurance.notes;
+
+      // Initialize positioning and layout variables
+      let currentY = notestart + 30; // Start below the header
+      const lineHeight = 14; // Base line height for text
+      const maxWidth = 500; // Maximum text width for wrapping
+      const pageHeight = 800; // Usable height of an A4 page (approx.)
+      const marginBottom = 50; // Bottom margin to avoid cutting off text
+
+      // Helper function to check and handle page breaks
+      function checkPageBreak(height) {
+        if (currentY + height > pageHeight - marginBottom) {
+          doc.addPage();
+          currentY = 50; // Reset to top of new page with margin
+          return true;
+        }
+        return false;
+      }
+
+      // Helper function to process DOM nodes recursively
+      function processNode(node, parentFont = "Helvetica", parentSize = 11, indent = 0) {
+        if (node.nodeType === 3) { // Text node
+          if (node.textContent.trim() !== '') {
+            const text = node.textContent.trim();
+
+            // Set font and size for text
+            doc.font(parentFont).fontSize(parentSize);
+
+            // Calculate text height for page break check
+            const textHeight = doc.heightOfString(text, {
+              width: maxWidth - indent,
+              align: "left"
+            });
+
+            // Check for page break
+            checkPageBreak(textHeight);
+
+            // Render text with wrapping
+            doc.text(text, 50 + indent, currentY, {
+              width: maxWidth - indent,
+              align: "left",
+              lineBreak: true,
+              lineGap: 2, // Small gap between lines
+              wordSpacing: 0.5 // Slight word spacing for readability
+            });
+
+            currentY += textHeight + 2; // Move Y-position down
+          }
+        } else if (node.nodeType === 1) { // Element node
+          let fontSize = parentSize;
+          let font = parentFont;
+          let additionalIndent = 0;
+
+          // Apply styles based on HTML tag
+          switch (node.tagName.toLowerCase()) {
+            case 'strong':
+            case 'b':
+              font = "Helvetica-Bold";
+              break;
+            case 'em':
+            case 'i':
+              font = "Helvetica-Oblique";
+              break;
+            case 'h1':
+              fontSize = 16;
+              font = "Helvetica-Bold";
+              checkPageBreak(fontSize + 5);
+              currentY += 5; // Extra space before heading
+              break;
+            case 'h2':
+              fontSize = 14;
+              font = "Helvetica-Bold";
+              checkPageBreak(fontSize + 4);
+              currentY += 4;
+              break;
+            case 'h3':
+              fontSize = 12;
+              font = "Helvetica-Bold";
+              checkPageBreak(fontSize + 3);
+              currentY += 3;
+              break;
+            case 'p':
+              checkPageBreak(lineHeight + 2);
+              currentY += 2; // Space between paragraphs
+              break;
+            case 'ul':
+            case 'ol':
+              checkPageBreak(lineHeight + 5);
+              currentY += 5; // Space before lists
+              break;
+            case 'li':
+              additionalIndent = 15;
+              if (!checkPageBreak(lineHeight)) {
+                doc.font(font).fontSize(fontSize).text("• ", 50 + indent, currentY);
+              }
+              break;
+            case 'br':
+              checkPageBreak(lineHeight);
+              currentY += lineHeight;
+              break;
+            case 'table':
+              checkPageBreak(lineHeight + 10);
+              currentY += 10; // Space for tables
+              break;
+            case 'tr':
+            case 'td':
+              additionalIndent = 5;
+              break;
+          }
+
+          // Process child nodes with updated styles
+          if (node.hasChildNodes()) {
+            for (let i = 0; i < node.childNodes.length; i++) {
+              processNode(node.childNodes[i], font, fontSize, indent + additionalIndent);
+            }
+          } else if (node.textContent.trim() !== '') {
+            const text = node.textContent.trim();
+            const textHeight = doc
+              .font(font)
+              .fontSize(fontSize)
+              .heightOfString(text, { width: maxWidth - indent - additionalIndent });
+
+            checkPageBreak(textHeight);
+
+            doc
+              .font(font)
+              .fontSize(fontSize)
+              .text(text, 50 + indent + additionalIndent, currentY, {
+                width: maxWidth - indent - additionalIndent,
+                lineBreak: true,
+                align: "left"
+              });
+
+            currentY += textHeight + 2;
+          }
+
+          // Add space after block elements
+          switch (node.tagName.toLowerCase()) {
+            case 'h1':
+            case 'h2':
+            case 'h3':
+            case 'p':
+            case 'ul':
+            case 'ol':
+            case 'table':
+              if (!checkPageBreak(5)) {
+                currentY += 5;
+              }
+              break;
+          }
+        }
+      }
+
+      // Process all nodes in the parsed HTML
+      Array.from(tempDiv.childNodes).forEach(node => {
+        processNode(node);
+      });
+
+    } catch (error) {
+      console.error("Error rendering formatted text:", error);
+      // Fallback to plain text if HTML parsing fails
+      const plainText = insurance.notes.replace(/<[^>]*>/g, ''); // Strip HTML tags
+      const textHeight = doc
         .font("Helvetica")
-        .text(
-          insurance.notes,
-          50,
-          notestart + 30,
-          { align: "left", width: 500 }
-        );
+        .fontSize(11)
+        .heightOfString(plainText, { width: 500 });
+
+      if (notestart + 30 + textHeight > 800 - 50) {
+        doc.addPage();
+        doc
+          .font("Helvetica")
+          .fontSize(11)
+          .text(plainText, 50, 50, {
+            align: "left",
+            width: 500,
+            lineBreak: true,
+            lineGap: 2,
+            wordSpacing: 0.5
+          });
+      } else {
+        doc
+          .font("Helvetica")
+          .fontSize(11)
+          .text(plainText, 50, notestart + 30, {
+            align: "left",
+            width: 500,
+            lineBreak: true,
+            lineGap: 2,
+            wordSpacing: 0.5
+          });
+      }
     }
   }
 
@@ -547,18 +780,168 @@ async function sendAttachment(data) {
 
   function generateNotes(doc, insurance) {
     if(insurance.notes){
+      // Set initial styles
       doc
         .fontSize(12)
         .font("Helvetica-Bold")
-        .text("Report Details:", 50, notestart + 10, "Report Details")
-        .fontSize(11)
-        .font("Helvetica")
-        .text(
-          insurance.notes,
-          50,
-          notestart + 30,
-          { align: "left", width: 500 }
-        );
+        .text("Report Details:", 50, notestart + 10, "Report Details");
+
+      try {
+        // Use a more robust approach to handle HTML content
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = insurance.notes;
+        
+        // Process the HTML content
+        let currentY = notestart + 30;
+        const lineHeight = 14; // Base line height
+        const maxWidth = 500; // Maximum width for text
+        
+        // Helper function to process a node and its children
+        function processNode(node, parentFont = "Helvetica", parentSize = 11, indent = 0) {
+          if (node.nodeType === 3) { // Text node
+            if (node.textContent.trim() !== '') {
+              const text = node.textContent.trim();
+              
+              // Calculate text height to prevent overlap
+              const textHeight = doc
+                .font(parentFont)
+                .fontSize(parentSize)
+                .heightOfString(text, { width: maxWidth - indent });
+              
+              doc
+                .font(parentFont)
+                .fontSize(parentSize)
+                .text(text, 50 + indent, currentY, {
+                  width: maxWidth - indent,
+                  lineBreak: true,
+                  align: "left"
+                });
+              
+              currentY += textHeight + 2; // Add a small gap between paragraphs
+            }
+          } else if (node.nodeType === 1) { // Element node
+            let fontSize = parentSize;
+            let font = parentFont;
+            let additionalIndent = 0;
+            
+            // Handle different HTML elements
+            switch(node.tagName.toLowerCase()) {
+              case 'strong':
+              case 'b':
+                font = "Helvetica-Bold";
+                break;
+              case 'em':
+              case 'i':
+                font = "Helvetica-Oblique";
+                break;
+              case 'h1':
+                fontSize = 16;
+                font = "Helvetica-Bold";
+                currentY += 5; // Add space before heading
+                break;
+              case 'h2':
+                fontSize = 14;
+                font = "Helvetica-Bold";
+                currentY += 4; // Add space before heading
+                break;
+              case 'h3':
+                fontSize = 12;
+                font = "Helvetica-Bold";
+                currentY += 3; // Add space before heading
+                break;
+              case 'p':
+                currentY += 2; // Add space between paragraphs
+                break;
+              case 'ul':
+              case 'ol':
+                currentY += 5; // Add space before lists
+                break;
+              case 'li':
+                additionalIndent = 15;
+                // Add bullet point
+                doc
+                  .font(font)
+                  .fontSize(fontSize)
+                  .text("• ", 50 + indent, currentY);
+                break;
+              case 'br':
+                currentY += lineHeight;
+                break;
+              case 'table':
+                // Simple table handling - just add some space
+                currentY += 10;
+                break;
+              case 'tr':
+              case 'td':
+                additionalIndent = 5;
+                break;
+            }
+            
+            // Process all child nodes with updated font and size
+            if (node.hasChildNodes()) {
+              // If this is a container with text styling, process all children with this style
+              for (let i = 0; i < node.childNodes.length; i++) {
+                processNode(node.childNodes[i], font, fontSize, indent + additionalIndent);
+              }
+            } else if (node.textContent.trim() !== '') {
+              // Handle leaf nodes with content
+              const text = node.textContent.trim();
+              
+              // Calculate text height to prevent overlap
+              const textHeight = doc
+                .font(font)
+                .fontSize(fontSize)
+                .heightOfString(text, { width: maxWidth - indent - additionalIndent });
+              
+              doc
+                .font(font)
+                .fontSize(fontSize)
+                .text(text, 50 + indent + additionalIndent, currentY, {
+                  width: maxWidth - indent - additionalIndent,
+                  lineBreak: true,
+                  align: "left"
+                });
+              
+              currentY += textHeight + 2;
+            }
+            
+            // Add space after certain elements
+            switch(node.tagName.toLowerCase()) {
+              case 'h1':
+              case 'h2':
+              case 'h3':
+              case 'p':
+              case 'ul':
+              case 'ol':
+              case 'table':
+                currentY += 5;
+                break;
+            }
+          }
+        }
+        
+        // Start processing from the root
+        Array.from(tempDiv.childNodes).forEach(node => {
+          processNode(node);
+        });
+        
+      } catch (error) {
+        console.error("Error rendering formatted text:", error);
+        // Fallback to plain text if HTML parsing fails
+        doc
+          .font("Helvetica")
+          .fontSize(11)
+          .text(
+            insurance.notes.replace(/<[^>]*>/g, ''), // Strip HTML tags
+            50,
+            notestart + 30,
+            {
+              align: "left",
+              width: 500,
+              lineBreak: true
+            }
+          );
+      }
     }
   }
 
@@ -695,7 +1078,14 @@ onMounted(()=>{
               <div class="text-2xl font-bold">Report details:</div>
               <div class="text-lg mt-2 max-w-full">
                 <span class="mr-10">
-                  <FormKit type="textarea" name="notes" v-model="insurance.notes" :value="insurance.notes" input-class="p-1 m-0 bg-slate-100 w-full text-left" :classes="{ outer: 'mb-0 ml-0 float-right w-full', inner: { $reset: true, 'p-0 m-0': true } }" />
+                  <QuillEditor
+                    v-model:content="insurance.notes"
+                    :options="editorOptions"
+                    contentType="html"
+                    theme="snow"
+                    class="bg-slate-100 w-full text-left mb-4"
+                    style="min-height: 500px;"
+                  />
                 </span>
               </div>              
             </div>
@@ -937,6 +1327,57 @@ onMounted(()=>{
     grid-column-end: 4;
     gap: 10px;
   }
+
+  /* Quill editor custom styles */
+  :deep(.ql-editor) {
+    min-height: 500px;
+    max-height: fit-content;
+    font-size: 14px;
+    line-height: 1.6;
+    padding: 12px 15px;
+    overflow: auto;
+  }
+
+  :deep(.ql-toolbar) {
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+    background-color: #f8f9fa;
+    border-color: #e2e8f0;
+  }
+
+  :deep(.ql-container) {
+    border-bottom-left-radius: 4px;
+    border-bottom-right-radius: 4px;
+    border-color: #e2e8f0;
+  }
+
+  :deep(.ql-snow .ql-picker) {
+    color: #4a5568;
+  }
+
+  :deep(.ql-snow .ql-stroke) {
+    stroke: #4a5568;
+  }
+
+  :deep(.ql-snow .ql-fill) {
+    fill: #4a5568;
+  }
+
+  :deep(.ql-snow.ql-toolbar button:hover),
+  :deep(.ql-snow .ql-toolbar button:hover) {
+    color: #2d3748;
+  }
+
+  :deep(.ql-snow.ql-toolbar button:hover .ql-stroke),
+  :deep(.ql-snow .ql-toolbar button:hover .ql-stroke) {
+    stroke: #2d3748;
+  }
+
+  :deep(.ql-snow.ql-toolbar button:hover .ql-fill),
+  :deep(.ql-snow .ql-toolbar button:hover .ql-fill) {
+    fill: #2d3748;
+  }
+
   .due {
     display: flex;
     flex-direction: column;
