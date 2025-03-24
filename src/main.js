@@ -26,8 +26,8 @@ library.add(fas, far, fab)
 
 import Popper from "vue3-popper";
 
-//axios.defaults.baseURL = "https://wibi.wilbertzgroup.com/"
-axios.defaults.baseURL = "http://localhost:8080/"
+axios.defaults.baseURL = "https://wibi.wilbertzgroup.com/"
+//axios.defaults.baseURL = "http://localhost:8080/"
 
 const app = createApp(App)
 const pinia = createPinia()
