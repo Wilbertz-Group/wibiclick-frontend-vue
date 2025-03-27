@@ -1,45 +1,152 @@
 # WibiClick Frontend (Vue)
 
-This is the frontend application for WibiClick, built using Vue 3 and Vite.
+This is the frontend application for WibiClick, a comprehensive business management platform built using Vue 3 and Vite.
 
 ## Project Overview
 
-WibiClick is a comprehensive business management application featuring modules for:
+WibiClick aims to provide businesses with a suite of tools to manage various aspects of their operations. Key functional areas include:
 
-*   **Core Functionality:** Dashboard, User Profiles, Authentication, Settings, Billing, Feedback.
-*   **Customer Relationship Management (CRM):** Managing Customers/Contacts, Jobs, Employees, Suppliers, and Notes.
-*   **Financial Management:** Creating and managing Invoices, Estimates, Payments, and Expenses.
-*   **Specialized Modules:** Insurance Reports, Visitor Tracking, Form Building, Page Management, Code Snippets.
-*   **Administration:** User Management, Application Settings.
-*   **Role-Based Access:** Different dashboards and feature access for Admins, Technicians, and Employees.
+*   **Core:** User authentication, dashboard, profile management, application settings, billing information, and feedback mechanisms.
+*   **CRM:** Tools for managing Customers/Contacts, associated Jobs, Employees, Suppliers, and internal Notes.
+*   **Financials:** Features for creating, tracking, and managing Invoices, Estimates, received Payments, and business Expenses.
+*   **Specialized Modules:** Dedicated sections for Insurance Reports, website Visitor Tracking, dynamic Form Building, content Page Management, and reusable Code Snippets.
+*   **Administration:** Capabilities for managing user accounts and configuring application-wide settings.
+*   **Role-Based Access Control (RBAC):** The application presents different views and functionalities based on user roles (e.g., Owner, Admin, Manager, Technician, Employee), primarily managed through the `UserStore` and Vue Router navigation guards.
 
 ## Tech Stack
 
-*   **Framework:** Vue 3 (with Composition API)
-*   **Build Tool:** Vite
-*   **Routing:** Vue Router
-*   **State Management:** Pinia (with `pinia-plugin-persistedstate` for local storage persistence)
-*   **Styling:** Tailwind CSS (with PostCSS)
-*   **HTTP Client:** Axios (configured to connect to `https://wibi.wilbertzgroup.com/`)
+*   **Framework:** Vue 3 (utilizing the Composition API)
+*   **Build Tool:** Vite (configured in `vite.config.js`)
+*   **Routing:** Vue Router (`src/router/index.js`) - Manages application navigation and implements authentication/authorization guards.
+*   **State Management:** Pinia (`src/stores/UserStore.js`) - Used primarily for managing user session state, with persistence enabled via `pinia-plugin-persistedstate`.
+*   **Styling:** Tailwind CSS (configured in `tailwind.config.js` and `postcss.config.js`) - Utility-first CSS framework. Global styles in `src/assets/main.css`. Also includes specific CSS files in `src/assets/css/`.
+*   **HTTP Client:** Axios - Used for making requests to the backend API. The base URL is configured in `src/main.js` (currently `https://wibi.wilbertzgroup.com/`).
 *   **UI Components & Libraries:**
-    *   FormKit (for forms)
-    *   Headless UI
-    *   Heroicons
-    *   FontAwesome
-    *   ApexCharts & Chart.js (for data visualization)
-    *   AG Grid (for data grids)
-    *   Quill Editor (for rich text editing)
-    *   SweetAlert2 (for notifications/alerts)
-    *   Vue Toast Notification
-    *   And various others for specific features (date pickers, drag & drop, PDF embedding, etc.)
-*   **Real-time:** Ably (likely for real-time updates or communication)
+    *   **Forms:** FormKit (`@formkit/vue`, `@formkit/themes`, `formkit`) - Simplifies form creation and validation.
+    *   **UI Primitives:** Headless UI (`@headlessui/vue`) - Unstyled, accessible UI components.
+    *   **Icons:** Heroicons (`@heroicons/vue`), FontAwesome (`@fortawesome/vue-fontawesome`, `@fortawesome/fontawesome-svg-core`, `@fortawesome/free-brands-svg-icons`, `@fortawesome/free-regular-svg-icons`, `@fortawesome/free-solid-svg-icons`), Boxicons (`boxicons`).
+    *   **Data Visualization:** ApexCharts (`vue3-apexcharts`, `apexcharts`), Chart.js (`chart.js`, `chartjs-adapter-moment`, `chartjs-plugin-annotation`).
+    *   **Data Grids:** AG Grid (`ag-grid-vue3`, `ag-grid-community`), Grid.js (`gridjs`).
+    *   **Rich Text Editing:** Quill Editor (`@vueup/vue-quill`, `quill-paste-smart`).
+    *   **Notifications:** SweetAlert2 (`sweetalert2`), Vue Toast Notification (`vue-toast-notification`).
+    *   **Real-time:** Ably (`ably`).
+    *   **Utilities:** Moment.js (`moment`, `moment-timezone`), Date-fns (`date-fns`), Lodash (`lodash`), VueUse (`@vueuse/core`), Buffer (`buffer`), Form Data (`form-data`), ESBuild (`esbuild`).
+    *   **Vue Ecosystem:** Vue Popper (`vue3-popper`), Vue Datepicker Next (`vue-datepicker-next`), Vue Draggable Next (`vue-draggable-next`, `vue3-draggable`), Vue Highlight.js (`vue-highlightjs`), Vue PDF Embed (`vue-pdf-embed`), Vue Spinner (`vue-spinner`), Vue UUID (`vue-uuid`), Vue Loading Overlay (`vue3-loading-overlay`), Vue Perfect Scrollbar (`vue3-perfect-scrollbar`).
+    *   **Video/Audio:** Video.js (`@videojs-player/vue`, `video.js`), Vue Audio Visual (`vue-audio-visual`).
+    *   **Other UI:** Flowbite (`flowbite`), Swiper (`swiper`), HTML2Canvas (`html2canvas`), jsPDF (`jspdf`).
 
-## Key Features & Structure
+## Project Structure
 
-*   **Modular Design:** Features are organized into distinct views and components (e.g., `src/views/Invoices`, `src/components/AppNav.vue`).
-*   **Authentication & Authorization:** Uses Vue Router's navigation guards (`beforeEach`) to protect routes based on login status and user permissions stored in the Pinia `UserStore`.
-*   **API Integration:** Uses Axios to communicate with the backend API.
-*   **State Persistence:** User session and potentially other state are persisted in local storage via Pinia.
+```
+.
+├── .git/                 # Git repository data
+├── .vscode/              # VSCode settings (extensions.json, settings.json)
+├── dist/                 # Build output directory (generated by 'npm run build')
+├── node_modules/         # Project dependencies (managed by npm)
+├── public/               # Static assets served directly
+│   ├── favicon.png
+│   ├── notification.mp3
+│   ├── whatsapp.mp3
+│   └── wibi.js
+├── src/                  # Main application source code
+│   ├── assets/           # Static assets processed by Vite
+│   │   ├── css/          # Specific CSS files (animate.css, app.css, datatable.css, dragndrop.css, file-upload-preview.css, file-upload-with-preview.min.css, flatpickr.css, form-elements.css, fullcalendar.css, lightbox.css, markdown-editor.css, quill-editor.css, range-slider.css, scrumboard.css, select2.css, sweetalert.css, sweetalert2.css, swiper.css, tailwind.css, tippy.css, wizard.css)
+│   │   ├── images/       # Image assets (forms/, beams.jpg, card.webp, card2.webp, card3.webp, client-3.png, client-4.png, client-8.png, ge.svg, grid.svg, job_hunt.svg, lg.png, login-office.jpeg, settings.png, smiling.webp, sparkle.gif, startup.png, wibi-logo.png, wibi-mini-logo.png, wibi-small-logo.png)
+│   │   └── main.css      # Main global stylesheet
+│   ├── components/       # Reusable Vue components
+│   │   ├── analytics/    # (accordionClick.vue, accordionForm.vue, accordionView.vue, accordionVisitor.vue)
+│   │   ├── customers/    # (accordion.vue, Hubspot.vue)
+│   │   ├── editor/       # (VueQuill.vue)
+│   │   ├── email/        # (accordion.vue)
+│   │   ├── employees/    # (View.vue)
+│   │   ├── estimates/    # (accordion.vue, Edit.vue, Estimate.vue, Status.vue, View.vue)
+│   │   ├── expenses/     # (EditExpense.vue, Expense.vue, ExpenseAccordion.vue, ExpenseStatus.vue, ViewExpense.vue)
+│   │   ├── insurance/    # (accordion.vue, Edit.vue, Insurance.vue, Status.vue, View.vue)
+│   │   ├── invoices/     # (accordion.vue, Edit.vue, Invoice.vue, Status.vue, View.vue)
+│   │   ├── jobs/         # (accordion.vue, Job.vue, Status.vue, Whatsapp.vue)
+│   │   ├── line-items/   # (accordion.vue, item.vue)
+│   │   ├── misc/         # (modal.vue, modalInsuranceAttachment.vue, modalInvoiceAttachment.vue, modalWAMessage.vue)
+│   │   ├── notes/        # (accordion.vue)
+│   │   ├── notification/ # (notifications.vue)
+│   │   ├── payments/     # (EditPayment.vue, Payment.vue, PaymentAccordion.vue, PaymentStatus.vue, ViewPayment.vue)
+│   │   ├── public/       # (footer.vue, header.vue)
+│   │   ├── transactions/ # (EarningsChart.vue, ExpensesBreakdown.vue, TransactionList.vue)
+│   │   ├── whatsapp/     # (accordion.vue)
+│   │   ├── Actions.vue
+│   │   ├── Alert.vue
+│   │   ├── AppNav.vue
+│   │   ├── button_widget.vue
+│   │   ├── Edit.vue
+│   │   ├── ForgotPassword.vue
+│   │   ├── Header.vue
+│   │   ├── KpiCard.vue
+│   │   ├── LoginUser.vue
+│   │   ├── RegisterUser.vue
+│   │   ├── timeline-item.vue
+│   │   ├── timeline.vue
+│   │   └── verifyEmail.vue
+│   ├── helpers/          # Utility functions and modules
+│   │   ├── color.js
+│   │   ├── custom-input.js
+│   │   ├── index.js
+│   │   └── logo.js
+│   ├── router/           # Vue Router configuration
+│   │   └── index.js      # Route definitions and navigation guards
+│   ├── stores/           # Pinia state management stores
+│   │   └── UserStore.js  # Store for user session and permissions
+│   ├── views/            # Page-level components (mapped to routes)
+│   │   ├── Customers/    # (Add.vue, Customers.vue, View.vue)
+│   │   ├── Employees/    # (Add.vue, Employees.vue, View.vue)
+│   │   ├── Estimates/    # (Add.vue, Edit.vue, Estimates.vue, View.vue)
+│   │   ├── Expenses/     # (AddExpense.vue, EditExpense.vue, ExpensesList.vue, ViewExpense.vue)
+│   │   ├── Forms/        # (Forms.vue)
+│   │   ├── Insurance/    # (Add.vue, Edit.vue, Reports.vue, View.vue)
+│   │   ├── Invoices/     # (Add.vue, Edit.vue, Invoices.vue, View.vue)
+│   │   ├── Jobs/         # (Add.vue, Jobs.vue)
+│   │   ├── Notes/        # (Notes.vue)
+│   │   ├── Pages/        # (Pages.vue)
+│   │   ├── payments/     # (AddPayment.vue, EditPayment.vue, PaymentsList.vue, ViewPayment.vue)
+│   │   ├── Suppliers/    # (Add.vue, Suppliers.vue)
+│   │   ├── Transactions/ # (OverviewDashboard.vue, TechnicianDashboard.vue)
+│   │   ├── Visitors/     # (Visitors.vue)
+│   │   ├── Apps.vue
+│   │   ├── Authenticate.vue
+│   │   ├── Billing.vue
+│   │   ├── Dashboard.vue
+│   │   ├── Feedback.vue
+│   │   ├── Home.vue
+│   │   ├── Privacy.vue
+│   │   ├── Profile.vue
+│   │   ├── Settings.vue
+│   │   ├── Snippet.vue
+│   │   ├── Terms.vue
+│   │   └── Users.vue
+│   ├── App.vue           # Root Vue component (contains RouterView)
+│   └── main.js           # Application entry point (Vue initialization, plugins)
+├── .gitattributes        # Git attributes configuration
+├── .gitignore            # Specifies intentionally untracked files for Git
+├── index.html            # Main HTML file template for Vite
+├── package-lock.json     # Records exact dependency versions
+├── package.json          # Project metadata and dependencies
+├── postcss.config.js     # PostCSS configuration (used by Tailwind)
+├── README.md             # This file
+├── tailwind.config.js    # Tailwind CSS configuration
+├── vercel.json           # Vercel deployment configuration
+└── vite.config.js        # Vite build tool configuration
+```
+
+## Key Architectural Points
+
+*   **Modularity:** The codebase is organized by feature, with dedicated folders for views and components related to specific modules (e.g., `src/views/Invoices`, `src/components/invoices`).
+*   **State Management:** Centralized user state management in `UserStore.js` using Pinia. State is persisted to local storage.
+*   **API Interaction:** Axios is used for backend communication. API calls are likely distributed throughout components and potentially centralized helper functions (needs further inspection).
+*   **Authentication Flow:**
+    1.  User attempts to access a route.
+    2.  `router.beforeEach` guard in `src/router/index.js` checks if the route requires authentication and if the user is logged in (via `localStorage` and `UserStore`).
+    3.  If auth is required but the user is not logged in, they are redirected to `/authenticate`.
+    4.  If the route has specific permission requirements (`meta.permission`), the guard checks the user's role from `UserStore`. Access is denied via redirection if permissions don't match.
+    5.  Otherwise, navigation proceeds.
+*   **Deployment:** The presence of `vercel.json` suggests the project is intended for deployment on Vercel.
 
 ## Recommended IDE Setup
 
@@ -58,9 +165,10 @@ npm install
 ### Compile and Hot-Reload for Development
 
 ```sh
-npm run start # Runs on port 3001 by default
-# or
-npm run dev   # Alias for npm run start
+# Runs on port 3001 by default (see package.json)
+npm run start
+# or alias:
+npm run dev
 ```
 
 ### Compile and Minify for Production
@@ -72,4 +180,5 @@ npm run build
 ### Preview Production Build
 
 ```sh
-npm run preview # Runs on port 4173 by default
+# Runs on port 4173 by default (see package.json)
+npm run preview
