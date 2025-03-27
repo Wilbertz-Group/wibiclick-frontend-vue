@@ -33,53 +33,71 @@ const props = defineProps({
   }
 });
 
-// Helper function to get the correct accordion component based on activity type
-// (Could be further optimized as discussed in Step 2 later)
-function getActivityComponent(activityType) {
-  switch (activityType) {
-    case 'whatsapp': return accordionWhatsapp;
-    case 'payment': return accordionPayment;
-    case 'email': return accordionEmail;
-    case 'note': return accordionNotes;
-    case 'invoice': return accordionInvoice;
-    case 'estimate': return accordionEstimate;
-    case 'insurance': return accordionInsurance;
-    case 'job': return accordionJob;
-    case 'customer': return accordionCustomer;
-    case 'line item': return accordionLineitem;
-    case 'view': return accordionView;
-    // 'click' and 'form' are handled via conditional v-if below for now
-    default: return null; // Or a default placeholder component
+// Map activity types to their corresponding components
+const activityComponentMap = {
+  whatsapp: accordionWhatsapp,
+  payment: accordionPayment,
+  email: accordionEmail,
+  note: accordionNotes,
+  invoice: accordionInvoice,
+  estimate: accordionEstimate,
+  insurance: accordionInsurance,
+  job: accordionJob,
+  customer: accordionCustomer,
+  'line item': accordionLineitem,
+  view: accordionView,
+  // Special handler for 'click' type to differentiate between click and form submission
+  click: (activity) => {
+    const clickData = activity?.visitor?.clicks.find(p => p.pageId == activity?.pageId);
+    return clickData?.button === 'form' ? accordionForm : accordionClick;
   }
+};
+
+// Function to resolve the component based on the activity type
+function getActivityComponent(activity) {
+  const componentOrResolver = activityComponentMap[activity.type];
+  if (typeof componentOrResolver === 'function') {
+    // If it's a function (like for 'click'), execute it to get the component
+    return componentOrResolver(activity);
+  }
+  // Otherwise, return the component directly or null if not found
+  return componentOrResolver || null;
 }
 
-// Helper function to get props for the activity component
-// (Could be further optimized as discussed in Step 2 later)
+// Function to get the appropriate props for the resolved component
 function getActivityProps(activity) {
-    switch (activity.type) {
-        case 'whatsapp': return { msgs: [activity?.whatsapp] };
-        case 'payment': return { payments: [activity?.payment], status: activity?.status, user: activity?.User?.firstName, created: activity?.createdAt };
-        case 'email': return { msgs: [activity?.email] };
-        case 'note': return { notes: [activity?.notes], status: activity?.status, user: activity?.User?.firstName, created: activity?.createdAt };
-        case 'invoice': return { invoices: [activity?.invoice], status: activity?.status, user: activity?.User?.firstName, created: activity?.createdAt };
-        case 'estimate': return { estimates: [activity?.estimate], status: activity?.status, user: activity?.User?.firstName, created: activity?.createdAt };
-        case 'insurance': return { insurances: [activity?.insurance], status: activity?.status, user: activity?.User?.firstName, created: activity?.createdAt };
-        case 'job': return { jobs: [activity?.job], status: activity?.status, user: activity?.User?.firstName, created: activity?.createdAt };
-        case 'customer': return { customers: [activity?.customer], status: activity?.status, user: activity?.User?.firstName, created: activity?.createdAt };
-        case 'line item': return { lineitems: [activity?.lineitem], status: activity?.status, user: activity?.User?.firstName, created: activity?.createdAt };
-        case 'view':
-            const viewData = activity?.visitor?.views.find(p => p.pageId == activity?.pageId); // Use find for single result
+    // Determine the specific component being rendered (especially for 'click' type)
+    const component = getActivityComponent(activity);
+
+    // Base props common to many accordion types (adjust as needed)
+    const baseProps = {
+        status: activity?.status,
+        user: activity?.User?.firstName,
+        created: activity?.createdAt
+    };
+
+    // Component-specific props
+    switch (component) {
+        case accordionWhatsapp: return { msgs: [activity?.whatsapp] }; // Assuming msgs is always an array
+        case accordionPayment: return { ...baseProps, payments: [activity?.payment] };
+        case accordionEmail: return { msgs: [activity?.email] }; // Assuming msgs is always an array
+        case accordionNotes: return { ...baseProps, notes: [activity?.notes] };
+        case accordionInvoice: return { ...baseProps, invoices: [activity?.invoice] };
+        case accordionEstimate: return { ...baseProps, estimates: [activity?.estimate] };
+        case accordionInsurance: return { ...baseProps, insurances: [activity?.insurance] };
+        case accordionJob: return { ...baseProps, jobs: [activity?.job] };
+        case accordionCustomer: return { ...baseProps, customers: [activity?.customer] };
+        case accordionLineitem: return { ...baseProps, lineitems: [activity?.lineitem] };
+        case accordionView:
+            const viewData = activity?.visitor?.views.find(p => p.pageId == activity?.pageId);
             return { customer: activity?.customer?.name, url: viewData?.page?.url, title: viewData?.page?.title, created: activity?.createdAt };
-        case 'click':
-            const clickData = activity?.visitor?.clicks.find(p => p.pageId == activity?.pageId); // Use find for single result
-            if (clickData?.button === 'form') {
-                 // Props for accordionForm
-                return { customer: activity?.customer?.name, url: clickData.page?.url, title: clickData.page?.title, created: activity?.createdAt };
-            } else {
-                 // Props for accordionClick
-                return { customer: activity?.customer?.name, url: clickData?.page?.url, title: clickData?.page?.title, button: clickData?.button, created: activity?.createdAt };
-            }
-        default: return {};
+        case accordionClick:
+             const clickDataForClick = activity?.visitor?.clicks.find(p => p.pageId == activity?.pageId);
+            return { customer: activity?.customer?.name, url: clickDataForClick?.page?.url, title: clickDataForClick?.page?.title, button: clickDataForClick?.button, created: activity?.createdAt };
+        case accordionForm:
+            const clickDataForForm = activity?.visitor?.clicks.find(p => p.pageId == activity?.pageId);
+            return { customer: activity?.customer?.name, url: clickDataForForm?.page?.url, title: clickDataForForm?.page?.title, created: activity?.createdAt };
+        default: return {}; // Return empty object for unknown components
     }
 }
 
@@ -140,29 +158,13 @@ function getActivityProps(activity) {
           <TabPanel>
             <ol class="relative border-l max-w-full ml-5 border-gray-200 dark:border-gray-700">
               <li v-for="activity in customer?.activities" :key="activity.uid" class="mb-10 ml-6">
-                <!-- Simplified rendering using functions (still basic) -->
-                 <!-- Special handling for click/form types -->
-                 <template v-if="activity.type === 'click'">
-                    <accordion-click v-if="activity?.visitor?.clicks.find(p => p.pageId == activity?.pageId)?.button !== 'form'"
-                        :customer="activity?.customer?.name"
-                        :url="activity?.visitor?.clicks.find(p => p.pageId == activity?.pageId)?.page?.url"
-                        :title="activity?.visitor?.clicks.find(p => p.pageId == activity?.pageId)?.page?.title"
-                        :button="activity?.visitor?.clicks.find(p => p.pageId == activity?.pageId)?.button"
-                        :created="activity?.createdAt" />
-                    <accordion-form v-else
-                        :customer="activity?.customer?.name"
-                        :url="activity?.visitor?.clicks.find(p => p.pageId == activity?.pageId)?.page?.url"
-                        :title="activity?.visitor?.clicks.find(p => p.pageId == activity?.pageId)?.page?.title"
-                        :created="activity?.createdAt" />
-                 </template>
-                 <!-- Generic handling for other types -->
-                 <component v-else
-                    :is="getActivityComponent(activity.type)"
+                 <!-- Use dynamic component with resolved component and props -->
+                 <component
+                    :is="getActivityComponent(activity)"
                     v-bind="getActivityProps(activity)"
                  />
               </li>
             </ol>
-
           </TabPanel>
           <TabPanel>
             <ol class="relative border-l max-w-full ml-5 border-gray-200 dark:border-gray-700">
