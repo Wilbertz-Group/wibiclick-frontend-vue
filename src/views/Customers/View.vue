@@ -333,10 +333,10 @@ watchEffect(() => {
            <button @click="reloadTimeline" class="btn-icon-modern" title="Refresh Data">
              <font-awesome-icon icon="sync" :class="{ 'fa-spin': isFetchingCustomer }" />
            </button>
-          <button data-modal-toggle="noteModal" type="button" class="btn-secondary-modern" title="Add Note">
+          <button @click="handleOpenNoteModal" type="button" class="btn-secondary-modern" title="Add Note">
             <font-awesome-icon icon="sticky-note" class="mr-1.5 h-4 w-4" /> Note
           </button>
-          <button data-modal-toggle="whatsappModal" type="button" class="btn-secondary-modern" title="Send WhatsApp">
+          <button @click="handleOpenWhatsappModal" type="button" class="btn-secondary-modern" title="Send WhatsApp">
             <font-awesome-icon :icon="['fab', 'whatsapp']" class="mr-1.5 h-4 w-4" /> WhatsApp
           </button>
           <!-- Add Job Button (Example using primary style) -->

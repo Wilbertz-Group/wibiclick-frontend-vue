@@ -164,7 +164,7 @@ const noteModal = (modelValue, wid, id, reloadTimeline) => {
 
 	const modal = new Modal($modalElement, modalOptions);
 
-	// $buttonElement.addEventListener('click', () => modal.toggle()); // Removed: Handled by data-modal-toggle
+	// $buttonElement.addEventListener('click', () => modal.toggle()); // Removed: Handled by Vue @click
 	$closeButton.addEventListener('click', () => modal.hide());
 	$saveNoteButton.addEventListener('click', async() => {
 		//Save Note logic
@@ -175,6 +175,9 @@ const noteModal = (modelValue, wid, id, reloadTimeline) => {
 		toast.success(`Notes have been successfully saved`)
 		modal.hide()
 	});
+	
+	// Return the modal instance so we can call show() from the Vue component
+	return modal;
 }
 
 const whatsappModal = (modelValue, id, phone) => {
@@ -190,7 +193,7 @@ const whatsappModal = (modelValue, id, phone) => {
 
 	const modal = new Modal($modalElement, modalOptions);
 
-	// $buttonElement.addEventListener('click', async() => modal.toggle()); // Removed: Handled by data-modal-toggle
+	// $buttonElement.addEventListener('click', async() => modal.toggle()); // Removed: Handled by Vue @click
 	$closeButton.addEventListener('click', () => modal.hide());
 	$saveWhatsappButton.addEventListener('click', async() => {
 		//Save Whatsapp logic
@@ -207,9 +210,12 @@ const whatsappModal = (modelValue, id, phone) => {
 		} catch (error) {
 			toast.error(`This client number ${phone} is not on whatsapp`)
 			modal.hide()
-		}		
+		}
 		
 	});
+	
+	// Return the modal instance so we can call show() from the Vue component
+	return modal;
 }
 
 export { 
