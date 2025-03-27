@@ -61,7 +61,7 @@
 </script>
 
 <template>
-	<div class="shadow rounded-xl px-3 pt-3 pb-1 mt-3 cursor-move w-full">
+	<div class="shadow rounded-xl p-4 mt-3 cursor-move w-full">
 		<div class="mb-2 p-0">
 			<modal :heading="heading" :body="body" :isOpen="isOpen" @close-modal="closeModal"></modal>
 			<div class="flex justify-between mb-2">		
@@ -142,7 +142,7 @@
 				<p class="text-sm text-black" >{{ universalDateFormatter(estimate.createdAt).includes(':') ? 'Today at '+ universalDateFormatter(estimate.createdAt) : universalDateFormatter(estimate.createdAt) }}</p>
 			</div>
 		</div>
-		<div class="flex mt-4 mb-1 justify-between items-center" >
+		<div class="flex mt-4 mb-1 justify-between items-center mb-2" >
 			<router-link :to="{ name: 'edit-estimate', query:{ estimate_id: estimate.id } }" class="text-white cursor-pointer inline-block bg-slate-900 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-gray-300 dark:focus:ring-gray-800 shadow-lg shadow-gray-500/50 dark:shadow-lg dark:shadow-gray-800/80 font-medium rounded-lg text-sm px-3 py-1 text-center"> Edit </router-link>
 			<router-link :to="{ name: 'view-estimate', query:{ estimate_id: estimate.id } }" class="text-white cursor-pointer inline-block bg-slate-900 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-gray-300 dark:focus:ring-gray-800 shadow-lg shadow-gray-500/50 dark:shadow-lg dark:shadow-gray-800/80 font-medium rounded-lg text-sm px-3 py-1 text-center"> View </router-link>
 		</div>

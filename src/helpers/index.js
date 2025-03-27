@@ -164,7 +164,7 @@ const noteModal = (modelValue, wid, id, reloadTimeline) => {
 
 	const modal = new Modal($modalElement, modalOptions);
 
-	$buttonElement.addEventListener('click', () => modal.toggle());
+	// $buttonElement.addEventListener('click', () => modal.toggle()); // Removed: Handled by data-modal-toggle
 	$closeButton.addEventListener('click', () => modal.hide());
 	$saveNoteButton.addEventListener('click', async() => {
 		//Save Note logic
@@ -190,7 +190,7 @@ const whatsappModal = (modelValue, id, phone) => {
 
 	const modal = new Modal($modalElement, modalOptions);
 
-	$buttonElement.addEventListener('click', async() => modal.toggle());
+	// $buttonElement.addEventListener('click', async() => modal.toggle()); // Removed: Handled by data-modal-toggle
 	$closeButton.addEventListener('click', () => modal.hide());
 	$saveWhatsappButton.addEventListener('click', async() => {
 		//Save Whatsapp logic

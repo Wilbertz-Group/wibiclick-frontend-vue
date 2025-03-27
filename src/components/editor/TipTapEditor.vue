@@ -1,6 +1,6 @@
 <template>
-  <div class="tiptap-editor border rounded">
-    <div v-if="editor" class="toolbar p-2 border-b bg-gray-100 flex space-x-2">
+  <div class="tiptap-editor border rounded bg-gray-100 dark:bg-gray-900">
+    <div v-if="editor" class="toolbar p-2 border-b bg-gray-100 dark:bg-gray-900 flex space-x-2">
       <button @click="editor.chain().focus().toggleBold().run()" :disabled="!editor.can().chain().focus().toggleBold().run()" :class="{ 'is-active': editor.isActive('bold') }" class="px-2 py-1 border rounded hover:bg-gray-200">
         Bold
       </button>
