@@ -5,7 +5,7 @@
 	import modal from "../misc/modal.vue";
 	import { useUserStore } from "@/stores/UserStore"
 	import { universalDateFormatter, dateFormatter, universalTimeFormatter } from '../../helpers';
-	import { 
+	import {
   Listbox,
   ListboxLabel,
   ListboxButton,
@@ -13,7 +13,7 @@
   ListboxOption,
 } from '@headlessui/vue'
 
-	const emit = defineEmits(['reloadTimeline'])
+	const emit = defineEmits(['reloadTimeline', 'edit-estimate', 'view-estimate'])
 	const props = defineProps(['estimate'])
 	const userStore = useUserStore()
 	const toast = useToast() 
@@ -143,8 +143,8 @@
 			</div>
 		</div>
 		<div class="flex mt-4 mb-1 justify-between items-center mb-2" >
-			<router-link :to="{ name: 'edit-estimate', query:{ estimate_id: estimate.id } }" class="text-white cursor-pointer inline-block bg-slate-900 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-gray-300 dark:focus:ring-gray-800 shadow-lg shadow-gray-500/50 dark:shadow-lg dark:shadow-gray-800/80 font-medium rounded-lg text-sm px-3 py-1 text-center"> Edit </router-link>
-			<router-link :to="{ name: 'view-estimate', query:{ estimate_id: estimate.id } }" class="text-white cursor-pointer inline-block bg-slate-900 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-gray-300 dark:focus:ring-gray-800 shadow-lg shadow-gray-500/50 dark:shadow-lg dark:shadow-gray-800/80 font-medium rounded-lg text-sm px-3 py-1 text-center"> View </router-link>
+			<button @click="$emit('edit-estimate', estimate)" class="text-white cursor-pointer inline-block bg-slate-900 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-gray-300 dark:focus:ring-gray-800 shadow-lg shadow-gray-500/50 dark:shadow-lg dark:shadow-gray-800/80 font-medium rounded-lg text-sm px-3 py-1 text-center"> Edit </button>
+			<button @click="$emit('view-estimate', estimate)" class="text-white cursor-pointer inline-block bg-slate-900 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-gray-300 dark:focus:ring-gray-800 shadow-lg shadow-gray-500/50 dark:shadow-lg dark:shadow-gray-800/80 font-medium rounded-lg text-sm px-3 py-1 text-center"> View </button>
 		</div>
 	</div>
 </template>

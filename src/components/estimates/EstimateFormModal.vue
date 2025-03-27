@@ -1,0 +1,531 @@
+<script setup>
+import { ref, reactive, watch, computed, onMounted } from 'vue';
+import axios from 'axios';
+import moment from 'moment';
+import { useToast } from 'vue-toast-notification';
+import { useUserStore } from '@/stores/UserStore';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+
+const props = defineProps({
+  modelValue: { // Controls modal visibility (v-model)
+    type: Boolean,
+    required: true,
+  },
+  customerData: { // Pre-fill data
+    type: Object,
+    default: () => ({}),
+  },
+  estimateData: { // For editing existing estimate
+    type: Object,
+    default: null,
+  }
+});
+
+const emit = defineEmits(['update:modelValue', 'estimate-saved']);
+
+const userStore = useUserStore();
+const toast = useToast();
+const loading = ref(false);
+const profile = ref(null);
+
+// --- Form State ---
+const estimateForm = reactive({
+  id: '', // Will be empty for new estimates
+  customerId: '',
+  name: 'Estimate',
+  status: 'sent',
+  estimate_nr: 1,
+  estimate_date: moment().format('YYYY-MM-DD'),
+  estimate_due_date: moment().add(3, 'days').format('YYYY-MM-DD'),
+  subtotal: 0,
+  paid: 0,
+  notes: '',
+  items: [],
+  customer: {
+    id: '',
+    name: '',
+    address: '',
+    phone: '',
+    vat: '',
+  },
+  company: {
+    name: '',
+    email: '',
+    slogan: '',
+    address1: '',
+    address2: '',
+    city: '',
+    state: '',
+    country: '',
+    postal_code: '',
+    currency_symbol: '',
+  },
+  banking: {
+    account_name: '',
+    bank: '',
+    account_number: '',
+    account_type: '',
+    branch_code: '',
+  },
+});
+
+const lineItem = reactive({
+  name: '',
+  description: '',
+  amount: 1,
+  quantity: 1,
+});
+
+const ESTIMATE_STATUSES = ['sent', 'accepted', 'rejected', 'pending', 'processing', 'paid'];
+
+const isEditing = computed(() => !!estimateForm.id);
+const lineItemTotal = computed(() => (Number(lineItem.amount) * Number(lineItem.quantity)).toFixed(2));
+
+// --- Methods ---
+const closeModal = () => {
+  emit('update:modelValue', false);
+};
+
+const resetEstimateForm = () => {
+  Object.assign(estimateForm, {
+    id: '',
+    customerId: '',
+    name: 'Estimate',
+    status: 'sent',
+    estimate_nr: 1,
+    estimate_date: moment().format('YYYY-MM-DD'),
+    estimate_due_date: moment().add(3, 'days').format('YYYY-MM-DD'),
+    subtotal: 0,
+    paid: 0,
+    notes: '',
+    items: [],
+    customer: {
+      id: '',
+      name: '',
+      address: '',
+      phone: '',
+      vat: '',
+    },
+    company: {
+      name: '',
+      email: '',
+      slogan: '',
+      address1: '',
+      address2: '',
+      city: '',
+      state: '',
+      country: '',
+      postal_code: '',
+      currency_symbol: '',
+    },
+    banking: {
+      account_name: '',
+      bank: '',
+      account_number: '',
+      account_type: '',
+      branch_code: '',
+    },
+  });
+  
+  Object.assign(lineItem, {
+    name: '',
+    description: '',
+    amount: 1,
+    quantity: 1,
+  });
+};
+
+const prefillForm = async (customer) => {
+  resetEstimateForm();
+  
+  // Fetch profile data if not already loaded
+  if (!profile.value) {
+    await fetchProfile();
+  }
+  
+  // Fetch estimate number
+  let estimate_number = 0;
+  try {
+    loading.value = true;
+    const response = await axios.get('estimate_number?id=' + userStore.currentWebsite);
+    estimate_number = response.data.estimate_number;
+    loading.value = false;
+  } catch (error) {
+    console.error("Failed to get estimate number", error);
+    toast.warning("Failed to get estimate number");
+    loading.value = false;
+  }
+  
+  if (customer && customer.id) {
+    estimateForm.customer.id = customer.id;
+    estimateForm.customer.name = customer.name || '';
+    estimateForm.customer.phone = customer.phone || '';
+    estimateForm.customer.address = customer.address || '';
+    estimateForm.customerId = customer.id;
+    
+    // Set company and banking details from profile
+    if (profile.value) {
+      estimateForm.company = profile.value.company || estimateForm.company;
+      estimateForm.banking = profile.value.banking || estimateForm.banking;
+    }
+    
+    // Set estimate number
+    estimateForm.estimate_nr = estimate_number + 1;
+  }
+  
+  // If editing, populate with existing estimate data
+  if (props.estimateData) {
+    Object.assign(estimateForm, {
+      id: props.estimateData.id,
+      customerId: props.estimateData.customerId,
+      name: props.estimateData.name || 'Estimate',
+      status: props.estimateData.reason || 'sent',
+      estimate_nr: props.estimateData.number || (estimate_number + 1),
+      estimate_date: props.estimateData.issuedAt ? moment(props.estimateData.issuedAt).format('YYYY-MM-DD') : moment().format('YYYY-MM-DD'),
+      estimate_due_date: props.estimateData.dueAt ? moment(props.estimateData.dueAt).format('YYYY-MM-DD') : moment().add(3, 'days').format('YYYY-MM-DD'),
+      subtotal: props.estimateData.subtotal || 0,
+      paid: props.estimateData.paid || 0,
+      notes: props.estimateData.notes || '',
+      items: props.estimateData.lineItem || [],
+    });
+  }
+};
+
+const fetchProfile = async () => {
+  try {
+    loading.value = true;
+    const response = await axios.get('profile?id=' + userStore.currentWebsite);
+    profile.value = response.data;
+    loading.value = false;
+  } catch (error) {
+    console.error("Failed to get profile data", error);
+    toast.warning("Failed to get profile data");
+    loading.value = false;
+  }
+};
+
+const addItem = () => {
+  if (lineItem.name && lineItem.amount && lineItem.quantity && lineItemTotal.value) {
+    estimateForm.items.push({
+      item: lineItem.name,
+      description: lineItem.description,
+      quantity: parseFloat(lineItem.quantity),
+      amount: parseFloat(lineItem.amount),
+      id: Date.now() // Add unique ID for item management
+    });
+
+    // Reset line item form
+    lineItem.name = '';
+    lineItem.description = '';
+    lineItem.amount = 1;
+    lineItem.quantity = 1;
+
+    // Recalculate total
+    getSum(estimateForm.items);
+  }
+};
+
+const removeItem = (index) => {
+  estimateForm.items.splice(index, 1);
+  getSum(estimateForm.items);
+};
+
+const getSum = (array) => {
+  if (array.length) {
+    let values = array.map(item => item.quantity * item.amount);
+    let total = values.reduce((a, b) => a + b);
+    estimateForm.subtotal = total - estimateForm.paid;
+    return total;
+  } else {
+    estimateForm.subtotal = 0;
+    return 0;
+  }
+};
+
+const submitEstimate = async () => {
+  loading.value = true;
+  try {
+    const payload = {
+      reason: estimateForm.status,
+      name: estimateForm.name,
+      number: estimateForm.estimate_nr,
+      issuedAt: moment(estimateForm.estimate_date).toISOString(),
+      dueAt: moment(estimateForm.estimate_due_date).toISOString(),
+      sales: estimateForm.subtotal,
+      subtotal: estimateForm.subtotal,
+      notes: estimateForm.notes,
+      customerId: estimateForm.customer.id || estimateForm.customerId,
+      items: estimateForm.items.map(item => ({
+        item: item.item || item.name,
+        description: item.description,
+        quantity: parseFloat(item.quantity),
+        amount: parseFloat(item.amount)
+      }))
+    };
+
+    // If editing, include the ID
+    if (isEditing.value) {
+      payload.id = estimateForm.id;
+    }
+
+    const response = await axios.post('add-estimate?id=' + userStore.currentWebsite, payload);
+    toast.success(response.data.message || 'Estimate saved successfully');
+    emit('estimate-saved');
+    closeModal();
+  } catch (error) {
+    console.error("Error submitting estimate:", error);
+    toast.error(`Error submitting estimate: ${error.response?.data?.message || error.message}`);
+  } finally {
+    loading.value = false;
+  }
+};
+
+// --- Watchers ---
+watch(() => props.modelValue, (newValue) => {
+  if (newValue) {
+    // When modal opens, prefill form with customer data
+    prefillForm(props.customerData);
+  }
+});
+
+// --- Lifecycle ---
+onMounted(() => {
+  // Fetch profile data initially
+  fetchProfile();
+});
+
+</script>
+
+<template>
+  <transition name="modal-fade">
+    <div v-if="modelValue" class="fixed z-30 inset-0 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+      <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <!-- Backdrop -->
+        <div class="fixed inset-0 bg-gray-500/75 dark:bg-black/80 transition-opacity" aria-hidden="true" @click="closeModal"></div>
+        <!-- Modal positioning -->
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+        <!-- Modal panel -->
+        <div class="modal-content-modern">
+          <h3 class="text-lg font-semibold mb-6 text-gray-900 dark:text-white" id="modal-title">
+            {{ isEditing ? 'Edit Estimate' : 'Add New Estimate' }}
+            <span v-if="!isEditing && customerData?.name" class="text-base font-normal text-gray-500 dark:text-gray-400"> for {{ customerData.name }}</span>
+          </h3>
+          <form @submit.prevent="submitEstimate" class="space-y-4">
+            <div class="max-h-[60vh] overflow-y-auto pr-2">
+              <!-- Estimate Details Section -->
+              <div class="mb-6">
+                <h4 class="text-md font-semibold mb-3 text-gray-800 dark:text-gray-200">Estimate Details</h4>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label for="estimate-name" class="label-modern">Estimate Title</label>
+                    <input type="text" id="estimate-name" v-model="estimateForm.name" required class="input-modern" />
+                  </div>
+                  <div>
+                    <label for="estimate-status" class="label-modern">Status</label>
+                    <select id="estimate-status" v-model="estimateForm.status" required class="input-modern input-modern--select">
+                      <option v-for="status in ESTIMATE_STATUSES" :key="status" :value="status">{{ status }}</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label for="estimate-number" class="label-modern">Estimate #</label>
+                    <input type="number" id="estimate-number" v-model="estimateForm.estimate_nr" required class="input-modern" />
+                  </div>
+                  <div>
+                    <label for="estimate-date" class="label-modern">Estimate Date</label>
+                    <input type="date" id="estimate-date" v-model="estimateForm.estimate_date" required class="input-modern" />
+                  </div>
+                  <div>
+                    <label for="estimate-due-date" class="label-modern">Due Date</label>
+                    <input type="date" id="estimate-due-date" v-model="estimateForm.estimate_due_date" required class="input-modern" />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Customer Details Section -->
+              <div class="mb-6">
+                <h4 class="text-md font-semibold mb-3 text-gray-800 dark:text-gray-200">Customer Details</h4>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label for="customer-name" class="label-modern">Name</label>
+                    <input type="text" id="customer-name" v-model="estimateForm.customer.name" required class="input-modern" />
+                  </div>
+                  <div>
+                    <label for="customer-phone" class="label-modern">Phone</label>
+                    <input type="tel" id="customer-phone" v-model="estimateForm.customer.phone" required class="input-modern" />
+                  </div>
+                  <div class="sm:col-span-2">
+                    <label for="customer-address" class="label-modern">Address</label>
+                    <textarea id="customer-address" v-model="estimateForm.customer.address" rows="2" class="input-modern"></textarea>
+                  </div>
+                  <div>
+                    <label for="customer-vat" class="label-modern">VAT (Optional)</label>
+                    <input type="text" id="customer-vat" v-model="estimateForm.customer.vat" class="input-modern" />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Line Items Section -->
+              <div class="mb-6">
+                <h4 class="text-md font-semibold mb-3 text-gray-800 dark:text-gray-200">Line Items</h4>
+                
+                <!-- Line Items Table -->
+                <div class="overflow-x-auto mb-4">
+                  <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead class="bg-gray-50 dark:bg-gray-800">
+                      <tr>
+                        <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Item</th>
+                        <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Quantity</th>
+                        <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Price</th>
+                        <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Total</th>
+                        <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody class="bg-white dark:bg-gray-700 divide-y divide-gray-200 dark:divide-gray-600">
+                      <tr v-if="estimateForm.items.length === 0">
+                        <td colspan="5" class="px-3 py-3 text-sm text-center text-gray-500 dark:text-gray-400">No items added yet</td>
+                      </tr>
+                      <tr v-for="(item, index) in estimateForm.items" :key="item.id || index" class="hover:bg-gray-50 dark:hover:bg-gray-600">
+                        <td class="px-3 py-2 text-sm">
+                          <div class="font-medium text-gray-900 dark:text-white">{{ item.item || item.name }}</div>
+                          <div class="text-xs text-gray-500 dark:text-gray-400">{{ item.description }}</div>
+                        </td>
+                        <td class="px-3 py-2 text-sm text-gray-900 dark:text-white">{{ item.quantity }}</td>
+                        <td class="px-3 py-2 text-sm text-gray-900 dark:text-white">{{ estimateForm.company.currency_symbol || 'R' }}{{ item.amount }}</td>
+                        <td class="px-3 py-2 text-sm text-gray-900 dark:text-white">{{ estimateForm.company.currency_symbol || 'R' }}{{ (item.quantity * item.amount).toFixed(2) }}</td>
+                        <td class="px-3 py-2 text-sm">
+                          <button type="button" @click="removeItem(index)" class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <!-- Add Line Item Form -->
+                <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 bg-gray-50 dark:bg-gray-800 p-3 rounded-md">
+                  <div class="sm:col-span-5">
+                    <label for="item-name" class="label-modern">Item Name</label>
+                    <input type="text" id="item-name" v-model="lineItem.name" class="input-modern" placeholder="Enter item name" />
+                  </div>
+                  <div class="sm:col-span-2">
+                    <label for="item-quantity" class="label-modern">Quantity</label>
+                    <input type="number" id="item-quantity" v-model="lineItem.quantity" min="1" class="input-modern" />
+                  </div>
+                  <div class="sm:col-span-2">
+                    <label for="item-price" class="label-modern">Price</label>
+                    <input type="number" id="item-price" v-model="lineItem.amount" min="0" step="0.01" class="input-modern" />
+                  </div>
+                  <div class="sm:col-span-2">
+                    <label for="item-total" class="label-modern">Total</label>
+                    <input type="text" id="item-total" :value="lineItemTotal" readonly class="input-modern bg-gray-100 dark:bg-gray-700" />
+                  </div>
+                  <div class="sm:col-span-1 flex items-end">
+                    <button type="button" @click="addItem" class="btn-primary-modern w-full h-10 flex items-center justify-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                      </svg>
+                    </button>
+                  </div>
+                  <div class="sm:col-span-12">
+                    <label for="item-description" class="label-modern">Description (Optional)</label>
+                    <textarea id="item-description" v-model="lineItem.description" rows="2" class="input-modern" placeholder="Enter item description"></textarea>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Totals Section -->
+              <div class="mb-6">
+                <div class="flex justify-between py-2 border-t border-gray-200 dark:border-gray-700">
+                  <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Subtotal</span>
+                  <span class="text-sm text-gray-900 dark:text-white">{{ estimateForm.company.currency_symbol || 'R' }}{{ (Number(estimateForm.subtotal) + Number(estimateForm.paid)).toFixed(2) }}</span>
+                </div>
+                <div class="flex justify-between py-2 border-t border-gray-200 dark:border-gray-700">
+                  <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Paid to Date</span>
+                  <span class="text-sm text-gray-900 dark:text-white">{{ estimateForm.company.currency_symbol || 'R' }}{{ Number(estimateForm.paid).toFixed(2) }}</span>
+                </div>
+                <div class="flex justify-between py-2 border-t border-b border-gray-200 dark:border-gray-700">
+                  <span class="text-sm font-bold text-gray-700 dark:text-gray-300">Balance Due</span>
+                  <span class="text-sm font-bold text-gray-900 dark:text-white">{{ estimateForm.company.currency_symbol || 'R' }}{{ Number(estimateForm.subtotal).toFixed(2) }}</span>
+                </div>
+              </div>
+
+              <!-- Notes Section -->
+              <div>
+                <label for="estimate-notes" class="label-modern">Notes (Optional)</label>
+                <textarea id="estimate-notes" v-model="estimateForm.notes" rows="3" class="input-modern" placeholder="Add any additional notes here"></textarea>
+              </div>
+            </div>
+
+            <div class="pt-5 sm:pt-6 flex flex-col sm:flex-row-reverse gap-3 border-t border-gray-200 dark:border-gray-700/50">
+              <button type="submit" class="btn-primary-modern w-full sm:w-auto" :disabled="loading">
+                {{ loading ? 'Saving...' : (isEditing ? 'Update Estimate' : 'Add Estimate') }}
+              </button>
+              <button @click="closeModal" type="button" class="btn-secondary-modern w-full sm:w-auto">
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </transition>
+</template>
+
+<style scoped>
+/* Re-use styles from View.vue or global styles */
+.input-modern {
+  @apply block w-full px-3 py-2 text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600/50 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500;
+  @apply focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:focus:ring-indigo-400 dark:focus:border-indigo-400;
+  @apply transition duration-150 ease-in-out;
+}
+.input-modern--select {
+  @apply pr-8 appearance-none bg-no-repeat bg-right;
+   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+   background-position: right 0.5rem center;
+   background-size: 1.5em 1.5em;
+}
+.dark .input-modern--select {
+   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+}
+.label-modern {
+  @apply block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1;
+}
+.btn-primary-modern {
+  @apply inline-flex items-center justify-center px-3.5 py-2 text-sm font-semibold text-white bg-indigo-600 dark:bg-indigo-500 rounded-md shadow-sm;
+  @apply hover:bg-indigo-700 dark:hover:bg-indigo-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600;
+  @apply transition-colors duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed;
+}
+.btn-secondary-modern {
+  @apply inline-flex items-center justify-center px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600/50 rounded-md shadow-sm;
+  @apply hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:focus:ring-indigo-400;
+  @apply transition-colors duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed;
+}
+.modal-content-modern {
+  @apply inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-xl md:max-w-2xl lg:max-w-3xl sm:w-full p-6 sm:p-8;
+}
+.modal-fade-enter-active,
+.modal-fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+.modal-fade-enter-from,
+.modal-fade-leave-to {
+  opacity: 0;
+}
+.modal-fade-enter-active .modal-content-modern,
+.modal-fade-leave-active .modal-content-modern {
+  transition: all 0.3s ease;
+}
+.modal-fade-enter-from .modal-content-modern,
+.modal-fade-leave-to .modal-content-modern {
+   transform: translateY(20px) scale(0.98);
+   opacity: 0;
+}
+/* Custom scrollbar for modal content */
+.modal-content-modern .overflow-y-auto::-webkit-scrollbar { width: 6px; height: 6px; }
+.modal-content-modern .overflow-y-auto::-webkit-scrollbar-track { @apply bg-gray-100 dark:bg-gray-700/50; }
+.modal-content-modern .overflow-y-auto::-webkit-scrollbar-thumb { @apply bg-gray-300 dark:bg-gray-600 rounded; }
+.modal-content-modern .overflow-y-auto::-webkit-scrollbar-thumb:hover { @apply bg-gray-400 dark:bg-gray-500; }
+</style>

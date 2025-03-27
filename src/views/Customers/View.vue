@@ -37,7 +37,8 @@ import {
   faArrowLeft, faEdit, faStickyNote, faPaperPlane, faPlus, faChevronDown, faChevronUp, faExternalLinkAlt, faPhone, faEnvelope, faMapMarkerAlt, faUser, faBuilding, faLink, faInfoCircle, faBriefcase, faFileInvoiceDollar, faReceipt, faMoneyBillWave, faShieldAlt, faListOl, faSync // Added icons
 } from '@fortawesome/free-solid-svg-icons'
 import { faWhatsapp } from '@fortawesome/free-brands-svg-icons' // Added WhatsApp brand icon
-import JobFormModal from '@/components/jobs/JobFormModal.vue'; // Import the new modal
+import JobFormModal from '@/components/jobs/JobFormModal.vue'; // Import job modal
+import EstimateFormModal from '@/components/estimates/EstimateFormModal.vue'; // Import estimate modal
 
 library.add(
   faArrowLeft, faEdit, faStickyNote, faPaperPlane, faPlus, faChevronDown, faChevronUp, faExternalLinkAlt, faPhone, faEnvelope, faMapMarkerAlt, faUser, faBuilding, faLink, faInfoCircle, faBriefcase, faFileInvoiceDollar, faReceipt, faMoneyBillWave, faShieldAlt, faListOl, faWhatsapp, faSync
@@ -49,7 +50,9 @@ const isFetchingCustomer = ref(false);
 const isUpdatingCustomer = ref(false);
 const isBookingJob = ref(false); // Keep AI booking state if needed
 const isEditingInfo = ref(false); // State to toggle edit mode for customer info
-const showAddJobModal = ref(false); // State for the new job modal visibility
+const showAddJobModal = ref(false); // State for the job modal visibility
+const showAddEstimateModal = ref(false); // State for the estimate modal visibility
+const selectedEstimate = ref(null); // State for the selected estimate when editing
 const technicians = ref([]); // State for technicians list
 
 const lineItems = ref([])
@@ -253,6 +256,25 @@ function handleJobSaved() {
   reloadTimeline(); // Refresh customer data (including jobs list)
 }
 
+// --- Estimate Modal Handlers ---
+function openAddEstimateModal(estimate = null) {
+  selectedEstimate.value = estimate;
+  showAddEstimateModal.value = true;
+}
+
+function handleEstimateSaved() {
+  // No need to explicitly close modal, v-model handles it
+  reloadTimeline(); // Refresh customer data (including estimates list)
+}
+
+function handleViewEstimate(estimate) {
+  // Navigate to the view-estimate route
+  router.push({
+    name: 'view-estimate',
+    query: { estimate_id: estimate.id }
+  });
+}
+
 // --- Data Fetching ---
 async function fetchTechnicians() {
   // Fetch technicians if not already fetched
@@ -267,15 +289,21 @@ async function fetchTechnicians() {
 }
 
 function handleAddRelatedItem(routeName, queryKey) {
-    // If adding a job, open the modal instead of navigating
+    // If adding a job, open the job modal instead of navigating
     if (routeName === 'add-job') {
       openAddJobModal();
       return; // Stop further execution
     }
+    
+    // If adding an estimate, open the estimate modal instead of navigating
+    if (routeName === 'add-estimate') {
+      openAddEstimateModal();
+      return; // Stop further execution
+    }
 
     const query = {};
-    // Special handling for estimate/invoice to potentially link to the latest job
-    if ((routeName === 'add-estimate' || routeName === 'add-invoice') && customer.value?.jobs?.length) {
+    // Special handling for invoice to potentially link to the latest job
+    if (routeName === 'add-invoice' && customer.value?.jobs?.length) {
         query['job_id'] = customer.value.jobs[customer.value.jobs.length - 1]?.id;
     }
     // Always add contact/customer id
@@ -471,6 +499,8 @@ watchEffect(() => {
                          :[itemGroup.itemKey]="item"
                          :key="item.id || item.uid || JSON.stringify(item)"
                          @reload-timeline="reloadTimeline"
+                         @edit-estimate="openAddEstimateModal"
+                         @view-estimate="handleViewEstimate"
                          class="border-b border-gray-100 dark:border-gray-700/50 last:border-b-0 bg-[#ffffff]"
                        />
                      </div>
@@ -644,13 +674,21 @@ watchEffect(() => {
        </div>
 
      </div> <!-- End container -->
+<!-- Add Job Modal -->
+<JobFormModal
+  v-model="showAddJobModal"
+  :customer-data="customer"
+  @job-saved="handleJobSaved"
+/>
 
-     <!-- Add Job Modal -->
-     <JobFormModal
-       v-model="showAddJobModal"
-       :customer-data="customer"
-       @job-saved="handleJobSaved"
-     />
+<!-- Add/Edit Estimate Modal -->
+<EstimateFormModal
+  v-model="showAddEstimateModal"
+  :customer-data="customer"
+  :estimate-data="selectedEstimate"
+  @estimate-saved="handleEstimateSaved"
+/>
+
      
 
      <!-- Loading Overlay -->
