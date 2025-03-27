@@ -107,7 +107,7 @@ function updateWhatsappModel(value) {
         <svg class="w-16 h-16 mb-3 rounded-full shadow p-4" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path></svg>
         <h5 class="mb-1 text-xl font-medium text-gray-900 dark:text-white">{{ customer?.name }}</h5>
         <span v-if="customer?.email" class="text-sm text-gray-500 dark:text-gray-400">{{ customer?.email }}</span>
-        <div class="flex mt-4 space-x-3 md:mt-6">
+        <div class="flex mt-4 space-x-2 md:mt-6"> <!-- Reduced space from x-3 to x-2 -->
 
           <!-- Create a note using a modal -->
           <div>
