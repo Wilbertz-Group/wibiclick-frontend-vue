@@ -274,6 +274,19 @@
              </h3>
              <form @submit.prevent="submitJob" class="space-y-4">
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                   <!-- Customer Selector (Only for Add New Job) -->
+                   <template v-if="!editingJob">
+                     <div class="sm:col-span-2">
+                       <label for="customerSelect" class="label-modern">Select Customer (Optional)</label>
+                       <select id="customerSelect" v-model="selectedCustomerIdInModal" class="input-modern input-modern--select">
+                         <option value="">-- Select to Autofill --</option>
+                         <option v-for="customer in allCustomers" :key="customer.id" :value="customer.id">
+                           {{ customer.name }}
+                         </option>
+                       </select>
+                     </div>
+                   </template>
+
                    <div>
                       <label for="name" class="label-modern">Customer Name</label>
                       <input type="text" id="name" v-model="jobForm.name" required class="input-modern" />
@@ -350,8 +363,9 @@
   </transition>
 </template>
 
+
 <script setup>
-import { ref, computed, onMounted, watchEffect, reactive } from 'vue'
+import { ref, computed, onMounted, watchEffect, reactive, watch } from 'vue' // Added watch
 import axios from 'axios'
 import moment from 'moment'
 import Chart from 'chart.js/auto'
@@ -393,6 +407,8 @@ const editingJob = ref(null)
 const currentPage = ref(1)
 const itemsPerPage = 10 // Keep pagination logic
 const technicians = ref([])
+const allCustomers = ref([]) // Store full customer objects
+const selectedCustomerIdInModal = ref('') // ID of customer selected in modal
 const customerOptions = ref([]) // Keep for potential future use
 const jobBookingTrendChart = ref(null)
 const tableHeaders = ['Customer', 'Issue', 'Status', 'Date', 'Technician', 'Location', 'Actions']
@@ -424,7 +440,7 @@ const JOB_STATUSES = [
   'waiting for parts', 'waiting for customer', 'waiting for payment'
 ];
 
-Chart.register(annotationPlugin)
+// Chart.register(annotationPlugin) // Moved before createCharts function
 
 const filters = reactive({
   search: '',
@@ -512,10 +528,11 @@ const fetchJobs = async () => {
 const fetchCustomers = async () => {
   try {
     const response = await axios.get(`customers?id=${currentWebsite.value}`)
-    customerOptions.value = response.data.customers.map(customer => ({
-      label: customer.name,
-      value: customer.id
-    }))
+    allCustomers.value = response.data.customers || []; // Assign full array to allCustomers
+    // customerOptions.value = response.data.customers.map(customer => ({
+    //   label: customer.name,
+    //   value: customer.id
+    // })) // Keep customerOptions if used elsewhere, otherwise remove
   } catch (error) {
     console.error('Error fetching customers:', error)
     // toast.error('Error fetching customers') // Maybe less aggressive error reporting
@@ -577,6 +594,7 @@ const resetJobForm = () => {
     location: '', address: '', phone: '', slotStart: '', slotTime: '1hr',
     employeeId: '', to_do: '', issue: '', notify: false
   })
+  selectedCustomerIdInModal.value = ''; // Clear selected customer in modal
 }
 
 const submitJob = async () => {
@@ -731,10 +749,12 @@ const toggleIssue = (job) => {
     jobRef.showFullIssue = !jobRef.showFullIssue;
   }
 }
-
+// Chart.register(annotationPlugin); // Moved inside createCharts
 const createCharts = () => {
   if (!jobBookingTrendChart.value) return; // Ensure canvas element exists
+  Chart.register(annotationPlugin); // Register plugin here, just before use
 
+  // Destroy previous chart instance if it exists
   // Destroy previous chart instance if it exists
   const existingChart = Chart.getChart(jobBookingTrendChart.value);
   if (existingChart) {
@@ -920,6 +940,25 @@ watchEffect(() => {
     fetchTechnicians()
   }
 })
+
+// Watch for customer selection in modal to autofill form
+watch(selectedCustomerIdInModal, (newCustomerId) => {
+  if (newCustomerId && !editingJob.value) { // Only autofill if adding new job and a customer is selected
+    const customer = allCustomers.value.find(c => c.id === newCustomerId);
+    if (customer) {
+      jobForm.name = customer.name || '';
+      jobForm.phone = customer.phone || '';
+      jobForm.address = customer.address || '';
+      // Optionally autofill location if available and desired
+      // jobForm.location = customer.location || '';
+    }
+  } else if (!newCustomerId && !editingJob.value) {
+    // Optional: Clear fields if "-- Select --" is chosen again while adding
+    // jobForm.name = '';
+    // jobForm.phone = '';
+    // jobForm.address = '';
+  }
+});
 
 // Watch dark mode changes to update chart options if needed
 watchEffect(() => {
