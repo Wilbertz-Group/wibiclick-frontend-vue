@@ -1,0 +1,300 @@
+<script setup>
+import { ref, reactive, watch, computed, onMounted } from 'vue';
+import axios from 'axios';
+import moment from 'moment';
+import { useToast } from 'vue-toast-notification';
+import { useUserStore } from '@/stores/UserStore';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+// Assuming necessary icons are globally registered or added here if needed
+// import { faCheck } from '@fortawesome/free-solid-svg-icons';
+// library.add(faCheck);
+
+const props = defineProps({
+  modelValue: { // Controls modal visibility (v-model)
+    type: Boolean,
+    required: true,
+  },
+  customerData: { // Pre-fill data
+    type: Object,
+    default: () => ({}),
+  },
+  // Add technicians prop if fetching in parent
+  // technicians: {
+  //   type: Array,
+  //   required: true,
+  // }
+});
+
+const emit = defineEmits(['update:modelValue', 'job-saved']);
+
+const userStore = useUserStore();
+const toast = useToast();
+const loading = ref(false); // Loading state for submission
+const technicians = ref([]); // Fetch technicians locally for now
+
+// --- Form State ---
+const jobForm = reactive({
+  id: '', // Will be empty for new jobs
+  customerId: '',
+  name: '',
+  jobStatus: 'scheduled', // Default status
+  callout: 'R350', // Default callout
+  location: '',
+  address: '',
+  phone: '',
+  slotStart: '',
+  slotTime: '1hr', // Default duration
+  employeeId: '',
+  to_do: '',
+  issue: '',
+  notify: false,
+});
+
+const JOB_STATUSES = [ // Keep statuses needed for add/edit
+  'scheduled', 'quoting', 'quoted', 'accepted', 'cancelled', 'no parts',
+  'pending', 'invoiced', 'done', 'paid', 'to order parts', 'parts ordered',
+  'parts arrived', 'parts installed', 'parts paid', 'parts not paid',
+  'parts not installed', 'parts not ordered', 'parts not available',
+  'parts not needed', 'parts not found', 'follow-up', 'waiting for price',
+  'waiting for parts', 'waiting for customer', 'waiting for payment'
+];
+
+const isEditing = computed(() => !!jobForm.id); // Determine if editing based on ID
+
+// --- Methods ---
+const closeModal = () => {
+  emit('update:modelValue', false);
+  // Optional: Delay reset slightly for animation if needed
+  // setTimeout(resetJobForm, 300);
+};
+
+const resetJobForm = () => {
+  Object.assign(jobForm, {
+    id: '', customerId: '', name: '', jobStatus: 'scheduled', callout: 'R350',
+    location: '', address: '', phone: '', slotStart: '', slotTime: '1hr',
+    employeeId: '', to_do: '', issue: '', notify: false
+  });
+};
+
+const prefillForm = (customer) => {
+  resetJobForm(); // Start fresh
+  if (customer && customer.id) {
+    jobForm.customerId = customer.id;
+    jobForm.name = customer.name || '';
+    jobForm.phone = customer.phone || '';
+    jobForm.address = customer.address || '';
+    jobForm.location = customer.location || ''; // Assuming customer might have location
+    jobForm.issue = customer.message || ''; // Use customer message as initial issue
+    // Set default slotStart to tomorrow 9 AM for convenience?
+    jobForm.slotStart = moment().add(1, 'day').hour(9).minute(0).second(0).format('YYYY-MM-DDTHH:mm');
+  }
+};
+
+const submitJob = async () => {
+  loading.value = true;
+  try {
+    const jobData = {
+      ...jobForm,
+      websiteId: userStore.currentWebsite,
+      slotStart: jobForm.slotStart ? moment(jobForm.slotStart).toISOString() : null,
+      // Ensure customerId is set if not editing (it should be from prefill)
+      customerId: jobForm.customerId || props.customerData?.id,
+    };
+
+    // Backend endpoint handles create vs update based on presence/absence of jobData.id
+    const url = `add-job?id=${userStore.currentWebsite}`;
+    await axios.post(url, jobData);
+
+    toast.success(isEditing.value ? 'Job updated successfully' : 'Job added successfully');
+    emit('job-saved'); // Notify parent
+    closeModal();
+  } catch (error) {
+    console.error('Error submitting job:', error);
+    toast.error(`Error submitting job: ${error.response?.data?.message || error.message}`);
+  } finally {
+    loading.value = false;
+  }
+};
+
+const fetchTechnicians = async () => {
+  // Fetch technicians if not passed as prop
+  if (!userStore.currentWebsite) return;
+  try {
+    const response = await axios.get(`employees?id=${userStore.currentWebsite}`);
+    technicians.value = response.data.employees || [];
+  } catch (error) {
+    console.error('Error fetching technicians:', error);
+    // toast.error('Error fetching technicians'); // Optional
+  }
+};
+
+// --- Watchers ---
+watch(() => props.modelValue, (newValue) => {
+  if (newValue) {
+    // When modal opens, prefill form with customer data
+    prefillForm(props.customerData);
+    // Fetch technicians if needed
+    if (technicians.value.length === 0) {
+       fetchTechnicians();
+    }
+  } else {
+    // Optional: Reset form when modal closes if not handled by closeModal delay
+    // resetJobForm();
+  }
+});
+
+// --- Lifecycle ---
+// onMounted(() => {
+//   // Fetch technicians initially if component might be rendered hidden
+//   fetchTechnicians();
+// });
+
+</script>
+
+<template>
+  <transition name="modal-fade">
+    <div v-if="modelValue" class="fixed z-30 inset-0 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+      <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <!-- Backdrop -->
+        <div class="fixed inset-0 bg-gray-500/75 dark:bg-black/80 transition-opacity" aria-hidden="true" @click="closeModal"></div>
+        <!-- Modal positioning -->
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+        <!-- Modal panel -->
+        <div class="modal-content-modern">
+          <h3 class="text-lg font-semibold mb-6 text-gray-900 dark:text-white" id="modal-title">
+            {{ isEditing ? 'Edit Job Details' : 'Add New Job' }}
+            <span v-if="!isEditing && customerData?.name" class="text-base font-normal text-gray-500 dark:text-gray-400"> for {{ customerData.name }}</span>
+          </h3>
+          <form @submit.prevent="submitJob" class="space-y-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[60vh] overflow-y-auto pr-2"> 
+              <div>
+                <label for="job-name" class="label-modern">Customer Name</label>
+                <input type="text" id="job-name" v-model="jobForm.name" required class="input-modern" />
+              </div>
+              <div>
+                <label for="job-status" class="label-modern">Job Status</label>
+                <select id="job-status" v-model="jobForm.jobStatus" required class="input-modern input-modern--select">
+                  <option v-for="status in JOB_STATUSES" :key="status" :value="status">{{ status }}</option>
+                </select>
+              </div>
+              <div>
+                <label for="job-callout" class="label-modern">Callout Fee</label>
+                <input type="text" id="job-callout" v-model="jobForm.callout" required class="input-modern" />
+              </div>
+              <div>
+                <label for="job-location" class="label-modern">Location</label>
+                <input type="text" id="job-location" v-model="jobForm.location" required class="input-modern" />
+              </div>
+              <div>
+                <label for="job-address" class="label-modern">Customer Address</label>
+                <input type="text" id="job-address" v-model="jobForm.address" required class="input-modern" />
+              </div>
+              <div>
+                <label for="job-phone" class="label-modern">Customer Phone</label>
+                <input type="tel" id="job-phone" v-model="jobForm.phone" required class="input-modern" />
+              </div>
+              <div>
+                <label for="job-slotStart" class="label-modern">Job Start Date</label>
+                <input type="datetime-local" id="job-slotStart" v-model="jobForm.slotStart" required class="input-modern" />
+              </div>
+              <div>
+                <label for="job-slotTime" class="label-modern">Job Duration</label>
+                <select id="job-slotTime" v-model="jobForm.slotTime" required class="input-modern input-modern--select">
+                  <option v-for="duration in ['1hr', '2hrs', '3hrs', '4hrs']" :key="duration" :value="duration">{{ duration }}</option>
+                </select>
+              </div>
+              <div>
+                <label for="job-employeeId" class="label-modern">Assign Employee</label>
+                <select id="job-employeeId" v-model="jobForm.employeeId" required class="input-modern input-modern--select">
+                  <option value="">Select Technician</option>
+                  <option v-for="tech in technicians" :key="tech.id" :value="tech.id">
+                    {{ tech.firstName }} {{ tech.lastName }}
+                  </option>
+                </select>
+              </div>
+              <div>
+                <label for="job-to_do" class="label-modern">To Do (Optional)</label>
+                <input type="text" id="job-to_do" v-model="jobForm.to_do" class="input-modern" />
+              </div>
+              <div class="sm:col-span-2">
+                <label for="job-issue" class="label-modern">Issue / Description</label>
+                <textarea id="job-issue" v-model="jobForm.issue" required rows="4" class="input-modern"></textarea>
+              </div>
+              <div class="sm:col-span-2">
+                <label class="flex items-center">
+                  <input type="checkbox" v-model="jobForm.notify" class="h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 dark:bg-gray-700 dark:checked:bg-indigo-600">
+                  <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Notify Employee upon creation/update</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="pt-5 sm:pt-6 flex flex-col sm:flex-row-reverse gap-3 border-t border-gray-200 dark:border-gray-700/50">
+              <button type="submit" class="btn-primary-modern w-full sm:w-auto" :disabled="loading">
+                {{ loading ? 'Saving...' : (isEditing ? 'Update Job' : 'Add Job') }}
+              </button>
+              <button @click="closeModal" type="button" class="btn-secondary-modern w-full sm:w-auto">
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </transition>
+</template>
+
+<style scoped>
+/* Re-use styles from Jobs.vue or global styles */
+.input-modern {
+  @apply block w-full px-3 py-2 text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600/50 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500;
+  @apply focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:focus:ring-indigo-400 dark:focus:border-indigo-400;
+  @apply transition duration-150 ease-in-out;
+}
+.input-modern--select {
+  @apply pr-8 appearance-none bg-no-repeat bg-right;
+   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+   background-position: right 0.5rem center;
+   background-size: 1.5em 1.5em;
+}
+.dark .input-modern--select {
+   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+}
+.label-modern {
+  @apply block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1;
+}
+.btn-primary-modern {
+  @apply inline-flex items-center justify-center px-3.5 py-2 text-sm font-semibold text-white bg-indigo-600 dark:bg-indigo-500 rounded-md shadow-sm;
+  @apply hover:bg-indigo-700 dark:hover:bg-indigo-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600;
+  @apply transition-colors duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed;
+}
+.btn-secondary-modern {
+  @apply inline-flex items-center justify-center px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600/50 rounded-md shadow-sm;
+  @apply hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:focus:ring-indigo-400;
+  @apply transition-colors duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed;
+}
+.modal-content-modern {
+  @apply inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-xl md:max-w-2xl lg:max-w-3xl sm:w-full p-6 sm:p-8;
+}
+.modal-fade-enter-active,
+.modal-fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+.modal-fade-enter-from,
+.modal-fade-leave-to {
+  opacity: 0;
+}
+.modal-fade-enter-active .modal-content-modern,
+.modal-fade-leave-active .modal-content-modern {
+  transition: all 0.3s ease;
+}
+.modal-fade-enter-from .modal-content-modern,
+.modal-fade-leave-to .modal-content-modern {
+   transform: translateY(20px) scale(0.98);
+   opacity: 0;
+}
+/* Custom scrollbar for modal content */
+.modal-content-modern .overflow-y-auto::-webkit-scrollbar { width: 6px; height: 6px; }
+.modal-content-modern .overflow-y-auto::-webkit-scrollbar-track { @apply bg-gray-100 dark:bg-gray-700/50; }
+.modal-content-modern .overflow-y-auto::-webkit-scrollbar-thumb { @apply bg-gray-300 dark:bg-gray-600 rounded; }
+.modal-content-modern .overflow-y-auto::-webkit-scrollbar-thumb:hover { @apply bg-gray-400 dark:bg-gray-500; }
+</style>

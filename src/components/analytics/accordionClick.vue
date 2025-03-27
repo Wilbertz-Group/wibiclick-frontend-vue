@@ -87,7 +87,7 @@
 			<div :id="'accordion-clicks-body-'+click.uid" class="hidden" aria-labelledby="accordion-arrow-icon-heading-2">
 				<!-- Accordion Content Panel: Added dark mode background and border -->
 				<div class="px-3 py-1 rounded-b-md font-light border-t border-gray-200 dark:border-gray-600/50 dark:bg-gray-800/30">
-					{/* Text Content: Added dark mode styles */}
+
 					<p class="p-2 my-2 text-xs italic font-normal bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300 border border-gray-200 dark:border-gray-600 rounded-lg">
 						<span class="capitalize">{{ click.customer?.name || 'Visitor' }}</span> clicked <code class="font-mono font-semibold">{{ click.click?.button || 'unknown element' }}</code> on <a target="_blank" class="text-blue-600 dark:text-blue-400 hover:underline" :href="click.page?.url">{{ click.page?.title || click.page?.url }}</a>
 					</p>

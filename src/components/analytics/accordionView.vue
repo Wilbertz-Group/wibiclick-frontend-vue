@@ -88,7 +88,7 @@
 			<div :id="'accordion-views-body-'+view.uid" class="hidden" aria-labelledby="accordion-arrow-icon-heading-2">
 				<!-- Accordion Content Panel: Added dark mode background and border -->
 				<div class="px-3 py-1 rounded-b-md font-light border-t border-gray-200 dark:border-gray-600/50 dark:bg-gray-800/30">
-					{/* Text Content: Added dark mode styles */}
+
 					<p class="p-2 my-2 text-xs italic font-normal bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300 border border-gray-200 dark:border-gray-600 rounded-lg">
 						<span class="capitalize">{{ view.customer?.name || 'Visitor' }}</span> viewed <a target="_blank" class="text-blue-600 dark:text-blue-400 hover:underline" :href="view.page?.url">{{ view.page?.title || view.page?.url }}</a>
 					</p>

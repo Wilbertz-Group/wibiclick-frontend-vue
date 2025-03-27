@@ -87,11 +87,11 @@
 			<div :id="'accordion-forms-body-'+form.uid" class="hidden" aria-labelledby="accordion-arrow-icon-heading-2">
 				<!-- Accordion Content Panel: Added dark mode background and border -->
 				<div class="px-3 py-1 rounded-b-md font-light border-t border-gray-200 dark:border-gray-600/50 dark:bg-gray-800/30">
-					{/* Text Content: Added dark mode styles */}
+
 					<p class="p-2 my-2 text-xs italic font-normal bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300 border border-gray-200 dark:border-gray-600 rounded-lg">
 						<span class="capitalize">{{ form.customer?.name || 'Visitor' }}</span> submitted a website form on <a target="_blank" class="text-blue-600 dark:text-blue-400 hover:underline" :href="form.page?.url">{{ form.page?.title || form.page?.url }}</a>
 					</p>
-					{/* Optionally display form message if available */}
+
 					<p v-if="form.customer?.message" class="p-2 my-2 text-xs italic font-normal bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300 border border-gray-200 dark:border-gray-600 rounded-lg whitespace-pre-wrap">
 						Message: {{ form.customer.message }}
 					</p>

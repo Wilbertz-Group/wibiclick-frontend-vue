@@ -37,6 +37,7 @@ import {
   faArrowLeft, faEdit, faStickyNote, faPaperPlane, faPlus, faChevronDown, faChevronUp, faExternalLinkAlt, faPhone, faEnvelope, faMapMarkerAlt, faUser, faBuilding, faLink, faInfoCircle, faBriefcase, faFileInvoiceDollar, faReceipt, faMoneyBillWave, faShieldAlt, faListOl, faSync // Added icons
 } from '@fortawesome/free-solid-svg-icons'
 import { faWhatsapp } from '@fortawesome/free-brands-svg-icons' // Added WhatsApp brand icon
+import JobFormModal from '@/components/jobs/JobFormModal.vue'; // Import the new modal
 
 library.add(
   faArrowLeft, faEdit, faStickyNote, faPaperPlane, faPlus, faChevronDown, faChevronUp, faExternalLinkAlt, faPhone, faEnvelope, faMapMarkerAlt, faUser, faBuilding, faLink, faInfoCircle, faBriefcase, faFileInvoiceDollar, faReceipt, faMoneyBillWave, faShieldAlt, faListOl, faWhatsapp, faSync
@@ -48,6 +49,8 @@ const isFetchingCustomer = ref(false);
 const isUpdatingCustomer = ref(false);
 const isBookingJob = ref(false); // Keep AI booking state if needed
 const isEditingInfo = ref(false); // State to toggle edit mode for customer info
+const showAddJobModal = ref(false); // State for the new job modal visibility
+const technicians = ref([]); // State for technicians list
 
 const lineItems = ref([])
 const notes = ref('') // Model for note modal
@@ -240,7 +243,36 @@ function handleCancelEdit() {
   resetEditableCustomer(); // Reset any changes made in the form
 }
 
+// --- Job Modal Handlers ---
+function openAddJobModal() {
+  showAddJobModal.value = true;
+}
+
+function handleJobSaved() {
+  // No need to explicitly close modal, v-model handles it
+  reloadTimeline(); // Refresh customer data (including jobs list)
+}
+
+// --- Data Fetching ---
+async function fetchTechnicians() {
+  // Fetch technicians if not already fetched
+  if (technicians.value.length > 0 || !userStore.currentWebsite) return;
+  try {
+    const response = await axios.get(`employees?id=${userStore.currentWebsite}`);
+    technicians.value = response.data.employees || [];
+  } catch (error) {
+    console.error('Error fetching technicians:', error);
+    // toast.error('Error fetching technicians'); // Optional
+  }
+}
+
 function handleAddRelatedItem(routeName, queryKey) {
+    // If adding a job, open the modal instead of navigating
+    if (routeName === 'add-job') {
+      openAddJobModal();
+      return; // Stop further execution
+    }
+
     const query = {};
     // Special handling for estimate/invoice to potentially link to the latest job
     if ((routeName === 'add-estimate' || routeName === 'add-invoice') && customer.value?.jobs?.length) {
@@ -258,6 +290,7 @@ function handleAddRelatedItem(routeName, queryKey) {
 onMounted(() => {
   document.documentElement.classList.toggle('dark', isDarkMode.value);
   fetchContacts();
+  fetchTechnicians(); // Fetch technicians on mount
   // tooltips(); // Moved to finally block of fetchContacts
 });
 
@@ -282,10 +315,14 @@ watchEffect(() => {
           </button>
           <div>
             <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900 dark:text-white flex items-center">
-              {{ customer.name || 'Loading Customer...' }}
-              <a v-if="customer.hubspotLink" :href="customer.hubspotLink" target="_blank" class="ml-2 text-gray-400 hover:text-indigo-500 dark:hover:text-indigo-400" title="View on HubSpot">
-                <font-awesome-icon icon="external-link-alt" class="h-4 w-4" />
-              </a>
+              {{ customer.name || 'Loading Customer...' }}              
+                <a v-if="customer.portal && customer.foreignID" :href="'https://app.hubspot.com/contacts/'+customer.portal+'/contact/'+customer.foreignID" target="_blank" class="ml-2 text-gray-400 hover:text-indigo-500 dark:hover:text-indigo-400" title="View on HubSpot">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10 cursor-pointer rounded-full shadow bg-[#ff7a59] hover:bg-[#ff7a59] p-2 text-white" x="0px" y="0px"
+                            width="64" height="64"
+                            viewBox="0,0,256,256">
+                            <g fill="none" fill-rule="nonzero" stroke="none" stroke-width="1" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="10" stroke-dasharray="" stroke-dashoffset="0" font-family="none" font-weight="none" font-size="none" text-anchor="none" style="mix-blend-mode: normal"><path d="M0,256v-256h256v256z" id="bgRectangle"></path></g><g fill="#fffefe" fill-rule="nonzero" stroke="none" stroke-width="1" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="10" stroke-dasharray="" stroke-dashoffset="0" font-family="none" font-weight="none" font-size="none" text-anchor="none" style="mix-blend-mode: normal"><g transform="scale(8,8)"><path d="M7.5,4c-1.38071,0 -2.5,1.11929 -2.5,2.5c0,1.38071 1.11929,2.5 2.5,2.5c0.47179,-0.00127 0.93359,-0.13602 1.33203,-0.38867l7.48633,5.64062c-0.82356,1.02723 -1.31836,2.32885 -1.31836,3.74805c0,1.55169 0.59408,2.96031 1.56055,4.02539l-3.04492,3.04492c-0.16808,-0.04579 -0.34142,-0.06943 -0.51562,-0.07031c-1.10457,0 -2,0.89543 -2,2c0,1.10457 0.89543,2 2,2c0.62094,-0.00084 1.20627,-0.29004 1.58419,-0.78272c0.37793,-0.49268 0.50558,-1.13296 0.34549,-1.7329l3.20898,-3.20898c0.00049,0.00027 0.00146,-0.00027 0.00195,0c0.85016,0.4618 1.82375,0.72461 2.85938,0.72461c3.314,0 6,-2.686 6,-6c0,-2.9724 -2.16333,-5.43311 -5,-5.91016v-3.35938c0.78227,-0.45329 1.16316,-1.37503 0.92906,-2.24831c-0.2341,-0.87329 -1.02495,-1.48092 -1.92906,-1.48216c-0.90412,0.00123 -1.69497,0.60887 -1.92906,1.48216c-0.2341,0.87329 0.14679,1.79502 0.92906,2.24831v3.35938c-0.77851,0.13092 -1.50439,0.41247 -2.15039,0.8125l-7.89258,-5.94727c0.13516,-0.73009 -0.06121,-1.48249 -0.53591,-2.05341c-0.4747,-0.57093 -1.17862,-0.90131 -1.92112,-0.90166zM21,15c1.654,0 3,1.346 3,3c0,1.654 -1.346,3 -3,3c-1.654,0 -3,-1.346 -3,-3c0,-1.654 1.346,-3 3,-3z"></path></g></g>
+                          </svg>
+                </a>
             </h1>
             <p v-if="customer.createdAt" class="text-xs text-gray-500 dark:text-gray-400 mt-1">
               Customer since {{ new Date(customer.createdAt).toLocaleDateString() }}
@@ -303,9 +340,9 @@ watchEffect(() => {
             <font-awesome-icon :icon="['fab', 'whatsapp']" class="mr-1.5 h-4 w-4" /> WhatsApp
           </button>
           <!-- Add Job Button (Example using primary style) -->
-           <button @click="handleAddRelatedItem('add-job', 'contact_id')" class="btn-primary-modern" title="Add New Job">
-             <font-awesome-icon icon="plus" class="mr-1.5 h-4 w-4" /> Add Job
-           </button>
+          <button @click="openAddJobModal" class="btn-primary-modern" title="Add New Job"> 
+            <font-awesome-icon icon="plus" class="mr-1.5 h-4 w-4" /> Add Job
+          </button>
         </div>
       </header>
 
@@ -606,14 +643,22 @@ watchEffect(() => {
          </div>
        </div>
 
-    </div> <!-- End container -->
+     </div> <!-- End container -->
 
-    <!-- Loading Overlay -->
-    <div v-if="isLoading" class="fixed inset-0 z-[60] bg-gray-900 bg-opacity-50 dark:bg-opacity-80 flex items-center justify-center">
-       <scale-loader :loading="true" color="#4f46e5" height="40px" width="5px" />
-    </div>
-  </div> <!-- End main div -->
-</template>
+     <!-- Add Job Modal -->
+     <JobFormModal
+       v-model="showAddJobModal"
+       :customer-data="customer"
+       @job-saved="handleJobSaved"
+     />
+     
+
+     <!-- Loading Overlay -->
+     <div v-if="isLoading" class="fixed inset-0 z-[60] bg-gray-900 bg-opacity-50 dark:bg-opacity-80 flex items-center justify-center">
+        <scale-loader :loading="true" color="#4f46e5" height="40px" width="5px" />
+     </div>
+   </div> <!-- End main div -->
+ </template>
 
 <style>
 /* Import modern styles used in Jobs.vue - Assuming these are globally available or defined in a main CSS file */
