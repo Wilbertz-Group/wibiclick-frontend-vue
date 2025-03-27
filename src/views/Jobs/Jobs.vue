@@ -613,14 +613,11 @@ const submitJob = async () => {
       delete jobData.id;
     }
 
-    // Use PUT for update, POST for create
-    const method = editingJob.value ? 'put' : 'post';
-    const url = editingJob.value ? `update-job?id=${jobData.id}` : `add-job?id=${currentWebsite.value}`;
+    // Always use POST to /add-job; backend handles create vs update based on body.id
+    const url = `add-job?id=${currentWebsite.value}`;
+    const payload = jobData; // Send the raw job data
 
-    // Adjust payload structure if needed by backend
-    const payload = method === 'put' ? { job: jobData } : jobData;
-
-    const response = await axios[method](url, payload);
+    const response = await axios.post(url, payload); // Always use POST
 
     toast.success(editingJob.value ? 'Job updated successfully' : 'Job added successfully');
     closeJobModal();
@@ -949,8 +946,9 @@ watch(selectedCustomerIdInModal, (newCustomerId) => {
       jobForm.name = customer.name || '';
       jobForm.phone = customer.phone || '';
       jobForm.address = customer.address || '';
-      // Optionally autofill location if available and desired
-      // jobForm.location = customer.location || '';
+      // Autofill location and issue as well
+      jobForm.location = customer.location || ''; // Assuming customer object has location
+      jobForm.issue = customer.message || ''; // Assuming customer object has message for issue
     }
   } else if (!newCustomerId && !editingJob.value) {
     // Optional: Clear fields if "-- Select --" is chosen again while adding
