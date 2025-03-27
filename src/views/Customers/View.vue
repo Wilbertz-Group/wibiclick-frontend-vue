@@ -197,11 +197,11 @@
 
 <template>
 	<!-- Adjusted grid layout for better responsiveness -->
-	<div class="px-2 py-2 grid lg:grid-cols-3 md:grid-cols-1 gap-3 bg-white h-[92vh]">
+	<div class="px-2 py-2 grid lg:grid-cols-12 md:grid-cols-1 gap-3 bg-white h-[92vh]">
 
 		<!-- Left Column: Customer Card & Info Form -->
 		<!-- Takes full width on medium screens and below, 1/3 on large screens -->
-		<div class="h-full overflow-y-scroll md:col-span-3 lg:col-span-1 p-1">
+		<div class="h-full overflow-y-scroll lg:col-span-3 p-1">
 			
 			<!-- Use CustomerCard Component -->
 			<CustomerCard
@@ -292,12 +292,12 @@
 			:customer="customer"
 			:wkey="wkey"
 			:nkey="nkey"
-			class="md:col-span-3 lg:col-span-1"
+			class="lg:col-span-6"
 		/>
 
 		<!-- Right Column: Related Records (Jobs, Estimates, etc.) -->
 		<!-- Takes full width on medium screens and below, 1/3 on large screens -->
-		<div class="h-full overflow-y-scroll md:col-span-3 lg:col-span-1 p-1">
+		<div class="h-full overflow-y-scroll lg:col-span-3 p-1">
 			<!-- Jobs Section -->
 			<section class="shadow sm:rounded-md sm:overflow-hidden">
 				<div class="p-3 sm:rounded-md sm:overflow-hidden">
