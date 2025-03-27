@@ -71,7 +71,7 @@
         <div class="">
           <h2 class="text-2xl font-semibold mb-4 text-gray-800 dark:text-white">Job List</h2>
           
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-6">
             <div class="relative">
               <input v-model="filters.search" placeholder="Search jobs..." class="form-input pl-10">
               <font-awesome-icon icon="search" class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -84,38 +84,71 @@
               <option value="">All Technicians</option>
               <option v-for="tech in technicians" :key="tech.id" :value="tech.id">{{ tech.firstName }} {{ tech.lastName }}</option>
             </select>
-            <div class="relative">
-              <input v-model="filters.location" placeholder="Filter by location" class="form-input pl-10">
-              <font-awesome-icon icon="map-marker-alt" class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-            </div>
-            <div class="relative">
-              <input 
-                :value="formatDateForInput(filters.date)" 
-                @input="updateDateFilter" 
-                type="date" 
-                placeholder="Filter by date" 
-                class="form-input pl-10"
-              >
-              <font-awesome-icon icon="calendar" class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-            </div>
-            <div class="relative">
-              <input 
-                :value="formatDateTimeForInput(filters.slotStart)" 
-                @input="updateSlotStartFilter" 
-                type="datetime-local" 
-                placeholder="Filter by slot start" 
-                class="form-input pl-10"
-              >
-              <font-awesome-icon icon="clock" class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            
+            <!-- Advanced Filters Section -->
+            <template v-if="showAdvancedFilters">
+              <div class="relative">
+                <input v-model="filters.location" placeholder="Filter by location" class="form-input pl-10">
+                <font-awesome-icon icon="map-marker-alt" class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              </div>
+              <div class="relative">
+                <input
+                  :value="formatDateForInput(filters.date)"
+                  @input="updateDateFilter"
+                  type="date"
+                  placeholder="Filter by date"
+                  class="form-input pl-10"
+                >
+                <font-awesome-icon icon="calendar" class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              </div>
+              <div class="relative">
+                <input
+                  :value="formatDateTimeForInput(filters.slotStart)"
+                  @input="updateSlotStartFilter"
+                  type="datetime-local"
+                  placeholder="Filter by slot start"
+                  class="form-input pl-10"
+                >
+                <font-awesome-icon icon="clock" class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              </div>
+            </template>
+            
+            <!-- Filter Action Buttons -->
+            <div class="md:col-span-2 lg:col-span-3 flex justify-end space-x-2">
+              <button @click="showAdvancedFilters = !showAdvancedFilters" class="btn-secondary-custom">
+                {{ showAdvancedFilters ? 'Hide' : 'Show' }} Advanced Filters
+              </button>
+              <button @click="clearFilters" class="btn-secondary-custom">
+                Clear Filters
+              </button>
             </div>
           </div>
         </div>
 
         <!-- Job List (Mobile Card View) -->
         <div class="md:hidden space-y-4">
-          <div v-for="job in paginatedJobs" :key="job.id" class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 border border-gray-200 dark:border-gray-700">
+          <!-- Skeleton Loader for Mobile -->
+          <div v-if="loading" class="space-y-4">
+            <div v-for="n in 5" :key="`skel-mob-${n}`" class="bg-gray-200 dark:bg-gray-700 rounded-lg shadow-md p-4 border border-gray-300 dark:border-gray-600 animate-pulse">
+              <div class="flex justify-between items-start mb-3">
+                <div class="h-5 bg-gray-300 dark:bg-gray-600 rounded w-3/5"></div>
+                <div class="h-4 bg-gray-300 dark:bg-gray-600 rounded w-1/5"></div>
+              </div>
+              <div class="h-4 bg-gray-300 dark:bg-gray-600 rounded w-full mb-2"></div>
+              <div class="h-4 bg-gray-300 dark:bg-gray-600 rounded w-4/5 mb-3"></div>
+              <div class="h-4 bg-gray-300 dark:bg-gray-600 rounded w-1/2 mb-1"></div>
+              <div class="h-4 bg-gray-300 dark:bg-gray-600 rounded w-1/2 mb-1"></div>
+              <div class="h-4 bg-gray-300 dark:bg-gray-600 rounded w-1/2 mb-4"></div>
+              <div class="flex justify-end space-x-2">
+                <div class="h-8 bg-gray-300 dark:bg-gray-600 rounded w-16"></div>
+                <div class="h-8 bg-gray-300 dark:bg-gray-600 rounded w-16"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Actual Job Cards -->
+          <div v-if="!loading" v-for="job in paginatedJobs" :key="job.id" class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 border border-gray-200 dark:border-gray-700">
             <div class="flex justify-between items-start mb-2">
-              <!-- Added router-link for customer name on mobile -->
               <router-link
                 :to="{ name: 'contact', query: { customer_id: job.customer?.id } }"
                 class="text-lg font-semibold text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200 transition duration-150 ease-in-out"
@@ -154,7 +187,37 @@
 
         <!-- Job Table (Desktop View) -->
         <div class="hidden md:block overflow-x-auto">
-          <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+          <!-- Skeleton Loader for Desktop Table -->
+          <div v-if="loading" class="animate-pulse">
+            <table class="min-w-full divide-y divide-gray-300 dark:divide-gray-600">
+              <thead class="bg-gray-200 dark:bg-gray-700">
+                <tr>
+                  <th v-for="header in tableHeaders" :key="`skel-head-${header}`" class="px-6 py-3 text-left text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+                    <div class="h-4 bg-gray-300 dark:bg-gray-600 rounded w-3/4"></div>
+                  </th>
+                </tr>
+              </thead>
+              <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-300 dark:divide-gray-600">
+                <tr v-for="n in 5" :key="`skel-row-${n}`">
+                  <td class="px-6 py-4 whitespace-nowrap"><div class="h-4 bg-gray-300 dark:bg-gray-600 rounded w-4/5"></div></td>
+                  <td class="px-6 py-4"><div class="h-4 bg-gray-300 dark:bg-gray-600 rounded w-full"></div></td>
+                  <td class="px-6 py-4 whitespace-nowrap"><div class="h-6 bg-gray-300 dark:bg-gray-600 rounded-full w-20 mx-auto"></div></td>
+                  <td class="px-6 py-4 whitespace-nowrap"><div class="h-4 bg-gray-300 dark:bg-gray-600 rounded w-3/4"></div></td>
+                  <td class="px-6 py-4 whitespace-nowrap"><div class="h-4 bg-gray-300 dark:bg-gray-600 rounded w-3/4"></div></td>
+                  <td class="px-6 py-4 whitespace-nowrap"><div class="h-4 bg-gray-300 dark:bg-gray-600 rounded w-3/4"></div></td>
+                  <td class="px-6 py-4 whitespace-nowrap text-right">
+                    <div class="flex justify-end space-x-2">
+                      <div class="h-4 bg-gray-300 dark:bg-gray-600 rounded w-10"></div>
+                      <div class="h-4 bg-gray-300 dark:bg-gray-600 rounded w-10"></div>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Actual Job Table -->
+          <table v-if="!loading" class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead class="bg-gray-50 dark:bg-gray-700">
               <tr>
                 <th v-for="header in tableHeaders" :key="header" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
@@ -166,7 +229,7 @@
               <tr v-for="job in paginatedJobs" :key="job.id" class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150">
                 <td data-label="Customer Name" class="px-6 py-2 whitespace-nowrap">
                   <div class="text-md font-medium text-gray-900 dark:text-white">
-                    <router-link 
+                    <router-link
                       :to="{
                         name: 'contact',
                         query: { customer_id: job.customer?.id }
@@ -205,8 +268,8 @@
                   {{ job.location }}
                 </td>
                 <td data-label="Actions" class="px-6 py-2 whitespace-nowrap text-right text-md font-medium">
-                  <button @click="editJob(job)" class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-200 mr-2">Edit</button>
-                  <button @click="notifyTechnician(job)" class="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-200">Notify</button>
+                  <button @click="editJob(job)" class="btn-secondary mr-2">Edit</button>
+                  <button @click="notifyTechnician(job)" class="btn-secondary">Notify</button>
                 </td>
               </tr>
             </tbody>
@@ -224,7 +287,8 @@
         </div>
       </div>
 
-      <div class="bg-white dark:bg-gray-700 dark:sm:bg-gray-800 rounded-lg shadow-md overflow-hidden transition-colors duration-300 p-6 mt-7">
+      <!-- Job Booking Trend Chart (Hidden on mobile) -->
+      <div class="hidden md:block bg-white dark:bg-gray-700 dark:sm:bg-gray-800 rounded-lg shadow-md overflow-hidden transition-colors duration-300 p-6 mt-7">
         <h3 class="text-2xl font-semibold mb-4 text-gray-800 dark:text-white">Job Booking Trend</h3>
         <div class="relative w-full">
           <canvas ref="jobBookingTrendChart"></canvas>
@@ -320,10 +384,6 @@
     </div>
   </transition>
 
-  <!-- Loading Overlay -->
-  <div v-if="loading" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <ScaleLoader color="#ffffff" />
-  </div>
 </template>
 
 <script setup>
@@ -358,6 +418,7 @@ const { currentWebsite, websites } = storeToRefs(userStore)
 
 const isDarkMode = ref(localStorage.getItem('darkMode') === 'true')
 const loading = ref(false)
+const showAdvancedFilters = ref(false) // Added state for advanced filters
 const jobs = ref([])
 const showJobModal = ref(false)
 const editingJob = ref(null)
@@ -424,6 +485,15 @@ const filters = reactive({
   date: null,
   slotStart: null
 })
+
+const clearFilters = () => {
+  filters.search = ''
+  filters.status = ''
+  filters.technician = ''
+  filters.location = ''
+  filters.date = null
+  filters.slotStart = null
+}
 
 const selectedWebsite = computed({
   get: () => currentWebsite.value,
@@ -710,30 +780,30 @@ const getStatusClass = (status) => {
     case 'pending': return baseClasses + 'bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
     case 'quoting': return baseClasses + 'bg-blue-200 text-blue-800 dark:bg-blue-700 dark:text-blue-200'
     case 'quoted': return baseClasses + 'bg-blue-800 text-white dark:bg-blue-800 dark:text-blue-100'
-    case 'accepted': return baseClasses + 'bg-indigo-300 text-indigo-800 dark:bg-indigo-600 dark:text-indigo-100'
+    case 'accepted': return baseClasses + 'bg-indigo-300 text-indigo-900 dark:bg-indigo-600 dark:text-indigo-100' // Adjusted text-indigo-800 to 900
     
     // Scheduling and progress
     case 'scheduled': return baseClasses + 'bg-emerald-200 text-emerald-800 dark:bg-emerald-700 dark:text-emerald-200'
-    case 'in progress': return baseClasses + 'bg-yellow-300 text-yellow-800 dark:bg-yellow-600 dark:text-yellow-100'
+    case 'in progress': return baseClasses + 'bg-yellow-300 text-yellow-900 dark:bg-yellow-600 dark:text-yellow-100' // Adjusted text-yellow-800 to 900
     case 'follow-up': return baseClasses + 'bg-orange-300 text-orange-800 dark:bg-orange-600 dark:text-orange-100'
     
     // Completion stages
-    case 'completed': return baseClasses + 'bg-green-300 text-green-800 dark:bg-green-600 dark:text-green-100'
-    case 'done': return baseClasses + 'bg-green-400 text-green-800 dark:bg-green-500 dark:text-green-100'
+    case 'completed': return baseClasses + 'bg-green-300 text-green-900 dark:bg-green-600 dark:text-green-100' // Adjusted text-green-800 to 900
+    case 'done': return baseClasses + 'bg-green-400 text-green-900 dark:bg-green-500 dark:text-green-100' // Adjusted text-green-800 to 900
     case 'invoiced': return baseClasses + 'bg-green-900 text-white dark:bg-green-900 dark:text-green-100'
     case 'paid': return baseClasses + 'bg-green-500 text-white dark:bg-green-700 dark:text-green-100'
     
     // Parts-related statuses
     case 'no parts': return baseClasses + 'bg-yellow-200 text-yellow-800 dark:bg-yellow-700 dark:text-yellow-200'
-    case 'to order parts': return baseClasses + 'bg-yellow-300 text-yellow-800 dark:bg-yellow-600 dark:text-yellow-100'
-    case 'parts ordered': return baseClasses + 'bg-yellow-400 text-yellow-800 dark:bg-yellow-500 dark:text-yellow-100'
+    case 'to order parts': return baseClasses + 'bg-yellow-300 text-yellow-900 dark:bg-yellow-600 dark:text-yellow-100' // Adjusted text-yellow-800 to 900
+    case 'parts ordered': return baseClasses + 'bg-yellow-400 text-yellow-900 dark:bg-yellow-500 dark:text-yellow-100' // Adjusted text-yellow-800 to 900
     case 'parts arrived': return baseClasses + 'bg-yellow-600 text-white dark:bg-yellow-800 dark:text-yellow-100'
-    case 'parts installed': return baseClasses + 'bg-green-300 text-green-800 dark:bg-green-600 dark:text-green-100'
-    case 'parts paid': return baseClasses + 'bg-green-400 text-green-800 dark:bg-green-500 dark:text-green-100'
+    case 'parts installed': return baseClasses + 'bg-green-300 text-green-900 dark:bg-green-600 dark:text-green-100' // Adjusted text-green-800 to 900
+    case 'parts paid': return baseClasses + 'bg-green-400 text-green-900 dark:bg-green-500 dark:text-green-100' // Adjusted text-green-800 to 900
     
     // Negative parts statuses
     case 'parts not paid': return baseClasses + 'bg-red-200 text-red-800 dark:bg-red-700 dark:text-red-200'
-    case 'parts not installed': return baseClasses + 'bg-red-300 text-red-800 dark:bg-red-600 dark:text-red-100'
+    case 'parts not installed': return baseClasses + 'bg-red-300 text-red-900 dark:bg-red-600 dark:text-red-100' // Adjusted text-red-800 to 900
     case 'parts not ordered': return baseClasses + 'bg-red-400 text-white dark:bg-red-500 dark:text-red-100'
     case 'parts not available': return baseClasses + 'bg-red-500 text-white dark:bg-red-600 dark:text-red-100'
     case 'parts not needed': return baseClasses + 'bg-orange-400 text-white dark:bg-orange-500 dark:text-orange-100'
