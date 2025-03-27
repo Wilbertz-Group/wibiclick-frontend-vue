@@ -115,7 +115,13 @@
         <div class="md:hidden space-y-4">
           <div v-for="job in paginatedJobs" :key="job.id" class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 border border-gray-200 dark:border-gray-700">
             <div class="flex justify-between items-start mb-2">
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ job.name }}</h3>
+              <!-- Added router-link for customer name on mobile -->
+              <router-link
+                :to="{ name: 'contact', query: { customer_id: job.customer?.id } }"
+                class="text-lg font-semibold text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200 transition duration-150 ease-in-out"
+              >
+                {{ job.name }}
+              </router-link>
               <span :class="getStatusClass(job.jobStatus)" class="px-2 py-1 text-xs font-semibold rounded-full">
                 {{ job.jobStatus }}
               </span>
