@@ -134,7 +134,20 @@
  async function updateCustomer(credentials) {
     isUpdatingCustomer.value = true; // Start updating state
     try {
-      const response = await axios.post('add-customer?id='+ userStore.currentWebsite, {data: credentials});
+      // Transform frontend data keys to match backend expected keys
+      const backendData = {
+        name: credentials.name,
+        Phone: credentials.phone, // Map phone -> Phone
+        Email: credentials.email, // Map email -> Email
+        Reply: credentials.channel, // Map channel -> Reply
+        address: credentials.address,
+        Message: credentials.message, // Map message -> Message
+        portal: credentials.portal,
+        foreignID: credentials.foreignID
+        // 'vid' is not directly available in the form, backend handles it if needed
+      };
+
+      const response = await axios.post('add-customer?id='+ userStore.currentWebsite, {data: backendData}); // Send transformed data
       toast.success("Customer updated successfully")
   	  reloadTimeline()
     } catch (error) {
