@@ -156,8 +156,8 @@ function getActivityProps(activity) {
 
         <TabPanels class="mt-2 ">
           <TabPanel>
-            <ol class="relative border-l max-w-full ml-5 border-gray-200 dark:border-gray-700">
-              <li v-for="activity in customer?.activities" :key="activity.uid" class="mb-10 ml-6">
+            <ol class="relative border-l max-w-full ml-2 sm:ml-5 border-gray-200 dark:border-gray-700"> <!-- Responsive margin -->
+              <li v-for="activity in customer?.activities" :key="activity.uid" class="mb-10 ml-3 sm:ml-6"> <!-- Responsive margin -->
                  <!-- Use dynamic component with resolved component and props -->
                  <component
                     :is="getActivityComponent(activity)"
@@ -167,16 +167,16 @@ function getActivityProps(activity) {
             </ol>
           </TabPanel>
           <TabPanel>
-            <ol class="relative border-l max-w-full ml-5 border-gray-200 dark:border-gray-700">
-              <li class="mb-10 ml-6">
+            <ol class="relative border-l max-w-full ml-2 sm:ml-5 border-gray-200 dark:border-gray-700"> <!-- Responsive margin -->
+              <li class="mb-10 ml-3 sm:ml-6"> <!-- Responsive margin -->
                  <!-- Ensure accordionWhatsapp is correctly imported and named -->
                 <accordionWhatsapp v-if="customer?.whatsapp" :msgs="customer?.whatsapp" :key="wkey"></accordionWhatsapp>
               </li>
             </ol>
           </TabPanel>
           <TabPanel>
-            <ol class="relative border-l max-w-full ml-5 border-gray-200 dark:border-gray-700">
-              <li class="mb-10 ml-6">
+            <ol class="relative border-l max-w-full ml-2 sm:ml-5 border-gray-200 dark:border-gray-700"> <!-- Responsive margin -->
+              <li class="mb-10 ml-3 sm:ml-6"> <!-- Responsive margin -->
                 <accordion-notes v-if="customer?.notes" :notes="customer?.notes" :key="nkey" status="" user="" created=""></accordion-notes>
               </li>
             </ol>

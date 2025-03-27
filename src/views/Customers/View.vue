@@ -197,7 +197,7 @@
 
 <template>
 	<!-- Adjusted grid layout for better responsiveness -->
-	<div class="px-2 py-2 grid lg:grid-cols-12 md:grid-cols-1 gap-3 bg-white h-[92vh]">
+	<div class="px-2 py-2 grid grid-cols-1 md:grid-cols-1 lg:grid-cols-12 gap-0 md:gap-3 bg-white min-h-[calc(100vh-theme(spacing.16))]"> <!-- Default to 1 col, 1 col at md, 12 cols at lg. Gap 0 on mobile -->
 
 		<!-- Left Column: Customer Card & Info Form -->
 		<!-- Takes full width on medium screens and below, 1/3 on large screens -->
@@ -288,11 +288,12 @@
 
 		<!-- Middle Column: Activity Tabs -->
 		<!-- Takes full width on medium screens and below, 1/3 on large screens -->
+		<!-- Added max-h for mobile/medium screens -->
 		<CustomerActivityTabs
 			:customer="customer"
 			:wkey="wkey"
 			:nkey="nkey"
-			class="lg:col-span-6"
+			class="lg:col-span-6 max-h-[60vh] lg:max-h-none"
 		/>
 
 		<!-- Right Column: Related Records (Jobs, Estimates, etc.) -->
