@@ -30,6 +30,7 @@
  import ScaleLoader from "vue-spinner/src/ScaleLoader.vue";
  import { TabGroup, TabList, Tab, TabPanels, TabPanel } from '@headlessui/vue'
  import CustomerCard from '@/components/customers/CustomerCard.vue'; // Import the new component
+ import CustomerInfoForm from '@/components/customers/CustomerInfoForm.vue'; // Import the form component
 
  const loading = ref(false)
  const lineItems = ref()
@@ -255,28 +256,11 @@
 					</div>
 			</div>
 
-			<!-- Contact Information Section -->
-			<section class="shadow sm:rounded-md sm:overflow-hidden mt-4">
-				<div class="p-2 sm:rounded-md sm:overflow-hidden">
-						<FormKit type="form" id="customer" submit-label="Update" @submit="updateCustomer" :actions="false">
-							<span class="text-xl font-medium text-gray-900 dark:text-white border-b-4 border-gray-900">About contact</span>
-							<div class="mt-4">
-								<FormKit type="text" name="name" v-model="customer.name" label="Name" placeholder="--" inner-class="shadow-none" outer-class="text-left border-none" input-class="pl-0 hover:border-sky-500 hover:ring-1 hover:ring-sky-500" />
-								<FormKit type="select" name="Reply" v-model="customer.channel" label="Reply" placeholder="--" inner-class="shadow-none" input-class="pl-0 hover:border-sky-500 hover:ring-1 hover:ring-sky-500" :options="[ 'Reply me by Email', 'Send me a message on Whatsapp', 'Use any of the above' ]"  />   
-								<FormKit type="email" name="Email" v-model="customer.email" label="Email" placeholder="--" inner-class="shadow-none" outer-class="text-left" input-class="pl-0 hover:border-sky-500 hover:ring-1 hover:ring-sky-500" />
-								<FormKit type="tel" name="Phone" label="Phone" v-model="customer.phone" placeholder="--" inner-class="shadow-none" outer-class="text-left" input-class="pl-0 hover:border-sky-500 hover:ring-1 hover:ring-sky-500" validation="required|phone" />
-								<FormKit type="text" name="portal" label="Portal" v-model="customer.portal" inner-class="shadow-none" placeholder="--" outer-class="text-left" input-class="pl-0 hover:border-sky-500 hover:ring-1 hover:ring-sky-500" />
-								<FormKit type="text" name="foreignID" label="Hubspot ID" v-model="customer.foreignID" placeholder="--" inner-class="shadow-none" outer-class="text-left" input-class="pl-0 hover:border-sky-500 hover:ring-1 hover:ring-sky-500" />
-								<FormKit type="text" name="address" label="Address" v-model="customer.address" placeholder="--" inner-class="shadow-none" outer-class="text-left" input-class="pl-0 hover:border-sky-500 hover:ring-1 hover:ring-sky-500" />
-							</div>
-
-							<FormKit type="textarea" name="Message" label="Issue" v-model="customer.message" inner-class="shadow-none" placeholder="--" outer-class="text-left" input-class="pl-0 hover:border-sky-500 hover:ring-1 hover:ring-sky-500" />
-
-							<FormKit type="submit" input-class="rounded-full shadow !bg-slate-900 hover:bg-slate-700 text-white" label="Update Customer" />
-							
-						</FormKit>
-				</div>
-			</section>
+			<!-- Use CustomerInfoForm Component -->
+			<CustomerInfoForm
+				:customer="customer"
+				@update-customer="updateCustomer"
+			/>
 
 		</div>
 
