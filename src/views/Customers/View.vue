@@ -31,6 +31,7 @@
  import { TabGroup, TabList, Tab, TabPanels, TabPanel } from '@headlessui/vue'
  import CustomerCard from '@/components/customers/CustomerCard.vue'; // Import the new component
  import CustomerInfoForm from '@/components/customers/CustomerInfoForm.vue'; // Import the form component
+ import CustomerActivityTabs from '@/components/customers/CustomerActivityTabs.vue'; // Import the tabs component
 
  const loading = ref(false)
  const lineItems = ref()
@@ -264,95 +265,12 @@
 
 		</div>
 
-		<div class="h-full overflow-y-scroll col-span-2 md:col-span-2 bg-slate-100 py-2 pl-2 shadow sm:rounded-md sm:overflow-hidden">
-			<TabGroup :defaultIndex="0">
-				<div class="h-full overflow-y-scroll pr-2">
-					<TabList class="flex space-x-1 rounded-xl bg-slate-900 p-1">		
-							<Tab 
-								as="template" 
-								v-slot="{ selected }"
-							>
-							<span
-								:class="[
-									selected
-										? 'bg-white shadow text-slate-900'
-										: 'text-blue-100 hover:bg-white/[0.12] hover:text-white',
-								]"
-								class="w-full cursor-pointer text-center rounded-lg py-2.5 text-sm font-medium leading-5 text-blue-700 ring-white ring-opacity-60 ring-offset-2 ring-offset-blue-400 focus:outline-none">	
-								Activity
-								</span>
-							</Tab>
-
-							<Tab 
-								as="template" 
-								v-slot="{ selected }"
-							>
-								<span
-									:class="[
-										selected
-											? 'bg-white shadow text-slate-900'
-											: 'text-blue-100 hover:bg-white/[0.12] hover:text-white',
-									]"
-									class="w-full cursor-pointer text-center rounded-lg py-2.5 text-sm font-medium leading-5 text-blue-700 ring-white ring-opacity-60 ring-offset-2 ring-offset-blue-400 focus:outline-none" >
-									Whatsapp
-								</span>
-							</Tab>
-
-							<Tab 
-								as="template" 
-								v-slot="{ selected }"
-							>
-								<span 
-									:class="[
-										selected
-											? 'bg-white shadow text-slate-900'
-											: 'text-blue-100 hover:bg-white/[0.12] hover:text-white',
-									]"
-									class="w-full cursor-pointer text-center rounded-lg py-2.5 text-sm font-medium leading-5 text-blue-700 ring-white ring-opacity-60 ring-offset-2 ring-offset-blue-400 focus:outline-none" >
-									Notes
-								</span>
-							</Tab>
-					</TabList>
-
-					<TabPanels class="mt-2 ">
-						<TabPanel>
-							<ol class="relative border-l max-w-full ml-5 border-gray-200 dark:border-gray-700">       
-								<li v-for="activity in customer?.activities" :key="activity.uid" class="mb-10 ml-6">
-									<accordion v-if="activity.type == 'whatsapp'" :msgs="[activity?.whatsapp]"></accordion>
-									<accordion-payment v-if="activity.type == 'payment'" :payments="[activity?.payment]" :status="activity?.status" :user="activity?.User?.firstName" :created="activity?.createdAt"></accordion-payment>
-									<accordion-email v-if="activity.type == 'email'" :msgs="[activity?.email]"></accordion-email>
-									<accordion-notes v-if="activity.type == 'note'" :notes="[activity?.notes]" :status="activity?.status" :user="activity?.User?.firstName" :created="activity?.createdAt"></accordion-notes>
-									<accordion-invoice v-if="activity.type == 'invoice'" :invoices="[activity?.invoice]" :status="activity?.status" :user="activity?.User?.firstName" :created="activity?.createdAt"></accordion-invoice>
-									<accordion-estimate v-if="activity.type == 'estimate'" :estimates="[activity?.estimate]" :status="activity?.status" :user="activity?.User?.firstName" :created="activity?.createdAt"></accordion-estimate>
-									<accordion-insurance v-if="activity.type == 'insurance'" :insurances="[activity?.insurance]" :status="activity?.status" :user="activity?.User?.firstName" :created="activity?.createdAt"></accordion-insurance>
-									<accordion-job v-if="activity.type == 'job'" :jobs="[activity?.job]" :status="activity?.status" :user="activity?.User?.firstName" :created="activity?.createdAt"></accordion-job>
-									<accordion-customer v-if="activity.type == 'customer'" :customers="[activity?.customer]" :status="activity?.status" :user="activity?.User?.firstName" :created="activity?.createdAt"></accordion-customer>
-									<accordion-lineitem v-if="activity.type == 'line item'" :lineitems="[activity?.lineitem]" :status="activity?.status" :user="activity?.User?.firstName" :created="activity?.createdAt"></accordion-lineitem>
-									<accordion-view v-if="activity.type == 'view'" :customer="activity?.customer?.name" :url="activity?.visitor?.views.filter(p => p.pageId == activity?.pageId)[0].page?.url" :title="activity?.visitor?.views.filter(p => p.pageId == activity?.pageId)[0].page?.title" :created="activity?.createdAt"></accordion-view>
-									<accordion-click v-if="activity.type == 'click' && activity?.visitor?.clicks.filter(p => p.pageId == activity?.pageId)[0].button != 'form'" :customer="activity?.customer?.name" :url="activity?.visitor?.clicks.filter(p => p.pageId == activity?.pageId)[0].page?.url" :title="activity?.visitor?.clicks.filter(p => p.pageId == activity?.pageId)[0].page?.title" :button="activity?.visitor?.clicks.filter(p => p.pageId == activity?.pageId)[0].button" :created="activity?.createdAt"></accordion-click>
-									<accordion-form v-if="activity.type == 'click' && activity?.visitor?.clicks.filter(p => p.pageId == activity?.pageId)[0].button == 'form'" :customer="activity?.customer?.name" :url="activity?.visitor?.clicks.filter(p => p.pageId == activity?.pageId)[0].page?.url" :title="activity?.visitor?.clicks.filter(p => p.pageId == activity?.pageId)[0].page?.title" :created="activity?.createdAt"></accordion-form>
-								</li>
-							</ol>
-							
-						</TabPanel>
-						<TabPanel>
-							<ol class="relative border-l max-w-full ml-5 border-gray-200 dark:border-gray-700">
-								<li class="mb-10 ml-6">
-									<accordion v-if="customer?.whatsapp" :msgs="customer?.whatsapp" :key="wkey"></accordion>
-								</li>								
-							</ol>
-						</TabPanel>
-						<TabPanel>
-							<ol class="relative border-l max-w-full ml-5 border-gray-200 dark:border-gray-700">
-								<li class="mb-10 ml-6">
-									<accordion-notes v-if="customer?.notes" :notes="customer?.notes" :key="nkey" status="" user="" created=""></accordion-notes>
-								</li>								
-							</ol>							
-						</TabPanel>
-					</TabPanels>
-				</div>
-			</TabGroup>
-		</div>
+		<!-- Use CustomerActivityTabs Component -->
+		<CustomerActivityTabs
+			:customer="customer"
+			:wkey="wkey"
+			:nkey="nkey"
+		/>
 
 		<div class="h-full overflow-y-scroll col-span-1 md:col-span-1 p-1">
 			<!-- Jobs Section -->
