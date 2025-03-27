@@ -1,7 +1,7 @@
 <script setup>
 import { defineProps, defineEmits } from 'vue';
 import { useRouter } from 'vue-router';
-import VueQuill from '@/components/editor/VueQuill.vue';
+import TipTapEditor from '@/components/editor/TipTapEditor.vue'; // Changed import
 
 const props = defineProps({
   customer: {
@@ -138,12 +138,12 @@ function updateWhatsappModel(value) {
                         </div>
                         <!-- Modal body -->
                         <div class="p-6 space-y-6">
-                          <VueQuill
+                          <TipTapEditor
                               :modelValue="notesContent"
                               @update:modelValue="updateNotesModel"
-                              contentType="html"
                               placeholder="Start typing to leave a note..."
-                          />
+                              class="border rounded"
+                          /> <!-- Added basic styling -->
                         </div>
                         <!-- Modal footer -->
                         <div class="flex items-center p-6 space-x-2 border-t border-gray-200 rounded-b dark:border-gray-600">
@@ -197,12 +197,12 @@ function updateWhatsappModel(value) {
                         </div>
                         <!-- Modal body -->
                         <div class="p-6 space-y-6">
-                          <VueQuill
+                           <TipTapEditor
                               :modelValue="whatsappContent"
                               @update:modelValue="updateWhatsappModel"
-                              contentType="text"
                               placeholder="Start typing to send a whatsapp message..."
-                          />
+                              class="border rounded"
+                          /> <!-- Added basic styling -->
                         </div>
                         <!-- Modal footer -->
                         <div class="flex items-center p-6 space-x-2 border-t border-gray-200 rounded-b dark:border-gray-600">

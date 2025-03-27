@@ -7,7 +7,7 @@
   import { useUserStore } from "@/stores/UserStore"
  import { tooltips, noteModal, whatsappModal } from '../../helpers';
  import JobVue from '@/components/jobs/Job.vue'
- import VueQuill from '@/components/editor/VueQuill.vue' // Keep for modals defined below
+ import TipTapEditor from '@/components/editor/TipTapEditor.vue'; // Changed import
  import ItemVue from '@/components/line-items/item.vue'
  import EstimateVue from '@/components/estimates/Estimate.vue'
  import InsuranceVue from '@/components/insurance/Insurance.vue'
@@ -231,11 +231,11 @@
 									</div>
 									<!-- Modal body -->
 									<div class="p-6 space-y-6">
-										<VueQuill
-											v-model:modelValue="notes"
-											contentType="html"
+										<TipTapEditor
+											v-model="notes"
 											placeholder="Start typing to leave a note..."
-										></VueQuill>
+											class="border rounded"
+										/> <!-- Added basic styling -->
 									</div>
 									<!-- Modal footer -->
 									<div class="flex items-center p-6 space-x-2 border-t border-gray-200 rounded-b dark:border-gray-600">
@@ -263,11 +263,11 @@
 									</div>
 									<!-- Modal body -->
 									<div class="p-6 space-y-6">
-										<VueQuill
-											v-model:modelValue="whatsapp"
-											contentType="text"
+										<TipTapEditor
+											v-model="whatsapp"
 											placeholder="Start typing to send a whatsapp message..."
-										></VueQuill>
+											class="border rounded"
+										/> <!-- Added basic styling -->
 									</div>
 									<!-- Modal footer -->
 									<div class="flex items-center p-6 space-x-2 border-t border-gray-200 rounded-b dark:border-gray-600">
@@ -425,11 +425,5 @@
 </template>
 
 <style>
-	.ql-container.ql-snow {
-    margin-top: 0px !important;
-    min-height: 28vh;
-	}
-	.ql-editor.ql-blank {
-    min-height: 200px;
-	}
+	/* Quill-specific styles removed */
 </style>

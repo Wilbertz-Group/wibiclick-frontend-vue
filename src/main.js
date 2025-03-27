@@ -13,8 +13,6 @@ import 'vue3-loading-overlay/dist/vue3-loading-overlay.css';
 import ToastPlugin from 'vue-toast-notification';
 import 'vue-toast-notification/dist/theme-sugar.css';
 import VueHighlightJS from 'vue-highlightjs'
-import { QuillEditor } from '@vueup/vue-quill'
-import '@vueup/vue-quill/dist/vue-quill.snow.css';
 import 'sweetalert2/dist/sweetalert2.min.css'
 
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
@@ -35,7 +33,6 @@ pinia.use(piniaPluginPersistedstate)
 
 app.component("Popper", Popper);
 app.component('font-awesome-icon', FontAwesomeIcon)
-app.component('QuillEditor', QuillEditor)
 app.use(VueHighlightJS)
 app.use(ToastPlugin);
 app.use(VueApexCharts);

@@ -27,7 +27,7 @@ WibiClick aims to provide businesses with a suite of tools to manage various asp
     *   **Icons:** Heroicons (`@heroicons/vue`), FontAwesome (`@fortawesome/vue-fontawesome`, `@fortawesome/fontawesome-svg-core`, `@fortawesome/free-brands-svg-icons`, `@fortawesome/free-regular-svg-icons`, `@fortawesome/free-solid-svg-icons`), Boxicons (`boxicons`).
     *   **Data Visualization:** ApexCharts (`vue3-apexcharts`, `apexcharts`), Chart.js (`chart.js`, `chartjs-adapter-moment`, `chartjs-plugin-annotation`).
     *   **Data Grids:** AG Grid (`ag-grid-vue3`, `ag-grid-community`), Grid.js (`gridjs`).
-    *   **Rich Text Editing:** Quill Editor (`@vueup/vue-quill`, `quill-paste-smart`).
+    *   **Rich Text Editing:** .
     *   **Notifications:** SweetAlert2 (`sweetalert2`), Vue Toast Notification (`vue-toast-notification`).
     *   **Real-time:** Ably (`ably`).
     *   **Utilities:** Moment.js (`moment`, `moment-timezone`), Date-fns (`date-fns`), Lodash (`lodash`), VueUse (`@vueuse/core`), Buffer (`buffer`), Form Data (`form-data`), ESBuild (`esbuild`).

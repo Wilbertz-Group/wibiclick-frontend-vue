@@ -4,8 +4,7 @@ import moment from 'moment'
 import Header from "@/components/Header.vue";
 import { useUserStore } from "@/stores/UserStore";
 import { onMounted, ref, watchEffect } from "vue";
-import { QuillEditor } from '@vueup/vue-quill';
-import '@vueup/vue-quill/dist/vue-quill.snow.css';
+import TipTapEditor from "@/components/editor/TipTapEditor.vue"; // Import TipTapEditor
 import { useToast } from "vue-toast-notification";
 import { useRoute, useRouter } from "vue-router";
 import { computed } from "@vue/reactivity";
@@ -15,19 +14,6 @@ import imageHolder from '@/helpers/logo.js'
 import modal from "@/components/misc/modalInsuranceAttachment.vue"
 import FormData from 'form-data';
 
-// Quill editor configuration
-const editorOptions = {
-  modules: {
-    toolbar: [
-      ['bold', 'italic', 'underline', 'strike'],
-      [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-      [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
-      [{ 'color': [] }, { 'background': [] }],
-      ['clean']
-    ]
-  },
-  theme: 'snow'
-};
 
 const loading = ref(false);
 const all_contacts = ref();
@@ -1077,17 +1063,14 @@ onMounted(()=>{
            <div class="mt-0">
               <div class="text-2xl font-bold">Report details:</div>
               <div class="text-lg mt-2 max-w-full">
-                <span class="mr-10">
-                  <QuillEditor
-                    v-model:content="insurance.notes"
-                    :options="editorOptions"
-                    contentType="html"
-                    theme="snow"
-                    class="bg-slate-100 w-full text-left mb-4"
-                    style="min-height: 500px;"
-                  />
+                <span class="mr-10 w-full"> <!-- Added w-full for better layout -->
+                  <TipTapEditor
+                    v-model="insurance.notes"
+                    placeholder="Enter report details here..."
+                    class="bg-slate-100 w-full text-left mb-4 border border-gray-300 rounded"
+                  /> <!-- Added basic styling -->
                 </span>
-              </div>              
+              </div>
             </div>
 
             <div class="mt-20 mb-20 text-center">
@@ -1328,55 +1311,7 @@ onMounted(()=>{
     gap: 10px;
   }
 
-  /* Quill editor custom styles */
-  :deep(.ql-editor) {
-    min-height: 500px;
-    max-height: fit-content;
-    font-size: 14px;
-    line-height: 1.6;
-    padding: 12px 15px;
-    overflow: auto;
-  }
-
-  :deep(.ql-toolbar) {
-    border-top-left-radius: 4px;
-    border-top-right-radius: 4px;
-    background-color: #f8f9fa;
-    border-color: #e2e8f0;
-  }
-
-  :deep(.ql-container) {
-    border-bottom-left-radius: 4px;
-    border-bottom-right-radius: 4px;
-    border-color: #e2e8f0;
-  }
-
-  :deep(.ql-snow .ql-picker) {
-    color: #4a5568;
-  }
-
-  :deep(.ql-snow .ql-stroke) {
-    stroke: #4a5568;
-  }
-
-  :deep(.ql-snow .ql-fill) {
-    fill: #4a5568;
-  }
-
-  :deep(.ql-snow.ql-toolbar button:hover),
-  :deep(.ql-snow .ql-toolbar button:hover) {
-    color: #2d3748;
-  }
-
-  :deep(.ql-snow.ql-toolbar button:hover .ql-stroke),
-  :deep(.ql-snow .ql-toolbar button:hover .ql-stroke) {
-    stroke: #2d3748;
-  }
-
-  :deep(.ql-snow.ql-toolbar button:hover .ql-fill),
-  :deep(.ql-snow .ql-toolbar button:hover .ql-fill) {
-    fill: #2d3748;
-  }
+  /* TipTap editor styles are now in TipTapEditor.vue */
 
   .due {
     display: flex;
