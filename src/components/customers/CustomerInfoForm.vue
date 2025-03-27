@@ -17,6 +17,10 @@ const props = defineProps({
       portal: "",
       // Add other fields if necessary for the form context
     })
+  },
+  isUpdating: { // Add prop to receive loading state
+    type: Boolean,
+    default: false
   }
 });
 
@@ -59,7 +63,16 @@ function submitForm(credentials) {
 
           <FormKit type="textarea" name="message" label="Issue" inner-class="shadow-none" placeholder="--" outer-class="text-left" input-class="pl-0 hover:border-sky-500 hover:ring-1 hover:ring-sky-500" />
 
-          <FormKit type="submit" input-class="rounded-full shadow !bg-slate-900 hover:bg-slate-700 text-white" label="Update Customer" />
+          <!-- Disable submit button based on isUpdating prop -->
+          <FormKit
+            type="submit"
+            :input-class="{
+              'rounded-full shadow !bg-slate-900 hover:bg-slate-700 text-white': !props.isUpdating,
+              'rounded-full shadow !bg-slate-500 text-white opacity-75 cursor-not-allowed': props.isUpdating
+            }"
+            :label="props.isUpdating ? 'Updating...' : 'Update Customer'"
+            :disabled="props.isUpdating"
+          />
 
         </FormKit>
     </div>

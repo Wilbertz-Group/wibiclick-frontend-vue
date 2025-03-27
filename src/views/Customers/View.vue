@@ -33,7 +33,11 @@
  import CustomerInfoForm from '@/components/customers/CustomerInfoForm.vue'; // Import the form component
  import CustomerActivityTabs from '@/components/customers/CustomerActivityTabs.vue'; // Import the tabs component
 
- const loading = ref(false)
+ // Specific loading states
+ const isFetchingCustomer = ref(false);
+ const isUpdatingCustomer = ref(false);
+ const isBookingJob = ref(false);
+
  const lineItems = ref()
  const notes = ref('') // Model for note modal
  const whatsapp = ref('') // Model for whatsapp modal
@@ -66,8 +70,8 @@
  const whatsappModalInstance = ref(null); // Added for modal control
 
  async function fetchContacts() {
+    isFetchingCustomer.value = true; // Start fetching state
     try {
-      loading.value = true;
   	const response = await axios.get(
   		`customer?id=${userStore.currentWebsite}&custId=${route.query.customer_id}`
   	);
@@ -110,11 +114,11 @@
   	whatsappModalInstance.value = await whatsappModal(whatsapp, userStore.currentWebsite, customer.value.phone)
   	noteModalInstance.value = await noteModal(notes, userStore.currentWebsite, customer.value.id, reloadTimeline)
 
-      loading.value = false;
     } catch (error) {
-      console.log(error);
-      loading.value = false;
-      toast.error("Error getting customer data")
+      console.error("Error fetching customer data:", error); // Log detailed error
+      toast.error("Error fetching customer data. Please try again.") // Improved user message
+    } finally {
+      isFetchingCustomer.value = false; // End fetching state regardless of success/error
     }
   }
 
@@ -128,30 +132,30 @@
  }
 
  async function updateCustomer(credentials) {
+    isUpdatingCustomer.value = true; // Start updating state
     try {
-      loading.value = true
       const response = await axios.post('add-customer?id='+ userStore.currentWebsite, {data: credentials});
-      loading.value = false
       toast.success("Customer updated successfully")
-  	reloadTimeline()
+  	  reloadTimeline()
     } catch (error) {
-      console.log(error)
-      loading.value = false
-  	toast.error("Error updating customer") // Add error toast
+      console.error("Error updating customer:", error); // Log detailed error
+      toast.error("Error updating customer. Please try again.") // Improved user message
+    } finally {
+       isUpdatingCustomer.value = false; // End updating state regardless of success/error
     }
   }
 
  async function aiBookJob(customerId){
-  try {
-      loading.value = true
+   isBookingJob.value = true; // Start booking state
+   try {
       await axios.post('ai-booking?id='+ userStore.currentWebsite, {data: customerId});
-      loading.value = false
       toast.success("Customer job booked successfully")
-  	reloadTimeline()
+  	  reloadTimeline()
     } catch (error) {
-      console.log(error)
-      loading.value = false
-  	toast.error("Error booking job via AI") // Add error toast
+      console.error("Error booking job via AI:", error); // Log detailed error
+      toast.error("Error booking job via AI. Please try again.") // Improved user message
+    } finally {
+      isBookingJob.value = false; // End booking state regardless of success/error
     }
  }
 
@@ -261,6 +265,7 @@
 			<CustomerInfoForm
 				:customer="customer"
 				@update-customer="updateCustomer"
+				:is-updating="isUpdatingCustomer"
 			/>
 
 		</div>
@@ -280,7 +285,8 @@
 						<span class="text-xl font-medium text-gray-900 dark:text-white">Jobs</span>
 						<div id="tooltip-add-job-button" @click="router.push({name: 'add-job', query: { contact_id: customer?.id } })" data-tooltip-target="tooltip-add-job" data-tooltip-placement="left" class="cursor-pointer">+ Add</div>
 						<div id="tooltip-ai" role="tooltip" class="">
-							<img src="@/assets/images/sparkle.gif" @click="aiBookJob(customer?.id)" alt="image" loading="lazy" width="26" height="26" class="cursor-pointer" />
+							<!-- Add loading state for AI booking button if desired -->
+							<img src="@/assets/images/sparkle.gif" @click="aiBookJob(customer?.id)" alt="image" loading="lazy" width="26" height="26" class="cursor-pointer" :class="{'opacity-50': isBookingJob}" />
 						</div>
 						<div id="tooltip-add-job" role="tooltip" class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white transition-opacity duration-300 bg-gray-900 rounded-lg shadow-sm opacity-0 tooltip dark:bg-gray-700">
 								Add Job
@@ -391,9 +397,10 @@
 			</section>
 		</div>
 	</div>
-	<scale-loader v-if="loading" :loading="loading" color="#23293b" height="50px" class="vld-overlay is-active is-full-page" width="6px">
-  </scale-loader>
-	<div v-if="loading" class="bg-gray-900 bg-opacity-50 dark:bg-opacity-80 fixed inset-0 z-40"></div>
+	<!-- Update loading overlay condition -->
+	<scale-loader v-if="isFetchingCustomer || isUpdatingCustomer || isBookingJob" :loading="true" color="#23293b" height="50px" class="vld-overlay is-active is-full-page" width="6px">
+		</scale-loader>
+	<div v-if="isFetchingCustomer || isUpdatingCustomer || isBookingJob" class="bg-gray-900 bg-opacity-50 dark:bg-opacity-80 fixed inset-0 z-40"></div>
 </template>
 
 <style>
