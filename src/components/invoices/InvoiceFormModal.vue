@@ -15,13 +15,13 @@ const props = defineProps({
     type: Object,
     default: () => ({}),
   },
-  estimateData: { // For editing existing estimate
+  invoiceData: { // For editing existing invoice
     type: Object,
     default: null,
   }
 });
 
-const emit = defineEmits(['update:modelValue', 'estimate-saved']);
+const emit = defineEmits(['update:modelValue', 'invoice-saved']);
 
 const userStore = useUserStore();
 const toast = useToast();
@@ -29,14 +29,14 @@ const loading = ref(false);
 const profile = ref(null);
 
 // --- Form State ---
-const estimateForm = reactive({
-  id: '', // Will be empty for new estimates
+const invoiceForm = reactive({
+  id: '', // Will be empty for new invoices
   customerId: '',
-  name: 'Estimate',
+  name: 'Invoice',
   status: 'sent',
-  estimate_nr: 1,
-  estimate_date: moment().format('YYYY-MM-DD'),
-  estimate_due_date: moment().add(3, 'days').format('YYYY-MM-DD'),
+  invoice_nr: 1,
+  invoice_date: moment().format('YYYY-MM-DD'),
+  invoice_due_date: moment().add(7, 'days').format('YYYY-MM-DD'),
   subtotal: 0,
   paid: 0,
   notes: '',
@@ -79,9 +79,9 @@ const lineItem = reactive({
 
 const isEditingLineItem = computed(() => lineItem.id !== null);
 
-const ESTIMATE_STATUSES = ['sent', 'accepted', 'rejected', 'pending', 'processing', 'paid'];
+const INVOICE_STATUSES = ['sent', 'pending', 'processing', 'paid', 'accepted'];
 
-const isEditing = computed(() => !!estimateForm.id);
+const isEditing = computed(() => !!invoiceForm.id);
 const lineItemTotal = computed(() => (Number(lineItem.amount) * Number(lineItem.quantity)).toFixed(2));
 
 // --- Methods ---
@@ -89,15 +89,15 @@ const closeModal = () => {
   emit('update:modelValue', false);
 };
 
-const resetEstimateForm = () => {
-  Object.assign(estimateForm, {
+const resetInvoiceForm = () => {
+  Object.assign(invoiceForm, {
     id: '',
     customerId: '',
-    name: 'Estimate',
+    name: 'Invoice',
     status: 'sent',
-    estimate_nr: 1,
-    estimate_date: moment().format('YYYY-MM-DD'),
-    estimate_due_date: moment().add(3, 'days').format('YYYY-MM-DD'),
+    invoice_nr: 1,
+    invoice_date: moment().format('YYYY-MM-DD'),
+    invoice_due_date: moment().add(7, 'days').format('YYYY-MM-DD'),
     subtotal: 0,
     paid: 0,
     notes: '',
@@ -144,57 +144,57 @@ const resetLineItemForm = () => {
 };
 
 const prefillForm = async (customer) => {
-  resetEstimateForm();
+  resetInvoiceForm();
   
   // Fetch profile data if not already loaded
   if (!profile.value) {
     await fetchProfile();
   }
   
-  // Fetch estimate number
-  let estimate_number = 0;
+  // Fetch invoice number
+  let invoice_number = 0;
   try {
     loading.value = true;
-    const response = await axios.get('estimate_number?id=' + userStore.currentWebsite);
-    estimate_number = response.data.estimate_number;
+    const response = await axios.get('invoice_number?id=' + userStore.currentWebsite);
+    invoice_number = response.data.invoice_number;
     loading.value = false;
   } catch (error) {
-    console.error("Failed to get estimate number", error);
-    toast.warning("Failed to get estimate number");
+    console.error("Failed to get invoice number", error);
+    toast.warning("Failed to get invoice number");
     loading.value = false;
   }
   
   if (customer && customer.id) {
-    estimateForm.customer.id = customer.id;
-    estimateForm.customer.name = customer.name || '';
-    estimateForm.customer.phone = customer.phone || '';
-    estimateForm.customer.address = customer.address || '';
-    estimateForm.customerId = customer.id;
+    invoiceForm.customer.id = customer.id;
+    invoiceForm.customer.name = customer.name || '';
+    invoiceForm.customer.phone = customer.phone || '';
+    invoiceForm.customer.address = customer.address || '';
+    invoiceForm.customerId = customer.id;
     
     // Set company and banking details from profile
     if (profile.value) {
-      estimateForm.company = profile.value.company || estimateForm.company;
-      estimateForm.banking = profile.value.banking || estimateForm.banking;
+      invoiceForm.company = profile.value.company || invoiceForm.company;
+      invoiceForm.banking = profile.value.banking || invoiceForm.banking;
     }
     
-    // Set estimate number
-    estimateForm.estimate_nr = estimate_number + 1;
+    // Set invoice number
+    invoiceForm.invoice_nr = invoice_number + 1;
   }
   
-  // If editing, populate with existing estimate data
-  if (props.estimateData) {
-    Object.assign(estimateForm, {
-      id: props.estimateData.id,
-      customerId: props.estimateData.customerId,
-      name: props.estimateData.name || 'Estimate',
-      status: props.estimateData.reason || 'sent',
-      estimate_nr: props.estimateData.number || (estimate_number + 1),
-      estimate_date: props.estimateData.issuedAt ? moment(props.estimateData.issuedAt).format('YYYY-MM-DD') : moment().format('YYYY-MM-DD'),
-      estimate_due_date: props.estimateData.dueAt ? moment(props.estimateData.dueAt).format('YYYY-MM-DD') : moment().add(3, 'days').format('YYYY-MM-DD'),
-      subtotal: props.estimateData.subtotal || 0,
-      paid: props.estimateData.paid || 0,
-      notes: props.estimateData.notes || '',
-      items: props.estimateData.lineItem || [],
+  // If editing, populate with existing invoice data
+  if (props.invoiceData) {
+    Object.assign(invoiceForm, {
+      id: props.invoiceData.id,
+      customerId: props.invoiceData.customerId,
+      name: props.invoiceData.name || 'Invoice',
+      status: props.invoiceData.reason || 'sent',
+      invoice_nr: props.invoiceData.number || (invoice_number + 1),
+      invoice_date: props.invoiceData.issuedAt ? moment(props.invoiceData.issuedAt).format('YYYY-MM-DD') : moment().format('YYYY-MM-DD'),
+      invoice_due_date: props.invoiceData.dueAt ? moment(props.invoiceData.dueAt).format('YYYY-MM-DD') : moment().add(7, 'days').format('YYYY-MM-DD'),
+      subtotal: props.invoiceData.subtotal || props.invoiceData.sales || 0,
+      paid: props.invoiceData.paid || 0,
+      notes: props.invoiceData.notes || '',
+      items: props.invoiceData.lineItem || [],
     });
   }
 };
@@ -227,7 +227,7 @@ const addItem = () => {
     if (isEditingLineItem.value) {
       // Update existing item
       const index = lineItem.index;
-      estimateForm.items[index] = {
+      invoiceForm.items[index] = {
         item: lineItem.name,
         description: lineItem.description,
         quantity: parseFloat(lineItem.quantity),
@@ -236,7 +236,7 @@ const addItem = () => {
       };
     } else {
       // Add new item
-      estimateForm.items.push({
+      invoiceForm.items.push({
         item: lineItem.name,
         description: lineItem.description,
         quantity: parseFloat(lineItem.quantity),
@@ -249,7 +249,7 @@ const addItem = () => {
     resetLineItemForm();
 
     // Recalculate total
-    getSum(estimateForm.items);
+    getSum(invoiceForm.items);
   }
 };
 
@@ -258,37 +258,37 @@ const cancelEdit = () => {
 };
 
 const removeItem = (index) => {
-  estimateForm.items.splice(index, 1);
-  getSum(estimateForm.items);
+  invoiceForm.items.splice(index, 1);
+  getSum(invoiceForm.items);
 };
 
 const getSum = (array) => {
   if (array.length) {
     let values = array.map(item => item.quantity * item.amount);
     let total = values.reduce((a, b) => a + b, 0);
-    estimateForm.subtotal = total;
+    invoiceForm.subtotal = total;
     return total;
   } else {
-    estimateForm.subtotal = 0;
+    invoiceForm.subtotal = 0;
     return 0;
   }
 };
 
-const submitEstimate = async () => {
+const submitInvoice = async () => {
   loading.value = true;
   try {
     const payload = {
-      reason: estimateForm.status,
-      name: estimateForm.name,
-      number: estimateForm.estimate_nr,
-      issuedAt: moment(estimateForm.estimate_date).toISOString(),
-      dueAt: moment(estimateForm.estimate_due_date).toISOString(),
-      sales: estimateForm.subtotal,
-      subtotal: estimateForm.subtotal,
-      paid: parseFloat(estimateForm.paid) || 0, // Add paid field
-      notes: estimateForm.notes,
-      customerId: estimateForm.customer.id || estimateForm.customerId,
-      items: estimateForm.items.map(item => ({
+      reason: invoiceForm.status,
+      name: invoiceForm.name,
+      number: invoiceForm.invoice_nr,
+      issuedAt: moment(invoiceForm.invoice_date).toISOString(),
+      dueAt: moment(invoiceForm.invoice_due_date).toISOString(),
+      sales: invoiceForm.subtotal,
+      subtotal: invoiceForm.subtotal,
+      paid: parseFloat(invoiceForm.paid) || 0, // Add paid field
+      notes: invoiceForm.notes,
+      customerId: invoiceForm.customer.id || invoiceForm.customerId,
+      items: invoiceForm.items.map(item => ({
         item: item.item || item.name,
         description: item.description,
         quantity: parseFloat(item.quantity),
@@ -298,16 +298,16 @@ const submitEstimate = async () => {
 
     // If editing, include the ID
     if (isEditing.value) {
-      payload.id = estimateForm.id;
+      payload.id = invoiceForm.id;
     }
 
-    const response = await axios.post('add-estimate?id=' + userStore.currentWebsite, payload);
-    toast.success(response.data.message || 'Estimate saved successfully');
-    emit('estimate-saved');
+    const response = await axios.post('add-invoice?id=' + userStore.currentWebsite, payload);
+    toast.success(response.data.message || 'Invoice saved successfully');
+    emit('invoice-saved');
     closeModal();
   } catch (error) {
-    console.error("Error submitting estimate:", error);
-    toast.error(`Error submitting estimate: ${error.response?.data?.message || error.message}`);
+    console.error("Error submitting invoice:", error);
+    toast.error(`Error submitting invoice: ${error.response?.data?.message || error.message}`);
   } finally {
     loading.value = false;
   }
@@ -340,36 +340,36 @@ onMounted(() => {
         <!-- Modal panel -->
         <div class="modal-content-modern">
           <h3 class="text-lg font-semibold mb-6 text-gray-900 dark:text-white" id="modal-title">
-            {{ isEditing ? 'Edit Estimate' : 'Add New Estimate' }}
+            {{ isEditing ? 'Edit Invoice' : 'Add New Invoice' }}
             <span v-if="!isEditing && customerData?.name" class="text-base font-normal text-gray-500 dark:text-gray-400"> for {{ customerData.name }}</span>
           </h3>
-          <form @submit.prevent="submitEstimate" class="space-y-4">
+          <form @submit.prevent="submitInvoice" class="space-y-4">
             <div class="max-h-[60vh] overflow-y-auto pr-2">
-              <!-- Estimate Details Section -->
+              <!-- Invoice Details Section -->
               <div class="mb-6">
-                <h4 class="text-md font-semibold mb-3 text-gray-800 dark:text-gray-200">Estimate Details</h4>
+                <h4 class="text-md font-semibold mb-3 text-gray-800 dark:text-gray-200">Invoice Details</h4>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label for="estimate-name" class="label-modern">Estimate Title</label>
-                    <input type="text" id="estimate-name" v-model="estimateForm.name" required class="input-modern" />
+                    <label for="invoice-name" class="label-modern">Invoice Title</label>
+                    <input type="text" id="invoice-name" v-model="invoiceForm.name" required class="input-modern" />
                   </div>
                   <div>
-                    <label for="estimate-status" class="label-modern">Status</label>
-                    <select id="estimate-status" v-model="estimateForm.status" required class="input-modern input-modern--select">
-                      <option v-for="status in ESTIMATE_STATUSES" :key="status" :value="status">{{ status }}</option>
+                    <label for="invoice-status" class="label-modern">Status</label>
+                    <select id="invoice-status" v-model="invoiceForm.status" required class="input-modern input-modern--select">
+                      <option v-for="status in INVOICE_STATUSES" :key="status" :value="status">{{ status }}</option>
                     </select>
                   </div>
                   <div>
-                    <label for="estimate-number" class="label-modern">Estimate #</label>
-                    <input type="number" id="estimate-number" v-model="estimateForm.estimate_nr" required class="input-modern" />
+                    <label for="invoice-number" class="label-modern">Invoice #</label>
+                    <input type="number" id="invoice-number" v-model="invoiceForm.invoice_nr" required class="input-modern" />
                   </div>
                   <div>
-                    <label for="estimate-date" class="label-modern">Estimate Date</label>
-                    <input type="date" id="estimate-date" v-model="estimateForm.estimate_date" required class="input-modern" />
+                    <label for="invoice-date" class="label-modern">Invoice Date</label>
+                    <input type="date" id="invoice-date" v-model="invoiceForm.invoice_date" required class="input-modern" />
                   </div>
                   <div>
-                    <label for="estimate-due-date" class="label-modern">Due Date</label>
-                    <input type="date" id="estimate-due-date" v-model="estimateForm.estimate_due_date" required class="input-modern" />
+                    <label for="invoice-due-date" class="label-modern">Due Date</label>
+                    <input type="date" id="invoice-due-date" v-model="invoiceForm.invoice_due_date" required class="input-modern" />
                   </div>
                 </div>
               </div>
@@ -380,19 +380,19 @@ onMounted(() => {
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label for="customer-name" class="label-modern">Name</label>
-                    <input type="text" id="customer-name" v-model="estimateForm.customer.name" required class="input-modern" />
+                    <input type="text" id="customer-name" v-model="invoiceForm.customer.name" required class="input-modern" />
                   </div>
                   <div>
                     <label for="customer-phone" class="label-modern">Phone</label>
-                    <input type="tel" id="customer-phone" v-model="estimateForm.customer.phone" required class="input-modern" />
+                    <input type="tel" id="customer-phone" v-model="invoiceForm.customer.phone" required class="input-modern" />
                   </div>
                   <div class="sm:col-span-2">
                     <label for="customer-address" class="label-modern">Address</label>
-                    <textarea id="customer-address" v-model="estimateForm.customer.address" rows="2" class="input-modern"></textarea>
+                    <textarea id="customer-address" v-model="invoiceForm.customer.address" rows="2" class="input-modern"></textarea>
                   </div>
                   <div>
                     <label for="customer-vat" class="label-modern">VAT (Optional)</label>
-                    <input type="text" id="customer-vat" v-model="estimateForm.customer.vat" class="input-modern" />
+                    <input type="text" id="customer-vat" v-model="invoiceForm.customer.vat" class="input-modern" />
                   </div>
                 </div>
               </div>
@@ -414,17 +414,17 @@ onMounted(() => {
                       </tr>
                     </thead>
                     <tbody class="bg-white dark:bg-gray-700 divide-y divide-gray-200 dark:divide-gray-600">
-                      <tr v-if="estimateForm.items.length === 0">
+                      <tr v-if="invoiceForm.items.length === 0">
                         <td colspan="5" class="px-3 py-3 text-sm text-center text-gray-500 dark:text-gray-400">No items added yet</td>
                       </tr>
-                      <tr v-for="(item, index) in estimateForm.items" :key="item.id || index" class="hover:bg-gray-50 dark:hover:bg-gray-600">
+                      <tr v-for="(item, index) in invoiceForm.items" :key="item.id || index" class="hover:bg-gray-50 dark:hover:bg-gray-600">
                         <td class="px-3 py-2 text-sm">
                           <div class="font-medium text-gray-900 dark:text-white">{{ item.item || item.name }}</div>
                           <div class="text-xs text-gray-500 dark:text-gray-400">{{ item.description }}</div>
                         </td>
                         <td class="px-3 py-2 text-sm text-gray-900 dark:text-white">{{ item.quantity }}</td>
-                        <td class="px-3 py-2 text-sm text-gray-900 dark:text-white">{{ estimateForm.company.currency_symbol || 'R' }}{{ item.amount }}</td>
-                        <td class="px-3 py-2 text-sm text-gray-900 dark:text-white">{{ estimateForm.company.currency_symbol || 'R' }}{{ (item.quantity * item.amount).toFixed(2) }}</td>
+                        <td class="px-3 py-2 text-sm text-gray-900 dark:text-white">{{ invoiceForm.company.currency_symbol || 'R' }}{{ item.amount }}</td>
+                        <td class="px-3 py-2 text-sm text-gray-900 dark:text-white">{{ invoiceForm.company.currency_symbol || 'R' }}{{ (item.quantity * item.amount).toFixed(2) }}</td>
                         <td class="px-3 py-2 text-sm">
                           <div class="flex space-x-2">
                             <button type="button" @click="editItem(item, index)" class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300">
@@ -492,31 +492,31 @@ onMounted(() => {
               <div class="mb-6">
                 <div class="flex justify-between py-2 border-t border-gray-200 dark:border-gray-700">
                   <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Subtotal</span>
-                  <span class="text-sm text-gray-900 dark:text-white">{{ estimateForm.company.currency_symbol || 'R' }}{{ Number(estimateForm.subtotal).toFixed(2) }}</span>
+                  <span class="text-sm text-gray-900 dark:text-white">{{ invoiceForm.company.currency_symbol || 'R' }}{{ Number(invoiceForm.subtotal).toFixed(2) }}</span>
                 </div>
                 <div class="flex justify-between items-center py-2 border-t border-gray-200 dark:border-gray-700">
-                  <label for="estimate-paid" class="text-sm font-medium text-gray-700 dark:text-gray-300">Paid to Date</label>
+                  <label for="invoice-paid" class="text-sm font-medium text-gray-700 dark:text-gray-300">Paid to Date</label>
                   <div class="relative">
-                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500 dark:text-gray-400 text-sm">{{ estimateForm.company.currency_symbol || 'R' }}</span>
-                    <input type="number" id="estimate-paid" v-model="estimateForm.paid" min="0" step="0.01" class="input-modern w-32 pl-7 pr-2 py-1 text-right" />
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500 dark:text-gray-400 text-sm">{{ invoiceForm.company.currency_symbol || 'R' }}</span>
+                    <input type="number" id="invoice-paid" v-model="invoiceForm.paid" min="0" step="0.01" class="input-modern w-32 pl-7 pr-2 py-1 text-right" />
                   </div>
                 </div>
                 <div class="flex justify-between py-2 border-t border-b border-gray-200 dark:border-gray-700">
                   <span class="text-sm font-bold text-gray-700 dark:text-gray-300">Balance Due</span>
-                  <span class="text-sm font-bold text-gray-900 dark:text-white">{{ estimateForm.company.currency_symbol || 'R' }}{{ Math.max(0, Number(estimateForm.subtotal) - Number(estimateForm.paid)).toFixed(2) }}</span>
+                  <span class="text-sm font-bold text-gray-900 dark:text-white">{{ invoiceForm.company.currency_symbol || 'R' }}{{ Math.max(0, Number(invoiceForm.subtotal) - Number(invoiceForm.paid)).toFixed(2) }}</span>
                 </div>
               </div>
 
               <!-- Notes Section -->
               <div>
-                <label for="estimate-notes" class="label-modern">Notes (Optional)</label>
-                <textarea id="estimate-notes" v-model="estimateForm.notes" rows="3" class="input-modern" placeholder="Add any additional notes here"></textarea>
+                <label for="invoice-notes" class="label-modern">Notes (Optional)</label>
+                <textarea id="invoice-notes" v-model="invoiceForm.notes" rows="3" class="input-modern" placeholder="Add any additional notes here"></textarea>
               </div>
             </div>
 
             <div class="pt-5 sm:pt-6 flex flex-col sm:flex-row-reverse gap-3 border-t border-gray-200 dark:border-gray-700/50">
               <button type="submit" class="btn-primary-modern w-full sm:w-auto" :disabled="loading">
-                {{ loading ? 'Saving...' : (isEditing ? 'Update Estimate' : 'Add Estimate') }}
+                {{ loading ? 'Saving...' : (isEditing ? 'Update Invoice' : 'Add Invoice') }}
               </button>
               <button @click="closeModal" type="button" class="btn-secondary-modern w-full sm:w-auto">
                 Cancel

@@ -9,13 +9,13 @@ import { tooltips, noteModal, whatsappModal } from '../../helpers';
 import JobVue from '@/components/jobs/Job.vue' // Keep for related items
 import TipTapEditor from '@/components/editor/TipTapEditor.vue';
 import ItemVue from '@/components/line-items/item.vue' // Keep for related items
-import EstimateVue from '@/components/estimates/Estimate.vue' // Keep for related items
-import InsuranceVue from '@/components/insurance/Insurance.vue' // Keep for related items
-import InvoiceVue from '@/components/invoices/Invoice.vue' // Keep for related items
-import PaymentVue from '@/components/payments/Payment.vue' // Keep for related items
-import ExpenseVue from '@/components/expenses/Expense.vue' // Keep for related items
+import EstimateCustomVue from '@/components/estimates/EstimateCustom.vue' // Custom component for modal-based interaction
+import InsuranceCustomVue from '@/components/insurance/InsuranceCustom.vue' // Custom component for modal-based interaction
+import InvoiceCustomVue from '@/components/invoices/InvoiceCustom.vue' // Custom component for modal-based interaction
+import PaymentCustomVue from '@/components/payments/PaymentCustom.vue' // Custom component for modal-based interaction
+import ExpenseCustomVue from '@/components/expenses/ExpenseCustom.vue' // Custom component for modal-based interaction
 // Accordions might be used for related items in the new design
-import accordionPayment from '@/components/payments/PaymentAccordion.vue'
+// import accordionPayment from '@/components/payments/PaymentAccordion.vue' // No longer needed directly here
 import accordionJob from '@/components/jobs/accordion.vue'
 import accordionCustomer from '@/components/customers/accordion.vue'
 import accordionView from '@/components/analytics/accordionView.vue'
@@ -39,6 +39,10 @@ import {
 import { faWhatsapp } from '@fortawesome/free-brands-svg-icons' // Added WhatsApp brand icon
 import JobFormModal from '@/components/jobs/JobFormModal.vue'; // Import job modal
 import EstimateFormModal from '@/components/estimates/EstimateFormModal.vue'; // Import estimate modal
+import InvoiceFormModal from '@/components/invoices/InvoiceFormModal.vue'; // Import invoice modal
+import PaymentFormModal from '@/components/payments/PaymentFormModal.vue'; // Import payment modal
+import ExpenseFormModal from '@/components/expenses/ExpenseFormModal.vue'; // Import expense modal
+import InsuranceFormModal from '@/components/insurance/InsuranceFormModal.vue'; // Import insurance modal
 
 library.add(
   faArrowLeft, faEdit, faStickyNote, faPaperPlane, faPlus, faChevronDown, faChevronUp, faExternalLinkAlt, faPhone, faEnvelope, faMapMarkerAlt, faUser, faBuilding, faLink, faInfoCircle, faBriefcase, faFileInvoiceDollar, faReceipt, faMoneyBillWave, faShieldAlt, faListOl, faWhatsapp, faSync
@@ -52,7 +56,15 @@ const isBookingJob = ref(false); // Keep AI booking state if needed
 const isEditingInfo = ref(false); // State to toggle edit mode for customer info
 const showAddJobModal = ref(false); // State for the job modal visibility
 const showAddEstimateModal = ref(false); // State for the estimate modal visibility
+const showAddInvoiceModal = ref(false); // State for the invoice modal visibility
+const showAddPaymentModal = ref(false); // State for the payment modal visibility
 const selectedEstimate = ref(null); // State for the selected estimate when editing
+const selectedInvoice = ref(null); // State for the selected invoice when editing
+const selectedPayment = ref(null); // State for the selected payment when editing
+const selectedExpense = ref(null); // State for the selected expense when editing
+const selectedInsurance = ref(null); // State for the selected insurance report when editing
+const showAddExpenseModal = ref(false); // State for the expense modal visibility
+const showAddInsuranceModal = ref(false); // State for the insurance modal visibility
 const technicians = ref([]); // State for technicians list
 
 const lineItems = ref([])
@@ -87,11 +99,11 @@ const relatedItems = computed(() => {
 
   return [
     { name: 'Jobs', icon: faBriefcase, data: jobs, component: JobVue, addRoute: 'add-job', queryKey: 'contact_id', itemKey: 'job' },
-    { name: 'Estimates', icon: faFileInvoiceDollar, data: estimates, component: EstimateVue, addRoute: 'add-estimate', queryKey: 'contact_id', itemKey: 'estimate' },
-    { name: 'Invoices', icon: faReceipt, data: invoices, component: InvoiceVue, addRoute: 'add-invoice', queryKey: 'contact_id', itemKey: 'invoice' },
-    { name: 'Payments', icon: faMoneyBillWave, data: payments, component: PaymentVue, addRoute: 'add-payment', queryKey: 'customer_id', itemKey: 'payment' },
-    { name: 'Expenses', icon: faMoneyBillWave, data: expenses, component: ExpenseVue, addRoute: 'add-expense', queryKey: 'customer_id', itemKey: 'expense' },
-    { name: 'Insurance', icon: faShieldAlt, data: insurance, component: InsuranceVue, addRoute: 'add-insurance-report', queryKey: 'contact_id', itemKey: 'insurance' },
+    { name: 'Estimates', icon: faFileInvoiceDollar, data: estimates, component: EstimateCustomVue, addRoute: 'add-estimate', queryKey: 'contact_id', itemKey: 'estimate' },
+    { name: 'Invoices', icon: faReceipt, data: invoices, component: InvoiceCustomVue, addRoute: 'add-invoice', queryKey: 'contact_id', itemKey: 'invoice' },
+    { name: 'Payments', icon: faMoneyBillWave, data: payments, component: PaymentCustomVue, addRoute: 'add-payment', queryKey: 'customer_id', itemKey: 'payment' },
+    { name: 'Expenses', icon: faMoneyBillWave, data: expenses, component: ExpenseCustomVue, addRoute: 'add-expense', queryKey: 'customer_id', itemKey: 'expense' },
+    { name: 'Insurance', icon: faShieldAlt, data: insurance, component: InsuranceCustomVue, addRoute: 'add-insurance-report', queryKey: 'contact_id', itemKey: 'insurance' },
     { name: 'Line Items', icon: faListOl, data: currentLineItems, component: ItemVue, addRoute: null, itemKey: 'item' }
   ];
 });
@@ -268,11 +280,72 @@ function handleEstimateSaved() {
 }
 
 function handleViewEstimate(estimate) {
-  // Navigate to the view-estimate route
-  router.push({
-    name: 'view-estimate',
-    query: { estimate_id: estimate.id }
-  });
+  // Open the estimate modal with the selected estimate for viewing/editing
+  openAddEstimateModal(estimate);
+}
+
+// --- Invoice Modal Handlers ---
+function openAddInvoiceModal(invoice = null) {
+  selectedInvoice.value = invoice;
+  showAddInvoiceModal.value = true;
+}
+
+function handleInvoiceSaved() {
+  // No need to explicitly close modal, v-model handles it
+  reloadTimeline(); // Refresh customer data (including invoices list)
+}
+
+function handleViewInvoice(invoice) {
+  // Open the invoice modal with the selected invoice for viewing/editing
+  openAddInvoiceModal(invoice);
+}
+
+// --- Payment Modal Handlers ---
+function openAddPaymentModal(payment = null) {
+  selectedPayment.value = payment;
+  showAddPaymentModal.value = true;
+}
+
+function handlePaymentSaved() {
+  // No need to explicitly close modal, v-model handles it
+  reloadTimeline(); // Refresh customer data (including payments list)
+}
+
+function handleViewPayment(payment) {
+  // Open the payment modal with the selected payment for viewing/editing
+  openAddPaymentModal(payment);
+}
+
+// --- Expense Modal Handlers ---
+function openAddExpenseModal(expense = null) {
+  selectedExpense.value = expense;
+  showAddExpenseModal.value = true;
+}
+
+function handleExpenseSaved() {
+  // No need to explicitly close modal, v-model handles it
+  reloadTimeline(); // Refresh customer data (including expenses list)
+}
+
+function handleViewExpense(expense) {
+  // Open the expense modal with the selected expense for viewing/editing
+  openAddExpenseModal(expense);
+}
+
+// --- Insurance Modal Handlers ---
+function openAddInsuranceModal(insurance = null) {
+  selectedInsurance.value = insurance;
+  showAddInsuranceModal.value = true;
+}
+
+function handleInsuranceSaved() {
+  // No need to explicitly close modal, v-model handles it
+  reloadTimeline(); // Refresh customer data (including insurance list)
+}
+
+function handleViewInsurance(insurance) {
+  // Open the insurance modal with the selected report for viewing/editing
+  openAddInsuranceModal(insurance);
 }
 
 // --- Data Fetching ---
@@ -300,12 +373,32 @@ function handleAddRelatedItem(routeName, queryKey) {
       openAddEstimateModal();
       return; // Stop further execution
     }
+    
+    // If adding an invoice, open the invoice modal instead of navigating
+    if (routeName === 'add-invoice') {
+      openAddInvoiceModal();
+      return; // Stop further execution
+    }
+    
+    // If adding a payment, open the payment modal instead of navigating
+    if (routeName === 'add-payment') {
+      openAddPaymentModal();
+      return; // Stop further execution
+    }
+
+    // If adding an expense, open the expense modal instead of navigating
+    if (routeName === 'add-expense') {
+      openAddExpenseModal();
+      return; // Stop further execution
+    }
+    
+    // If adding an insurance report, open the insurance modal instead of navigating
+    if (routeName === 'add-insurance-report') {
+      openAddInsuranceModal();
+      return; // Stop further execution
+    }
 
     const query = {};
-    // Special handling for invoice to potentially link to the latest job
-    if (routeName === 'add-invoice' && customer.value?.jobs?.length) {
-        query['job_id'] = customer.value.jobs[customer.value.jobs.length - 1]?.id;
-    }
     // Always add contact/customer id
     query[queryKey] = customer.value?.id;
 
@@ -361,10 +454,10 @@ watchEffect(() => {
            <button @click="reloadTimeline" class="btn-icon-modern" title="Refresh Data">
              <font-awesome-icon icon="sync" :class="{ 'fa-spin': isFetchingCustomer }" />
            </button>
-          <button @click="handleOpenNoteModal" type="button" class="btn-secondary-modern" title="Add Note">
+          <button @click="handleOpenNoteModal" data-modal-toggle="noteModal" type="button" class="btn-secondary-modern" title="Add Note"> <!-- Added data-modal-toggle -->
             <font-awesome-icon icon="sticky-note" class="mr-1.5 h-4 w-4" /> Note
           </button>
-          <button @click="handleOpenWhatsappModal" type="button" class="btn-secondary-modern" title="Send WhatsApp">
+          <button @click="handleOpenWhatsappModal" data-modal-toggle="whatsappModal" type="button" class="btn-secondary-modern" title="Send WhatsApp"> <!-- Added data-modal-toggle -->
             <font-awesome-icon :icon="['fab', 'whatsapp']" class="mr-1.5 h-4 w-4" /> WhatsApp
           </button>
           <!-- Add Job Button (Example using primary style) -->
@@ -501,6 +594,14 @@ watchEffect(() => {
                          @reload-timeline="reloadTimeline"
                          @edit-estimate="openAddEstimateModal"
                          @view-estimate="handleViewEstimate"
+                         @edit-invoice="openAddInvoiceModal"
+                         @view-invoice="handleViewInvoice"
+                         @edit-payment="openAddPaymentModal"
+                         @view-payment="handleViewPayment"
+                         @edit-expense="openAddExpenseModal"
+                         @view-expense="handleViewExpense"
+                         @edit-insurance="openAddInsuranceModal"
+                         @view-insurance="handleViewInsurance"
                          class="border-b border-gray-100 dark:border-gray-700/50 last:border-b-0 bg-[#ffffff]"
                        />
                      </div>
@@ -689,6 +790,37 @@ watchEffect(() => {
   @estimate-saved="handleEstimateSaved"
 />
 
+<!-- Add/Edit Invoice Modal -->
+<InvoiceFormModal
+  v-model="showAddInvoiceModal"
+  :customer-data="customer"
+  :invoice-data="selectedInvoice"
+  @invoice-saved="handleInvoiceSaved"
+/>
+
+<!-- Add/Edit Payment Modal -->
+<PaymentFormModal
+  v-model="showAddPaymentModal"
+  :customer-data="customer"
+  :payment-data="selectedPayment"
+  @payment-saved="handlePaymentSaved"
+/>
+
+<!-- Add/Edit Expense Modal -->
+<ExpenseFormModal
+  v-model="showAddExpenseModal"
+  :customer-data="customer"
+  :expense-data="selectedExpense"
+  @expense-saved="handleExpenseSaved"
+/>
+
+<!-- Add/Edit Insurance Report Modal -->
+<InsuranceFormModal
+  v-model="showAddInsuranceModal"
+  :customer-data="customer"
+  :insurance-data="selectedInsurance"
+  @insurance-saved="handleInsuranceSaved"
+/>
      
 
      <!-- Loading Overlay -->
