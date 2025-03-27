@@ -13,7 +13,7 @@
         </h1>
         <div class="flex items-center space-x-2 sm:space-x-3">
           <!-- Website Selector (Minimalist Style) -->
-          <Listbox v-model="selectedWebsite" as="div" class="relative">
+          <Listbox v-model="selectedWebsite" as="div" class="relative w-72"> <!-- Added w-72 -->
             <ListboxButton class="input-modern input-modern--select pr-8 text-sm">
               <span class="block truncate">
                 {{ opt.find(a => a.value === selectedWebsite)?.label || 'Select Website' }}
@@ -25,7 +25,7 @@
             <transition leave-active-class="transition duration-100 ease-in" leave-from-class="opacity-100" leave-to-class="opacity-0">
               <ListboxOptions class="absolute z-20 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white dark:bg-gray-800 py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
                 <ListboxOption v-for="website in opt" :key="website.value" :value="website.value" v-slot="{ active, selected }">
-                  <li :class="[ active ? 'bg-indigo-100 dark:bg-indigo-700 text-indigo-900 dark:text-white' : 'text-gray-900 dark:text-gray-300', 'relative cursor-default select-none py-2 pl-10 pr-4']">
+                  <li :class="[ active ? 'bg-indigo-100 dark:bg-indigo-700 text-indigo-900 dark:text-white' : 'text-gray-900 dark:text-gray-100', 'relative cursor-default select-none py-2 pl-10 pr-4']"> <!-- Adjusted dark text color -->
                     <span :class="[selected ? 'font-semibold' : 'font-normal', 'block truncate']">{{ website.label }}</span>
                     <span v-if="selected" class="absolute inset-y-0 left-0 flex items-center pl-3 text-indigo-600 dark:text-indigo-400">
                       <font-awesome-icon icon="check" class="h-5 w-5" aria-hidden="true" />
@@ -771,6 +771,16 @@ const createCharts = () => {
           tension: 0.4,
           pointBackgroundColor: 'rgb(79, 70, 229)',
         },
+        { // Added Last Year comparison
+          label: 'Last Year Bookings',
+          data: lastYearData.data,
+          borderColor: 'rgb(156, 163, 175)', // Gray
+          backgroundColor: 'rgba(156, 163, 175, 0.1)',
+          fill: true,
+          tension: 0.4,
+          pointStyle: 'dash', // Differentiate points
+          pointBackgroundColor: 'rgb(156, 163, 175)',
+        },
         // { // Optional: Moving Average
         //   label: '30-Day Moving Average',
         //   data: movingAverageData,
@@ -938,7 +948,7 @@ watchEffect(() => {
 
 /* Minimalist Input Styles */
 .input-modern {
-  @apply block w-full px-3 py-2 text-sm bg-white dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600/50 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500;
+  @apply block w-full px-3 py-2 text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600/50 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500; /* Added dark:text-white */
   @apply focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:focus:ring-indigo-400 dark:focus:border-indigo-400;
   @apply transition duration-150 ease-in-out;
 }

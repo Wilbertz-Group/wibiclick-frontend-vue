@@ -9,7 +9,7 @@ import router from './router'
 import './assets/main.css'
 import VueApexCharts from "vue3-apexcharts";
 import 'vue3-loading-overlay/dist/vue3-loading-overlay.css';
-import 'boxicons'
+/* import 'boxicons' // Removed - Causing CORS/fetch errors for bxs-store, FontAwesome is used instead */
 import ToastPlugin from 'vue-toast-notification';
 import 'vue-toast-notification/dist/theme-sugar.css';
 import VueHighlightJS from 'vue-highlightjs'
