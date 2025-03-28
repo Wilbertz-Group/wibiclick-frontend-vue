@@ -575,7 +575,7 @@ const editJob = (job) => {
     address: job.address || '',
     phone: job.phone || '',
     // Convert UTC from server to local time string for the input
-    slotStart: job.slotStart ? moment.utc(job.slotStart).format('YYYY-MM-DDTHH:mm') : '',
+    slotStart: job.slotStart ? moment.utc(job.slotStart).local().format('YYYY-MM-DDTHH:mm') : '',
     slotTime: job.slotTime || '1hr',
     employeeId: job.employee?.id || '',
     to_do: job.to_do || '',
@@ -702,22 +702,24 @@ const notifyTechnician = async (job) => {
 const formatDate = (date) => {
   if (!date) return 'N/A';
   // Reverted: Keep original UTC parsing for table display
-  const jobDate = moment.utc(date);
-  // Reverted: Compare with UTC 'now'
-  const now = moment.utc();
+  // Parse the incoming date (assumed UTC) and convert to local time
+  const localJobDate = moment.utc(date).local();
+  // Get local 'now' for comparison
+  const now = moment(); // moment() without args gives local time
 
-  if (jobDate.isSame(now, 'day')) {
-    return jobDate.format('h:mm A');
-  } else if (jobDate.isSame(now.clone().add(1, 'day'), 'day')) {
-    return `Tomorrow, ${jobDate.format('h:mm A')}`;
-  } else if (jobDate.isSame(now.clone().subtract(1, 'day'), 'day')) {
-    return `Yesterday, ${jobDate.format('h:mm A')}`;
+  // Compare localJobDate with local 'now'
+  if (localJobDate.isSame(now, 'day')) {
+    return localJobDate.format('h:mm A'); // Format local time
+  } else if (localJobDate.isSame(now.clone().add(1, 'day'), 'day')) {
+    return `Tomorrow, ${localJobDate.format('h:mm A')}`; // Format local time
+  } else if (localJobDate.isSame(now.clone().subtract(1, 'day'), 'day')) {
+    return `Yesterday, ${localJobDate.format('h:mm A')}`; // Format local time
   } else {
-    // Check if it's current year
-    if (jobDate.isSame(now, 'year')) {
-      return jobDate.format('MMM DD, h:mm A');
+    // Check if it's current year (using local time)
+    if (localJobDate.isSame(now, 'year')) {
+      return localJobDate.format('MMM DD, h:mm A'); // Format local time
     } else {
-      return jobDate.format('MMM DD YYYY, h:mm A');
+      return localJobDate.format('MMM DD YYYY, h:mm A'); // Format local time
     }
   }
 };
