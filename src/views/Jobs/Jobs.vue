@@ -54,7 +54,8 @@
             <!-- Search Input -->
             <div class="relative sm:col-span-2 lg:col-span-1">
                <font-awesome-icon icon="search" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-               <input v-model="filters.search" placeholder="Search customer or issue..." class="input-modern pl-9" />
+               <!-- Added input-icon-left class for text-indent -->
+               <input v-model="filters.search" placeholder="Search customer or issue..." class="input-modern pl-3 pr-3 input-icon-left" />
             </div>
             <!-- Status Select -->
             <select v-model="filters.status" class="input-modern input-modern--select">
@@ -72,12 +73,15 @@
                <!-- Location Input -->
                <div class="relative">
                   <font-awesome-icon icon="map-marker-alt" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-                  <input v-model="filters.location" placeholder="Location" class="input-modern pl-9" />
+                  <!-- Added input-icon-left class for text-indent -->
+                  <input v-model="filters.location" placeholder="Location" class="input-modern pl-3 pr-3 input-icon-left" />
                </div>
                <!-- Date Input -->
-               <input :value="formatDateForInput(filters.date)" @input="updateDateFilter" type="date" placeholder="Date" class="input-modern" />
+               <!-- Applied specific padding pl-3 pr-10 -->
+               <input :value="formatDateForInput(filters.date)" @input="updateDateFilter" type="date" placeholder="Date" class="input-modern pl-3 pr-10" />
                <!-- Slot Start Input -->
-               <input :value="formatDateTimeForInput(filters.slotStart)" @input="updateSlotStartFilter" type="datetime-local" placeholder="Slot Start" class="input-modern" />
+               <!-- Applied specific padding pl-3 pr-10 -->
+               <input :value="formatDateTimeForInput(filters.slotStart)" @input="updateSlotStartFilter" type="datetime-local" placeholder="Slot Start" class="input-modern pl-3 pr-10" />
             </template>
 
             <!-- Filter Actions -->
@@ -200,7 +204,8 @@
                          </p>
                       </td>
                       <td class="td-modern">
-                         <span :class="getModernStatusClass(job.jobStatus)" class="status-badge-modern">
+                         <!-- Added w-28 and justify-center for consistent width -->
+                         <span :class="getModernStatusClass(job.jobStatus)" class="status-badge-modern w-28 justify-center">
                             {{ job.jobStatus }}
                          </span>
                       </td>
@@ -687,47 +692,53 @@ const updateSlotStartFilter = (event) => {
 }
 
 // *** NEW Status Class Function ***
-const getModernStatusClass = (status) => {
-  const base = 'status-badge-modern '; // Base class defined in styles
-  switch (status?.toLowerCase()) {
-    // Positive/Complete
-    case 'paid':
-    case 'done':
-    case 'completed':
-    case 'parts installed':
-    case 'parts paid':
-      return base + 'status-badge--positive';
-    // In Progress/Scheduled
-    case 'scheduled':
-    case 'accepted':
-    case 'in progress': // Assuming 'in progress' might exist
-    case 'parts arrived':
-      return base + 'status-badge--active';
-    // Attention/Waiting
-    case 'quoting':
-    case 'quoted':
-    case 'pending':
-    case 'follow-up':
-    case 'no parts':
-    case 'to order parts':
-    case 'parts ordered':
-    case 'waiting for price':
-    case 'waiting for parts':
-    case 'waiting for customer':
-    case 'waiting for payment':
-      return base + 'status-badge--attention';
-    // Negative/Cancelled
-    case 'cancelled':
-    case 'parts not paid':
-    case 'parts not installed':
-    case 'parts not ordered':
-    case 'parts not available':
-    case 'parts not needed':
-    case 'parts not found':
-      return base + 'status-badge--negative';
+const getModernStatusClass = (status) => { // Renamed from getStatusClass to match usage
+  const baseClasses = 'px-2 inline-flex text-xs leading-5 font-semibold rounded-full '
+  switch (status?.toLowerCase()) { // Added optional chaining and toLowerCase for safety
+    // Initial stages
+    case 'pending': return baseClasses + 'bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
+    case 'quoting': return baseClasses + 'bg-blue-200 text-blue-800 dark:bg-blue-700 dark:text-blue-200'
+    case 'quoted': return baseClasses + 'bg-blue-800 text-white dark:bg-blue-800 dark:text-blue-100'
+    case 'accepted': return baseClasses + 'bg-indigo-300 text-indigo-800 dark:bg-indigo-600 dark:text-indigo-100'
+
+    // Scheduling and progress
+    case 'scheduled': return baseClasses + 'bg-emerald-200 text-emerald-800 dark:bg-emerald-700 dark:text-emerald-200'
+    case 'in progress': return baseClasses + 'bg-yellow-300 text-yellow-800 dark:bg-yellow-600 dark:text-yellow-100'
+    case 'follow-up': return baseClasses + 'bg-orange-300 text-orange-800 dark:bg-orange-600 dark:text-orange-100'
+
+    // Completion stages
+    case 'completed': return baseClasses + 'bg-green-300 text-green-800 dark:bg-green-600 dark:text-green-100'
+    case 'done': return baseClasses + 'bg-green-400 text-green-800 dark:bg-green-500 dark:text-green-100'
+    case 'invoiced': return baseClasses + 'bg-green-900 text-white dark:bg-green-900 dark:text-green-100'
+    case 'paid': return baseClasses + 'bg-green-500 text-white dark:bg-green-700 dark:text-green-100'
+
+    // Parts-related statuses
+    case 'no parts': return baseClasses + 'bg-yellow-200 text-yellow-800 dark:bg-yellow-700 dark:text-yellow-200'
+    case 'to order parts': return baseClasses + 'bg-yellow-300 text-yellow-800 dark:bg-yellow-600 dark:text-yellow-100'
+    case 'parts ordered': return baseClasses + 'bg-yellow-400 text-yellow-800 dark:bg-yellow-500 dark:text-yellow-100'
+    case 'parts arrived': return baseClasses + 'bg-yellow-600 text-white dark:bg-yellow-800 dark:text-yellow-100'
+    case 'parts installed': return baseClasses + 'bg-green-300 text-green-800 dark:bg-green-600 dark:text-green-100'
+    case 'parts paid': return baseClasses + 'bg-green-400 text-green-800 dark:bg-green-500 dark:text-green-100'
+
+    // Negative parts statuses
+    case 'parts not paid': return baseClasses + 'bg-red-200 text-red-800 dark:bg-red-700 dark:text-red-200'
+    case 'parts not installed': return baseClasses + 'bg-red-300 text-red-800 dark:bg-red-600 dark:text-red-100'
+    case 'parts not ordered': return baseClasses + 'bg-red-400 text-white dark:bg-red-500 dark:text-red-100'
+    case 'parts not available': return baseClasses + 'bg-red-500 text-white dark:bg-red-600 dark:text-red-100'
+    case 'parts not needed': return baseClasses + 'bg-orange-400 text-white dark:bg-orange-500 dark:text-orange-100'
+    case 'parts not found': return baseClasses + 'bg-red-600 text-white dark:bg-red-700 dark:text-red-100'
+
+    // Waiting statuses
+    case 'waiting for price': return baseClasses + 'bg-cyan-300 text-cyan-800 dark:bg-cyan-600 dark:text-cyan-100'
+    case 'waiting for parts': return baseClasses + 'bg-amber-300 text-amber-800 dark:bg-amber-600 dark:text-amber-100'
+    case 'waiting for customer': return baseClasses + 'bg-indigo-300 text-indigo-800 dark:bg-indigo-600 dark:text-indigo-100'
+    case 'waiting for payment': return baseClasses + 'bg-violet-300 text-violet-800 dark:bg-violet-600 dark:text-violet-100'
+
+    // Cancelled
+    case 'cancelled': return baseClasses + 'bg-red-300 text-red-800 dark:bg-red-600 dark:text-red-100'
+
     // Default
-    default:
-      return base + 'status-badge--default';
+    default: return baseClasses + 'bg-gray-300 text-gray-800 dark:bg-gray-600 dark:text-gray-100'
   }
 }
 
@@ -765,19 +776,15 @@ const createCharts = () => {
   const lastYearData = processBookingData(jobs.value, 1); // Maybe remove last year?
   const movingAverageData = calculateMovingAverage(currentYearData.data, 30);
 
-  const startDate = moment('2024-01-01').startOf('month');
+  const startDate = moment().subtract(1, 'year').startOf('year'); // Keep for data processing range if needed, but not for labels
   const endDate = moment().endOf('month');
-  const labels = [];
-  let currentDate = startDate.clone();
-  while (currentDate <= endDate) {
-    labels.push(currentDate.format('YYYY-MM-DD'));
-    currentDate.add(1, 'month');
-  }
+  // Use month names for labels
+  const monthLabels = moment.monthsShort(); // ['Jan', 'Feb', ..., 'Dec']
 
   new Chart(jobBookingTrendChart.value, {
     type: 'line',
     data: {
-      labels: labels,
+      labels: monthLabels, // Use month names for the x-axis labels
       datasets: [
         {
           label: 'Monthly Bookings', // Simplified label
@@ -814,11 +821,10 @@ const createCharts = () => {
       maintainAspectRatio: false, // Allow height constraint to work
       scales: {
         x: {
-          type: 'time',
-          time: { unit: 'month', displayFormats: { month: 'MMM YYYY' } },
-          min: '2024-01-01', max: endDate.format('YYYY-MM-DD'),
+          type: 'category', // Change axis type to category for months
+          // Remove time, min, max settings
           grid: { display: false }, // Cleaner look
-          ticks: { color: isDarkMode.value ? '#9ca3af' : '#6b7280', maxRotation: 0, autoSkip: true, maxTicksLimit: 12 },
+          ticks: { color: isDarkMode.value ? '#9ca3af' : '#6b7280', maxRotation: 0, autoSkip: false }, // autoSkip false to show all months
         },
         y: {
           beginAtZero: true,
@@ -837,7 +843,8 @@ const createCharts = () => {
           borderWidth: 1,
           padding: 10,
           callbacks: {
-            title: (tooltipItems) => moment(tooltipItems[0].parsed.x).format('MMMM YYYY')
+            // Use the label (month name) directly for the title on category axis
+            title: (tooltipItems) => tooltipItems[0].label
           }
         }
       },
@@ -867,31 +874,27 @@ const calculateMovingAverage = (data, windowSize) => {
 };
 
 const processBookingData = (jobs, yearOffset = 0) => {
-  // Keep this function
   const targetYear = moment().subtract(yearOffset, 'years').year();
-  const startDate = moment(`${targetYear}-01-01`).startOf('month');
-  // Ensure end date covers the current month even if yearOffset > 0
-  const endDate = moment().subtract(yearOffset, 'years').endOf('month');
+  const monthlyCounts = Array(12).fill(0); // Initialize array for 12 months with 0 counts
 
-  const groupedJobs = jobs
+  jobs
     .filter(job => moment(job.createdAt).year() === targetYear) // Filter by target year
-    .reduce((acc, job) => {
-      const date = moment(job.createdAt).startOf('month').format('YYYY-MM-DD');
-      acc[date] = (acc[date] || 0) + 1;
-      return acc;
-    }, {});
+    .forEach(job => {
+      const monthIndex = moment(job.createdAt).month(); // Get month index (0-11)
+      if (monthIndex >= 0 && monthIndex < 12) {
+        monthlyCounts[monthIndex]++; // Increment count for that month
+      }
+    });
 
-  const data = [];
-  let currentDate = moment(`${targetYear}-01-01`).startOf('month');
-  const finalDate = moment().year() === targetYear ? moment().endOf('month') : moment(`${targetYear}-12-31`).endOf('month');
-
-
-  while (currentDate <= finalDate) {
-    const dateKey = currentDate.format('YYYY-MM-DD');
-    data.push(groupedJobs[dateKey] || 0);
-    currentDate.add(1, 'month');
+  // For the current year, set future months' data to null to avoid plotting zeros
+  if (yearOffset === 0) {
+      const currentMonthIndex = moment().month();
+      for (let i = currentMonthIndex + 1; i < 12; i++) {
+          monthlyCounts[i] = null;
+      }
   }
-  return { data };
+
+  return { data: monthlyCounts }; // Return the array of 12 monthly counts
 }
 
 
@@ -985,9 +988,14 @@ watchEffect(() => {
 
 /* Minimalist Input Styles */
 .input-modern {
-  @apply block w-full px-3 py-2 text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600/50 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500; /* Added dark:text-white */
+  /* Removed px-3, will apply specific padding per input type */
+  @apply block w-full py-2 text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600/50 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500;
   @apply focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:focus:ring-indigo-400 dark:focus:border-indigo-400;
   @apply transition duration-150 ease-in-out;
+}
+/* Add text-indent for inputs with left icons */
+.input-icon-left {
+  text-indent: 1.75rem; /* Adjust as needed (28px) */
 }
 .input-modern--select {
   @apply pr-8 appearance-none; /* Remove default arrow */
