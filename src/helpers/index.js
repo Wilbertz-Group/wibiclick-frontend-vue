@@ -155,17 +155,39 @@ const noteModal = (modelValue, wid, id, reloadTimeline) => {
 	const $buttonElement = document.querySelector('#tooltip-note-button');
 	const $modalElement = document.querySelector('#noteModal');
 	const $closeButton = document.querySelector('#noteModalClose');
+	const $closesButton = document.querySelector('#noteModalCloses');
 	const $saveNoteButton = document.querySelector('#noteModalSave');
 
 	const modalOptions = {
 		placement: 'bottom-right',
 		backdropClasses: 'bg-gray-900 bg-opacity-50 dark:bg-opacity-80 fixed inset-0 z-40',
+		onShow: () => {
+			// Remove inert attribute when showing the modal
+			$modalElement.removeAttribute('inert');
+		},
+		onHide: () => {
+			// Add inert attribute when hiding the modal
+			$modalElement.setAttribute('inert', '');
+			// Move focus to a safe element outside the modal
+			document.body.focus();
+		}
 	};
 
 	const modal = new Modal($modalElement, modalOptions);
 
 	// $buttonElement.addEventListener('click', () => modal.toggle()); // Removed: Handled by Vue @click
-	$closeButton.addEventListener('click', () => modal.hide());
+	$closeButton.addEventListener('click', () => {
+		// Ensure focus is moved before hiding the modal
+		document.body.focus();
+		toast.info(`closing modal`)
+		modal.hide();
+	});
+	$closesButton.addEventListener('click', () => {
+		// Ensure focus is moved before hiding the modal
+		document.body.focus();
+		toast.info(`closing modal`)
+		modal.hide();
+	});
 	$saveNoteButton.addEventListener('click', async() => {
 		//Save Note logic
 		let notes = modelValue.value
@@ -173,7 +195,7 @@ const noteModal = (modelValue, wid, id, reloadTimeline) => {
 		await axios.post(`add-notes?id=${wid}`, { id, notes });
 		reloadTimeline()
 		toast.success(`Notes have been successfully saved`)
-		modal.hide()
+		modal.hide();		
 	});
 	
 	// Return the modal instance so we can call show() from the Vue component
@@ -184,17 +206,39 @@ const whatsappModal = (modelValue, id, phone) => {
 	const $buttonElement = document.querySelector('#tooltip-whatsapp-button');
 	const $modalElement = document.querySelector('#whatsappModal');
 	const $closeButton = document.querySelector('#whatsappModalClose');
+	const $closesButton = document.querySelector('#whatsappModalCloses');
 	const $saveWhatsappButton = document.querySelector('#whatsappModalSave');
 
 	const modalOptions = {
 		placement: 'bottom-right',
 		backdropClasses: 'bg-gray-900 bg-opacity-50 dark:bg-opacity-80 fixed inset-0 z-40',
+		onShow: () => {
+			// Remove inert attribute when showing the modal
+			$modalElement.removeAttribute('inert');
+		},
+		onHide: () => {
+			// Add inert attribute when hiding the modal
+			$modalElement.setAttribute('inert', '');
+			// Move focus to a safe element outside the modal
+			document.body.focus();
+		}
 	};
 
 	const modal = new Modal($modalElement, modalOptions);
 
 	// $buttonElement.addEventListener('click', async() => modal.toggle()); // Removed: Handled by Vue @click
-	$closeButton.addEventListener('click', () => modal.hide());
+	$closeButton.addEventListener('click', () => {
+		// Ensure focus is moved before hiding the modal
+		document.body.focus();
+		toast.info(`closing modal`)
+		modal.hide();
+	});
+	$closesButton.addEventListener('click', () => {
+		// Ensure focus is moved before hiding the modal
+		document.body.focus();
+		toast.info(`closing modal`)
+		modal.hide();
+	});
 	$saveWhatsappButton.addEventListener('click', async() => {
 		//Save Whatsapp logic
 		//console.log(modelValue.value)
