@@ -202,7 +202,7 @@ const prefillForm = async (customer) => {
       estimate_date: props.estimateData.issuedAt ? moment(props.estimateData.issuedAt).format('YYYY-MM-DD') : moment().format('YYYY-MM-DD'),
       estimate_due_date: props.estimateData.dueAt ? moment(props.estimateData.dueAt).format('YYYY-MM-DD') : moment().add(3, 'days').format('YYYY-MM-DD'),
       subtotal: props.estimateData.subtotal || 0,
-      paid: props.estimateData.paid || 0,
+      paid: props.estimateData.deposit || 0,
       notes: props.estimateData.notes || '',
       items: props.estimateData.lineItem || [],
     });
@@ -278,7 +278,15 @@ const cancelEdit = () => {
   resetLineItemForm();
 };
 
+// Track removed items to properly disconnect them from the estimate
+const removedItems = ref([]);
+
 const removeItem = (index) => {
+  const item = estimateForm.items[index];
+  // Only track removal of items with non-numeric IDs (existing items in the database)
+  if (item.id && isNaN(item.id)) {
+    removedItems.value.push(item);
+  }
   estimateForm.items.splice(index, 1);
   getSum(estimateForm.items);
 };
@@ -311,6 +319,7 @@ const saveEstimateOnly = async (closeAfterSave = true) => { // Added parameter
       notes: estimateForm.notes,
       customerId: estimateForm.customer.id || estimateForm.customerId,
       items: estimateForm.items.map(item => ({
+        id: item.id, // Include the ID for proper update/create handling
         item: item.item || item.name,
         description: item.description,
         quantity: parseFloat(item.quantity),
@@ -323,7 +332,31 @@ const saveEstimateOnly = async (closeAfterSave = true) => { // Added parameter
       payload.id = estimateForm.id;
     }
 
+    // First save the estimate
     const response = await axios.post('add-estimate?id=' + userStore.currentWebsite, payload);
+    
+    // If we're editing and have removed items, disconnect them from the estimate
+    if (isEditing.value && removedItems.value.length > 0) {
+      // Process each removed item
+      for (const item of removedItems.value) {
+        if (item.id && isNaN(item.id)) { // Only process items with non-numeric IDs (existing in DB)
+          try {
+            await axios.post('remove-estimate-item?id=' + userStore.currentWebsite, {
+              id: estimateForm.id,
+              item: { id: item.id },
+              customerId: estimateForm.customerId
+            });
+            console.log(`Removed line item ${item.id} from estimate ${estimateForm.id}`);
+          } catch (error) {
+            console.error(`Failed to remove line item ${item.id}:`, error);
+            // Continue with other items even if one fails
+          }
+        }
+      }
+      // Clear the removed items array
+      removedItems.value = [];
+    }
+    
     toast.success(response.data.message || 'Estimate saved successfully');
     emit('estimate-saved');
     if (closeAfterSave) {

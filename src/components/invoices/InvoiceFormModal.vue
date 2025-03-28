@@ -5,6 +5,9 @@ import moment from 'moment';
 import { useToast } from 'vue-toast-notification';
 import { useUserStore } from '@/stores/UserStore';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import modal from "@/components/misc/modalWAMessage.vue";
+import imageHolder from '@/helpers/logo.js';
+import { getBase64FromUrl, generateTableRow } from '@/helpers/index.js'; // Assuming these exist in helpers
 
 const props = defineProps({
   modelValue: { // Controls modal visibility (v-model)
@@ -28,6 +31,12 @@ const toast = useToast();
 const loading = ref(false);
 const profile = ref(null);
 
+const save_type = ref('save'); // 'save', 'download', 'whatsapp'
+const isOpen = ref(false); // WhatsApp modal state
+const blob = ref(null); // PDF blob for WhatsApp
+const client = ref('');
+const sender = ref('');
+const company = ref('');
 // --- Form State ---
 const invoiceForm = reactive({
   id: '', // Will be empty for new invoices
@@ -73,7 +82,7 @@ const lineItem = reactive({
   name: '',
   description: '',
   amount: 0,
-  quantity: 1,
+  quantity: 0,
   id: null, // For tracking if we're editing an existing item
 });
 
@@ -137,7 +146,7 @@ const resetLineItemForm = () => {
   Object.assign(lineItem, {
     name: '',
     description: '',
-    amount: 1,
+    amount: 0,
     quantity: 1,
     id: null,
   });
@@ -192,7 +201,7 @@ const prefillForm = async (customer) => {
       invoice_date: props.invoiceData.issuedAt ? moment(props.invoiceData.issuedAt).format('YYYY-MM-DD') : moment().format('YYYY-MM-DD'),
       invoice_due_date: props.invoiceData.dueAt ? moment(props.invoiceData.dueAt).format('YYYY-MM-DD') : moment().add(7, 'days').format('YYYY-MM-DD'),
       subtotal: props.invoiceData.subtotal || props.invoiceData.sales || 0,
-      paid: props.invoiceData.paid || 0,
+      paid: props.invoiceData.deposit || 0,
       notes: props.invoiceData.notes || '',
       items: props.invoiceData.lineItem || [],
     });
@@ -257,7 +266,15 @@ const cancelEdit = () => {
   resetLineItemForm();
 };
 
+// Track removed items to properly disconnect them from the invoice
+const removedItems = ref([]);
+
 const removeItem = (index) => {
+  const item = invoiceForm.items[index];
+  // Only track removal of items with non-numeric IDs (existing items in the database)
+  if (item.id && isNaN(item.id)) {
+    removedItems.value.push(item);
+  }
   invoiceForm.items.splice(index, 1);
   getSum(invoiceForm.items);
 };
@@ -274,7 +291,7 @@ const getSum = (array) => {
   }
 };
 
-const submitInvoice = async () => {
+const saveInvoiceOnly = async (closeAfterSave = true) => { // Added parameter
   loading.value = true;
   try {
     const payload = {
@@ -289,27 +306,368 @@ const submitInvoice = async () => {
       notes: invoiceForm.notes,
       customerId: invoiceForm.customer.id || invoiceForm.customerId,
       items: invoiceForm.items.map(item => ({
+        id: item.id, // Include the ID for proper update/create handling
         item: item.item || item.name,
         description: item.description,
         quantity: parseFloat(item.quantity),
         amount: parseFloat(item.amount)
       }))
     };
-
+    
     // If editing, include the ID
     if (isEditing.value) {
       payload.id = invoiceForm.id;
     }
 
+    // First save the invoice
     const response = await axios.post('add-invoice?id=' + userStore.currentWebsite, payload);
+    
+    // If we're editing and have removed items, disconnect them from the invoice
+    if (isEditing.value && removedItems.value.length > 0) {
+      // Process each removed item
+      for (const item of removedItems.value) {
+        if (item.id && isNaN(item.id)) { // Only process items with non-numeric IDs (existing in DB)
+          try {
+            await axios.post('remove-invoice-item?id=' + userStore.currentWebsite, {
+              id: invoiceForm.id,
+              item: { id: item.id },
+              customerId: invoiceForm.customerId
+            });
+            console.log(`Removed line item ${item.id} from invoice ${invoiceForm.id}`);
+          } catch (error) {
+            console.error(`Failed to remove line item ${item.id}:`, error);
+            // Continue with other items even if one fails
+          }
+        }
+      }
+      // Clear the removed items array
+      removedItems.value = [];
+    }
+    
     toast.success(response.data.message || 'Invoice saved successfully');
     emit('invoice-saved');
-    closeModal();
+    
+    if (closeAfterSave) {
+      closeModal();
+    }
+    return true; // Indicate success
   } catch (error) {
     console.error("Error submitting invoice:", error);
     toast.error(`Error submitting invoice: ${error.response?.data?.message || error.message}`);
+    return false; // Indicate failure
   } finally {
     loading.value = false;
+  }
+};
+
+const saveAndDownloadInvoice = async () => {
+  // First, save the invoice data without closing the modal
+  const savedSuccessfully = await saveInvoiceOnly(false);
+
+  if (savedSuccessfully) {
+    // If save was successful, prepare and download the PDF
+    // Ensure profile is loaded
+    if (!profile.value) {
+      toast.warning("Company profile not loaded yet. Please wait.");
+      await fetchProfile(); // Wait for profile
+    }
+    if (profile.value) {
+       prepareAndGeneratePDF(invoiceForm, `${invoiceForm.customer.name || 'Invoice'}.pdf`, 'download');
+       closeModal(); // Close modal after download starts
+    } else {
+      toast.error("Could not load profile data to generate PDF.");
+    }
+  } else {
+    toast.error("Failed to save invoice, cannot download PDF.");
+  }
+};
+
+const handleSave = () => {
+  if (save_type.value === 'save') {
+    saveInvoiceOnly();
+  } else if (save_type.value === 'download') {
+    saveAndDownloadInvoice();
+  }
+  // WhatsApp is handled by a separate button/function (sendAttachment)
+};
+
+// --- PDF Generation & WhatsApp ---
+
+const closeModalWA = () => {
+  isOpen.value = false;
+};
+
+// Adapted PDF generation functions for Invoices
+const createInvoicePDF = (invoice, path, action = 'download') => {
+  let doc;
+  // Check if PDFDocument is available on window
+  if (!window.PDFDocument || !window.blobStream) {
+      toast.error("PDF generation library not loaded yet. Please wait a moment and try again.");
+      console.error("PDFKit or BlobStream not found on window object.");
+      return;
+  }
+  try {
+    doc = new window.PDFDocument({ size: "A4", margin: 50 });
+  } catch (error) {
+    console.error("PDFKit Error:", error);
+    toast.error("Failed to initialize PDF generation. Reload and try again!");
+    return; // Stop if PDFDocument fails
+  }
+
+  const stream = doc.pipe(window.blobStream());
+
+  // --- PDF Content Generation Functions (Adapted for invoiceForm) ---
+  function generateHeader(doc, invoice) {
+    doc
+      .image(img, 50, 45, { width: 50 })
+      .fillColor("#444444")
+      .fontSize(14)
+      .text(invoice.company.name || '', 110, 57)
+      .fontSize(10)
+      .text(invoice.company.slogan || '', 110, 75)
+      .text(invoice.company.name || '', 200, 50, { align: "right" })
+      .text(invoice.company.address1 || '', 200, 65, { align: "right" })
+      .text(`${invoice.company.address2 || ''} ${invoice.company.city || ''}`, 200, 80, { align: "right" })
+      .text(`${invoice.company.state || ''}, ${invoice.company.country || ''}`, 200, 95, { align: "right" })
+      .text(invoice.company.postal_code || '', 200, 110, { align: "right" })
+      .text(`Email: ${invoice.company.email || ''}`, 200, 130, { align: "right" })
+      .moveDown();
+  }
+
+  function generateCustomerInformation(doc, invoice) {
+    doc.fillColor("#444444").fontSize(20).text("Invoice", 50, 160); // Changed to Invoice
+    generateHr(doc, 185);
+    const customerInformationTop = 200, bankingDetails = 200, invoiceSpace = 130;
+
+    doc
+      //Invoice Data
+      .fontSize(10)
+      .font("Helvetica-Bold")
+      .text("Invoice Details:", 50, bankingDetails)
+      .font("Helvetica")
+      .text("Invoice #:", 50, customerInformationTop + 15)
+      .text(invoice.invoice_nr, invoiceSpace, customerInformationTop + 15)
+      .text("Invoice Date:", 50, customerInformationTop + 30)
+      .text(invoice.invoice_date, invoiceSpace, customerInformationTop + 30)
+      .text("Invoice Due:", 50, customerInformationTop + 45)
+      .text(invoice.invoice_due_date, invoiceSpace, customerInformationTop + 45)
+      .font("Helvetica-Bold")
+      .text("Balance Due:", 50, customerInformationTop + 60)
+      .text(
+        formatCurrency(invoice.subtotal - (invoice.paid || 0), invoice.company.currency_symbol),
+        invoiceSpace,
+        customerInformationTop + 60
+      )
+      //Banking Details
+      .font("Helvetica-Bold")
+      .text("Banking Details:", 300, bankingDetails)
+      .font("Helvetica")
+      .text("Name:", 300, bankingDetails + 15)
+      .text(invoice.banking.account_name || '', 380, bankingDetails + 15)
+      .text("Bank Name:", 300, bankingDetails + 30)
+      .text(invoice.banking.bank || '', 380, bankingDetails + 30)
+      .text("Account #:", 300, bankingDetails + 45)
+      .text(invoice.banking.account_number || '', 380, bankingDetails + 45)
+      .text("Account Type:", 300, bankingDetails + 60)
+      .text(invoice.banking.account_type || '', 380, bankingDetails + 60)
+      .text("Branch Code:", 300, bankingDetails + 75)
+      .text(invoice.banking.branch_code || '', 380, bankingDetails + 75)
+      .moveDown();
+
+    generateHr(doc, 300);
+
+    //Billed To
+    let billed_to = 315
+    doc
+      .fontSize(10)
+      .font("Helvetica-Bold")
+      .text("Billed To:", 50, billed_to)
+      .font("Helvetica")
+      .text("Name:", 50, billed_to + 15)
+      .text(invoice.customer.name || '', 130, billed_to + 15)
+      .text("Address:", 50, billed_to + 30)
+      .text(invoice.customer.address || '', 130, billed_to + 30)
+      .text("Phone:", 50, billed_to + 45)
+      .text(invoice.customer.phone || '', 130, billed_to + 45)
+      .text("VAT:", 50, billed_to + 60)
+      .text(invoice.customer.vat || '', 130, billed_to + 60)
+      .moveDown();
+
+    generateHr(doc, 400);
+  }
+
+  function generateInvoiceTable(doc, invoice) { // Renamed
+    let i;
+    const invoiceTableTop = 425;
+
+    doc.font("Helvetica-Bold");
+    generateTableRow(
+      doc,
+      invoiceTableTop,
+      "Item",
+      "Description",
+      "Unit Cost",
+      "Quantity",
+      "Line Total"
+    );
+    generateHr(doc, invoiceTableTop + 20);
+    doc.font("Helvetica");
+
+    for (i = 0; i < invoice.items.length; i++) {
+      const item = invoice.items[i];
+      const position = invoiceTableTop + (i + 1) * 30;
+      generateTableRow(
+        doc,
+        position,
+        item.item || item.name,
+        item.description || '',
+        formatCurrency(item.amount, invoice.company.currency_symbol),
+        item.quantity,
+        formatCurrency(item.amount * item.quantity, invoice.company.currency_symbol)
+      );
+      generateHr(doc, position + 20);
+    }
+
+    const subtotalPosition = invoiceTableTop + (i + 1) * 30;
+    generateTableRow(
+      doc,
+      subtotalPosition,
+      "",
+      "",
+      "Subtotal",
+      "",
+      formatCurrency(invoice.subtotal, invoice.company.currency_symbol)
+    );
+
+    const paidToDatePosition = subtotalPosition + 20;
+    generateTableRow(
+      doc,
+      paidToDatePosition,
+      "",
+      "",
+      "Paid To Date",
+      "",
+      formatCurrency(invoice.paid || 0, invoice.company.currency_symbol)
+    );
+
+    const duePosition = paidToDatePosition + 25;
+    doc.font("Helvetica-Bold");
+    generateTableRow(
+      doc,
+      duePosition,
+      "",
+      "",
+      "Balance Due",
+      "",
+      formatCurrency(invoice.subtotal - (invoice.paid || 0), invoice.company.currency_symbol)
+    );
+    doc.font("Helvetica");
+  }
+
+  function generateNotes(doc, invoice) {
+    if (invoice.notes) {
+      doc
+        .fontSize(11)
+        .font("Helvetica-Bold")
+        .text("Notes:", 50, 580)
+        .fontSize(10)
+        .font("Helvetica")
+        .text(
+          invoice.notes,
+          50,
+          595,
+          { align: "left", width: 500 }
+        );
+    }
+  }
+
+  function generateFooter(doc) {
+    doc
+      .fontSize(10)
+      .text(
+        "Thank you for your business. Use the Invoice # as your payment reference.", // Changed to Invoice
+        50,
+        780,
+        { align: "center", width: 500 }
+      );
+  }
+
+  function generateHr(doc, y) {
+    doc.strokeColor("#aaaaaa").lineWidth(1).moveTo(50, y).lineTo(550, y).stroke();
+  }
+
+  function formatCurrency(value, symbol = 'R') {
+    return `${symbol}${Number(value).toFixed(2)}`;
+  }
+
+  function formatDate(date) {
+    return date; 
+  }
+  // --- End PDF Content Generation Functions ---
+
+  // Add content to the document
+  generateHeader(doc, invoice);
+  generateCustomerInformation(doc, invoice);
+  generateInvoiceTable(doc, invoice); // Renamed
+  generateNotes(doc, invoice);
+  generateFooter(doc);
+
+  doc.end();
+
+  stream.on("finish", function() {
+    const pdfBlob = stream.toBlob("application/pdf");
+    if (action === 'download') {
+      const a = document.createElement("a");
+      document.body.appendChild(a);
+      a.style = "display: none";
+      const url = window.URL.createObjectURL(pdfBlob);
+      a.href = url;
+      a.download = path;
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast.success("Invoice downloaded successfully");
+    } else if (action === 'whatsapp') {
+      blob.value = pdfBlob; // Set blob for WhatsApp modal
+      isOpen.value = true; // Open WhatsApp modal
+    }
+  });
+};
+
+let img; // Variable to hold the logo image dataURL
+
+const prepareAndGeneratePDF = async (invoice, path, action = 'download') => {
+  loading.value = true;
+  try {
+    const logoUrl = profile.value?.invoice_logo || profile.value?.estimate_logo || ''; // Use invoice logo if available, fallback to estimate logo
+    if (logoUrl) {
+      img = await getBase64FromUrl(logoUrl);
+    } else {
+      img = imageHolder; // Use placeholder if no logo URL
+    }
+    createInvoicePDF(invoice, path, action);
+  } catch (error) {
+    console.error("Error preparing PDF:", error);
+    toast.error("Error preparing PDF for download/sending.");
+    img = imageHolder; // Fallback image
+  } finally {
+    loading.value = false;
+  }
+};
+
+const sendAttachment = () => {
+  client.value = invoiceForm.customer?.name || 'Customer';
+  sender.value = profile.value?.firstName || 'Sender';
+  company.value = profile.value?.company?.company_name || 'Company';
+
+  // Ensure profile is loaded before attempting to generate PDF
+  if (!profile.value) {
+    toast.warning("Company profile not loaded yet. Please wait.");
+    fetchProfile().then(() => {
+      prepareAndGeneratePDF(invoiceForm, `${invoiceForm.customer.name || 'Invoice'}.pdf`, 'whatsapp');
+    });
+  } else {
+    prepareAndGeneratePDF(invoiceForm, `${invoiceForm.customer.name || 'Invoice'}.pdf`, 'whatsapp');
   }
 };
 
@@ -325,6 +683,25 @@ watch(() => props.modelValue, (newValue) => {
 onMounted(() => {
   // Fetch profile data initially
   fetchProfile();
+
+  // Load PDFKit and BlobStream via script tags
+  // Ensure these aren't loaded multiple times if the modal is opened repeatedly without page refresh
+  if (!document.querySelector('script[src*="pdfkit.standalone.js"]')) {
+    let pdfKitTag = document.createElement("script");
+    pdfKitTag.setAttribute("src", "https://github.com/foliojs/pdfkit/releases/download/v0.13.0/pdfkit.standalone.js");
+    pdfKitTag.setAttribute("type", "text/javascript");
+    document.head.append(pdfKitTag);
+  }
+
+  if (!document.querySelector('script[src*="blob-stream.js"]')) {
+    let blobStreamTag = document.createElement("script");
+    blobStreamTag.setAttribute("src", "https://github.com/devongovett/blob-stream/releases/download/v0.1.3/blob-stream.js");
+    blobStreamTag.setAttribute("type", "text/javascript");
+    document.head.append(blobStreamTag);
+  }
+
+  // Note: Cleanup on unmount might be complex if multiple modals use these scripts.
+  // Relying on browser caching and the check above is generally sufficient.
 });
 
 </script>
@@ -343,7 +720,10 @@ onMounted(() => {
             {{ isEditing ? 'Edit Invoice' : 'Add New Invoice' }}
             <span v-if="!isEditing && customerData?.name" class="text-base font-normal text-gray-500 dark:text-gray-400"> for {{ customerData.name }}</span>
           </h3>
-          <form @submit.prevent="submitInvoice" class="space-y-4">
+          <!-- WhatsApp Modal -->
+          <modal v-if="isOpen" :website="userStore.currentWebsite" :body="body" :isOpen="isOpen" :blob="blob" :client="client" :sender="sender" :company="company" :phone="invoiceForm.customer.phone" name="Invoice" @close-modal="closeModalWA"></modal>
+          
+          <form @submit.prevent="handleSave" class="space-y-4">
             <div class="max-h-[60vh] overflow-y-auto pr-2">
               <!-- Invoice Details Section -->
               <div class="mb-6">
@@ -498,7 +878,7 @@ onMounted(() => {
                   <label for="invoice-paid" class="text-sm font-medium text-gray-700 dark:text-gray-300">Paid to Date</label>
                   <div class="relative">
                     <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500 dark:text-gray-400 text-sm">{{ invoiceForm.company.currency_symbol || 'R' }}</span>
-                    <input type="number" id="invoice-paid" v-model="invoiceForm.paid" min="0" step="0.01" class="input-modern w-32 pl-7 pr-2 py-1 text-right" />
+                    <input type="number" id="invoice-paid" v-model="invoiceForm.paid" min="0" step="1" class="input-modern w-32 pl-7 pr-2 py-1 text-right" />
                   </div>
                 </div>
                 <div class="flex justify-between py-2 border-t border-b border-gray-200 dark:border-gray-700">
@@ -515,10 +895,22 @@ onMounted(() => {
             </div>
 
             <div class="pt-5 sm:pt-6 flex flex-col sm:flex-row-reverse gap-3 border-t border-gray-200 dark:border-gray-700/50">
-              <button type="submit" class="btn-primary-modern w-full sm:w-auto" :disabled="loading">
-                {{ loading ? 'Saving...' : (isEditing ? 'Update Invoice' : 'Add Invoice') }}
+              <!-- WhatsApp Button -->
+              <button @click="sendAttachment" type="button" class="btn-secondary-modern w-full sm:w-auto bg-green-100 dark:bg-green-900/50 border-green-300 dark:border-green-700 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-800/50" :disabled="loading">
+                <font-awesome-icon :icon="['fab', 'whatsapp']" class="mr-1.5 h-4 w-4" /> WhatsApp
               </button>
-              <button @click="closeModal" type="button" class="btn-secondary-modern w-full sm:w-auto">
+              <!-- Save & Download Button -->
+              <button @click="save_type = 'download'; handleSave()" type="button" class="btn-secondary-modern w-full sm:w-auto" :disabled="loading">
+                 <svg class="w-4 h-4 mr-1.5 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                 {{ loading && save_type === 'download' ? 'Saving...' : 'Save & Download' }}
+              </button>
+              <!-- Save Button (acts as primary submit) -->
+              <button @click="save_type = 'save'" type="submit" class="btn-primary-modern w-full sm:w-auto" :disabled="loading">
+                 <svg class="w-4 h-4 mr-1.5 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                 {{ loading && save_type === 'save' ? 'Saving...' : 'Save Invoice' }}
+              </button>
+              <!-- Cancel Button -->
+              <button @click="closeModal" type="button" class="btn-secondary-modern w-full sm:w-auto mr-auto"> <!-- Added mr-auto to push cancel left -->
                 Cancel
               </button>
             </div>

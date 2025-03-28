@@ -13,7 +13,7 @@
   ListboxOption,
 } from '@headlessui/vue'
 
-	const emit = defineEmits(['reloadTimeline'])
+	const emit = defineEmits(['reloadTimeline', 'edit-job']) // Add edit-job emit
 	const props = defineProps(['job'])
 	const userStore = useUserStore()
 	const toast = useToast() 
@@ -89,10 +89,10 @@
 			<div class="flex justify-between mb-2">
 				<div class="flex flex-col justify-center">
 					<p class="text-lg text-black" ></p>
-				</div>				
-				<div class="relative">
+				</div>
+				<div class="relative"> <!-- Status Dropdown -->
 					<Listbox v-model="selectedStatus">
-						<div class="relative mt-1">						
+						<div class="relative mt-1">
 							<ListboxButton
 								class="relative w-full cursor-default rounded-lg bg-slate-900 py-1 pl-3 pr-5 min-w-[120px] text-left shadow-md focus:outline-none focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-opacity-75 focus-visible:ring-offset-2 focus-visible:ring-offset-orange-300 sm:text-sm"
 							>
@@ -168,5 +168,10 @@
 				<p class="text-xs text-black">{{ job.issue }}</p>
 			</div>
 		</div>
+		  <!-- Action Buttons -->
+		  <div class="flex mt-2 mb-1 justify-between items-center"> <!-- Changed back to justify-between -->
+		    <button @click="$emit('edit-job', job)" class="text-white cursor-pointer inline-block bg-slate-900 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-gray-300 dark:focus:ring-gray-800 shadow-lg shadow-gray-500/50 dark:shadow-lg dark:shadow-gray-800/80 font-medium rounded-lg text-sm px-3 py-1 text-center"> Edit </button>
+		    <button @click="$emit('edit-job', job)" class="text-white cursor-pointer inline-block bg-slate-900 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-gray-300 dark:focus:ring-gray-800 shadow-lg shadow-gray-500/50 dark:shadow-lg dark:shadow-gray-800/80 font-medium rounded-lg text-sm px-3 py-1 text-center"> View </button>
+		  </div>
 	</div>
 </template>
