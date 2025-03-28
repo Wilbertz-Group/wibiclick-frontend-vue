@@ -651,8 +651,9 @@ const notifyTechnician = async (job) => {
        payment: job.payment,
        address: job.address,
        issue: job.issue,
-       slotStart: job.slotStart, // Keep original format for backend
-       slotEnd: job.slotEnd,
+       // Parse UTC, convert to local, format as ISO string with local offset
+       slotStart: job.slotStart ? moment.utc(job.slotStart).local().format() : null,
+       slotEnd: job.slotEnd ? moment.utc(job.slotEnd).local().format() : null, // Apply same logic to slotEnd if needed
        slotTime: job.slotTime,
        jobStatus: job.jobStatus,
        parts: job.parts,
