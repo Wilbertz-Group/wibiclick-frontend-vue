@@ -63,6 +63,7 @@ const selectedInvoice = ref(null); // State for the selected invoice when editin
 const selectedPayment = ref(null); // State for the selected payment when editing
 const selectedExpense = ref(null); // State for the selected expense when editing
 const selectedInsurance = ref(null); // State for the selected insurance report when editing
+const selectedJob = ref(null); // State for the selected job when editing
 const showAddExpenseModal = ref(false); // State for the expense modal visibility
 const showAddInsuranceModal = ref(false); // State for the insurance modal visibility
 const technicians = ref([]); // State for technicians list
@@ -203,8 +204,7 @@ async function updateCustomer() {
       Message: editableCustomer.value.message, // Map message -> Message
       portal: editableCustomer.value.portal,
       foreignID: editableCustomer.value.foreignID,
-      // Include customer ID for update identification by backend
-      vid: customer.value.id // Assuming 'vid' or similar is used by backend
+      vid: editableCustomer.value.foreignID, // Map foreignID -> vid
     };
 
     await axios.post('add-customer?id=' + userStore.currentWebsite, { data: backendData });
@@ -260,7 +260,13 @@ function handleCancelEdit() {
 
 // --- Job Modal Handlers ---
 function openAddJobModal() {
+  selectedJob.value = null; // Ensure we are in 'add' mode
   showAddJobModal.value = true;
+}
+
+function handleViewJob(job) {
+  selectedJob.value = job; // Set the job data for editing
+  showAddJobModal.value = true; // Open the modal
 }
 
 function handleJobSaved() {
@@ -602,6 +608,7 @@ watchEffect(() => {
                          @view-expense="handleViewExpense"
                          @edit-insurance="openAddInsuranceModal"
                          @view-insurance="handleViewInsurance"
+                         @edit-job="handleViewJob"
                          class="border-b border-gray-100 dark:border-gray-700/50 last:border-b-0 bg-[#ffffff]"
                        />
                      </div>
@@ -779,6 +786,7 @@ watchEffect(() => {
 <JobFormModal
   v-model="showAddJobModal"
   :customer-data="customer"
+  :job-data="selectedJob"
   @job-saved="handleJobSaved"
 />
 

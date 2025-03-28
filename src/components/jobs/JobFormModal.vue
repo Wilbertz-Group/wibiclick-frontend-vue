@@ -18,6 +18,10 @@ const props = defineProps({
     type: Object,
     default: () => ({}),
   },
+  jobData: { // For editing existing job
+    type: Object,
+    default: null,
+  },
   // Add technicians prop if fetching in parent
   // technicians: {
   //   type: Array,
@@ -88,6 +92,35 @@ const prefillForm = (customer) => {
     // Set default slotStart to tomorrow 9 AM for convenience?
     jobForm.slotStart = moment().add(1, 'day').hour(9).minute(0).second(0).format('YYYY-MM-DDTHH:mm');
   }
+
+  // If editing, populate with existing job data
+  if (props.jobData) {
+    Object.assign(jobForm, {
+      id: props.jobData.id,
+      customerId: props.jobData.customerId,
+      // Remove name from here to ensure we always use customer name
+      jobStatus: props.jobData.jobStatus || 'scheduled',
+      callout: props.jobData.callout || 'R350',
+      location: props.jobData.location || '',
+      address: props.jobData.address || '', // Use job address if available, fallback to customer address
+      phone: props.jobData.phone || '', // Use job phone if available, fallback to customer phone
+      slotStart: props.jobData.slotStart ? moment(props.jobData.slotStart).format('YYYY-MM-DDTHH:mm') : '',
+      slotTime: props.jobData.slotTime || '1hr',
+      employeeId: props.jobData.employeeId || '',
+      to_do: props.jobData.to_do || '',
+      issue: props.jobData.issue || '',
+      notify: props.jobData.notify || false, // Assuming notify is a boolean
+    });
+    // Ensure customer details are always used
+    if (customer && customer.id) {
+        // Always use customer name
+        jobForm.name = customer.name || '';
+        // For other fields, prioritize job data if available
+        jobForm.phone = jobForm.phone || customer.phone || '';
+        jobForm.address = jobForm.address || customer.address || '';
+        jobForm.location = jobForm.location || customer.location || '';
+    }
+  }
 };
 
 const submitJob = async () => {
@@ -131,8 +164,10 @@ const fetchTechnicians = async () => {
 // --- Watchers ---
 watch(() => props.modelValue, (newValue) => {
   if (newValue) {
-    // When modal opens, prefill form with customer data
+    // When modal opens, always prefill with customer data first.
+    // prefillForm will handle checking props.jobData internally for editing.
     prefillForm(props.customerData);
+
     // Fetch technicians if needed
     if (technicians.value.length === 0) {
        fetchTechnicians();
