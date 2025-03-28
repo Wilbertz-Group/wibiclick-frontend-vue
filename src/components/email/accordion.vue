@@ -77,7 +77,7 @@
  					<span class="flex items-center">
  						<span class="text-sm">
  							<!-- Access nested email object -->
- 							<span class="font-semibold">We have <span v-if="!email.email.from?.includes('info@')">received</span> <span v-if="email.email.from?.includes('info@')">sent</span> a message <span v-if="!email.email.from?.includes('info@')">from</span> <span v-if="email.email.from?.includes('info@')">to</span> {{email.email.to}}</span>
+ 							<span class="font-semibold"><span v-if="!email.email.from?.includes('info@')">received</span> <span v-if="email.email.from?.includes('info@')">sent</span> </span>
  						</span>
  					</span>
  					<div class="flex items-center">
