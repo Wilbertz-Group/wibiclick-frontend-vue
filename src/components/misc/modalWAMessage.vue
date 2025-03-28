@@ -82,7 +82,7 @@ ${props.sender}`
 <template>
   <div>
     <TransitionRoot appear :show="isOpen" as="div">
-      <Dialog as="div" class="relative z-10">
+      <Dialog as="div" class="relative z-40"> <!-- Increased z-index -->
         <TransitionChild
           as="template"
           enter="duration-300 ease-out"
