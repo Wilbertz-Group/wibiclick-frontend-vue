@@ -150,7 +150,7 @@ watch(() => props.modelValue, (newValue) => {
                     <label for="payment-amount" class="label-modern">Amount</label>
                      <div class="relative">
                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500 dark:text-gray-400 text-sm">R</span>
-                       <input type="number" id="payment-amount" v-model="paymentForm.amount" required min="0" step="0.01" class="input-modern pl-7" />
+                       <input type="number" id="payment-amount" v-model="paymentForm.amount" required min="0" step="0.01" class="input-modern pl-7 text-right" />
                      </div>
                   </div>
                    <div>

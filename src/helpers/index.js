@@ -179,13 +179,11 @@ const noteModal = (modelValue, wid, id, reloadTimeline) => {
 	$closeButton.addEventListener('click', () => {
 		// Ensure focus is moved before hiding the modal
 		document.body.focus();
-		toast.info(`closing modal`)
 		modal.hide();
 	});
 	$closesButton.addEventListener('click', () => {
 		// Ensure focus is moved before hiding the modal
 		document.body.focus();
-		toast.info(`closing modal`)
 		modal.hide();
 	});
 	$saveNoteButton.addEventListener('click', async() => {
@@ -230,13 +228,11 @@ const whatsappModal = (modelValue, id, phone) => {
 	$closeButton.addEventListener('click', () => {
 		// Ensure focus is moved before hiding the modal
 		document.body.focus();
-		toast.info(`closing modal`)
 		modal.hide();
 	});
 	$closesButton.addEventListener('click', () => {
 		// Ensure focus is moved before hiding the modal
 		document.body.focus();
-		toast.info(`closing modal`)
 		modal.hide();
 	});
 	$saveWhatsappButton.addEventListener('click', async() => {
