@@ -72,7 +72,7 @@ const invoiceForm = reactive({
 const lineItem = reactive({
   name: '',
   description: '',
-  amount: 1,
+  amount: 0,
   quantity: 1,
   id: null, // For tracking if we're editing an existing item
 });

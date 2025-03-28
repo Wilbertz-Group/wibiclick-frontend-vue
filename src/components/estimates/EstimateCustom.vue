@@ -27,8 +27,10 @@ const statuses = [
   { value: "rejected", name: "Rejected" },
 ]
 
-const currentStatus = statuses.filter(a => a.value == props.estimate.reason)?.length && props.estimate?.reason ? statuses.filter(a => a.value == props.estimate.reason) : ''
-const selectedStatus = ref(currentStatus[0])
+// Find the status object matching the estimate's reason, provide a default if not found
+const findStatus = (reason) => statuses.find(s => s.value === reason);
+const initialStatus = findStatus(props.estimate?.reason) || statuses.find(s => s.value === 'sent') || { name: 'N/A', value: null }; // Default to 'sent' or N/A
+const selectedStatus = ref(initialStatus);
 const body = ref()
 const heading = ref()
 const isOpen = ref(false)

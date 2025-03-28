@@ -1,10 +1,14 @@
 <script setup>
 import { ref, reactive, watch, computed, onMounted } from 'vue';
 import axios from 'axios';
+// PDFDocument and blobStream will be loaded via script tags
 import moment from 'moment';
 import { useToast } from 'vue-toast-notification';
 import { useUserStore } from '@/stores/UserStore';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import modal from "@/components/misc/modalWAMessage.vue";
+import imageHolder from '@/helpers/logo.js';
+import { getBase64FromUrl, generateTableRow } from '@/helpers/index.js'; // Assuming these exist in helpers
 
 const props = defineProps({
   modelValue: { // Controls modal visibility (v-model)
@@ -28,6 +32,12 @@ const toast = useToast();
 const loading = ref(false);
 const profile = ref(null);
 
+const save_type = ref('save'); // 'save', 'download', 'whatsapp'
+const isOpen = ref(false); // WhatsApp modal state
+const blob = ref(null); // PDF blob for WhatsApp
+const client = ref('');
+const sender = ref('');
+const company = ref('');
 // --- Form State ---
 const estimateForm = reactive({
   id: '', // Will be empty for new estimates
@@ -72,7 +82,7 @@ const estimateForm = reactive({
 const lineItem = reactive({
   name: '',
   description: '',
-  amount: 1,
+  amount: 0,
   quantity: 1,
   id: null, // For tracking if we're editing an existing item
 });
@@ -196,7 +206,18 @@ const prefillForm = async (customer) => {
       notes: props.estimateData.notes || '',
       items: props.estimateData.lineItem || [],
     });
+
+    // Re-apply customer details from the main customer prop to ensure address is present
+    if (customer && customer.id) {
+        estimateForm.customer.id = customer.id; // Ensure ID is consistent
+        estimateForm.customer.name = customer.name || '';
+        estimateForm.customer.phone = customer.phone || '';
+        estimateForm.customer.address = customer.address || '';
+        // estimateForm.customerId = customer.id; // Already set by Object.assign if present in estimateData
+    }
   }
+  // Calculate initial sum after potentially loading items
+  getSum(estimateForm.items);
 };
 
 const fetchProfile = async () => {
@@ -263,10 +284,11 @@ const removeItem = (index) => {
 };
 
 const getSum = (array) => {
-  if (array.length) {
-    let values = array.map(item => item.quantity * item.amount);
+  if (array && array.length) { // Added check for array existence
+    // Ensure quantity and amount are treated as numbers
+    let values = array.map(item => (Number(item.quantity) || 0) * (Number(item.amount) || 0));
     let total = values.reduce((a, b) => a + b, 0);
-    estimateForm.subtotal = total;
+    estimateForm.subtotal = total; // Assign the calculated total
     return total;
   } else {
     estimateForm.subtotal = 0;
@@ -274,7 +296,7 @@ const getSum = (array) => {
   }
 };
 
-const submitEstimate = async () => {
+const saveEstimateOnly = async (closeAfterSave = true) => { // Added parameter
   loading.value = true;
   try {
     const payload = {
@@ -304,12 +326,332 @@ const submitEstimate = async () => {
     const response = await axios.post('add-estimate?id=' + userStore.currentWebsite, payload);
     toast.success(response.data.message || 'Estimate saved successfully');
     emit('estimate-saved');
-    closeModal();
+    if (closeAfterSave) {
+      closeModal();
+    }
+    return true; // Indicate success
   } catch (error) {
     console.error("Error submitting estimate:", error);
     toast.error(`Error submitting estimate: ${error.response?.data?.message || error.message}`);
+    return false; // Indicate failure
   } finally {
     loading.value = false;
+  }
+};
+
+const saveAndDownloadEstimate = async () => {
+  // First, save the estimate data without closing the modal
+  const savedSuccessfully = await saveEstimateOnly(false); 
+
+  if (savedSuccessfully) {
+    // If save was successful, prepare and download the PDF
+    // Ensure profile is loaded
+    if (!profile.value) {
+      toast.warning("Company profile not loaded yet. Please wait.");
+      await fetchProfile(); // Wait for profile
+    }
+    if (profile.value) {
+       prepareAndGeneratePDF(estimateForm, `${estimateForm.customer.name || 'Estimate'}.pdf`, 'download');
+       closeModal(); // Close modal after download starts
+    } else {
+      toast.error("Could not load profile data to generate PDF.");
+    }
+  } else {
+    toast.error("Failed to save estimate, cannot download PDF.");
+  }
+};
+
+const handleSave = () => {
+  if (save_type.value === 'save') {
+    saveEstimateOnly();
+  } else if (save_type.value === 'download') {
+    saveAndDownloadEstimate();
+  }
+  // WhatsApp is handled by a separate button/function (sendAttachment)
+};
+
+
+// --- PDF Generation & WhatsApp --- 
+
+const closeModalWA = () => {
+  isOpen.value = false;
+};
+
+const createEstimatePDF = (estimate, path, action = 'download') => {
+  let doc;
+  // Check if PDFDocument is available on window
+  if (!window.PDFDocument || !window.blobStream) {
+      toast.error("PDF generation library not loaded yet. Please wait a moment and try again.");
+      console.error("PDFKit or BlobStream not found on window object.");
+      return;
+  }
+  try {
+    doc = new window.PDFDocument({ size: "A4", margin: 50 });
+  } catch (error) {
+    console.error("PDFKit Error:", error);
+    toast.error("Failed to initialize PDF generation. Reload and try again!");
+    return; // Stop if PDFDocument fails
+  }
+
+  const stream = doc.pipe(window.blobStream());
+
+  // --- PDF Content Generation Functions (Adapted for estimateForm) ---
+  function generateHeader(doc, estimate) {
+    // This function relies on 'img' being available in its scope
+    // We will fetch it before calling createEstimatePDF
+    doc
+      .image(img, 50, 45, { width: 50 })
+      .fillColor("#444444")
+      .fontSize(14)
+      .text(estimate.company.name || '', 110, 57)
+      .fontSize(10)
+      .text(estimate.company.slogan || '', 110, 75)
+      .text(estimate.company.name || '', 200, 50, { align: "right" })
+      .text(estimate.company.address1 || '', 200, 65, { align: "right" })
+      .text(`${estimate.company.address2 || ''} ${estimate.company.city || ''}`, 200, 80, { align: "right" })
+      .text(`${estimate.company.state || ''}, ${estimate.company.country || ''}`, 200, 95, { align: "right" })
+      .text(estimate.company.postal_code || '', 200, 110, { align: "right" })
+      .text(`Email: ${estimate.company.email || ''}`, 200, 130, { align: "right" })
+      .moveDown();
+  }
+
+  function generateCustomerInformation(doc, estimate) {
+    doc.fillColor("#444444").fontSize(20).text("Estimate", 50, 160);
+    generateHr(doc, 185);
+    const customerInformationTop = 200, bankingDetails = 200, estimateSpace = 130;
+
+    doc
+      //Estimate Data
+      .fontSize(10)
+      .font("Helvetica-Bold")
+      .text("Estimate Details:", 50, bankingDetails)
+      .font("Helvetica")
+      .text("Estimate #:", 50, customerInformationTop + 15)
+      .text(estimate.estimate_nr, estimateSpace, customerInformationTop + 15)
+      .text("Estimate Date:", 50, customerInformationTop + 30)
+      .text(estimate.estimate_date, estimateSpace, customerInformationTop + 30)
+      .text("Estimate Due:", 50, customerInformationTop + 45)
+      .text(estimate.estimate_due_date, estimateSpace, customerInformationTop + 45)
+      .font("Helvetica-Bold")
+      .text("Balance Due:", 50, customerInformationTop + 60)
+      .text(
+        formatCurrency(estimate.subtotal - (estimate.paid || 0), estimate.company.currency_symbol),
+        estimateSpace,
+        customerInformationTop + 60
+      )
+      //Banking Details
+      .font("Helvetica-Bold")
+      .text("Banking Details:", 300, bankingDetails)
+      .font("Helvetica")
+      .text("Name:", 300, bankingDetails + 15)
+      .text(estimate.banking.account_name || '', 380, bankingDetails + 15)
+      .text("Bank Name:", 300, bankingDetails + 30)
+      .text(estimate.banking.bank || '', 380, bankingDetails + 30)
+      .text("Account #:", 300, bankingDetails + 45)
+      .text(estimate.banking.account_number || '', 380, bankingDetails + 45)
+      .text("Account Type:", 300, bankingDetails + 60)
+      .text(estimate.banking.account_type || '', 380, bankingDetails + 60)
+      .text("Branch Code:", 300, bankingDetails + 75)
+      .text(estimate.banking.branch_code || '', 380, bankingDetails + 75)
+      .moveDown();
+
+    generateHr(doc, 300);
+
+    //Billed To
+    let billed_to = 315
+    doc
+      .fontSize(10)
+      .font("Helvetica-Bold")
+      .text("Billed To:", 50, billed_to)
+      .font("Helvetica")
+      .text("Name:", 50, billed_to + 15)
+      .text(estimate.customer.name || '', 130, billed_to + 15)
+      .text("Address:", 50, billed_to + 30)
+      .text(estimate.customer.address || '', 130, billed_to + 30)
+      .text("Phone:", 50, billed_to + 45)
+      .text(estimate.customer.phone || '', 130, billed_to + 45)
+      .text("VAT:", 50, billed_to + 60)
+      .text(estimate.customer.vat || '', 130, billed_to + 60)
+      .moveDown();
+
+    generateHr(doc, 400);
+  }
+
+  function generateEstimateTable(doc, estimate) {
+    let i;
+    const estimateTableTop = 425;
+
+    doc.font("Helvetica-Bold");
+    generateTableRow(
+      doc,
+      estimateTableTop,
+      "Item",
+      "Description", // Added description header
+      "Unit Cost",
+      "Quantity",
+      "Line Total"
+    );
+    generateHr(doc, estimateTableTop + 20);
+    doc.font("Helvetica");
+
+    for (i = 0; i < estimate.items.length; i++) {
+      const item = estimate.items[i];
+      const position = estimateTableTop + (i + 1) * 30;
+      generateTableRow(
+        doc,
+        position,
+        item.item || item.name,
+        item.description || '', // Added description
+        formatCurrency(item.amount, estimate.company.currency_symbol),
+        item.quantity,
+        formatCurrency(item.amount * item.quantity, estimate.company.currency_symbol)
+      );
+      generateHr(doc, position + 20);
+    }
+
+    const subtotalPosition = estimateTableTop + (i + 1) * 30;
+    generateTableRow(
+      doc,
+      subtotalPosition,
+      "",
+      "",
+      "Subtotal",
+      "",
+      formatCurrency(estimate.subtotal, estimate.company.currency_symbol)
+    );
+
+    const paidToDatePosition = subtotalPosition + 20;
+    generateTableRow(
+      doc,
+      paidToDatePosition,
+      "",
+      "",
+      "Paid To Date",
+      "",
+      formatCurrency(estimate.paid || 0, estimate.company.currency_symbol)
+    );
+
+    const duePosition = paidToDatePosition + 25;
+    doc.font("Helvetica-Bold");
+    generateTableRow(
+      doc,
+      duePosition,
+      "",
+      "",
+      "Balance Due",
+      "",
+      formatCurrency(estimate.subtotal - (estimate.paid || 0), estimate.company.currency_symbol)
+    );
+    doc.font("Helvetica");
+  }
+
+  function generateNotes(doc, estimate) {
+    if (estimate.notes) {
+      doc
+        .fontSize(11)
+        .font("Helvetica-Bold")
+        .text("Notes:", 50, 580) // Removed "Notes" label repetition
+        .fontSize(10)
+        .font("Helvetica")
+        .text(
+          estimate.notes,
+          50,
+          595,
+          { align: "left", width: 500 } // Increased width for notes
+        );
+    }
+  }
+
+  function generateFooter(doc) {
+    doc
+      .fontSize(10)
+      .text(
+        "Thank you for your business. Use the Estimate # as your payment reference.",
+        50,
+        780,
+        { align: "center", width: 500 }
+      );
+  }
+
+  function generateHr(doc, y) {
+    doc.strokeColor("#aaaaaa").lineWidth(1).moveTo(50, y).lineTo(550, y).stroke();
+  }
+
+  function formatCurrency(value, symbol = 'R') {
+    return `${symbol}${Number(value).toFixed(2)}`;
+  }
+
+  function formatDate(date) {
+    // Assuming date is already in 'YYYY-MM-DD' format from the form
+    return date; 
+  }
+  // --- End PDF Content Generation Functions ---
+
+  // Add content to the document
+  generateHeader(doc, estimate);
+  generateCustomerInformation(doc, estimate);
+  generateEstimateTable(doc, estimate);
+  generateNotes(doc, estimate);
+  generateFooter(doc);
+
+  doc.end();
+
+  stream.on("finish", function() {
+    const pdfBlob = stream.toBlob("application/pdf");
+    if (action === 'download') {
+      const a = document.createElement("a");
+      document.body.appendChild(a);
+      a.style = "display: none";
+      const url = window.URL.createObjectURL(pdfBlob);
+      a.href = url;
+      a.download = path;
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast.success("Estimate downloaded successfully");
+    } else if (action === 'whatsapp') {
+      blob.value = pdfBlob; // Set blob for WhatsApp modal
+      isOpen.value = true; // Open WhatsApp modal
+    }
+  });
+};
+
+let img; // Variable to hold the logo image dataURL
+
+const prepareAndGeneratePDF = async (estimate, path, action = 'download') => {
+  loading.value = true;
+  try {
+    const logoUrl = profile.value?.estimate_logo || '';
+    if (logoUrl) {
+      img = await getBase64FromUrl(logoUrl);
+    } else {
+      img = imageHolder; // Use placeholder if no logo URL
+    }
+    createEstimatePDF(estimate, path, action);
+  } catch (error) {
+    console.error("Error preparing PDF:", error);
+    toast.error("Error preparing PDF for download/sending.");
+    img = imageHolder; // Fallback image
+    // Optionally try generating PDF with fallback image
+    // createEstimatePDF(estimate, path, action);
+  } finally {
+    loading.value = false;
+  }
+};
+
+const sendAttachment = () => {
+  client.value = estimateForm.customer?.name || 'Customer';
+  sender.value = profile.value?.firstName || 'Sender';
+  company.value = profile.value?.company?.company_name || 'Company';
+
+  // Ensure profile is loaded before attempting to generate PDF
+  if (!profile.value) {
+    toast.warning("Company profile not loaded yet. Please wait.");
+    fetchProfile().then(() => {
+      prepareAndGeneratePDF(estimateForm, `${estimateForm.customer.name || 'Estimate'}.pdf`, 'whatsapp');
+    });
+  } else {
+    prepareAndGeneratePDF(estimateForm, `${estimateForm.customer.name || 'Estimate'}.pdf`, 'whatsapp');
   }
 };
 
@@ -325,6 +667,24 @@ watch(() => props.modelValue, (newValue) => {
 onMounted(() => {
   // Fetch profile data initially
   fetchProfile();
+
+  // Load PDFKit and BlobStream via script tags
+  let pdfKitTag = document.createElement("script");
+  pdfKitTag.setAttribute("src", "https://github.com/foliojs/pdfkit/releases/download/v0.13.0/pdfkit.standalone.js"); // Use latest version if possible
+  pdfKitTag.setAttribute("type", "text/javascript");
+  document.head.append(pdfKitTag);
+
+  let blobStreamTag = document.createElement("script");
+  blobStreamTag.setAttribute("src", "https://github.com/devongovett/blob-stream/releases/download/v0.1.3/blob-stream.js");
+  blobStreamTag.setAttribute("type", "text/javascript");
+  document.head.append(blobStreamTag);
+
+  // Cleanup script tags on component unmount (optional but good practice)
+  // import { onUnmounted } from 'vue'; // Add this import at the top
+  // onUnmounted(() => {
+  //   document.head.removeChild(pdfKitTag);
+  //   document.head.removeChild(blobStreamTag);
+  // });
 });
 
 </script>
@@ -343,7 +703,10 @@ onMounted(() => {
             {{ isEditing ? 'Edit Estimate' : 'Add New Estimate' }}
             <span v-if="!isEditing && customerData?.name" class="text-base font-normal text-gray-500 dark:text-gray-400"> for {{ customerData.name }}</span>
           </h3>
-          <form @submit.prevent="submitEstimate" class="space-y-4">
+          <!-- WhatsApp Modal -->
+          <modal v-if="isOpen" :website="userStore.currentWebsite" :body="body" :isOpen="isOpen" :blob="blob" :client="client" :sender="sender" :company="company" :phone="estimateForm.customer.phone" name="Estimate" @close-modal="closeModalWA"></modal>
+          
+          <form @submit.prevent="handleSave" class="space-y-4">
             <div class="max-h-[60vh] overflow-y-auto pr-2">
               <!-- Estimate Details Section -->
               <div class="mb-6">
@@ -515,10 +878,22 @@ onMounted(() => {
             </div>
 
             <div class="pt-5 sm:pt-6 flex flex-col sm:flex-row-reverse gap-3 border-t border-gray-200 dark:border-gray-700/50">
-              <button type="submit" class="btn-primary-modern w-full sm:w-auto" :disabled="loading">
-                {{ loading ? 'Saving...' : (isEditing ? 'Update Estimate' : 'Add Estimate') }}
+              <!-- WhatsApp Button -->
+              <button @click="sendAttachment" type="button" class="btn-secondary-modern w-full sm:w-auto bg-green-100 dark:bg-green-900/50 border-green-300 dark:border-green-700 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-800/50" :disabled="loading">
+                <font-awesome-icon :icon="['fab', 'whatsapp']" class="mr-1.5 h-4 w-4" /> WhatsApp
               </button>
-              <button @click="closeModal" type="button" class="btn-secondary-modern w-full sm:w-auto">
+              <!-- Save & Download Button -->
+              <button @click="save_type = 'download'; handleSave()" type="button" class="btn-secondary-modern w-full sm:w-auto" :disabled="loading">
+                 <svg class="w-4 h-4 mr-1.5 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                 {{ loading && save_type === 'download' ? 'Saving...' : 'Save & Download' }}
+              </button>
+              <!-- Save Button (acts as primary submit) -->
+              <button @click="save_type = 'save'" type="submit" class="btn-primary-modern w-full sm:w-auto" :disabled="loading">
+                 <svg class="w-4 h-4 mr-1.5 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                 {{ loading && save_type === 'save' ? 'Saving...' : 'Save Estimate' }}
+              </button>
+              <!-- Cancel Button -->
+              <button @click="closeModal" type="button" class="btn-secondary-modern w-full sm:w-auto mr-auto"> <!-- Added mr-auto to push cancel left -->
                 Cancel
               </button>
             </div>
