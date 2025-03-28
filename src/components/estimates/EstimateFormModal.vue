@@ -318,13 +318,23 @@ const saveEstimateOnly = async (closeAfterSave = true) => { // Added parameter
       paid: parseFloat(estimateForm.paid) || 0, // Add paid field
       notes: estimateForm.notes,
       customerId: estimateForm.customer.id || estimateForm.customerId,
-      items: estimateForm.items.map(item => ({
-        id: item.id, // Include the ID for proper update/create handling
-        item: item.item || item.name,
-        description: item.description,
-        quantity: parseFloat(item.quantity),
-        amount: parseFloat(item.amount)
-      }))
+      // IMPORTANT: Ensure props.customerData.jobId is passed correctly when creating estimate from a job
+      jobId: props.customerData?.jobId,
+      employeeId: props.customerData?.employeeId || userStore.user?.id, // Add employeeId (fallback to current user)
+      websiteId: userStore.currentWebsite, // Add websiteId from store
+      items: estimateForm.items.map(item => {
+        const lineItemPayload = {
+          item: item.item || item.name,
+          description: item.description,
+          quantity: parseFloat(item.quantity),
+          amount: parseFloat(item.amount)
+        };
+        // Only include 'id' if it exists and is NOT a number (i.e., likely a DB ID)
+        if (item.id && isNaN(item.id)) {
+          lineItemPayload.id = item.id;
+        }
+        return lineItemPayload;
+      })
     };
 
     // If editing, include the ID

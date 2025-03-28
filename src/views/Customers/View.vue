@@ -84,6 +84,7 @@ const wkey = ref(0) // Keep for potential accordion re-renders
 const nkey = ref(0) // Keep for potential accordion re-renders
 const noteModalInstance = ref(null);
 const whatsappModalInstance = ref(null);
+const customerContextForModal = ref(null); // State to hold specific context for add modals
 
 // --- Computed ---
 const isLoading = computed(() => isFetchingCustomer.value || isUpdatingCustomer.value || isBookingJob.value);
@@ -373,17 +374,50 @@ function handleAddRelatedItem(routeName, queryKey) {
       openAddJobModal();
       return; // Stop further execution
     }
-    
-    // If adding an estimate, open the estimate modal instead of navigating
-    if (routeName === 'add-estimate') {
-      openAddEstimateModal();
-      return; // Stop further execution
-    }
-    
-    // If adding an invoice, open the invoice modal instead of navigating
-    if (routeName === 'add-invoice') {
-      openAddInvoiceModal();
-      return; // Stop further execution
+
+    // --- New logic for Estimate and Invoice ---
+    if (routeName === 'add-estimate' || routeName === 'add-invoice') {
+        // Prepare context for the modal
+        let context = {
+            id: customer.value?.id,
+            name: customer.value?.name,
+            phone: customer.value?.phone,
+            address: customer.value?.address,
+            // Add other base customer fields if needed by the modal
+        };
+
+        // Find the latest job
+        const jobs = customer.value?.jobs || [];
+        if (jobs.length > 0) {
+            // Sort jobs by createdAt descending (assuming createdAt exists and is a valid date string/object)
+            const sortedJobs = [...jobs].sort((a, b) => {
+              const dateA = a.createdAt ? new Date(a.createdAt) : 0;
+              const dateB = b.createdAt ? new Date(b.createdAt) : 0;
+              // Handle potential invalid dates
+              if (isNaN(dateA) && isNaN(dateB)) return 0;
+              if (isNaN(dateA)) return 1; // Put invalid dates earlier (older)
+              if (isNaN(dateB)) return -1; // Put invalid dates earlier (older)
+              return dateB - dateA;
+            });
+            const latestJob = sortedJobs[0];
+
+            if (latestJob) {
+                context.jobId = latestJob.id;
+                // Assuming employeeId/websiteId are directly on the job object. Adjust if nested (e.g., latestJob.employee.id)
+                context.employeeId = latestJob.employeeId;
+                context.websiteId = latestJob.websiteId;
+            }
+        }
+
+        customerContextForModal.value = context; // Set the context for the modal
+
+        // Open the correct modal (without passing data directly, modal will use customerContextForModal via prop)
+        if (routeName === 'add-estimate') {
+            openAddEstimateModal();
+        } else { // routeName === 'add-invoice'
+            openAddInvoiceModal();
+        }
+        return; // Stop further execution
     }
     
     // If adding a payment, open the payment modal instead of navigating
@@ -793,7 +827,7 @@ watchEffect(() => {
 <!-- Add/Edit Estimate Modal -->
 <EstimateFormModal
   v-model="showAddEstimateModal"
-  :customer-data="customer"
+  :customer-data="customerContextForModal || customer"
   :estimate-data="selectedEstimate"
   @estimate-saved="handleEstimateSaved"
 />
@@ -801,7 +835,7 @@ watchEffect(() => {
 <!-- Add/Edit Invoice Modal -->
 <InvoiceFormModal
   v-model="showAddInvoiceModal"
-  :customer-data="customer"
+  :customer-data="customerContextForModal || customer"
   :invoice-data="selectedInvoice"
   @invoice-saved="handleInvoiceSaved"
 />
