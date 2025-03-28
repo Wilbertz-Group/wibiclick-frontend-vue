@@ -146,8 +146,8 @@ function handleViewPayment() {
       </div>
       <!-- Data display styled like InvoiceCustom -->
        <div class="flex justify-between">
-        <p class="text-sm font-bold text-black dark:text-gray-300">Payment #</p> <!-- Adjusted text color -->
-        <p class="text-sm text-black dark:text-gray-100">{{ payment.id.substring(0, 8) }}...</p> <!-- Adjusted text color -->
+        <p class="text-sm font-bold text-black dark:text-gray-300 capitalize">Method</p> <!-- Changed Label -->
+        <p class="text-sm text-black dark:text-gray-100 capitalize">{{ payment.paymentMethod || 'N/A' }}</p> <!-- Changed Value -->
       </div>
       <div class="flex justify-between">
         <p class="text-sm font-bold text-black dark:text-gray-300">Amount</p> <!-- Adjusted text color -->
