@@ -1,28 +1,28 @@
 <template>
   <div class="tiptap-editor border rounded bg-gray-100 dark:bg-gray-900">
     <div v-if="editor" class="toolbar p-2 border-b bg-gray-100 dark:bg-gray-900 flex space-x-2">
-      <button @click="editor.chain().focus().toggleBold().run()" :disabled="!editor.can().chain().focus().toggleBold().run()" :class="{ 'is-active': editor.isActive('bold') }" class="px-2 py-1 border rounded hover:bg-gray-200">
+      <button type="button" @click="editor.chain().focus().toggleBold().run()" :disabled="!editor.can().chain().focus().toggleBold().run()" :class="{ 'is-active': editor.isActive('bold') }" class="px-2 py-1 border rounded hover:bg-gray-200">
         Bold
       </button>
-      <button @click="editor.chain().focus().toggleItalic().run()" :disabled="!editor.can().chain().focus().toggleItalic().run()" :class="{ 'is-active': editor.isActive('italic') }" class="px-2 py-1 border rounded hover:bg-gray-200">
+      <button type="button" @click="editor.chain().focus().toggleItalic().run()" :disabled="!editor.can().chain().focus().toggleItalic().run()" :class="{ 'is-active': editor.isActive('italic') }" class="px-2 py-1 border rounded hover:bg-gray-200">
         Italic
       </button>
-      <button @click="editor.chain().focus().toggleStrike().run()" :disabled="!editor.can().chain().focus().toggleStrike().run()" :class="{ 'is-active': editor.isActive('strike') }" class="px-2 py-1 border rounded hover:bg-gray-200">
+      <button type="button" @click="editor.chain().focus().toggleStrike().run()" :disabled="!editor.can().chain().focus().toggleStrike().run()" :class="{ 'is-active': editor.isActive('strike') }" class="px-2 py-1 border rounded hover:bg-gray-200">
         Strike
       </button>
-      <button @click="editor.chain().focus().toggleBlockquote().run()" :class="{ 'is-active': editor.isActive('blockquote') }" class="px-2 py-1 border rounded hover:bg-gray-200">
+      <button type="button" @click="editor.chain().focus().toggleBlockquote().run()" :class="{ 'is-active': editor.isActive('blockquote') }" class="px-2 py-1 border rounded hover:bg-gray-200">
         Blockquote
       </button>
-      <button @click="editor.chain().focus().toggleBulletList().run()" :class="{ 'is-active': editor.isActive('bulletList') }" class="px-2 py-1 border rounded hover:bg-gray-200">
+      <button type="button" @click="editor.chain().focus().toggleBulletList().run()" :class="{ 'is-active': editor.isActive('bulletList') }" class="px-2 py-1 border rounded hover:bg-gray-200">
         Bullet List
       </button>
-      <button @click="editor.chain().focus().toggleOrderedList().run()" :class="{ 'is-active': editor.isActive('orderedList') }" class="px-2 py-1 border rounded hover:bg-gray-200">
+      <button type="button" @click="editor.chain().focus().toggleOrderedList().run()" :class="{ 'is-active': editor.isActive('orderedList') }" class="px-2 py-1 border rounded hover:bg-gray-200">
         Ordered List
       </button>
-       <button @click="editor.chain().focus().unsetAllMarks().run()" class="px-2 py-1 border rounded hover:bg-gray-200">
+       <button type="button" @click="editor.chain().focus().unsetAllMarks().run()" class="px-2 py-1 border rounded hover:bg-gray-200">
         Clear Marks
       </button>
-      <button @click="editor.chain().focus().clearNodes().run()" class="px-2 py-1 border rounded hover:bg-gray-200">
+      <button type="button" @click="editor.chain().focus().clearNodes().run()" class="px-2 py-1 border rounded hover:bg-gray-200">
         Clear Nodes
       </button>
     </div>

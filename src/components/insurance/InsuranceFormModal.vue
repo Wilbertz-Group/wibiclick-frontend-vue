@@ -6,6 +6,9 @@ import { useToast } from 'vue-toast-notification';
 import { useUserStore } from '@/stores/UserStore';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import TipTapEditor from '@/components/editor/TipTapEditor.vue'; // Import TipTapEditor
+import modal from "@/components/misc/modalWAMessage.vue";
+import imageHolder from '@/helpers/logo.js';
+import { getBase64FromUrl } from '@/helpers/index.js'; // Assuming this exists in helpers
 
 const props = defineProps({
   modelValue: { // Controls modal visibility (v-model)
@@ -28,6 +31,13 @@ const userStore = useUserStore();
 const toast = useToast();
 const loading = ref(false);
 
+const profile = ref(null); // Add profile state
+const save_type = ref('save'); // 'save', 'download', 'whatsapp'
+const isOpen = ref(false); // WhatsApp modal state
+const blob = ref(null); // PDF blob for WhatsApp
+const client = ref('');
+const sender = ref('');
+const company = ref('');
 // --- Form State ---
 const insuranceForm = reactive({
   id: '', // Will be empty for new reports
@@ -79,15 +89,33 @@ const prefillForm = (customer) => {
       notes: props.insuranceData.notes || props.insuranceData.details || '', // Use notes first, fallback to details
     });
   } else {
-      // Fetch next report number for new reports? (Optional, depends on backend)
-      // fetchNextReportNumber();
+      // Fetch and set the next report number for new reports
+      fetchNextReportNumber().then(nextNumber => {
+        if (nextNumber !== null) {
+          insuranceForm.number = nextNumber.toString();
+        }
+      });
   }
 };
 
-// Optional: Function to get the next report number
-// async function fetchNextReportNumber() { ... }
+// Function to get the next report number
+async function fetchNextReportNumber() {
+  if (!userStore.currentWebsite) return null; // Need website context
+  loading.value = true;
+  try {
+    const response = await axios.get(`/insurance_report_number?id=${userStore.currentWebsite}`);
+    const lastNumber = response.data?.insurance_number || 0;
+    return Number(lastNumber) + 1; // Return the next number
+  } catch (error) {
+    console.error("Error fetching next insurance report number:", error);
+    toast.error("Could not fetch the next report number.");
+    return null; // Indicate failure
+  } finally {
+    loading.value = false;
+  }
+}
 
-const submitInsuranceReport = async () => {
+const saveInsuranceOnly = async (closeAfterSave = true) => { // Renamed and added parameter
   loading.value = true;
   try {
     // Construct payload similar to old Edit.vue
@@ -107,19 +135,476 @@ const submitInsuranceReport = async () => {
     // Use POST for both add and update, matching old Edit.vue
     const endpoint = `add-insurance-report?id=${userStore.currentWebsite}`;
     const method = 'post';
-
+    
     const response = await axios({ method, url: endpoint, data: payload });
-
     toast.success(response.data.message || 'Insurance report saved successfully');
     emit('insurance-saved');
-    closeModal();
+    if (closeAfterSave) {
+      closeModal();
+    }
+    return true; // Indicate success
   } catch (error) {
     console.error("Error submitting insurance report:", error);
     toast.error(`Error submitting report: ${error.response?.data?.message || error.message}`);
+    return false; // Indicate failure
   } finally {
     loading.value = false;
   }
 };
+const saveAndDownloadInsurance = async () => {
+  // First, save the report data without closing the modal
+  const savedSuccessfully = await saveInsuranceOnly(false); 
+
+  if (savedSuccessfully) {
+    // If save was successful, prepare and download the PDF
+    if (!profile.value) {
+      toast.warning("Company profile not loaded yet. Please wait.");
+      await fetchProfile();
+    }
+    if (profile.value) {
+       prepareAndGeneratePDF(insuranceForm, `InsuranceReport_${insuranceForm.number || 'Details'}.pdf`, 'download');
+       closeModal(); // Close modal after download starts
+    } else {
+      toast.error("Could not load profile data to generate PDF.");
+    }
+  } else {
+    toast.error("Failed to save report, cannot download PDF.");
+  }
+};
+
+const handleSave = () => {
+  if (save_type.value === 'save') {
+    saveInsuranceOnly();
+  } else if (save_type.value === 'download') {
+    saveAndDownloadInsurance();
+  }
+  // WhatsApp is handled by a separate button/function (sendAttachment)
+};
+
+
+const fetchProfile = async () => {
+  // Fetch profile if not already loaded (needed for company details in PDF)
+  if (profile.value) return;
+  try {
+    loading.value = true;
+    const response = await axios.get('profile?id=' + userStore.currentWebsite);
+    profile.value = response.data;
+    loading.value = false;
+  } catch (error) {
+    console.error("Failed to get profile data", error);
+    toast.warning("Failed to get profile data for PDF generation.");
+    loading.value = false;
+  }
+};
+
+// --- PDF Generation & WhatsApp --- 
+
+const closeModalWA = () => {
+  isOpen.value = false;
+};
+
+// Simplified PDF generation for Insurance Reports
+const createInsurancePDF = (report, path, action = 'download') => {
+  let doc;
+  if (!window.PDFDocument || !window.blobStream) {
+      toast.error("PDF generation library not loaded yet. Please wait and try again.");
+      console.error("PDFKit or BlobStream not found on window object.");
+      return;
+  }
+  try {
+    doc = new window.PDFDocument({ size: "A4", margin: 50 });
+  } catch (error) {
+    console.error("PDFKit Error:", error);
+    toast.error("Failed to initialize PDF generation.");
+    return;
+  }
+  
+  // Set a global error handler for the PDF generation process
+  const originalConsoleError = console.error;
+  console.error = function(message, ...args) {
+    // Log the error but don't let it stop the PDF generation
+    originalConsoleError.apply(console, [message, ...args]);
+    if (message.includes("NaN") || message.includes("undefined")) {
+      toast.warning("Some formatting may be simplified in the PDF due to complex content");
+    }
+  };
+
+  const stream = doc.pipe(window.blobStream());
+
+  // --- PDF Content Generation Functions ---
+  function generateHeader(doc, report) {
+    const companyDetails = profile.value?.company || {};
+    doc
+      .image(img, 50, 45, { width: 50 }) // Assumes 'img' is loaded globally
+      .fillColor("#444444")
+      .fontSize(14)
+      .text(companyDetails.name || '', 110, 57)
+      .fontSize(10)
+      .text(companyDetails.slogan || '', 110, 75)
+      .text(companyDetails.name || '', 200, 50, { align: "right" })
+      .text(companyDetails.address1 || '', 200, 65, { align: "right" })
+      .text(`${companyDetails.address2 || ''} ${companyDetails.city || ''}`, 200, 80, { align: "right" })
+      .text(`${companyDetails.state || ''}, ${companyDetails.country || ''}`, 200, 95, { align: "right" })
+      .text(companyDetails.postal_code || '', 200, 110, { align: "right" })
+      .text(`Email: ${companyDetails.email || ''}`, 200, 130, { align: "right" })
+      .moveDown();
+  }
+
+  function generateReportDetails(doc, report) {
+    doc.fillColor("#444444").fontSize(20).text("Insurance Report", 50, 160);
+    generateHr(doc, 185);
+    const detailsTop = 200;
+
+    doc
+      .fontSize(10)
+      .font("Helvetica-Bold")
+      .text("Report Details:", 50, detailsTop)
+      .font("Helvetica")
+      .text("Report #:", 50, detailsTop + 15)
+      .text(report.number || 'N/A', 150, detailsTop + 15)
+      .text("Report Date:", 50, detailsTop + 30)
+      .text(report.report_date || 'N/A', 150, detailsTop + 30)
+      .text("Status:", 50, detailsTop + 45)
+      .text(report.status || 'N/A', 150, detailsTop + 45);
+
+    // Customer Info
+    doc
+      .font("Helvetica-Bold")
+      .text("Customer Details:", 300, detailsTop)
+      .font("Helvetica")
+      .text("Name:", 300, detailsTop + 15)
+      .text(props.customerData?.name || 'N/A', 350, detailsTop + 15)
+      .text("Phone:", 300, detailsTop + 30)
+      .text(props.customerData?.phone || 'N/A', 350, detailsTop + 30)
+      .text("Address:", 300, detailsTop + 45)
+      .text(props.customerData?.address || 'N/A', 350, detailsTop + 45, { width: 230 }); // Added width for address
+
+    generateHr(doc, detailsTop + 80);
+  }
+
+ // This function parses HTML content from TipTap editor and preserves formatting in the PDF
+ // It handles headings, paragraphs, lists, text formatting, and other rich text elements
+ function generateNotes(doc, report) {
+    doc.moveDown(2);
+    if (report.notes) {
+        doc
+            .fontSize(11)
+            .font("Helvetica-Bold")
+            .text("Details / Notes:", 50)
+            .moveDown(0.6)
+            .fontSize(10)
+            .font("Helvetica");
+
+        // Improved HTML content handling to preserve formatting from TipTap editor
+        // This parses the HTML and maintains headings, paragraphs, lists, and text formatting in the PDF
+        const content = report.notes;
+        
+        // Parse the HTML content
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = content;
+        
+        // Process the content with formatting preserved
+        try {
+            const processNode = (node, indent = 0) => {
+                // Ensure indent is always a valid number
+                indent = Number(indent) || 0;
+            if (node.nodeType === Node.TEXT_NODE) {
+                const text = node.textContent.trim();
+                if (text) {
+                    doc.text(text, 50 + indent, { continued: false, width: 500 - indent });
+                }
+            } else if (node.nodeType === Node.ELEMENT_NODE) {
+                // Handle different element types
+                switch (node.nodeName.toLowerCase()) {
+                    case 'h1':
+                        doc.moveDown(0.6).fontSize(16).font('Helvetica-Bold');
+                        processTextContent(node, indent);
+                        doc.fontSize(10).font('Helvetica').moveDown(0.6); // Adjusted moveDown
+                        break;
+                    case 'h2':
+                        doc.moveDown(0.6).fontSize(14).font('Helvetica-Bold');
+                        processTextContent(node, indent);
+                        doc.fontSize(10).font('Helvetica').moveDown(0.6); // Adjusted moveDown
+                        break;
+                    case 'h3':
+                        doc.moveDown(0.6).fontSize(12).font('Helvetica-Bold');
+                        processTextContent(node, indent);
+                        doc.fontSize(10).font('Helvetica').moveDown(0.6); // Adjusted moveDown
+                        break;
+                    case 'p':
+                        doc.moveDown(0.6);
+                        processTextContent(node, indent);
+                        doc.moveDown(0.6); // Adjusted moveDown
+                        break;
+                    case 'br':
+                        doc.moveDown(0.6);
+                        break;
+                    case 'strong':
+                    case 'b':
+                        doc.font('Helvetica-Bold');
+                        processTextContent(node, indent);
+                        doc.font('Helvetica');
+                        break;
+                    case 'em':
+                    case 'i':
+                        doc.font('Helvetica-Oblique');
+                        processTextContent(node, indent);
+                        doc.font('Helvetica');
+                        break;
+                    case 'ul':
+                        doc.moveDown(0.6);
+                        Array.from(node.childNodes).forEach(child => {
+                            if (child.nodeName.toLowerCase() === 'li') {
+                                try {
+                                    // Ensure indent is a valid number before calculating xPos
+                                    const currentIndent = Number(indent) || 0;
+                                    const xPos = Math.max(50, 50 + currentIndent);
+                                    const yPos = doc.y; // Get current Y position
+                                    // Explicitly set Y position to avoid potential NaN issues
+                                    if (isNaN(yPos)) {
+                                        // Attempt a fallback if yPos is NaN (shouldn't happen often)
+                                        doc.text('• ', xPos, { continued: true });
+                                    } else {
+                                        doc.text('• ', xPos, yPos, { continued: true });
+                                    }
+                                    processTextContent(child, currentIndent + 10);
+                                } catch (err) {
+                                    console.error("Error rendering bullet point:", err);
+                                    // Fallback to basic bullet point
+                                    doc.text('• ' + child.textContent.trim());
+                                }
+                                doc.moveDown(1); // Reverted spacing after bullet item
+                            }
+                        });
+                        doc.moveDown(0.6);
+                        break;
+                    case 'ol':
+                        doc.moveDown(0.6);
+                        let itemNumber = 1;
+                        Array.from(node.childNodes).forEach(child => {
+                            if (child.nodeName.toLowerCase() === 'li') {
+                                try {
+                                    // Ensure indent is a valid number before calculating xPos
+                                    const currentIndent = Number(indent) || 0;
+                                    const xPos = Math.max(50, 50 + currentIndent);
+                                    // Explicitly set Y position (similar logic could be added if needed)
+                                    doc.text(`${itemNumber}. `, xPos, { continued: true });
+                                    processTextContent(child, currentIndent + 15);
+                                } catch (err) {
+                                    console.error("Error rendering numbered list item:", err);
+                                    // Fallback to basic numbered list item
+                                    doc.text(`${itemNumber}. ` + child.textContent.trim());
+                                }
+                                doc.moveDown(0.6); // Reverted spacing after numbered item
+                                itemNumber++;
+                            }
+                        });
+                        doc.moveDown(0.6);
+                        break;
+                    case 'blockquote':
+                        doc.moveDown(0.6);
+                        try {
+                            // Ensure indent is a valid number before calculating xPos
+                            const currentIndent = Number(indent) || 0;
+                            const xPos = Math.max(70, 70 + currentIndent);
+                            // Explicitly set Y position (similar logic could be added if needed)
+                            doc.text('', xPos, { continued: false });
+                            processTextContent(node, currentIndent + 20);
+                        } catch (err) {
+                            console.error("Error rendering blockquote:", err);
+                            // Fallback to basic blockquote
+                            doc.text(node.textContent.trim());
+                        }
+                        doc.moveDown(0.6);
+                        break;
+                    case 'pre':
+                    case 'code':
+                        doc.moveDown(0.6).font('Courier');
+                        processTextContent(node, indent + 10);
+                        doc.font('Helvetica').moveDown(0.6);
+                        break;
+                    default:
+                        // Process child nodes for other elements
+                        Array.from(node.childNodes).forEach(child => {
+                            processNode(child, indent);
+                        });
+                }
+            }
+        };
+        
+        // Helper function to process text content of a node, handling inline styles (Simplified)
+        const processTextContent = (node, indent) => {
+            // Ensure indent is always a valid number
+            indent = Number(indent) || 0;
+            const startX = 50 + indent;
+
+            Array.from(node.childNodes).forEach(child => {
+                if (child.nodeType === Node.TEXT_NODE) {
+                    // Render text node with current font, allow continuation
+                     doc.text(child.textContent, { continued: true, width: 500 - indent });
+                } else if (child.nodeType === Node.ELEMENT_NODE) {
+                    const originalFont = doc._font.name; // Store current font
+                    let renderText = child.textContent; // Text to render for this element
+
+                    try {
+                        switch (child.nodeName.toLowerCase()) {
+                            case 'strong':
+                            case 'b':
+                                doc.font('Helvetica-Bold');
+                                doc.text(renderText, { continued: true, width: 500 - indent });
+                                doc.font(originalFont); // Restore font
+                                break;
+                            case 'em':
+                            case 'i':
+                                doc.font('Helvetica-Oblique');
+                                doc.text(renderText, { continued: true, width: 500 - indent });
+                                doc.font(originalFont); // Restore font
+                                break;
+                            // Add cases for other inline styles like 'u' (underline) if needed
+                            // case 'u':
+                            //     doc.text(renderText, { continued: true, underline: true, width: 500 - indent });
+                            //     break;
+                            default:
+                                // Render text content of unknown/unhandled inline elements
+                                doc.text(renderText, { continued: true, width: 500 - indent });
+                        }
+                    } catch (err) {
+                         console.error("Error rendering inline text segment:", err, renderText);
+                         // Fallback: render plain text and restore font
+                         doc.font(originalFont);
+                         doc.text(renderText, { continued: true });
+                    }
+                }
+            });
+             // After processing all children of the block node (e.g., <p>), add a final newline.
+             // This prevents text from the *next* block element from continuing on the same line.
+             doc.text('', startX); // Move to next line
+        };
+        
+        // Start processing from the root
+        Array.from(tempDiv.childNodes).forEach(node => {
+            processNode(node);
+        });
+        } catch (error) {
+            console.error("Error processing HTML content for PDF:", error);
+            // Fallback to basic text rendering if HTML processing fails
+            doc.text(report.notes.replace(/<[^>]+>/g, ''), {
+                align: "left",
+                width: 500
+            });
+        }
+    }
+}
+
+
+  function generateFooter(doc) {
+    // Optional: Add a footer if needed
+    // doc.fontSize(10).text("Generated by Wibiclick", 50, 780, { align: "center", width: 500 });
+  }
+
+  function generateHr(doc, y) {
+    doc.strokeColor("#aaaaaa").lineWidth(1).moveTo(50, y).lineTo(550, y).stroke();
+  }
+  // --- End PDF Content Generation Functions ---
+
+  // Add content to the document
+  try {
+    generateHeader(doc, report);
+    generateReportDetails(doc, report);
+    generateNotes(doc, report);
+    generateFooter(doc);
+  } catch (error) {
+    console.error("Error generating PDF content:", error);
+    // Add a simple error message to the PDF
+    doc.fontSize(14).font('Helvetica-Bold').text('Error generating formatted content', 50, 300);
+    doc.fontSize(10).font('Helvetica').text('The report content could not be fully formatted. Please try again or contact support.', 50, 330);
+  }
+
+  doc.end();
+
+  stream.on("finish", function() {
+    // Restore the original console.error function
+    console.error = originalConsoleError;
+    const pdfBlob = stream.toBlob("application/pdf");
+    if (action === 'download') {
+      const a = document.createElement("a");
+      document.body.appendChild(a);
+      a.style = "display: none";
+      const url = window.URL.createObjectURL(pdfBlob);
+      a.href = url;
+      a.download = path;
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast.success("Insurance Report with formatting downloaded successfully");
+    } else if (action === 'whatsapp') {
+      blob.value = pdfBlob;
+      isOpen.value = true;
+    }
+  });
+};
+
+let img; // Variable to hold the logo image dataURL
+
+const prepareAndGeneratePDF = async (report, path, action = 'download') => {
+  loading.value = true;
+  try {
+    // Notify user that PDF is being generated with formatting
+    toast.info("Generating PDF with formatted content...");
+    
+    // Use a generic logo or estimate logo as fallback
+    const logoUrl = profile.value?.estimate_logo || '';
+    if (logoUrl) {
+      img = await getBase64FromUrl(logoUrl);
+    } else {
+      img = imageHolder;
+    }
+    createInsurancePDF(report, path, action);
+  } catch (error) {
+    console.error("Error preparing PDF:", error);
+    toast.error("Error preparing PDF for download/sending.");
+    img = imageHolder; // Fallback image
+  } finally {
+    loading.value = false;
+  }
+};
+
+const sendAttachment = () => {
+  client.value = props.customerData?.name || 'Customer';
+  sender.value = profile.value?.firstName || 'Sender';
+  company.value = profile.value?.company?.company_name || 'Company';
+
+  if (!profile.value) {
+    toast.warning("Company profile not loaded yet. Please wait.");
+    fetchProfile().then(() => {
+      prepareAndGeneratePDF(insuranceForm, `InsuranceReport_${insuranceForm.number || 'Details'}.pdf`, 'whatsapp');
+    });
+  } else {
+    prepareAndGeneratePDF(insuranceForm, `InsuranceReport_${insuranceForm.number || 'Details'}.pdf`, 'whatsapp');
+  }
+};
+
+// --- Lifecycle ---
+onMounted(() => {
+  // Fetch profile data initially
+  fetchProfile(); // Ensure profile is fetched for PDF details
+
+  // Load PDFKit and BlobStream via script tags
+  if (!document.querySelector('script[src*="pdfkit.standalone.js"]')) {
+    let pdfKitTag = document.createElement("script");
+    pdfKitTag.setAttribute("src", "https://github.com/foliojs/pdfkit/releases/download/v0.13.0/pdfkit.standalone.js");
+    pdfKitTag.setAttribute("type", "text/javascript");
+    document.head.append(pdfKitTag);
+  }
+
+  if (!document.querySelector('script[src*="blob-stream.js"]')) {
+    let blobStreamTag = document.createElement("script");
+    blobStreamTag.setAttribute("src", "https://github.com/devongovett/blob-stream/releases/download/v0.1.3/blob-stream.js");
+    blobStreamTag.setAttribute("type", "text/javascript");
+    document.head.append(blobStreamTag);
+  }
+});
+
 
 // --- Watchers ---
 watch(() => props.modelValue, (newValue) => {
@@ -139,35 +624,44 @@ watch(() => props.modelValue, (newValue) => {
         <div class="fixed inset-0 bg-gray-500/75 dark:bg-black/80 transition-opacity" aria-hidden="true" @click="closeModal"></div>
         <!-- Modal positioning -->
         <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-        <!-- Modal panel -->
-        <div class="modal-content-modern">
+        <!-- Modal panel - Using larger size for easier editing of insurance reports -->
+        <div class="modal-content-modern modal-content-large">
           <h3 class="text-lg font-semibold mb-6 text-gray-900 dark:text-white" id="modal-title">
             {{ isEditing ? 'Edit Insurance Report' : 'Add New Insurance Report' }}
             <span v-if="customerData?.name" class="text-base font-normal text-gray-500 dark:text-gray-400"> for {{ customerData.name }}</span>
           </h3>
-          <form @submit.prevent="submitInsuranceReport" class="space-y-4">
-            <div class="max-h-[60vh] overflow-y-auto pr-2">
+          <!-- WhatsApp Modal -->
+          <modal v-if="isOpen" :website="userStore.currentWebsite" :body="body" :isOpen="isOpen" :blob="blob" :client="client" :sender="sender" :company="company" :phone="props.customerData?.phone" name="Insurance Report" @close-modal="closeModalWA"></modal>
+          
+          <form @submit.prevent="handleSave" class="space-y-4">
+            <div class="max-h-[70vh] overflow-y-auto pr-2">
               <!-- Insurance Report Details Section -->
               <div class="mb-6">
                 <h4 class="text-md font-semibold mb-3 text-gray-800 dark:text-gray-200">Report Details</h4>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
                     <label for="insurance-number" class="label-modern">Report Number</label>
-                    <input type="text" id="insurance-number" v-model="insuranceForm.number" class="input-modern" placeholder="e.g., CLAIM-123" />
+                    <input
+                      type="text"
+                      id="insurance-number"
+                      v-model="insuranceForm.number"
+                      :readonly="!isEditing"
+                      :class="['input-modern', { 'bg-gray-100 dark:bg-gray-700/80 cursor-not-allowed': !isEditing }]"
+                      placeholder="Auto-generated..." />
                   </div>
                    <div>
                     <label for="insurance-date" class="label-modern">Report Date</label>
                     <input type="date" id="insurance-date" v-model="insuranceForm.report_date" required class="input-modern" />
                   </div>
-                  <div class="sm:col-span-2">
+                  <div class="sm:col-span-3">
                     <label for="insurance-status" class="label-modern">Status</label>
                     <select id="insurance-status" v-model="insuranceForm.status" required class="input-modern input-modern--select">
                       <option v-for="status in INSURANCE_STATUSES" :key="status" :value="status">{{ status }}</option>
                     </select>
                   </div>
-                   <div class="sm:col-span-2">
+                   <div class="sm:col-span-3">
                     <label for="insurance-notes" class="label-modern">Details / Notes</label>
-                    <TipTapEditor id="insurance-notes" v-model="insuranceForm.notes" placeholder="Enter details about the insurance report or claim..." class="input-modern min-h-[150px]" />
+                    <TipTapEditor id="insurance-notes" v-model="insuranceForm.notes" placeholder="Enter details about the insurance report or claim..." class="input-modern min-h-[300px]" />
                   </div>
                   <!-- Add more fields here if needed (Provider, Policy No, Claim No, etc.) -->
                 </div>
@@ -176,10 +670,22 @@ watch(() => props.modelValue, (newValue) => {
             </div>
 
             <div class="pt-5 sm:pt-6 flex flex-col sm:flex-row-reverse gap-3 border-t border-gray-200 dark:border-gray-700/50">
-              <button type="submit" class="btn-primary-modern w-full sm:w-auto" :disabled="loading">
-                {{ loading ? 'Saving...' : (isEditing ? 'Update Report' : 'Add Report') }}
+              <!-- WhatsApp Button -->
+              <button @click="sendAttachment" type="button" class="btn-secondary-modern w-full sm:w-auto bg-green-100 dark:bg-green-900/50 border-green-300 dark:border-green-700 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-800/50" :disabled="loading">
+                <font-awesome-icon :icon="['fab', 'whatsapp']" class="mr-1.5 h-4 w-4" /> WhatsApp
               </button>
-              <button @click="closeModal" type="button" class="btn-secondary-modern w-full sm:w-auto">
+              <!-- Save & Download Button -->
+              <button @click="save_type = 'download'; handleSave()" type="button" class="btn-secondary-modern w-full sm:w-auto" :disabled="loading">
+                 <svg class="w-4 h-4 mr-1.5 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                 {{ loading && save_type === 'download' ? 'Saving...' : 'Save & Download' }}
+              </button>
+              <!-- Save Button (acts as primary submit) -->
+              <button @click="save_type = 'save'" type="submit" class="btn-primary-modern w-full sm:w-auto" :disabled="loading">
+                 <svg class="w-4 h-4 mr-1.5 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                 {{ loading && save_type === 'save' ? 'Saving...' : 'Save Report' }} <!-- Changed text -->
+              </button>
+              <!-- Cancel Button -->
+              <button @click="closeModal" type="button" class="btn-secondary-modern w-full sm:w-auto mr-auto"> <!-- Added mr-auto -->
                 Cancel
               </button>
             </div>
@@ -220,7 +726,12 @@ watch(() => props.modelValue, (newValue) => {
   @apply transition-colors duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed;
 }
 .modal-content-modern {
-  @apply inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full p-6 sm:p-8; /* Adjusted max-width */
+  @apply inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full p-6 sm:p-8;
+}
+
+/* Larger modal for easier editing */
+.modal-content-large {
+  @apply sm:max-w-4xl; /* Much wider modal */
 }
 .modal-fade-enter-active,
 .modal-fade-leave-active {
