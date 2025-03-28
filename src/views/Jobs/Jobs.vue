@@ -574,6 +574,7 @@ const editJob = (job) => {
     location: job.location || '',
     address: job.address || '',
     phone: job.phone || '',
+    // Convert UTC from server to local time string for the input
     slotStart: job.slotStart ? moment.utc(job.slotStart).format('YYYY-MM-DDTHH:mm') : '',
     slotTime: job.slotTime || '1hr',
     employeeId: job.employee?.id || '',
@@ -640,7 +641,54 @@ const notifyTechnician = async (job) => {
    try {
      loading.value = true // Maybe a specific notification loading state?
      // Construct payload as needed by 'send-job-to-technician' endpoint
-     const jobData = { /* ... construct job data accurately ... */ };
+     const jobData = {
+       id: job.id,
+       name: job.name,
+       callout: job.callout,
+       paid: job.paid,
+       phone: job.phone,
+       location: job.location,
+       payment: job.payment,
+       address: job.address,
+       issue: job.issue,
+       slotStart: job.slotStart, // Keep original format for backend
+       slotEnd: job.slotEnd,
+       slotTime: job.slotTime,
+       jobStatus: job.jobStatus,
+       parts: job.parts,
+       to_do: job.to_do,
+       techAmount: job.techAmount,
+       companyAmount: job.companyAmount,
+       estimate: job.estimate,
+       invoice: job.invoice,
+       employee: job.employee ? { // Check if employee exists
+         id: job.employee.id,
+         firstName: job.employee.firstName,
+         lastName: job.employee.lastName,
+         phone: job.employee.phone
+       } : null, // Send null if no employee assigned
+       customer: job.customer ? { // Check if customer exists
+         id: job.customer.id,
+         name: job.customer.name,
+         foreignID: job.customer.foreignID,
+         portal: job.customer.portal,
+         address: job.customer.address,
+         phone: job.customer.phone
+       } : null, // Send null if no customer linked
+       website: { // Construct website info based on current context
+         id: currentWebsite.value,
+         url: websites.value.find(w => w.value === currentWebsite.value)?.label,
+         userId: userStore.user?.id, // Use optional chaining
+         // settingId, createdAt, updatedAt might not be available directly on job.website
+       },
+       createdAt: job.createdAt,
+       updatedAt: job.updatedAt,
+       // Include other potential fields, ensuring defaults if they might be null/undefined
+       fuelExpense: job.fuelExpense || "0",
+       partsExpense: job.partsExpense || "0",
+       calloutFee: job.calloutFee || "0", // Assuming this is different from 'callout'
+       expenses: job.expenses || []
+     };
      await axios.post('send-job-to-technician', { job: jobData }) // Ensure endpoint and payload match backend
      toast.success('Technician notified successfully')
    } catch (error) {
@@ -653,7 +701,9 @@ const notifyTechnician = async (job) => {
 
 const formatDate = (date) => {
   if (!date) return 'N/A';
+  // Reverted: Keep original UTC parsing for table display
   const jobDate = moment.utc(date);
+  // Reverted: Compare with UTC 'now'
   const now = moment.utc();
 
   if (jobDate.isSame(now, 'day')) {
