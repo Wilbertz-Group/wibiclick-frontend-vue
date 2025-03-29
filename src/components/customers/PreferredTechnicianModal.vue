@@ -118,18 +118,16 @@ async function fetchTechnicians() {
   isFetchingTechnicians.value = true;
   fetchError.value = '';
   try {
-    const apiUrl = import.meta.env.VITE_API_URL;
-    // TODO: Replace with actual API call to fetch technicians
-    // const response = await axios.get(`${apiUrl}/employees?websiteId=${userStore.currentWebsite}&role=technician`); // Example endpoint
+    // Actual API call to fetch technicians
+    const response = await axios.get(`employees?id=${userStore.currentWebsite}`); // Use relative path and websiteId query param
     console.log("Fetching technicians for website:", userStore.currentWebsite);
-    await new Promise(resolve => setTimeout(resolve, 800)); // Simulate API call
-    // Simulate response
-    technicians.value = [
-      { id: 1, firstName: 'John', lastName: 'Doe' },
-      { id: 2, firstName: 'Jane', lastName: 'Smith' },
-      { id: 3, firstName: 'Peter', lastName: 'Jones' },
-    ];
-    // technicians.value = response.data; // Assuming API returns an array of technicians
+    // Removed simulation code
+    // Removed simulation code
+    // Removed simulation code
+    // Removed simulation code
+    // Removed simulation code
+    // Removed simulation code
+    technicians.value = response.data.employees || []; // Assuming API returns { employees: [...] }
   } catch (error) {
     console.error("Error fetching technicians:", error);
     fetchError.value = `Failed to load technicians: ${error.response?.data?.message || error.message}`;
@@ -158,11 +156,18 @@ async function savePreference() {
     const payload = { technicianId: selectedTechnicianId.value }; // API expects { technicianId: number | null }
 
     console.log(`Saving preferred technician for customer ${props.customerId}:`, payload);
-    // TODO: Replace with actual API call: PUT /customers/:id/preferred-technician
-    // await axios.put(`${apiUrl}/customers/${props.customerId}/preferred-technician`, payload);
-    await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
+    // Actual API call: PUT /customers/:id/preferred-technician
+    const websiteId = userStore.currentWebsite;
+    if (!websiteId) {
+        saveError.value = "Cannot save preference: Website ID is missing.";
+        toast.error(saveError.value);
+        isSaving.value = false;
+        return;
+    }
+    await axios.put(`customers/${props.customerId}/preferred-technician?id=${websiteId}`, payload);
+    // Removed simulation code
 
-    toast.success('Preferred technician updated successfully (simulated)');
+    toast.success('Preferred technician updated successfully');
     emit('saved'); // Notify parent component to refresh data
     closeModal();
 

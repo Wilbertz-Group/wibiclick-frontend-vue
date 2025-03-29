@@ -53,13 +53,25 @@
 	const heading = ref()
 	const isOpen = ref(false)
 
-	// Helper function for currency formatting (basic example)
+	// Helper function for currency formatting
 	function formatCurrency(value) {
-	  if (value === null || value === undefined) return 'N/A';
-	  // TODO: Use a more robust currency formatting library or locale-specific formatting
-	  return `R ${Number(value).toFixed(2)}`;
+	  if (value === null || value === undefined || isNaN(Number(value))) return 'N/A';
+	
+	  // Use Intl.NumberFormat for locale-aware currency formatting
+	  try {
+	    return new Intl.NumberFormat('en-ZA', { // Use South African locale
+	      style: 'currency',
+	      currency: 'ZAR', // Specify ZAR currency code
+	      minimumFractionDigits: 2,
+	      maximumFractionDigits: 2,
+	    }).format(Number(value));
+	  } catch (error) {
+	    console.error("Currency formatting error:", error);
+	    // Fallback to basic formatting on error
+	    return `R ${Number(value).toFixed(2)}`;
+	  }
 	}
-
+	
 	// Helper function to determine profit text color
 	function getProfitClass(value) {
 	  if (value === null || value === undefined) return 'text-gray-500';

@@ -4,6 +4,7 @@ import { uuid } from 'vue-uuid';
 import { onMounted, ref, computed, watchEffect, nextTick } from "vue"; // Added nextTick
 import { useToast } from 'vue-toast-notification';
 import { useRouter, useRoute } from "vue-router";
+// import { formatDistanceToNow } from 'date-fns'; // Removed duplicate import - used within formatRelativeTime helper
 import { useUserStore } from "@/stores/UserStore"
 import { tooltips, noteModal, whatsappModal } from '../../helpers';
 import JobVue from '@/components/jobs/Job.vue' // Keep for related items
@@ -48,6 +49,7 @@ import ApplianceCard from '@/components/Customers/ApplianceCard.vue'; // Import 
 import ApplianceFormModal from '@/components/Customers/ApplianceFormModal.vue'; // Import Appliance Form Modal
 import PreferredTechnicianModal from '@/components/Customers/PreferredTechnicianModal.vue'; // Import Preferred Technician Modal
 import CommunicationPreferencesModal from '@/components/Customers/CommunicationPreferencesModal.vue'; // Import Comm Prefs Modal
+import { formatDistanceToNow } from 'date-fns'; // Import date-fns function
 
 library.add(
   faArrowLeft, faEdit, faStickyNote, faPaperPlane, faPlus, faChevronDown, faChevronUp, faExternalLinkAlt, faPhone, faEnvelope, faMapMarkerAlt, faUser, faUsers, faUserCog, faBuilding, faLink, faInfoCircle, faBriefcase, faFileInvoiceDollar, faReceipt, faMoneyBillWave, faShieldAlt, faListOl, faWhatsapp, faSync, faStar, farStar, faComments, faClock, farClock, faSignal, faLanguage, faExclamationTriangle, faMagic // Added faUsers, faStar, farStar, faUserCog, comms icons, warning icon, magic icon
@@ -77,28 +79,49 @@ const showPreferredTechnicianModal = ref(false); // State for preferred technici
 const showCommPrefsModal = ref(false); // State for communication preferences modal
 const technicians = ref([]); // State for technicians list (might be fetched within modal now)
 const customerFinancials = ref({ totalRevenue: null, totalCosts: null, netProfit: null }); // State for customer financials
-const timelineSummary = ref(''); // State for AI timeline summary
-const isFetchingTimelineSummary = ref(false); // Loading state for summary
-const timelineSummaryError = ref(null); // Error state for summary
-const followupSuggestions = ref([]); // State for AI suggestions
-const isFetchingSuggestions = ref(false); // Loading state for suggestions
-const suggestionsError = ref(null); // Error state for suggestions
-const profitabilityAnalysis = ref(''); // State for AI profitability analysis
-const isFetchingProfitabilityAnalysis = ref(false); // Loading state for analysis
-const profitabilityAnalysisError = ref(null); // Error state for analysis
-const predictiveMaintenanceAlerts = ref([]); // State for predictive maintenance alerts { applianceId: number, alert: object }[]
-const isFetchingPredMaint = ref(false); // Loading state for predictive maintenance
-const predMaintError = ref(null); // Error state for predictive maintenance
-const serviceFollowUps = ref([]); // State for service follow-up records (used for Satisfaction display)
-const loggedFollowUps = ref([]); // State for logged/historical follow-ups (Engagement Hub)
-const holidayGreetings = ref([]); // State for suggested holiday/occasion greetings
+
+// --- AI Analysis State ---
+// Old state (kept for fetch triggers, cleared on load)
+const timelineSummary = ref('');
+const profitabilityAnalysis = ref('');
+const sentimentAnalysis = ref(null); // Keep old structure for now if needed by fetchSentimentAnalysis
+
+// New state for latest history
+const latestTimelineSummary = ref(null); // Will hold { content: string, generatedAt: string } | null
+const latestProfitabilityAnalysis = ref(null); // Will hold { content: string, generatedAt: string } | null
+const latestSentimentAnalysis = ref(null); // Will hold { content: string, generatedAt: string } | null
+
+// Loading/Error states for AI fetches (Needed for individual refresh triggers)
+const isFetchingTimelineSummary = ref(false);
+const timelineSummaryError = ref(null);
+const isFetchingProfitabilityAnalysis = ref(false);
+const profitabilityAnalysisError = ref(null);
+const isFetchingSentiment = ref(false);
+const sentimentError = ref(null);
+
+// Other AI/Engagement state
+const followupSuggestions = ref([]);
+const isFetchingSuggestions = ref(false);
+const suggestionsError = ref(null);
+const predictiveMaintenanceAlerts = ref([]);
+const isFetchingPredMaint = ref(false);
+const predMaintError = ref(null);
+const serviceFollowUps = ref([]);
+const loggedFollowUps = ref([]);
+const holidayGreetings = ref([]);
+const scheduledMessages = ref([]);
+const isFetchingScheduled = ref(false);
+const scheduledError = ref(null);
+const isFetchingGreetings = ref(false);
+const greetingsError = ref(null);
 
 const lineItems = ref([])
 const notes = ref('') // Model for note modal
 const whatsapp = ref('') // Model for whatsapp modal
 const customer = ref({
   id: '', name: '', phone: '', email: '', channel: '', address: '', message: '', hubspotLink: '', foreignID: '', portal: '', jobs: [], estimate: [], invoice: [], employeeId: '', createdAt: '', updatedAt: '', activities: [], payments: [], expenses: [], insurance: [], appliances: [], referredBy: null, referrals: [], preferredTechnicianId: null, preferredTechnician: null, // Added technician preference
-  preferredContactMethod: null, preferredContactTimes: null, communicationFrequencyPreference: null, languagePreference: 'en' // Added communication preferences
+  preferredContactMethod: null, preferredContactTimes: null, communicationFrequencyPreference: null, languagePreference: 'en', // Added communication preferences
+  aiAnalysisHistory: [] // Expect this from backend now
 })
 const editableCustomer = ref({}); // For editing form
 
@@ -148,13 +171,55 @@ const activityTabs = computed(() => [
 ]);
 
 // --- Methods ---
+
+// Helper function for relative time formatting
+function formatRelativeTime(dateString) {
+  if (!dateString) return '';
+  try {
+    return formatDistanceToNow(new Date(dateString), { addSuffix: true });
+  } catch (error) {
+    console.error("Error formatting date:", error);
+    return ''; // Return empty string on error
+  }
+}
+
 async function fetchContacts() {
   isFetchingCustomer.value = true;
+  // Reset latest analysis state on fetch
+  latestProfitabilityAnalysis.value = null;
+  latestTimelineSummary.value = null;
+  latestSentimentAnalysis.value = null;
+  // Clear old state refs (if keeping them for fetch triggers)
+  profitabilityAnalysis.value = '';
+  timelineSummary.value = '';
+  sentimentAnalysis.value = null;
+
   try {
     const response = await axios.get(
       `customer?id=${userStore.currentWebsite}&custId=${route.query.customer_id}`
     );
     customer.value = response.data.customer || customer.value; // Ensure fallback
+
+    // --- Process AI Analysis History ---
+    if (Array.isArray(customer.value?.aiAnalysisHistory)) {
+      // Find the latest entry for each type (history is sorted desc by backend)
+      latestProfitabilityAnalysis.value = customer.value.aiAnalysisHistory.find(
+        h => h.analysisType === 'customerProfitabilityAnalysis'
+      ) || null;
+      latestTimelineSummary.value = customer.value.aiAnalysisHistory.find(
+        h => h.analysisType === 'interactionTimelineSummary'
+      ) || null;
+      latestSentimentAnalysis.value = customer.value.aiAnalysisHistory.find(
+        h => h.analysisType === 'sentimentAnalysis'
+      ) || null;
+
+      // Log found history for debugging
+      console.log("Latest Profitability:", latestProfitabilityAnalysis.value);
+      console.log("Latest Summary:", latestTimelineSummary.value);
+      console.log("Latest Sentiment:", latestSentimentAnalysis.value);
+    }
+    // --- End AI History Processing ---
+
 
     // Process activities
     if (customer.value?.activities) {
@@ -222,6 +287,7 @@ function reloadTimeline() {
     // Fetch financials after main customer data is loaded/refreshed
     fetchCustomerFinancials();
     fetchLoggedFollowUps(); // Fetch logged follow-ups on reload
+    fetchScheduledMessages(); // Fetch scheduled messages on reload
   });
   wkey.value += 1;
   nkey.value += 1;
@@ -476,20 +542,21 @@ function handleCommPrefsSaved() {
     reloadTimeline(); // Refresh customer data to show updated preferences
 }
 
-// --- LLM Fetch Placeholders ---
+// --- LLM Fetch Functions ---
+// These functions now trigger the backend to generate AND save the analysis.
+// The result displayed will be from the latest history fetched in fetchContacts.
 async function fetchTimelineSummary() {
   console.log("Fetching AI Timeline Summary...");
   isFetchingTimelineSummary.value = true;
   timelineSummaryError.value = null;
-  timelineSummary.value = ''; // Clear previous summary
+  // Don't clear latestTimelineSummary.value here, let fetchContacts handle update
 
   try {
-    // Actual API call
-    // Assuming websiteId is needed as a query param for backend routing/auth
-    const response = await axios.post(`customers/${route.query.customer_id}/timeline-summary?id=${userStore.currentWebsite}`);
-    // Assuming backend returns { summary: '...' }
-    timelineSummary.value = response.data.summary;
-
+    // Call backend to generate (and save)
+    await axios.post(`customers/${route.query.customer_id}/timeline-summary?id=${userStore.currentWebsite}`);
+    toast.success("Timeline summary generated. Refreshing data...");
+    // Reload all customer data to get the latest history entry
+    await fetchContacts();
   } catch (error) {
     console.error("Error fetching timeline summary:", error);
     timelineSummaryError.value = error.response?.data?.message || error.message || "Failed to generate summary.";
@@ -524,39 +591,133 @@ async function fetchFollowupSuggestions() {
 }
 
 // Placeholder actions for suggestions
-function scheduleSuggestion(suggestion) {
+async function scheduleSuggestion(suggestion) {
   console.log("Scheduling suggestion:", suggestion);
-  toast.info("Schedule functionality not implemented.");
+  // TODO: Implement a date/time picker modal to allow user selection for followUpDate
+  const placeholderScheduleDate = new Date();
+  placeholderScheduleDate.setDate(placeholderScheduleDate.getDate() + 1); // Schedule for tomorrow for now
+
+  const payload = {
+      customerId: customer.value.id, // Assuming customer.value.id is available
+      jobId: null, // Suggestions aren't typically tied to a specific job
+      status: 'SCHEDULED',
+      type: 'AI_SUGGESTION',
+      messageContent: suggestion.draftMessage,
+      followUpDate: placeholderScheduleDate.toISOString(),
+  };
+
+  try {
+      await axios.post(`follow-ups?id=${userStore.currentWebsite}`, payload); // Assuming websiteId needed for auth/context
+      toast.success(`Suggestion scheduled for ${placeholderScheduleDate.toLocaleDateString()}.`);
+      // Optionally remove the suggestion from the list after scheduling
+      // followupSuggestions.value = followupSuggestions.value.filter(s => s !== suggestion); // Need a unique ID on suggestions for this
+  } catch (error) {
+      console.error("Error scheduling suggestion:", error);
+      toast.error(`Failed to schedule suggestion: ${error.response?.data?.message || error.message}`);
+  }
 }
-function sendSuggestionNow(suggestion) {
+async function sendSuggestionNow(suggestion) {
   console.log("Sending suggestion now:", suggestion);
-  toast.info("Send Now functionality not implemented.");
-  // TODO: Call API to send message (WhatsApp/Email/SMS)
+
+  // Determine channel (use customer preference or default, e.g., WhatsApp)
+  const channel = customer.value?.preferredContactMethod || 'WHATSAPP'; // Default to WhatsApp if not set
+
+  const payload = {
+      customerId: customer.value.id,
+      message: suggestion.draftMessage,
+      channel: channel,
+      subject: suggestion.title || 'Following Up', // Use suggestion title as subject for email
+      logAsFollowUp: true, // Log this send action
+      websiteId: userStore.currentWebsite, // Needed for WhatsApp
+  };
+
+  try {
+      // Call the new direct messaging endpoint
+      await axios.post(`messaging/send-direct?id=${userStore.currentWebsite}`, payload); // Assuming websiteId needed for auth/context
+      toast.success(`Suggestion sent via ${channel}.`);
+      // Optionally remove the suggestion from the list
+      // followupSuggestions.value = followupSuggestions.value.filter(s => s !== suggestion); // Need unique ID
+  } catch (error) {
+      console.error("Error sending suggestion now:", error);
+      toast.error(`Failed to send suggestion: ${error.response?.data?.message || error.message}`);
+  }
+  // Removed example comment block
+  // try {
+  //   await axios.post(`/messaging/send?id=${userStore.currentWebsite}`, {
+  //     customerId: customer.value.id,
+  //     channel: suggestion.channel || customer.value.preferredContactMethod || 'whatsapp', // Determine channel
+  //     message: suggestion.draftMessage
+  //   });
+  //   toast.success("Suggestion sent successfully (placeholder).");
+  //   // Optionally remove the suggestion from the list or update its state
+  // } catch (error) {
+  //   console.error("Error sending suggestion:", error);
+  //   toast.error("Failed to send suggestion.");
+  // }
 }
-function logSuggestionManually(suggestion) {
+async function logSuggestionManually(suggestion) {
   console.log("Logging suggestion manually:", suggestion);
-  toast.info("Manual Log functionality not implemented.");
-  // TODO: Open a modal/form to log interaction
+  // TODO: Implement a modal to capture user feedback/notes about the manual interaction.
+  const userFeedback = prompt("Enter notes about the manual interaction (placeholder):"); // Placeholder for modal input
+
+  const payload = {
+      customerId: customer.value.id,
+      jobId: null,
+      status: 'COMPLETED', // Or 'LOGGED' depending on desired workflow
+      type: 'MANUAL_LOG',
+      messageContent: suggestion.draftMessage, // Store original suggestion context
+      feedback: userFeedback || `Manual action based on suggestion: ${suggestion.title}`, // Use user input or default
+      followUpDate: new Date().toISOString(), // Log when it happened
+  };
+
+  try {
+      await axios.post(`follow-ups?id=${userStore.currentWebsite}`, payload);
+      toast.success(`Manual interaction logged.`);
+      // Optionally remove the suggestion from the list
+      // followupSuggestions.value = followupSuggestions.value.filter(s => s !== suggestion); // Need unique ID
+  } catch (error) {
+      console.error("Error logging manual interaction:", error);
+      toast.error(`Failed to log interaction: ${error.response?.data?.message || error.message}`);
+  }
 }
-function dismissSuggestion(index) {
-  console.log("Dismissing suggestion at index:", index);
-  followupSuggestions.value.splice(index, 1); // Remove from local state
-  // TODO: Optionally call API to mark suggestion as dismissed on backend
+async function dismissSuggestion(index) {
+  const suggestionToDismiss = followupSuggestions.value[index];
+  if (!suggestionToDismiss || !suggestionToDismiss.id) {
+      console.error("Cannot dismiss suggestion: ID missing.", suggestionToDismiss);
+      toast.error("Cannot dismiss suggestion: ID missing.");
+      return;
+  }
+  const suggestionId = suggestionToDismiss.id;
+  console.log("Dismissing suggestion:", suggestionId);
+
+  // Optimistic UI update
+  const originalSuggestions = [...followupSuggestions.value];
+  followupSuggestions.value.splice(index, 1);
+
+  try {
+      // Call backend to update status
+      await axios.post(`suggestions/${suggestionId}/dismiss?id=${userStore.currentWebsite}`); // Assuming websiteId needed for auth/context
+      toast.success(`Suggestion dismissed.`);
+  } catch (error) {
+      console.error("Error dismissing suggestion:", error);
+      toast.error(`Failed to dismiss suggestion: ${error.response?.data?.message || error.message}`);
+      // Revert UI change on error
+      followupSuggestions.value = originalSuggestions;
+  }
 }
 
 async function fetchProfitabilityAnalysis() {
   console.log("Fetching AI Profitability Analysis...");
   isFetchingProfitabilityAnalysis.value = true;
   profitabilityAnalysisError.value = null;
-  profitabilityAnalysis.value = '';
+  // Don't clear latestProfitabilityAnalysis.value here
 
   try {
-    // Actual API call
-    // Assuming websiteId is needed as a query param for backend routing/auth
-    const response = await axios.post(`customers/${route.query.customer_id}/profitability-analysis?id=${userStore.currentWebsite}`);
-    // Assuming backend returns { analysis: '...' }
-    profitabilityAnalysis.value = response.data.analysis;
-
+    // Call backend to generate (and save)
+    await axios.post(`customers/${route.query.customer_id}/profitability-analysis?id=${userStore.currentWebsite}`);
+    toast.success("Profitability analysis generated. Refreshing data...");
+    // Reload all customer data to get the latest history entry
+    await fetchContacts();
   } catch (error) {
     console.error("Error fetching profitability analysis:", error);
     profitabilityAnalysisError.value = error.response?.data?.message || error.message || "Failed to load analysis.";
@@ -633,11 +794,196 @@ function getApplianceName(applianceId) {
   return appliance ? `${appliance.type} (${appliance.brand || 'Unknown Brand'})` : `Appliance ID ${applianceId}`;
 }
 
-function scheduleServiceForAlert(alertData) {
-  console.log("Scheduling service for alert:", alertData);
-  // TODO: Pre-fill and open JobFormModal with details from alertData and appliance
-  toast.info("Schedule Service from alert not implemented.");
+// Renamed function
+function handleScheduleServiceFromAlert(payload) { // payload contains { appliance, alert }
+  console.log("Scheduling service for alert:", payload.alert, "for appliance:", payload.appliance);
+  // TODO: Implement scheduling from alert.
+  // 1. Construct a preliminary job object based on the appliance and alert details.
+  //    - Use customer ID, appliance details (type, brand, serial), alert reason (e.g., "Predictive Maintenance Alert: " + payload.alert.needs).
+  //    - Potentially pre-fill description, priority.
+  // 2. Set `selectedJob.value` to this preliminary job object.
+  // 3. Set `showAddJobModal.value = true` to open the JobFormModal, pre-filled.
+  selectedJob.value = {
+      customerId: customer.value.id,
+      customerName: customer.value.name, // Pass customer name for display in modal
+      customerPhone: customer.value.phone, // Pass phone
+      customerAddress: customer.value.address, // Pass address
+      applianceType: payload.appliance?.type,
+      applianceBrand: payload.appliance?.brand,
+      applianceSerial: payload.appliance?.serialNumber,
+      // Construct a meaningful description
+      description: `Predictive Maintenance Alert for ${payload.appliance?.type || 'Appliance'}:\nNeeds: ${payload.alert?.needs || 'Check Required'}\nRisk: ${payload.alert?.risk || 'Unknown'}\nDetails: ${payload.alert?.details || ''}`,
+      priority: 'Medium', // Or determine based on risk
+      // Add other necessary fields if the modal requires them (e.g., websiteId)
+      websiteId: userStore.currentWebsite,
+  };
+  showAddJobModal.value = true;
+  toast.info("Job modal opened with pre-filled alert details.");
 }
+
+// Handler for dismissing a predictive maintenance alert
+async function handleDismissAlert(applianceId) {
+    console.log("Dismissing alert for appliance ID:", applianceId);
+    const alertIndex = predictiveMaintenanceAlerts.value.findIndex(a => a.applianceId === applianceId);
+    if (alertIndex === -1) return; // Alert not found
+
+    // Remove the alert from the local state immediately for responsiveness
+    const dismissedAlert = predictiveMaintenanceAlerts.value.splice(alertIndex, 1)[0]; // Keep optimistic removal
+
+    // Call backend to persist dismissal
+    try {
+      await axios.post(`appliances/${applianceId}/dismiss-alert?id=${userStore.currentWebsite}`);
+      toast.success(`Alert for ${getApplianceName(applianceId)} dismissed.`);
+      // UI already updated optimistically
+    } catch (error) {
+      console.error("Error dismissing alert on backend:", error);
+      toast.error(`Failed to dismiss alert on server: ${error.response?.data?.message || error.message}. It might reappear.`);
+      // Revert UI change if backend call failed
+      predictiveMaintenanceAlerts.value.splice(alertIndex, 0, dismissedAlert);
+    }
+    // Removed placeholder toast
+}
+
+// Placeholder actions for greetings
+async function scheduleGreeting(greeting) {
+  console.log("Scheduling greeting:", greeting);
+  // TODO: Implement a date/time picker modal to allow user selection/confirmation
+  const scheduleDate = greeting.occasionDate ? new Date(greeting.occasionDate) : new Date(); // Use occasion date or now as fallback
+  // Potentially adjust scheduleDate based on user input from modal in the future
+
+  const payload = {
+      customerId: customer.value.id,
+      jobId: null,
+      status: 'SCHEDULED',
+      type: 'GREETING',
+      messageContent: greeting.draftMessage,
+      followUpDate: scheduleDate.toISOString(),
+  };
+
+  try {
+      const response = await axios.post(`follow-ups?id=${userStore.currentWebsite}`, payload);
+      toast.success(`Greeting scheduled for ${scheduleDate.toLocaleDateString()}.`);
+
+      // Update the greeting object with the returned followUpId
+      // Find the index of the greeting in the array
+      const index = holidayGreetings.value.findIndex(g => g === greeting); // Assumes object identity works, might need a unique key
+      if (index !== -1 && response.data?.followUp?.id) {
+          holidayGreetings.value[index].followUpId = response.data.followUp.id;
+          // Optionally move to scheduledMessages array instead?
+          // scheduledMessages.value.push(response.data.followUp);
+          // holidayGreetings.value.splice(index, 1);
+      } else {
+          console.warn("Could not find scheduled greeting in array or missing followUpId in response.");
+          // Fetch scheduled messages again to ensure UI consistency if update fails
+          fetchScheduledMessages();
+      }
+
+  } catch (error) {
+      console.error("Error scheduling greeting:", error);
+      toast.error(`Failed to schedule greeting: ${error.response?.data?.message || error.message}`);
+  }
+}
+
+async function sendGreetingNow(greeting) {
+  console.log("Sending greeting now:", greeting);
+
+  // Determine channel (use customer preference or default, e.g., WhatsApp)
+  const channel = customer.value?.preferredContactMethod || 'WHATSAPP'; // Default to WhatsApp if not set
+
+  const payload = {
+      customerId: customer.value.id,
+      message: greeting.draftMessage,
+      channel: channel,
+      subject: greeting.specificOccasion || 'A Message From Us', // Use occasion as subject for email
+      logAsFollowUp: true, // Log this send action
+      websiteId: userStore.currentWebsite, // Needed for WhatsApp
+  };
+
+  try {
+      // Call the new direct messaging endpoint
+      await axios.post(`messaging/send-direct?id=${userStore.currentWebsite}`, payload);
+      toast.success(`Greeting sent via ${channel}.`);
+      // Optionally remove the greeting from the list
+      // holidayGreetings.value = holidayGreetings.value.filter(g => g !== greeting); // Need unique ID
+  } catch (error) {
+      console.error("Error sending greeting now:", error);
+      toast.error(`Failed to send greeting: ${error.response?.data?.message || error.message}`);
+  }
+  // Removed example comment block
+  // Removed example comment block
+  // Removed example comment block
+  // Removed example comment block
+  // Removed example comment block
+  //   toast.success("Greeting sent successfully (placeholder).");
+  //   // Optionally remove the greeting from the list or update its state
+  // } catch (error) {
+  //   console.error("Error sending greeting:", error);
+  //   toast.error("Failed to send greeting.");
+  // }
+}
+
+async function fetchScheduledMessages() {
+  console.log("Fetching Scheduled Messages...");
+  isFetchingScheduled.value = true;
+  scheduledError.value = null;
+  scheduledMessages.value = [];
+  try {
+    // Call the backend endpoint, filtering for status 'SCHEDULED'
+    const response = await axios.get(`follow-ups?customerId=${route.query.customer_id}&status=SCHEDULED&id=${userStore.currentWebsite}`);
+    // Assuming backend returns { followUps: [...] }
+    scheduledMessages.value = response.data.followUps || [];
+    console.log("Fetched scheduled messages:", scheduledMessages.value);
+  } catch (error) {
+     console.error("Error fetching scheduled messages:", error);
+     scheduledError.value = error.response?.data?.message || error.message || "Failed to load scheduled messages.";
+     toast.error(`Could not load scheduled messages: ${scheduledError.value}`);
+  } finally {
+    isFetchingScheduled.value = false;
+  }
+}
+
+async function cancelScheduledMessage(followUpId) {
+  console.log("Cancelling scheduled message:", followUpId);
+
+  // Optimistically remove from UI first for better UX
+  const originalMessages = [...scheduledMessages.value];
+  scheduledMessages.value = scheduledMessages.value.filter(msg => msg.id !== followUpId);
+
+  try {
+      // Call backend to update status to CANCELLED
+      await axios.put(`follow-ups/${followUpId}?id=${userStore.currentWebsite}`, { status: 'CANCELLED' });
+      toast.success("Scheduled message cancelled.");
+      // No need to filter again, already done optimistically
+  } catch (error) {
+      console.error("Error cancelling scheduled message:", error);
+      toast.error(`Failed to cancel message: ${error.response?.data?.message || error.message}`);
+      // Revert UI change if backend call failed
+      scheduledMessages.value = originalMessages;
+  }
+  // Removed placeholder toast
+}
+
+async function fetchSentimentAnalysis() {
+  console.log("Fetching Sentiment Analysis...");
+  isFetchingSentiment.value = true;
+  sentimentError.value = null;
+  // Don't clear latestSentimentAnalysis.value here
+
+  try {
+    // Call backend to generate (and save)
+    await axios.post(`customers/${route.query.customer_id}/analyze-sentiment?id=${userStore.currentWebsite}`);
+    toast.success("Sentiment analysis generated. Refreshing data...");
+    // Reload all customer data to get the latest history entry
+    await fetchContacts();
+  } catch (error) {
+     console.error("Error fetching sentiment analysis:", error);
+     sentimentError.value = error.response?.data?.message || error.message || "Failed to load sentiment analysis.";
+     toast.error(`Could not load sentiment analysis: ${sentimentError.value}`);
+  } finally {
+    isFetchingSentiment.value = false;
+  }
+}
+
 
 // Fetch logged/historical follow-ups for Engagement Hub
 async function fetchLoggedFollowUps() {
@@ -658,68 +1004,151 @@ async function fetchLoggedFollowUps() {
 // Fetch suggested holiday/occasion greetings
 async function fetchHolidayGreetings() {
     console.log("Fetching Holiday/Occasion Greetings...");
+    isFetchingGreetings.value = true; // Set loading state
+    greetingsError.value = null; // Clear previous error
     holidayGreetings.value = []; // Clear previous
-    // TODO: Implement logic to determine relevant upcoming occasions
-    // Example: Check for upcoming holidays, customer birthday, service anniversary
-    const occasions = [
-        // Example structure:
-        // { occasionType: 'Holiday', specificOccasion: 'Christmas', occasionDate: '2025-12-25' },
-        // { occasionType: 'Service Anniversary', specificOccasion: '1 Year Anniversary', occasionDate: '...' }
-    ];
+    try {
+        const occasions = [];
+        const today = new Date();
+        const currentYear = today.getFullYear();
 
-    if (occasions.length === 0) {
-        console.log("No relevant upcoming occasions found.");
-        return;
-    }
+        // --- Placeholder Logic ---
+        // TODO: Replace with robust date checking and potentially a holiday library
 
-    // Call backend for each relevant occasion
-    for (const occasion of occasions) {
-        try {
-            const response = await axios.post(
-                `customers/${route.query.customer_id}/generate-greeting?id=${userStore.currentWebsite}`,
-                occasion // Send occasion details in the body
-            );
-            // Assuming backend returns { draftMessage: '...' }
-            if (response.data.draftMessage) {
-                holidayGreetings.value.push({
-                    ...occasion, // Include occasion details with the message
-                    draftMessage: response.data.draftMessage
-                });
+        // 1. Customer Birthday (Assuming customer.value.birthday exists as 'YYYY-MM-DD' or Date object)
+        // if (customer.value?.birthday) {
+        //    const birthDate = new Date(customer.value.birthday);
+        //    // Set year to current year for comparison
+        //    birthDate.setFullYear(currentYear);
+        //    // Check if birthday is within the next month (example window)
+        //    const oneMonthLater = new Date(today);
+        //    oneMonthLater.setMonth(today.getMonth() + 1);
+        //    if (birthDate >= today && birthDate <= oneMonthLater) {
+        //        occasions.push({ occasionType: 'Birthday', specificOccasion: 'Happy Birthday!', occasionDate: birthDate.toISOString().split('T')[0] });
+        //    }
+        // }
+
+        // 2. Service Anniversary (Using customer.createdAt)
+        if (customer.value?.createdAt) {
+            const creationDate = new Date(customer.value.createdAt);
+            const anniversaryDate = new Date(creationDate);
+            anniversaryDate.setFullYear(currentYear);
+            // Check if anniversary is today or within the next week (example window)
+            const oneWeekLater = new Date(today);
+            oneWeekLater.setDate(today.getDate() + 7);
+            if (anniversaryDate >= today && anniversaryDate <= oneWeekLater) {
+                const years = currentYear - creationDate.getFullYear();
+                if (years > 0) { // Only add if it's not the creation year
+                    occasions.push({ occasionType: 'Service Anniversary', specificOccasion: `${years} Year Anniversary`, occasionDate: anniversaryDate.toISOString().split('T')[0] });
+                }
             }
-        } catch (error) {
-            console.error(`Error fetching greeting for ${occasion.specificOccasion}:`, error);
-            toast.error(`Could not generate greeting for ${occasion.specificOccasion}.`);
-            // Continue to next occasion even if one fails
         }
+
+        // 3. Fixed Public Holidays (Example: Christmas)
+        const christmas = new Date(currentYear, 11, 25); // Month is 0-indexed
+        const oneMonthLater = new Date(today);
+        oneMonthLater.setMonth(today.getMonth() + 1);
+         if (christmas >= today && christmas <= oneMonthLater) {
+            occasions.push({ occasionType: 'Holiday', specificOccasion: 'Christmas', occasionDate: christmas.toISOString().split('T')[0] });
+        }
+        // Add more holidays as needed...
+
+        // --- End Placeholder Logic ---
+
+        if (occasions.length === 0) {
+            console.log("No relevant upcoming occasions found.");
+            // No return here, let finally block run
+        } else {
+            // Call backend for each relevant occasion
+            // Use Promise.allSettled to handle individual failures without stopping others
+            const greetingPromises = occasions.map(async (occasion) => {
+                try {
+                    const response = await axios.post(
+                        `customers/${route.query.customer_id}/generate-greeting?id=${userStore.currentWebsite}`,
+                        occasion // Send occasion details in the body
+                    );
+                    // Assuming backend returns { draftMessage: '...' }
+                    if (response.data.draftMessage) {
+                        return { // Return successful data for aggregation
+                            ...occasion,
+                            draftMessage: response.data.draftMessage
+                        };
+                    }
+                    return null; // Return null if no message generated
+                } catch (error) {
+                    console.error(`Error fetching greeting for ${occasion.specificOccasion}:`, error);
+                    toast.error(`Could not generate greeting for ${occasion.specificOccasion}.`);
+                    return { error: true, occasion: occasion.specificOccasion }; // Indicate error for this occasion
+                }
+            });
+
+            const results = await Promise.allSettled(greetingPromises);
+            const successfulGreetings = results
+                .filter(result => result.status === 'fulfilled' && result.value && !result.value.error)
+                .map(result => result.value);
+
+            holidayGreetings.value = successfulGreetings; // Assign successful results
+        }
+        console.log("Fetched holiday greetings:", holidayGreetings.value);
+    } catch (error) { // Add catch block for overall errors (e.g., initial checks)
+        console.error("Error fetching holiday greetings:", error);
+        greetingsError.value = error.message || "Failed to load greetings.";
+        toast.error(`Could not load greetings: ${greetingsError.value}`);
+    } finally {
+        isFetchingGreetings.value = false; // Clear loading state
     }
-     console.log("Fetched holiday greetings:", holidayGreetings.value);
 }
+
 
 
 function createFollowupForAlert(alertData) {
-  console.log("Creating follow-up task for alert:", alertData);
-  // TODO: Open a task creation modal/form pre-filled with alert details
-  toast.info("Create Follow-up from alert not implemented.");
+  // TODO: Implement a dedicated Task creation modal/component.
+  // This function would likely:
+  // 1. Construct a preliminary task object from alertData (e.g., title, description linking to customer/appliance).
+  // 2. Emit an event or use a store action to open the task modal with the pre-filled data.
+  console.log("Attempting to create follow-up task for alert:", alertData);
+  toast.info("Task creation from alert: UI Modal needed.");
 }
 
+// This function seems to have been corrupted, restoring definition
 function dismissPredMaintAlert(applianceId) {
   console.log("Dismissing predictive maintenance alert for appliance:", applianceId);
-  // Remove from local state
+  // Remove from local state - Note: Backend call is handled by handleDismissAlert
   predictiveMaintenanceAlerts.value = predictiveMaintenanceAlerts.value.filter(a => a.applianceId !== applianceId);
-  // TODO: Optionally call API to mark alert as dismissed on backend
 }
 
 
 // --- Formatting Helpers ---
 function formatCurrency(value) {
-  if (value === null || value === undefined) return 'N/A';
-  // TODO: Use a more robust currency formatting library or locale-specific formatting
-  return `R ${Number(value).toFixed(2)}`;
+  if (value === null || value === undefined || isNaN(Number(value))) return 'N/A';
+
+  // Use Intl.NumberFormat for locale-aware currency formatting
+  try {
+    return new Intl.NumberFormat('en-ZA', { // Use South African locale
+      style: 'currency',
+      currency: 'ZAR', // Specify ZAR currency code
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(Number(value));
+  } catch (error) {
+    console.error("Currency formatting error:", error);
+    // Fallback to basic formatting on error
+    return `R ${Number(value).toFixed(2)}`;
+  }
 }
 
 function getProfitClass(value) {
   if (value === null || value === undefined) return 'text-gray-500';
   return value >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400';
+}
+
+function getSentimentClass(sentiment) {
+  if (!sentiment) return 'text-gray-500 dark:text-gray-400'; // Default/unknown
+  const lowerSentiment = sentiment.toLowerCase();
+  if (lowerSentiment === 'positive') return 'text-green-600 dark:text-green-400';
+  if (lowerSentiment === 'negative') return 'text-red-600 dark:text-red-400';
+  if (lowerSentiment === 'neutral') return 'text-yellow-600 dark:text-yellow-400'; // Or gray
+  return 'text-gray-500 dark:text-gray-400'; // Fallback
 }
 
 // --- Data Fetching ---
@@ -840,6 +1269,7 @@ onMounted(() => {
      fetchCustomerFinancials();
      fetchLoggedFollowUps(); // Fetch logged follow-ups
      fetchHolidayGreetings(); // Fetch holiday greetings
+     fetchScheduledMessages(); // Fetch scheduled messages
   });
   fetchTechnicians(); // Fetch technicians on mount
   // tooltips(); // Moved to finally block of fetchContacts
@@ -924,9 +1354,14 @@ watchEffect(() => {
             <div class="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700/50">
                <div class="flex justify-between items-center mb-2">
                  <h4 class="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">AI Analysis</h4>
-                 <button @click="fetchProfitabilityAnalysis" class="btn-ghost-modern text-xs p-1" :disabled="isFetchingProfitabilityAnalysis" aria-label="Refresh AI profitability analysis">
-                   <font-awesome-icon icon="sync" :class="{ 'fa-spin': isFetchingProfitabilityAnalysis }" />
-                 </button>
+                 <div class="flex items-center space-x-2">
+                    <span v-if="latestProfitabilityAnalysis?.generatedAt" class="text-xs text-gray-400 dark:text-gray-500 italic">
+                        {{ formatRelativeTime(latestProfitabilityAnalysis.generatedAt) }}
+                    </span>
+                    <button @click="fetchProfitabilityAnalysis" class="btn-ghost-modern text-xs p-1" :disabled="isFetchingProfitabilityAnalysis" aria-label="Refresh AI profitability analysis">
+                        <font-awesome-icon icon="sync" :class="{ 'fa-spin': isFetchingProfitabilityAnalysis }" />
+                    </button>
+                 </div>
                </div>
                <div v-if="isFetchingProfitabilityAnalysis" class="text-center py-2">
                  <p class="text-xs text-gray-500 dark:text-gray-400">Generating analysis...</p>
@@ -934,11 +1369,11 @@ watchEffect(() => {
                <div v-else-if="profitabilityAnalysisError" class="text-xs text-red-600 dark:text-red-400">
                  Error: {{ profitabilityAnalysisError }}
                </div>
-               <div v-else-if="profitabilityAnalysis" class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap prose dark:prose-invert prose-xs max-w-none">
-                 {{ profitabilityAnalysis }}
-               </div>
+               <!-- Display latest analysis using v-html -->
+               <div v-else-if="latestProfitabilityAnalysis?.content" v-html="latestProfitabilityAnalysis.content" class="text-sm text-gray-700 dark:text-gray-300 space-y-2"></div>
+               <!-- Empty state -->
                <div v-else class="text-xs text-gray-500 dark:text-gray-400 italic">
-                 Click refresh for AI insights on profitability.
+                 No analysis available. Click refresh to generate.
                </div>
             </div>
           </section>
@@ -1105,8 +1540,18 @@ watchEffect(() => {
                 <font-awesome-icon icon="plus" class="mr-1.5 h-3 w-3" /> Add Appliance
               </button>
             </div>
-            <!-- Add safety check for customer.appliances -->
-            <div v-if="customer.appliances && customer.appliances.length > 0" class="space-y-3 max-h-60 overflow-y-auto pr-1">
+            <!-- Loading State for Predictive Maintenance -->
+            <div v-if="isFetchingPredMaint" class="text-center py-4">
+              <Spinner />
+              <p class="text-sm text-gray-500 mt-2">Checking predictive maintenance...</p>
+            </div>
+            <!-- Error State for Predictive Maintenance -->
+            <div v-else-if="predMaintError" class="text-center py-4 text-red-600 dark:text-red-400">
+              <p>Error checking maintenance: {{ predMaintError }}</p>
+              <button @click="fetchPredictiveMaintenance" class="btn-secondary-modern mt-2">Retry</button>
+            </div>
+            <!-- Appliance List (only show if not loading/erroring on maint check) -->
+            <div v-else-if="customer.appliances && customer.appliances.length > 0" class="space-y-3 max-h-60 overflow-y-auto pr-1">
               <ApplianceCard
                 v-for="appliance in customer.appliances"
                 :key="appliance.id"
@@ -1114,6 +1559,8 @@ watchEffect(() => {
                 :alert="predictiveMaintenanceAlerts.find(a => a.applianceId === appliance.id)?.alert"
                 @edit="openEditApplianceModal(appliance)"
                 @delete="handleDeleteAppliance(appliance.id)"
+                @schedule-service="handleScheduleServiceFromAlert"
+                @dismiss-alert="handleDismissAlert"
               />
             </div>
             <div v-else class="text-center text-gray-500 dark:text-gray-400 py-4">
@@ -1226,9 +1673,14 @@ watchEffect(() => {
                      <div class="mb-6 p-4 border border-blue-200 dark:border-blue-800/50 bg-blue-50 dark:bg-blue-900/20 rounded-lg shadow-sm">
                        <div class="flex justify-between items-center mb-2">
                          <h4 class="text-sm font-semibold text-blue-800 dark:text-blue-300 uppercase tracking-wider">AI Relationship Summary</h4>
-                         <button @click="fetchTimelineSummary" class="btn-ghost-modern text-xs p-1" :disabled="isFetchingTimelineSummary" aria-label="Refresh AI summary">
-                           <font-awesome-icon icon="sync" :class="{ 'fa-spin': isFetchingTimelineSummary }" />
-                         </button>
+                         <div class="flex items-center space-x-2">
+                            <span v-if="latestTimelineSummary?.generatedAt" class="text-xs text-gray-400 dark:text-gray-500 italic">
+                                {{ formatRelativeTime(latestTimelineSummary.generatedAt) }}
+                            </span>
+                            <button @click="fetchTimelineSummary" class="btn-ghost-modern text-xs p-1" :disabled="isFetchingTimelineSummary" aria-label="Refresh AI summary">
+                                <font-awesome-icon icon="sync" :class="{ 'fa-spin': isFetchingTimelineSummary }" />
+                            </button>
+                         </div>
                        </div>
                        <div v-if="isFetchingTimelineSummary" class="text-center py-4">
                          <p class="text-sm text-gray-500 dark:text-gray-400">Generating summary...</p>
@@ -1237,16 +1689,68 @@ watchEffect(() => {
                        <div v-else-if="timelineSummaryError" class="text-sm text-red-600 dark:text-red-400">
                          Error generating summary: {{ timelineSummaryError }}
                        </div>
-                       <div v-else-if="timelineSummary" class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap prose dark:prose-invert prose-sm max-w-none">
-                         {{ timelineSummary }}
-                       </div>
+                       <!-- Use v-html to render HTML from backend -->
+                       <div v-else-if="latestTimelineSummary?.content" v-html="latestTimelineSummary.content" class="text-sm text-gray-700 dark:text-gray-300 space-y-2"></div>
                        <div v-else class="text-sm text-gray-500 dark:text-gray-400 italic">
                          Click the refresh button to generate an AI summary of the customer's interaction history.
                        </div>
                      </div>
                      <!-- End AI Timeline Summary Section -->
 
-                      <p v-if="!customer.activities || customer.activities.length === 0" class="text-center text-gray-500 py-8">No activities recorded yet.</p>
+                     <!-- AI Sentiment Analysis Section -->
+                     <div class="mb-6 p-4 border border-purple-200 dark:border-purple-800/50 bg-purple-50 dark:bg-purple-900/20 rounded-lg shadow-sm">
+                       <div class="flex justify-between items-center mb-2">
+                         <h4 class="text-sm font-semibold text-purple-800 dark:text-purple-300 uppercase tracking-wider">AI Sentiment Analysis</h4>
+                         <div class="flex items-center space-x-2">
+                            <span v-if="latestSentimentAnalysis?.generatedAt" class="text-xs text-gray-400 dark:text-gray-500 italic">
+                                {{ formatRelativeTime(latestSentimentAnalysis.generatedAt) }}
+                            </span>
+                            <button @click="fetchSentimentAnalysis" class="btn-ghost-modern text-xs p-1" :disabled="isFetchingSentiment" aria-label="Refresh AI sentiment analysis">
+                                <font-awesome-icon icon="sync" :class="{ 'fa-spin': isFetchingSentiment }" />
+                            </button>
+                         </div>
+                       </div>
+                       <div v-if="isFetchingSentiment" class="text-center py-4">
+                         <p class="text-sm text-gray-500 dark:text-gray-400">Analyzing sentiment...</p>
+                       </div>
+                       <div v-else-if="sentimentError" class="text-sm text-red-600 dark:text-red-400">
+                         Error analyzing sentiment: {{ sentimentError }}
+                       </div>
+                       <!-- Display Sentiment Analysis from JSON object -->
+                       <div v-else-if="latestSentimentAnalysis?.content" class="text-sm text-gray-700 dark:text-gray-300 space-y-2">
+                          <!-- Display overallSummary directly -->
+                          <p><strong>Overall Summary:</strong> {{ latestSentimentAnalysis.content.overallSummary || 'N/A' }}</p>
+                          <!-- Display individual messages, urgent issues, opportunities -->
+                          <div v-if="latestSentimentAnalysis.content.individualMessages && latestSentimentAnalysis.content.individualMessages.length > 0">
+                            <strong>Individual Messages Summary ({{ latestSentimentAnalysis.content.individualMessages.length }}):</strong>
+                            <ul class="list-disc list-inside ml-1 text-xs max-h-20 overflow-y-auto border dark:border-gray-600 p-1 rounded"> <!-- Added style -->
+                              <li v-for="(msg, mIndex) in latestSentimentAnalysis.content.individualMessages" :key="mIndex">
+                                {{ msg.date }} - {{ msg.sentiment }}: {{ msg.keyPoints?.join(', ') || 'No key points' }}
+                              </li>
+                            </ul>
+                          </div>
+                           <div v-if="latestSentimentAnalysis.content.urgentIssues && latestSentimentAnalysis.content.urgentIssues.length > 0">
+                            <strong>Urgent Issues:</strong>
+                            <ul class="list-disc list-inside ml-1 text-xs text-red-500 dark:text-red-400"> <!-- Style urgent issues -->
+                              <li v-for="(issue, iIndex) in latestSentimentAnalysis.content.urgentIssues" :key="iIndex">{{ issue }}</li>
+                            </ul>
+                          </div>
+                          <div v-if="latestSentimentAnalysis.content.opportunities && latestSentimentAnalysis.content.opportunities.length > 0">
+                            <strong>Opportunities:</strong>
+                            <ul class="list-disc list-inside ml-1 text-xs text-green-600 dark:text-green-400"> <!-- Style opportunities -->
+                              <li v-for="(opp, oIndex) in latestSentimentAnalysis.content.opportunities" :key="oIndex">{{ opp }}</li>
+                            </ul>
+                          </div>
+                          <!-- Timestamp already shown in header -->
+                       </div>
+                       <!-- Empty state -->
+                       <div v-else class="text-sm text-gray-500 dark:text-gray-400 italic">
+                         No sentiment analysis available. Click refresh to generate.
+                       </div>
+                     </div>
+                     <!-- End AI Sentiment Analysis Section -->
+
+                     <p v-if="!customer.activities || customer.activities.length === 0" class="text-center text-gray-500 py-8">No activities recorded yet.</p>
                       <template v-else>
                          <!-- Loop through all activities and try to determine type -->
                          <div v-for="activity in customer.activities" :key="activity.uid" class="activity-item">
@@ -1315,7 +1819,8 @@ watchEffect(() => {
                           <div v-for="(suggestion, index) in followupSuggestions" :key="index" class="border rounded p-3 text-sm bg-gray-50 dark:bg-gray-700/30">
                              <p class="font-medium mb-1">{{ suggestion.title }} (Reason: {{ suggestion.reason }})</p>
                              <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">Timing: {{ suggestion.timing }}</p>
-                             <p class="italic bg-gray-100 dark:bg-gray-800/50 p-2 rounded text-xs">"{{ suggestion.draftMessage }}"</p>
+                             <!-- Use v-html for draft message -->
+                             <div v-html="suggestion.draftMessage" class="bg-gray-100 dark:bg-gray-800/50 p-2 rounded text-xs space-y-1"></div>
                              <div class="flex justify-end space-x-2 mt-2">
                                 <button class="btn-secondary-modern text-xs py-0.5 px-1.5" @click="scheduleSuggestion(suggestion)">Schedule</button>
                                 <button class="btn-secondary-modern text-xs py-0.5 px-1.5" @click="sendSuggestionNow(suggestion)">Send Now</button>
@@ -1330,8 +1835,37 @@ watchEffect(() => {
                      <!-- Scheduled Messages Section -->
                      <section class="card-modern p-4">
                         <h4 class="text-md font-semibold text-gray-800 dark:text-gray-200 mb-3">Scheduled Messages</h4>
-                        <!-- Placeholder - Requires backend implementation (e.g., filtering ServiceFollowUp by future date/pending status or dedicated model) -->
-                        <p class="text-sm text-gray-500 dark:text-gray-400 italic">Display of scheduled messages/reminders is not yet implemented.</p>
+                        <div class="flex justify-between items-center mb-2">
+                           <!-- Refresh button -->
+                           <button @click="fetchScheduledMessages" class="btn-ghost-modern text-xs p-1" :disabled="isFetchingScheduled" aria-label="Refresh scheduled messages">
+                              <font-awesome-icon icon="sync" :class="{ 'fa-spin': isFetchingScheduled }" />
+                           </button>
+                        </div>
+                        <!-- Loading State -->
+                        <div v-if="isFetchingScheduled" class="text-center py-3 text-sm text-gray-500 dark:text-gray-400">Loading scheduled messages...</div>
+                        <!-- Error State -->
+                        <div v-else-if="scheduledError" class="text-sm text-red-600 dark:text-red-400">Error: {{ scheduledError }}</div>
+                        <!-- Message List -->
+                        <div v-else-if="scheduledMessages && scheduledMessages.length > 0" class="space-y-3 max-h-60 overflow-y-auto pr-1">
+                           <div v-for="message in scheduledMessages" :key="message.id" class="border rounded p-3 text-sm bg-gray-50 dark:bg-gray-700/30 flex justify-between items-start">
+                              <div>
+                                 <p class="font-medium mb-1">
+                                    Scheduled for: {{ message.scheduledAt ? new Date(message.scheduledAt).toLocaleString() : 'N/A' }}
+                                    <span class="text-xs text-gray-500 dark:text-gray-400 ml-1">({{ message.type || 'Follow-up' }})</span>
+                                 </p>
+                                 <p class="italic bg-gray-100 dark:bg-gray-800/50 p-2 rounded text-xs">"{{ message.messageContent || 'No content' }}"</p>
+                              </div>
+                              <button
+                                 @click="cancelScheduledMessage(message.id)"
+                                 class="btn-ghost-modern text-xs py-0.5 px-1.5 text-red-500 ml-2 flex-shrink-0"
+                                 title="Cancel this scheduled message"
+                              >
+                                 Cancel
+                              </button>
+                           </div>
+                        </div>
+                        <!-- Empty State -->
+                        <div v-else class="text-sm text-gray-500 dark:text-gray-400 italic">No messages currently scheduled.</div>
                      </section>
 
                      <!-- Logged Follow-ups & Satisfaction Section -->
@@ -1384,19 +1918,33 @@ watchEffect(() => {
                       <!-- Holiday/Occasion Messages Section -->
                      <section class="card-modern p-4">
                         <h4 class="text-md font-semibold text-gray-800 dark:text-gray-200 mb-3">Suggested Greetings</h4>
+                        <!-- Loading State -->
+                        <div v-if="isFetchingGreetings" class="text-center py-4">
+                          <Spinner />
+                          <p class="text-sm text-gray-500 mt-2">Loading greetings...</p>
+                        </div>
+                        <!-- Error State -->
+                        <div v-else-if="greetingsError" class="text-center py-4 text-red-600 dark:text-red-400">
+                          <p>Error loading greetings: {{ greetingsError }}</p>
+                          <button @click="fetchHolidayGreetings" class="btn-secondary-modern mt-2">Retry</button>
+                        </div>
                         <!-- Display fetched greetings -->
-                        <div v-if="holidayGreetings && holidayGreetings.length > 0" class="space-y-3">
+                        <div v-else-if="holidayGreetings && holidayGreetings.length > 0" class="space-y-3">
                            <div v-for="(greeting, index) in holidayGreetings" :key="index" class="border rounded p-3 text-sm bg-gray-50 dark:bg-gray-700/30">
                               <p class="font-medium mb-1">{{ greeting.specificOccasion }} ({{ greeting.occasionType }}) - {{ new Date(greeting.occasionDate).toLocaleDateString() }}</p>
-                              <p class="italic bg-gray-100 dark:bg-gray-800/50 p-2 rounded text-xs">"{{ greeting.draftMessage }}"</p>
+                              <!-- Use v-html for draft message -->
+                              <div v-html="greeting.draftMessage" class="bg-gray-100 dark:bg-gray-800/50 p-2 rounded text-xs space-y-1"></div>
                               <div class="flex justify-end space-x-2 mt-2">
-                                 <!-- TODO: Implement actions -->
-                                 <button class="btn-secondary-modern text-xs py-0.5 px-1.5" @click="console.log('Schedule Greeting:', greeting)">Schedule</button>
-                                 <button class="btn-secondary-modern text-xs py-0.5 px-1.5" @click="console.log('Send Greeting Now:', greeting)">Send Now</button>
-                                 <button class="btn-ghost-modern text-xs py-0.5 px-1.5 text-red-500" @click="holidayGreetings.splice(index, 1)">Dismiss</button>
+                                 <!-- Actions are now implemented -->
+                                 <!-- Show Schedule button only if not already scheduled -->
+                                 <button v-if="!greeting.followUpId" class="btn-secondary-modern text-xs py-0.5 px-1.5" @click="scheduleGreeting(greeting)">Schedule</button>
+                                 <button class="btn-secondary-modern text-xs py-0.5 px-1.5" @click="sendGreetingNow(greeting)">Send Now</button>
+                                 <!-- Show Cancel button only if scheduled -->
+                                 <button v-if="greeting.followUpId" class="btn-ghost-modern text-xs py-0.5 px-1.5 text-red-500" @click="cancelScheduledMessage(greeting.followUpId)">Cancel Scheduled</button>
                               </div>
                            </div>
                         </div>
+                        <!-- Empty State -->
                         <p v-else class="text-sm text-gray-500 dark:text-gray-400 italic">No suggested greetings available at this time.</p>
                      </section>
 

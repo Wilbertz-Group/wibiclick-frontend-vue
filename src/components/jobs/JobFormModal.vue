@@ -5,9 +5,10 @@ import moment from 'moment';
 import { useToast } from 'vue-toast-notification';
 import { useUserStore } from '@/stores/UserStore';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-// Assuming necessary icons are globally registered or added here if needed
-// import { faCheck } from '@fortawesome/free-solid-svg-icons';
-// library.add(faCheck);
+import { library } from '@fortawesome/fontawesome-svg-core';
+import { faCheck, faMagic } from '@fortawesome/free-solid-svg-icons'; // Added faCheck, faMagic
+
+library.add(faCheck, faMagic); // Register icons used in this component
 
 const props = defineProps({
   modelValue: { // Controls modal visibility (v-model)
@@ -175,7 +176,13 @@ async function suggestTechnician() {
     const context = {
       customerId: props.customerData?.id,
       issueDescription: jobForm.issue,
-      applianceType: null, // TODO: Determine appliance type if relevant/available
+      // TODO: Determine appliance type if relevant/available.
+      // This could be achieved if:
+      // 1. The job form included an appliance selection field.
+      // 2. The jobData prop (when editing) reliably contained linked appliance info.
+      // 3. We could reliably parse the appliance type from jobForm.issue.
+      // For now, sending null as the backend should handle its absence.
+      applianceType: null,
       // Backend will fetch available technicians and customer history
     };
 
@@ -308,6 +315,48 @@ watch(() => props.modelValue, (newValue) => {
                    <font-awesome-icon icon="magic" class="mr-1 h-3 w-3" :class="{ 'fa-spin': isSuggestingTechnician }" />
                    Suggest
                 </button>
+                <!-- Display Suggestions -->
+                <div v-if="suggestionError" class="text-xs text-red-500 mt-1">Error: {{ suggestionError }}</div>
+                <ul v-if="suggestedTechnicians.length > 0" class="mt-2 text-xs space-y-1.5 border-t border-gray-200 dark:border-gray-700/50 pt-2">
+                   <!-- Improved display for suggestions -->
+                   <li v-for="(suggestion, index) in suggestedTechnicians"
+                       :key="suggestion.technician?.technicianId || suggestion.technicianId || index"
+                       :class="[
+                         'flex justify-between items-center p-2 rounded-md border',
+                         (suggestion.technician?.technicianId || suggestion.technicianId) === jobForm.employeeId
+                           ? 'bg-indigo-50 dark:bg-indigo-900/30 border-indigo-300 dark:border-indigo-700'
+                           : 'bg-gray-50 dark:bg-gray-700/30 border-gray-200 dark:border-gray-600/50',
+                         suggestion.isPrimary ? 'border-l-4 border-l-indigo-500 pl-1.5' : '' // Extra indicator for primary
+                       ]"
+                   >
+                      <div class="flex-grow mr-2">
+                        <div class="flex items-center">
+                           <!-- Checkmark for selected -->
+                           <FontAwesomeIcon
+                               v-if="(suggestion.technician?.technicianId || suggestion.technicianId) === jobForm.employeeId"
+                               icon="check"
+                               class="w-3 h-3 mr-1.5 text-indigo-600 dark:text-indigo-400 flex-shrink-0"
+                           />
+                           <strong v-if="suggestion.isPrimary" class="text-indigo-600 dark:text-indigo-400 mr-1 flex-shrink-0">[Primary]</strong>
+                           <!-- Access name/id based on structure -->
+                           <span class="font-medium text-gray-800 dark:text-gray-200">{{ suggestion.technician?.technicianName || suggestion.technicianName }}</span>
+                        </div>
+                        <span v-if="suggestion.technician?.reasoning" class="block text-gray-500 dark:text-gray-400 text-xxs italic mt-0.5">({{ suggestion.technician.reasoning.join(', ') }})</span>
+                      </div>
+                      <button
+                        type="button"
+                        @click="jobForm.employeeId = suggestion.technician?.technicianId || suggestion.technicianId"
+                        :class="[
+                           'btn-ghost-modern text-xxs py-0.5 px-1.5 flex-shrink-0',
+                           (suggestion.technician?.technicianId || suggestion.technicianId) === jobForm.employeeId ? 'opacity-50 cursor-default' : '' // Dim if already selected
+                        ]"
+                        :disabled="(suggestion.technician?.technicianId || suggestion.technicianId) === jobForm.employeeId"
+                        title="Select this technician"
+                      >
+                        {{ (suggestion.technician?.technicianId || suggestion.technicianId) === jobForm.employeeId ? 'Selected' : 'Select' }}
+                      </button>
+                   </li>
+                </ul>
               </div>
               <div>
                 <label for="job-to_do" class="label-modern">To Do (Optional)</label>

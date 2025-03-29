@@ -85,6 +85,7 @@
 import { ref, watch, computed, defineProps, defineEmits } from 'vue';
 import axios from 'axios';
 import { useToast } from 'vue-toast-notification';
+import { useUserStore } from '@/stores/UserStore'; // Import user store
 import {
   TransitionRoot,
   TransitionChild,
@@ -110,6 +111,7 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'saved']);
 
 const toast = useToast();
+const userStore = useUserStore(); // Initialize user store
 const isLoading = ref(false);
 const errorMessage = ref('');
 
@@ -171,25 +173,35 @@ async function saveAppliance() {
     }
 
     let response;
+    // Get websiteId from the store
+    const websiteId = userStore.currentWebsite;
+
+    if (!websiteId) {
+        errorMessage.value = "Cannot save appliance: Website ID is missing.";
+        toast.error(errorMessage.value);
+        isLoading.value = false;
+        return; // Prevent API call without websiteId
+    }
+
     if (isEditing.value) {
       // PUT request for updating
       console.log("Updating appliance:", props.appliance.id, payload);
-      // TODO: Replace with actual API call
-      // response = await axios.put(`${apiUrl}/appliances/${props.appliance.id}`, payload);
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
-      response = { data: { ...payload, id: props.appliance.id, updatedAt: new Date().toISOString() } }; // Simulate response
-      toast.success('Appliance updated successfully (simulated)');
+      // Actual API call
+      response = await axios.put(`appliances/${props.appliance.id}?id=${websiteId}`, payload);
+      // Removed simulation code
+      // Removed simulation code
+      toast.success('Appliance updated successfully');
     } else {
       // POST request for creating
       console.log("Adding new appliance:", payload);
-      // TODO: Replace with actual API call
-      // response = await axios.post(`${apiUrl}/appliances`, payload);
-       await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
-       response = { data: { ...payload, id: Math.floor(Math.random() * 1000) + 1, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() } }; // Simulate response
-      toast.success('Appliance added successfully (simulated)');
+      // Actual API call
+      response = await axios.post(`appliances?id=${websiteId}`, payload);
+      // Removed simulation code
+      // Removed simulation code
+      toast.success('Appliance added successfully');
     }
 
-    console.log('API Response (simulated):', response.data);
+    console.log('API Response:', response.data);
     emit('saved'); // Notify parent component
     closeModal();
 

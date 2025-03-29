@@ -83,7 +83,7 @@
 						<span class="flex items-center">
 							<span class="text-sm">
 								<!-- Access nested whatsapp object -->
-								<span class="font-semibold"><span v-if="!whatsapp.whatsapp.fromMe">received</span> <span v-if="whatsapp.whatsapp.fromMe">Sent</span> </span>
+								<span class="font-semibold"><span v-if="!whatsapp.whatsapp.fromMe">received</span> <span v-if="whatsapp.whatsapp.fromMe">sent</span> </span>
 							</span>
 						</span>
 						<div class="flex items-center">

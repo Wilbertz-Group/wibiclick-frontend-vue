@@ -101,6 +101,7 @@
 import { ref, watch, computed, defineProps, defineEmits } from 'vue';
 import axios from 'axios';
 import { useToast } from 'vue-toast-notification';
+import { useUserStore } from '@/stores/UserStore'; // Import user store
 import {
   TransitionRoot,
   TransitionChild,
@@ -130,6 +131,7 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'saved']);
 
 const toast = useToast();
+const userStore = useUserStore(); // Initialize user store
 const isSaving = ref(false);
 const saveError = ref('');
 
@@ -192,11 +194,18 @@ async function savePreferences() {
 
 
     console.log(`Saving communication preferences for customer ${props.customerId}:`, payload);
-    // TODO: Replace with actual API call: PUT /customers/:id/communication-preferences
-    // await axios.put(`${apiUrl}/customers/${props.customerId}/communication-preferences`, payload);
-    await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
+    // Actual API call: PUT /customers/:id/communication-preferences
+    const websiteId = userStore.currentWebsite;
+    if (!websiteId) {
+        saveError.value = "Cannot save preferences: Website ID is missing.";
+        toast.error(saveError.value);
+        isSaving.value = false;
+        return;
+    }
+    await axios.put(`customers/${props.customerId}/communication-preferences?id=${websiteId}`, payload);
+    // Removed simulation code
 
-    toast.success('Communication preferences updated successfully (simulated)');
+    toast.success('Communication preferences updated successfully');
     emit('saved'); // Notify parent component to refresh data
     closeModal();
 

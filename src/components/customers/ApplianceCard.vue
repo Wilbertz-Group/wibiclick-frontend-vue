@@ -30,8 +30,8 @@ const props = defineProps<{
   alert?: MaintenanceAlert | null; // Optional predictive maintenance alert
 }>();
 
-// Define emits for edit and delete actions
-const emit = defineEmits(['edit', 'delete']);
+// Define emits for edit, delete, and alert actions
+const emit = defineEmits(['edit', 'delete', 'schedule-service', 'dismiss-alert']);
 
 // Function to format date (basic example)
 const formatDate = (dateString: string | Date | null | undefined): string => {
@@ -96,7 +96,23 @@ const getAlertClass = (alert: MaintenanceAlert | null | undefined): string => {
         </p>
         <p class="mt-1">Needs: {{ props.alert.needs }}</p>
         <p>Timing: {{ props.alert.timing }}</p>
-        <!-- Optional: Add actions like 'Schedule Service' here -->
+        <!-- Actions for Alert -->
+        <div class="flex justify-end space-x-2 mt-2">
+            <button
+                @click="$emit('schedule-service', { appliance: props.appliance, alert: props.alert })"
+                class="btn-secondary-modern text-xxs py-0.5 px-1.5"
+                title="Schedule service based on this alert"
+            >
+                Schedule Service
+            </button>
+             <button
+                @click="$emit('dismiss-alert', props.appliance.id)"
+                class="btn-ghost-modern text-xxs py-0.5 px-1.5 text-gray-500 hover:text-red-600"
+                title="Dismiss this alert"
+            >
+                Dismiss
+            </button>
+        </div>
      </div>
   </div>
 </template>
