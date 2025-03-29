@@ -24,8 +24,14 @@ library.add(fas, far, fab)
 
 import Popper from "vue3-popper";
 
-axios.defaults.baseURL = "https://wibi.wilbertzgroup.com/"
-//axios.defaults.baseURL = "http://localhost:8080/"
+// Set base URL based on environment
+if (import.meta.env.DEV) {
+  // Development environment (e.g., running with `npm run dev`)
+  axios.defaults.baseURL = "http://localhost:8080/";
+} else {
+  // Production or other environments
+  axios.defaults.baseURL = "https://wibi.wilbertzgroup.com/";
+}
 
 const app = createApp(App)
 const pinia = createPinia()
