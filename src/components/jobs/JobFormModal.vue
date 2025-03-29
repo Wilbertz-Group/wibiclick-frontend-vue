@@ -35,6 +35,9 @@ const userStore = useUserStore();
 const toast = useToast();
 const loading = ref(false); // Loading state for submission
 const technicians = ref([]); // Fetch technicians locally for now
+const suggestedTechnicians = ref([]); // State for AI suggestions
+const isSuggestingTechnician = ref(false); // Loading state for suggestions
+const suggestionError = ref(null); // Error state for suggestions
 
 // --- Form State ---
 const jobForm = reactive({
@@ -161,6 +164,55 @@ const fetchTechnicians = async () => {
   }
 };
 
+async function suggestTechnician() {
+  console.log("Suggesting technician...");
+  isSuggestingTechnician.value = true;
+  suggestionError.value = null;
+  suggestedTechnicians.value = []; // Clear previous suggestions
+
+  try {
+    // Prepare context for the backend
+    const context = {
+      customerId: props.customerData?.id,
+      issueDescription: jobForm.issue,
+      applianceType: null, // TODO: Determine appliance type if relevant/available
+      // Backend will fetch available technicians and customer history
+    };
+
+    // Actual API call
+    // Assuming websiteId is needed as a query param for backend routing/auth
+    const response = await axios.post(`jobs/match-technician?id=${userStore.currentWebsite}`, context);
+
+    // Assuming backend returns { recommendations: { primaryRecommendation: {...}, alternatives: [...] } }
+    const recommendations = response.data.recommendations;
+
+    if (recommendations?.primaryRecommendation) {
+        // Store suggestions (adjust structure as needed)
+        suggestedTechnicians.value = [
+            { technician: recommendations.primaryRecommendation, isPrimary: true },
+            ...(recommendations.alternatives || [])
+        ];
+
+        // Display suggestion (e.g., via toast) and maybe pre-select
+        const primary = recommendations.primaryRecommendation;
+        toast.success(`Suggested: ${primary.technicianName} (Reason: ${primary.reasoning?.join(', ') || 'AI Match'})`);
+
+        // Optional: Automatically select the primary suggestion
+        // jobForm.employeeId = primary.technicianId;
+    } else {
+         toast.warning("No suitable technician suggestion found.");
+         suggestedTechnicians.value = []; // Ensure it's empty
+    }
+
+  } catch (error) {
+    console.error("Error suggesting technician:", error);
+    suggestionError.value = error.response?.data?.message || error.message || "Failed to get suggestion.";
+    toast.error(`Error suggesting technician: ${suggestionError.value}`);
+  } finally {
+    isSuggestingTechnician.value = false;
+  }
+}
+
 // --- Watchers ---
 watch(() => props.modelValue, (newValue) => {
   if (newValue) {
@@ -246,6 +298,16 @@ watch(() => props.modelValue, (newValue) => {
                     {{ tech.firstName }} {{ tech.lastName }}
                   </option>
                 </select>
+                <button
+                   type="button"
+                   @click="suggestTechnician"
+                   class="btn-secondary-modern text-xs mt-1.5 py-1 px-2"
+                   :disabled="isSuggestingTechnician"
+                   aria-label="Suggest technician based on AI matching"
+                 >
+                   <font-awesome-icon icon="magic" class="mr-1 h-3 w-3" :class="{ 'fa-spin': isSuggestingTechnician }" />
+                   Suggest
+                </button>
               </div>
               <div>
                 <label for="job-to_do" class="label-modern">To Do (Optional)</label>

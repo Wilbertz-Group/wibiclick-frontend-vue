@@ -34,8 +34,9 @@ import { TabGroup, TabList, Tab, TabPanels, TabPanel, Disclosure, DisclosureButt
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { library } from '@fortawesome/fontawesome-svg-core'
 import {
-  faArrowLeft, faEdit, faStickyNote, faPaperPlane, faPlus, faChevronDown, faChevronUp, faExternalLinkAlt, faPhone, faEnvelope, faMapMarkerAlt, faUser, faBuilding, faLink, faInfoCircle, faBriefcase, faFileInvoiceDollar, faReceipt, faMoneyBillWave, faShieldAlt, faListOl, faSync // Added icons
+  faArrowLeft, faEdit, faStickyNote, faPaperPlane, faPlus, faChevronDown, faChevronUp, faExternalLinkAlt, faPhone, faEnvelope, faMapMarkerAlt, faUser, faUsers, faUserCog, faBuilding, faLink, faInfoCircle, faBriefcase, faFileInvoiceDollar, faReceipt, faMoneyBillWave, faShieldAlt, faListOl, faSync, faStar, faComments, faClock, faSignal, faLanguage, faExclamationTriangle, faMagic // Added icons, faUsers, faStar, faUserCog, comms icons, warning icon, magic icon
 } from '@fortawesome/free-solid-svg-icons'
+import { faStar as farStar, faClock as farClock } from '@fortawesome/free-regular-svg-icons' // Added regular star, clock
 import { faWhatsapp } from '@fortawesome/free-brands-svg-icons' // Added WhatsApp brand icon
 import JobFormModal from '@/components/jobs/JobFormModal.vue'; // Import job modal
 import EstimateFormModal from '@/components/estimates/EstimateFormModal.vue'; // Import estimate modal
@@ -43,9 +44,13 @@ import InvoiceFormModal from '@/components/invoices/InvoiceFormModal.vue'; // Im
 import PaymentFormModal from '@/components/payments/PaymentFormModal.vue'; // Import payment modal
 import ExpenseFormModal from '@/components/expenses/ExpenseFormModal.vue'; // Import expense modal
 import InsuranceFormModal from '@/components/insurance/InsuranceFormModal.vue'; // Import insurance modal
+import ApplianceCard from '@/components/Customers/ApplianceCard.vue'; // Import Appliance Card
+import ApplianceFormModal from '@/components/Customers/ApplianceFormModal.vue'; // Import Appliance Form Modal
+import PreferredTechnicianModal from '@/components/Customers/PreferredTechnicianModal.vue'; // Import Preferred Technician Modal
+import CommunicationPreferencesModal from '@/components/Customers/CommunicationPreferencesModal.vue'; // Import Comm Prefs Modal
 
 library.add(
-  faArrowLeft, faEdit, faStickyNote, faPaperPlane, faPlus, faChevronDown, faChevronUp, faExternalLinkAlt, faPhone, faEnvelope, faMapMarkerAlt, faUser, faBuilding, faLink, faInfoCircle, faBriefcase, faFileInvoiceDollar, faReceipt, faMoneyBillWave, faShieldAlt, faListOl, faWhatsapp, faSync
+  faArrowLeft, faEdit, faStickyNote, faPaperPlane, faPlus, faChevronDown, faChevronUp, faExternalLinkAlt, faPhone, faEnvelope, faMapMarkerAlt, faUser, faUsers, faUserCog, faBuilding, faLink, faInfoCircle, faBriefcase, faFileInvoiceDollar, faReceipt, faMoneyBillWave, faShieldAlt, faListOl, faWhatsapp, faSync, faStar, farStar, faComments, faClock, farClock, faSignal, faLanguage, faExclamationTriangle, faMagic // Added faUsers, faStar, farStar, faUserCog, comms icons, warning icon, magic icon
 )
 
 // --- State ---
@@ -66,13 +71,34 @@ const selectedInsurance = ref(null); // State for the selected insurance report 
 const selectedJob = ref(null); // State for the selected job when editing
 const showAddExpenseModal = ref(false); // State for the expense modal visibility
 const showAddInsuranceModal = ref(false); // State for the insurance modal visibility
-const technicians = ref([]); // State for technicians list
+const showAddApplianceModal = ref(false); // State for appliance modal (add/edit)
+const selectedAppliance = ref(null); // State for selected appliance being edited/viewed
+const showPreferredTechnicianModal = ref(false); // State for preferred technician modal
+const showCommPrefsModal = ref(false); // State for communication preferences modal
+const technicians = ref([]); // State for technicians list (might be fetched within modal now)
+const customerFinancials = ref({ totalRevenue: null, totalCosts: null, netProfit: null }); // State for customer financials
+const timelineSummary = ref(''); // State for AI timeline summary
+const isFetchingTimelineSummary = ref(false); // Loading state for summary
+const timelineSummaryError = ref(null); // Error state for summary
+const followupSuggestions = ref([]); // State for AI suggestions
+const isFetchingSuggestions = ref(false); // Loading state for suggestions
+const suggestionsError = ref(null); // Error state for suggestions
+const profitabilityAnalysis = ref(''); // State for AI profitability analysis
+const isFetchingProfitabilityAnalysis = ref(false); // Loading state for analysis
+const profitabilityAnalysisError = ref(null); // Error state for analysis
+const predictiveMaintenanceAlerts = ref([]); // State for predictive maintenance alerts { applianceId: number, alert: object }[]
+const isFetchingPredMaint = ref(false); // Loading state for predictive maintenance
+const predMaintError = ref(null); // Error state for predictive maintenance
+const serviceFollowUps = ref([]); // State for service follow-up records (used for Satisfaction display)
+const loggedFollowUps = ref([]); // State for logged/historical follow-ups (Engagement Hub)
+const holidayGreetings = ref([]); // State for suggested holiday/occasion greetings
 
 const lineItems = ref([])
 const notes = ref('') // Model for note modal
 const whatsapp = ref('') // Model for whatsapp modal
 const customer = ref({
-  id: '', name: '', phone: '', email: '', channel: '', address: '', message: '', hubspotLink: '', foreignID: '', portal: '', jobs: [], estimate: [], invoice: [], employeeId: '', createdAt: '', updatedAt: '', activities: [], payments: [], expenses: [], insurance: []
+  id: '', name: '', phone: '', email: '', channel: '', address: '', message: '', hubspotLink: '', foreignID: '', portal: '', jobs: [], estimate: [], invoice: [], employeeId: '', createdAt: '', updatedAt: '', activities: [], payments: [], expenses: [], insurance: [], appliances: [], referredBy: null, referrals: [], preferredTechnicianId: null, preferredTechnician: null, // Added technician preference
+  preferredContactMethod: null, preferredContactTimes: null, communicationFrequencyPreference: null, languagePreference: 'en' // Added communication preferences
 })
 const editableCustomer = ref({}); // For editing form
 
@@ -112,11 +138,12 @@ const relatedItems = computed(() => {
 
 const activityTabs = computed(() => [
   { name: 'All', component: null, type: 'all' }, // Added type for consistency
+  { name: 'Engagement', component: null, type: 'engagement' }, // Moved Engagement Hub tab
   { name: 'Notes', component: accordionNotes, type: 'note' },
   { name: 'Whatsapp', component: accordion, type: 'whatsapp' },
   { name: 'Email', component: accordionEmail, type: 'email' },
-  { name: 'Views', component: accordionView, type: 'view' },
-  { name: 'Clicks', component: accordionClick, type: 'click' },
+  // { name: 'Views', component: accordionView, type: 'view' }, // Removed Views tab
+  // { name: 'Clicks', component: accordionClick, type: 'click' }, // Removed Clicks tab
   { name: 'Forms', component: accordionForm, type: 'form' },
 ]);
 
@@ -152,6 +179,17 @@ async function fetchContacts() {
     customer.value.estimate = customer.value.estimate || [];
     customer.value.invoice = customer.value.invoice || [];
     customer.value.activities = customer.value.activities || []; // Ensure activities array exists
+    customer.value.appliances = customer.value.appliances || []; // Ensure appliances array exists
+    customer.value.referredBy = customer.value.referredBy || null; // Ensure referredBy exists
+    customer.value.referrals = customer.value.referrals || []; // Ensure referrals array exists
+    customer.value.preferredTechnicianId = customer.value.preferredTechnicianId || null; // Ensure preferredTechnicianId exists
+    customer.value.preferredTechnician = customer.value.preferredTechnician || null; // Ensure preferredTechnician object exists
+    // Communication Preferences Initialization
+    customer.value.preferredContactMethod = customer.value.preferredContactMethod || null;
+    customer.value.preferredContactTimes = customer.value.preferredContactTimes || null;
+    customer.value.communicationFrequencyPreference = customer.value.communicationFrequencyPreference || null;
+    customer.value.languagePreference = customer.value.languagePreference || 'en';
+
 
     // Initialize editable form data
     resetEditableCustomer();
@@ -162,6 +200,11 @@ async function fetchContacts() {
     if (noteModalInstance.value?.destroy) noteModalInstance.value.destroy();
     whatsappModalInstance.value = await whatsappModal(whatsapp, userStore.currentWebsite, customer.value.phone);
     noteModalInstance.value = await noteModal(notes, userStore.currentWebsite, customer.value.id, reloadTimeline);
+
+    // Fetch predictive maintenance alerts after main data is loaded
+    fetchPredictiveMaintenance();
+    // Fetch service follow-ups
+    fetchServiceFollowUps();
 
   } catch (error) {
     console.error("Error fetching customer data:", error);
@@ -175,7 +218,11 @@ async function fetchContacts() {
 }
 
 function reloadTimeline() {
-  fetchContacts();
+  fetchContacts().then(() => {
+    // Fetch financials after main customer data is loaded/refreshed
+    fetchCustomerFinancials();
+    fetchLoggedFollowUps(); // Fetch logged follow-ups on reload
+  });
   wkey.value += 1;
   nkey.value += 1;
 }
@@ -189,7 +236,13 @@ function resetEditableCustomer() {
     address: customer.value.address || '',
     message: customer.value.message || '', // Assuming 'message' is the field for 'Lead Source / Details'
     portal: customer.value.portal || '',
-    foreignID: customer.value.foreignID || ''
+    foreignID: customer.value.foreignID || '',
+    preferredTechnicianId: customer.value.preferredTechnicianId || null, // Added preferred technician ID
+    // Communication Preferences
+    preferredContactMethod: customer.value.preferredContactMethod || null,
+    preferredContactTimes: customer.value.preferredContactTimes || '', // Assuming string for now
+    communicationFrequencyPreference: customer.value.communicationFrequencyPreference || null,
+    languagePreference: customer.value.languagePreference || 'en'
   };
 }
 
@@ -355,7 +408,339 @@ function handleViewInsurance(insurance) {
   openAddInsuranceModal(insurance);
 }
 
+// --- Appliance Modal Handlers (Placeholders) ---
+function openAddApplianceModal() {
+  selectedAppliance.value = null;
+  showAddApplianceModal.value = true;
+  console.log("Opening Add Appliance Modal");
+  // TODO: Implement actual modal display logic & component
+  // Actual modal component will handle display
+}
+
+// Modify to accept the full appliance object
+function openEditApplianceModal(applianceToEdit) {
+  if (applianceToEdit) {
+    selectedAppliance.value = { ...applianceToEdit }; // Clone to avoid direct mutation
+    showAddApplianceModal.value = true; // Reuse the same modal flag for add/edit
+    console.log("Opening Edit Appliance Modal for:", applianceToEdit.id);
+    // Actual modal component will handle display
+  } else {
+    toast.error("Could not find appliance to edit.");
+  }
+}
+
+async function handleDeleteAppliance(applianceId) {
+  console.log("Attempting to delete appliance:", applianceId);
+  // TODO: Add a more robust confirmation dialog (e.g., using a modal library)
+  if (!confirm('Are you sure you want to delete this appliance? This action cannot be undone.')) {
+      return;
+  }
+  try {
+    // Actual API call
+    // Ensure the correct API endpoint is used (e.g., including websiteId if needed by backend auth/routing)
+    await axios.delete(`appliances/${applianceId}?id=${userStore.currentWebsite}`); // Assuming websiteId is needed in query
+    toast.success(`Appliance deleted successfully.`);
+    // Refresh data after deletion
+    await reloadTimeline(); // Ensure data is refreshed
+  } catch (error) {
+    console.error("Error deleting appliance:", error);
+    toast.error(`Error deleting appliance: ${error.response?.data?.message || error.message}`);
+  }
+}
+
+function handleApplianceSaved() {
+  // Modal's v-model handles closing
+  reloadTimeline(); // Refresh customer data to show updated appliance list
+}
+
+
+// --- Preferred Technician Modal Handler ---
+function openEditPreferredTechnicianModal() {
+  console.log("Opening Edit Preferred Technician Modal");
+  showPreferredTechnicianModal.value = true; // Open the modal
+}
+
+function handlePreferredTechnicianSaved() {
+  // Modal v-model handles closing
+  reloadTimeline(); // Refresh customer data to show updated preference
+}
+
+// --- Communication Preferences Modal Handler ---
+function openEditCommPrefsModal() {
+  console.log("Opening Edit Communication Preferences Modal");
+  showCommPrefsModal.value = true; // Open the modal
+}
+
+function handleCommPrefsSaved() {
+    // Modal v-model handles closing
+    reloadTimeline(); // Refresh customer data to show updated preferences
+}
+
+// --- LLM Fetch Placeholders ---
+async function fetchTimelineSummary() {
+  console.log("Fetching AI Timeline Summary...");
+  isFetchingTimelineSummary.value = true;
+  timelineSummaryError.value = null;
+  timelineSummary.value = ''; // Clear previous summary
+
+  try {
+    // Actual API call
+    // Assuming websiteId is needed as a query param for backend routing/auth
+    const response = await axios.post(`customers/${route.query.customer_id}/timeline-summary?id=${userStore.currentWebsite}`);
+    // Assuming backend returns { summary: '...' }
+    timelineSummary.value = response.data.summary;
+
+  } catch (error) {
+    console.error("Error fetching timeline summary:", error);
+    timelineSummaryError.value = error.response?.data?.message || error.message || "Failed to generate summary.";
+    toast.error(`Error generating timeline summary: ${timelineSummaryError.value}`);
+  } finally {
+    isFetchingTimelineSummary.value = false;
+  }
+}
+
+async function fetchFollowupSuggestions() {
+  console.log("Fetching AI Follow-up Suggestions...");
+  isFetchingSuggestions.value = true;
+  suggestionsError.value = null;
+  followupSuggestions.value = [];
+
+  try {
+    // Actual API call
+    // Assuming websiteId is needed as a query param for backend routing/auth
+    const response = await axios.post(`customers/${route.query.customer_id}/followup-suggestions?id=${userStore.currentWebsite}`);
+    // Assuming backend returns { suggestions: [...] } which might be stringified JSON from n8n
+    const suggestions = response.data.suggestions;
+    followupSuggestions.value = typeof suggestions === 'string' ? JSON.parse(suggestions) : suggestions || [];
+
+
+  } catch (error) {
+    console.error("Error fetching suggestions:", error);
+    suggestionsError.value = error.response?.data?.message || error.message || "Failed to load suggestions.";
+    toast.error(`Error loading suggestions: ${suggestionsError.value}`);
+  } finally {
+    isFetchingSuggestions.value = false;
+  }
+}
+
+// Placeholder actions for suggestions
+function scheduleSuggestion(suggestion) {
+  console.log("Scheduling suggestion:", suggestion);
+  toast.info("Schedule functionality not implemented.");
+}
+function sendSuggestionNow(suggestion) {
+  console.log("Sending suggestion now:", suggestion);
+  toast.info("Send Now functionality not implemented.");
+  // TODO: Call API to send message (WhatsApp/Email/SMS)
+}
+function logSuggestionManually(suggestion) {
+  console.log("Logging suggestion manually:", suggestion);
+  toast.info("Manual Log functionality not implemented.");
+  // TODO: Open a modal/form to log interaction
+}
+function dismissSuggestion(index) {
+  console.log("Dismissing suggestion at index:", index);
+  followupSuggestions.value.splice(index, 1); // Remove from local state
+  // TODO: Optionally call API to mark suggestion as dismissed on backend
+}
+
+async function fetchProfitabilityAnalysis() {
+  console.log("Fetching AI Profitability Analysis...");
+  isFetchingProfitabilityAnalysis.value = true;
+  profitabilityAnalysisError.value = null;
+  profitabilityAnalysis.value = '';
+
+  try {
+    // Actual API call
+    // Assuming websiteId is needed as a query param for backend routing/auth
+    const response = await axios.post(`customers/${route.query.customer_id}/profitability-analysis?id=${userStore.currentWebsite}`);
+    // Assuming backend returns { analysis: '...' }
+    profitabilityAnalysis.value = response.data.analysis;
+
+  } catch (error) {
+    console.error("Error fetching profitability analysis:", error);
+    profitabilityAnalysisError.value = error.response?.data?.message || error.message || "Failed to load analysis.";
+    toast.error(`Error loading profitability analysis: ${profitabilityAnalysisError.value}`);
+  } finally {
+    isFetchingProfitabilityAnalysis.value = false;
+  }
+}
+
+async function fetchPredictiveMaintenance() {
+  console.log("Fetching Predictive Maintenance Alerts...");
+  isFetchingPredMaint.value = true;
+  predMaintError.value = null;
+  predictiveMaintenanceAlerts.value = [];
+  const appliances = customer.value?.appliances; // Get appliances once
+
+  // Need customer appliances to exist first
+  if (!appliances || appliances.length === 0) {
+      console.log("No appliances found for predictive maintenance check.");
+      isFetchingPredMaint.value = false;
+      return;
+  }
+
+  try {
+    const alertPromises = appliances.map(async (appliance) => {
+      try {
+        // Actual API call per appliance
+        const response = await axios.post(`appliances/${appliance.id}/predict-maintenance?id=${userStore.currentWebsite}`); // Assuming websiteId needed
+        // Assuming backend returns { prediction: { risk: ..., needs: ... } or null }
+        if (response.data.prediction) {
+          return { applianceId: appliance.id, alert: response.data.prediction };
+        }
+        return null;
+      } catch (err) {
+        console.error(`Error fetching prediction for appliance ${appliance.id}:`, err.response?.data || err.message);
+        // Optionally add error state per appliance or just log it
+        return null; // Return null on error for this appliance
+      }
+    });
+
+    const results = await Promise.all(alertPromises);
+    predictiveMaintenanceAlerts.value = results.filter(alert => alert !== null); // Filter out nulls from errors or no-alert responses
+    console.log("Fetched predictive maintenance alerts:", predictiveMaintenanceAlerts.value);
+
+  } catch (error) { // Catch errors from Promise.all or initial checks
+    console.error("Error fetching predictive maintenance:", error);
+    predMaintError.value = error.response?.data?.message || error.message || "Failed to load predictions.";
+    toast.error(`Error loading predictions: ${predMaintError.value}`);
+  } finally {
+    isFetchingPredMaint.value = false;
+  }
+}
+
+async function fetchServiceFollowUps() {
+  console.log("Fetching Service Follow-ups...");
+  serviceFollowUps.value = []; // Clear previous
+  try {
+    // Actual API call
+    // Assuming websiteId is needed as query param
+    const response = await axios.get(`follow-ups?customerId=${route.query.customer_id}&id=${userStore.currentWebsite}`);
+    // Assuming backend returns { followUps: [...] }
+    serviceFollowUps.value = response.data.followUps || [];
+    console.log("Fetched service follow-ups:", serviceFollowUps.value);
+
+  } catch (error) {
+     console.error("Error fetching service follow-ups:", error);
+     toast.error("Could not load service follow-up data.");
+  }
+}
+
+// --- Predictive Maintenance Helpers/Actions ---
+function getApplianceName(applianceId) {
+  const appliance = customer.value?.appliances?.find(a => a.id === applianceId);
+  return appliance ? `${appliance.type} (${appliance.brand || 'Unknown Brand'})` : `Appliance ID ${applianceId}`;
+}
+
+function scheduleServiceForAlert(alertData) {
+  console.log("Scheduling service for alert:", alertData);
+  // TODO: Pre-fill and open JobFormModal with details from alertData and appliance
+  toast.info("Schedule Service from alert not implemented.");
+}
+
+// Fetch logged/historical follow-ups for Engagement Hub
+async function fetchLoggedFollowUps() {
+  console.log("Fetching Logged Follow-ups...");
+  loggedFollowUps.value = []; // Clear previous
+  try {
+    // Call the backend endpoint, filtering for completed/relevant statuses if needed
+    const response = await axios.get(`follow-ups?customerId=${route.query.customer_id}&id=${userStore.currentWebsite}`); // Assuming websiteId needed
+    // Assuming backend returns { followUps: [...] }
+    loggedFollowUps.value = response.data.followUps || [];
+    console.log("Fetched logged follow-ups:", loggedFollowUps.value);
+  } catch (error) {
+     console.error("Error fetching logged follow-ups:", error);
+     toast.error("Could not load follow-up history.");
+  }
+}
+
+// Fetch suggested holiday/occasion greetings
+async function fetchHolidayGreetings() {
+    console.log("Fetching Holiday/Occasion Greetings...");
+    holidayGreetings.value = []; // Clear previous
+    // TODO: Implement logic to determine relevant upcoming occasions
+    // Example: Check for upcoming holidays, customer birthday, service anniversary
+    const occasions = [
+        // Example structure:
+        // { occasionType: 'Holiday', specificOccasion: 'Christmas', occasionDate: '2025-12-25' },
+        // { occasionType: 'Service Anniversary', specificOccasion: '1 Year Anniversary', occasionDate: '...' }
+    ];
+
+    if (occasions.length === 0) {
+        console.log("No relevant upcoming occasions found.");
+        return;
+    }
+
+    // Call backend for each relevant occasion
+    for (const occasion of occasions) {
+        try {
+            const response = await axios.post(
+                `customers/${route.query.customer_id}/generate-greeting?id=${userStore.currentWebsite}`,
+                occasion // Send occasion details in the body
+            );
+            // Assuming backend returns { draftMessage: '...' }
+            if (response.data.draftMessage) {
+                holidayGreetings.value.push({
+                    ...occasion, // Include occasion details with the message
+                    draftMessage: response.data.draftMessage
+                });
+            }
+        } catch (error) {
+            console.error(`Error fetching greeting for ${occasion.specificOccasion}:`, error);
+            toast.error(`Could not generate greeting for ${occasion.specificOccasion}.`);
+            // Continue to next occasion even if one fails
+        }
+    }
+     console.log("Fetched holiday greetings:", holidayGreetings.value);
+}
+
+
+function createFollowupForAlert(alertData) {
+  console.log("Creating follow-up task for alert:", alertData);
+  // TODO: Open a task creation modal/form pre-filled with alert details
+  toast.info("Create Follow-up from alert not implemented.");
+}
+
+function dismissPredMaintAlert(applianceId) {
+  console.log("Dismissing predictive maintenance alert for appliance:", applianceId);
+  // Remove from local state
+  predictiveMaintenanceAlerts.value = predictiveMaintenanceAlerts.value.filter(a => a.applianceId !== applianceId);
+  // TODO: Optionally call API to mark alert as dismissed on backend
+}
+
+
+// --- Formatting Helpers ---
+function formatCurrency(value) {
+  if (value === null || value === undefined) return 'N/A';
+  // TODO: Use a more robust currency formatting library or locale-specific formatting
+  return `R ${Number(value).toFixed(2)}`;
+}
+
+function getProfitClass(value) {
+  if (value === null || value === undefined) return 'text-gray-500';
+  return value >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400';
+}
+
 // --- Data Fetching ---
+async function fetchCustomerFinancials() {
+  // Placeholder: Fetch or calculate customer financials
+  console.log("Fetching customer financials...");
+  // Reset state before fetching
+  customerFinancials.value = { totalRevenue: null, totalCosts: null, netProfit: null };
+  try {
+    // Actual API call
+    const response = await axios.get(`customers/${route.query.customer_id}/financials?id=${userStore.currentWebsite}`); // Assuming websiteId needed
+    // Assuming backend returns { totalRevenue: number, totalCosts: number, netProfit: number }
+    customerFinancials.value = response.data;
+
+  } catch (error) {
+    console.error("Error fetching/calculating customer financials:", error);
+    toast.error("Could not load customer financial summary.");
+    customerFinancials.value = { totalRevenue: null, totalCosts: null, netProfit: null }; // Reset on error
+  }
+}
+
 async function fetchTechnicians() {
   // Fetch technicians if not already fetched
   if (technicians.value.length > 0 || !userStore.currentWebsite) return;
@@ -450,7 +835,12 @@ function handleAddRelatedItem(routeName, queryKey) {
 // --- Lifecycle ---
 onMounted(() => {
   document.documentElement.classList.toggle('dark', isDarkMode.value);
-  fetchContacts();
+  fetchContacts().then(() => {
+     // Fetch financials after initial customer data is loaded
+     fetchCustomerFinancials();
+     fetchLoggedFollowUps(); // Fetch logged follow-ups
+     fetchHolidayGreetings(); // Fetch holiday greetings
+  });
   fetchTechnicians(); // Fetch technicians on mount
   // tooltips(); // Moved to finally block of fetchContacts
 });
@@ -491,7 +881,7 @@ watchEffect(() => {
           </div>
         </div>
         <div class="flex items-center space-x-2 sm:space-x-3 flex-shrink-0">
-           <button @click="reloadTimeline" class="btn-icon-modern" title="Refresh Data">
+           <button @click="reloadTimeline" class="btn-icon-modern" title="Refresh Data" aria-label="Refresh customer data">
              <font-awesome-icon icon="sync" :class="{ 'fa-spin': isFetchingCustomer }" />
            </button>
           <button @click="handleOpenNoteModal" data-modal-toggle="noteModal" type="button" class="btn-secondary-modern" title="Add Note"> <!-- Added data-modal-toggle -->
@@ -513,11 +903,51 @@ watchEffect(() => {
         <!-- Left Column: Customer Info & Related Items -->
         <div class="lg:col-span-4 space-y-6 lg:space-y-8">
 
+          <!-- Client Value Snapshot Card -->
+          <section class="card-modern p-5 sm:p-6">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Client Value Snapshot</h2>
+            <div class="grid grid-cols-3 gap-4 text-center">
+              <div>
+                <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Total Revenue</p>
+                <p class="text-xl font-semibold text-green-600 dark:text-green-400 mt-1">{{ formatCurrency(customerFinancials.totalRevenue) }}</p>
+              </div>
+              <div>
+                <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Total Costs</p>
+                <p class="text-xl font-semibold text-red-600 dark:text-red-400 mt-1">{{ formatCurrency(customerFinancials.totalCosts) }}</p>
+              </div>
+              <div>
+                <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Net Profit</p>
+                <p class="text-xl font-semibold mt-1" :class="getProfitClass(customerFinancials.netProfit)">{{ formatCurrency(customerFinancials.netProfit) }}</p>
+              </div>
+            </div>
+            <!-- LLM Profitability Analysis -->
+            <div class="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700/50">
+               <div class="flex justify-between items-center mb-2">
+                 <h4 class="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">AI Analysis</h4>
+                 <button @click="fetchProfitabilityAnalysis" class="btn-ghost-modern text-xs p-1" :disabled="isFetchingProfitabilityAnalysis" aria-label="Refresh AI profitability analysis">
+                   <font-awesome-icon icon="sync" :class="{ 'fa-spin': isFetchingProfitabilityAnalysis }" />
+                 </button>
+               </div>
+               <div v-if="isFetchingProfitabilityAnalysis" class="text-center py-2">
+                 <p class="text-xs text-gray-500 dark:text-gray-400">Generating analysis...</p>
+               </div>
+               <div v-else-if="profitabilityAnalysisError" class="text-xs text-red-600 dark:text-red-400">
+                 Error: {{ profitabilityAnalysisError }}
+               </div>
+               <div v-else-if="profitabilityAnalysis" class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap prose dark:prose-invert prose-xs max-w-none">
+                 {{ profitabilityAnalysis }}
+               </div>
+               <div v-else class="text-xs text-gray-500 dark:text-gray-400 italic">
+                 Click refresh for AI insights on profitability.
+               </div>
+            </div>
+          </section>
+
           <!-- Customer Information Card -->
           <section class="card-modern p-5 sm:p-6">
             <div class="flex justify-between items-center mb-4">
               <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Customer Details</h2>
-              <button v-if="!isEditingInfo" @click="handleEditInfo" class="btn-ghost-modern text-xs">
+              <button v-if="!isEditingInfo" @click="handleEditInfo" class="btn-ghost-modern text-xs" aria-label="Edit customer details">
                 <font-awesome-icon icon="edit" class="mr-1" /> Edit
               </button>
             </div>
@@ -551,6 +981,39 @@ watchEffect(() => {
               <div v-if="customer.foreignID" class="flex items-center">
                  <font-awesome-icon icon="link" class="w-4 h-4 mr-2.5 text-gray-400" />
                  <span class="text-gray-700 dark:text-gray-300">Foreign ID: {{ customer.foreignID }}</span>
+              </div>
+              <!-- Referral Info -->
+              <div v-if="customer.referredBy" class="flex items-center">
+                <font-awesome-icon icon="user" class="w-4 h-4 mr-2.5 text-gray-400" /> <!-- Placeholder icon -->
+                <span class="text-gray-700 dark:text-gray-300">
+                  Referred By:
+                  <!-- TODO: Add link to referrer customer view if possible -->
+                  <span class="font-medium ml-1">{{ customer.referredBy.name || 'N/A' }}</span>
+                </span>
+              </div>
+              <div v-if="customer.referrals && customer.referrals.length > 0" class="flex items-start">
+                <font-awesome-icon icon="users" class="w-4 h-4 mr-2.5 text-gray-400 mt-0.5 flex-shrink-0" /> <!-- Placeholder icon -->
+                <span class="text-gray-700 dark:text-gray-300">
+                  Referred Clients:
+                  <ul class="list-disc list-inside ml-1 mt-1">
+                    <li v-for="referral in customer.referrals" :key="referral.id">
+                      <!-- TODO: Add link to referred customer view if possible -->
+                      {{ referral.name || 'N/A' }}
+                    </li>
+                  </ul>
+                </span>
+              </div>
+              <!-- Preferred Technician -->
+              <div class="flex items-center">
+                <font-awesome-icon icon="user-cog" class="w-4 h-4 mr-2.5 text-gray-400" /> <!-- Placeholder icon -->
+                <span class="text-gray-700 dark:text-gray-300">
+                  Preferred Technician:
+                  <span class="font-medium ml-1">{{ customer.preferredTechnician?.name || 'None' }}</span>
+                  <!-- TODO: Add Edit button/modal trigger here -->
+                  <button @click="openEditPreferredTechnicianModal" class="btn-ghost-modern text-xs ml-2 p-0.5" aria-label="Edit preferred technician">
+                    <font-awesome-icon icon="edit" />
+                  </button>
+                </span>
               </div>
             </div>
 
@@ -595,6 +1058,67 @@ watchEffect(() => {
                 </button>
               </div>
             </form>
+          </section>
+
+          <!-- Communication Preferences Card -->
+          <section class="card-modern p-5 sm:p-6">
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Communication Preferences</h3>
+              <!-- TODO: Add Edit button/modal trigger here -->
+              <button @click="openEditCommPrefsModal" class="btn-ghost-modern text-xs" aria-label="Edit communication preferences">
+                <font-awesome-icon icon="edit" class="mr-1" /> Edit
+              </button>
+            </div>
+            <div class="space-y-3 text-sm">
+              <div class="flex items-center">
+                <font-awesome-icon icon="comments" class="w-4 h-4 mr-2.5 text-gray-400" /> <!-- Placeholder icon -->
+                <span class="text-gray-700 dark:text-gray-300">
+                  Method: <span class="font-medium ml-1">{{ customer.preferredContactMethod || 'Any' }}</span>
+                </span>
+              </div>
+              <div class="flex items-center">
+                <font-awesome-icon :icon="['far', 'clock']" class="w-4 h-4 mr-2.5 text-gray-400" /> <!-- Use regular clock icon -->
+                <span class="text-gray-700 dark:text-gray-300">
+                  Times: <span class="font-medium ml-1">{{ customer.preferredContactTimes || 'Any' }}</span>
+                </span>
+              </div>
+              <div class="flex items-center">
+                <font-awesome-icon icon="signal" class="w-4 h-4 mr-2.5 text-gray-400" /> <!-- Placeholder icon -->
+                <span class="text-gray-700 dark:text-gray-300">
+                  Frequency: <span class="font-medium ml-1">{{ customer.communicationFrequencyPreference || 'Moderate' }}</span>
+                </span>
+              </div>
+              <div class="flex items-center">
+                <font-awesome-icon icon="language" class="w-4 h-4 mr-2.5 text-gray-400" /> <!-- Placeholder icon -->
+                <span class="text-gray-700 dark:text-gray-300">
+                  Language: <span class="font-medium ml-1">{{ customer.languagePreference || 'en' }}</span>
+                </span>
+              </div>
+            </div>
+          </section>
+
+          <!-- Client Appliances Section -->
+          <section class="card-modern p-5 sm:p-6">
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Client Appliances</h3>
+              <button @click="openAddApplianceModal()" class="btn-primary-modern text-sm" aria-label="Add new appliance for this client">
+                <font-awesome-icon icon="plus" class="mr-1.5 h-3 w-3" /> Add Appliance
+              </button>
+            </div>
+            <!-- Add safety check for customer.appliances -->
+            <div v-if="customer.appliances && customer.appliances.length > 0" class="space-y-3 max-h-60 overflow-y-auto pr-1">
+              <ApplianceCard
+                v-for="appliance in customer.appliances"
+                :key="appliance.id"
+                :appliance="appliance"
+                :alert="predictiveMaintenanceAlerts.find(a => a.applianceId === appliance.id)?.alert"
+                @edit="openEditApplianceModal(appliance)"
+                @delete="handleDeleteAppliance(appliance.id)"
+              />
+            </div>
+            <div v-else class="text-center text-gray-500 dark:text-gray-400 py-4">
+              No appliances recorded for this client yet.
+            </div>
           </section>
 
           <!-- Related Items Accordion -->
@@ -696,7 +1220,32 @@ watchEffect(() => {
                    :class="['focus:outline-none h-full']" 
                  >
                    <!-- Render 'All' Activities (simplified) -->
-                   <div v-if="tab.name === 'All'" class="space-y-4 h-full"> 
+                   <div v-if="tab.name === 'All'" class="space-y-4 h-full">
+
+                     <!-- AI Timeline Summary Section -->
+                     <div class="mb-6 p-4 border border-blue-200 dark:border-blue-800/50 bg-blue-50 dark:bg-blue-900/20 rounded-lg shadow-sm">
+                       <div class="flex justify-between items-center mb-2">
+                         <h4 class="text-sm font-semibold text-blue-800 dark:text-blue-300 uppercase tracking-wider">AI Relationship Summary</h4>
+                         <button @click="fetchTimelineSummary" class="btn-ghost-modern text-xs p-1" :disabled="isFetchingTimelineSummary" aria-label="Refresh AI summary">
+                           <font-awesome-icon icon="sync" :class="{ 'fa-spin': isFetchingTimelineSummary }" />
+                         </button>
+                       </div>
+                       <div v-if="isFetchingTimelineSummary" class="text-center py-4">
+                         <p class="text-sm text-gray-500 dark:text-gray-400">Generating summary...</p>
+                         <!-- Optional: Add a small spinner here -->
+                       </div>
+                       <div v-else-if="timelineSummaryError" class="text-sm text-red-600 dark:text-red-400">
+                         Error generating summary: {{ timelineSummaryError }}
+                       </div>
+                       <div v-else-if="timelineSummary" class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap prose dark:prose-invert prose-sm max-w-none">
+                         {{ timelineSummary }}
+                       </div>
+                       <div v-else class="text-sm text-gray-500 dark:text-gray-400 italic">
+                         Click the refresh button to generate an AI summary of the customer's interaction history.
+                       </div>
+                     </div>
+                     <!-- End AI Timeline Summary Section -->
+
                       <p v-if="!customer.activities || customer.activities.length === 0" class="text-center text-gray-500 py-8">No activities recorded yet.</p>
                       <template v-else>
                          <!-- Loop through all activities and try to determine type -->
@@ -746,6 +1295,111 @@ watchEffect(() => {
                              </div> -->
                          </div>
                       </template>
+                   </div>
+                   <!-- Render Engagement Hub -->
+                   <div v-else-if="tab.name === 'Engagement'" class="space-y-6 h-full">
+                     <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Proactive Engagement Hub</h3>
+
+                     <!-- LLM Suggestions Section -->
+                     <section class="card-modern p-4">
+                       <div class="flex justify-between items-center mb-3">
+                          <h4 class="text-md font-semibold text-gray-800 dark:text-gray-200">AI Suggestions</h4>
+                          <button @click="fetchFollowupSuggestions" class="btn-ghost-modern text-xs p-1" :disabled="isFetchingSuggestions" aria-label="Refresh AI suggestions">
+                             <font-awesome-icon icon="sync" :class="{ 'fa-spin': isFetchingSuggestions }" />
+                          </button>
+                       </div>
+                       <div v-if="isFetchingSuggestions" class="text-center py-3 text-sm text-gray-500 dark:text-gray-400">Loading suggestions...</div>
+                       <div v-else-if="suggestionsError" class="text-sm text-red-600 dark:text-red-400">Error: {{ suggestionsError }}</div>
+                       <div v-else-if="followupSuggestions && followupSuggestions.length > 0" class="space-y-3">
+                          <!-- Placeholder for suggestion display -->
+                          <div v-for="(suggestion, index) in followupSuggestions" :key="index" class="border rounded p-3 text-sm bg-gray-50 dark:bg-gray-700/30">
+                             <p class="font-medium mb-1">{{ suggestion.title }} (Reason: {{ suggestion.reason }})</p>
+                             <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">Timing: {{ suggestion.timing }}</p>
+                             <p class="italic bg-gray-100 dark:bg-gray-800/50 p-2 rounded text-xs">"{{ suggestion.draftMessage }}"</p>
+                             <div class="flex justify-end space-x-2 mt-2">
+                                <button class="btn-secondary-modern text-xs py-0.5 px-1.5" @click="scheduleSuggestion(suggestion)">Schedule</button>
+                                <button class="btn-secondary-modern text-xs py-0.5 px-1.5" @click="sendSuggestionNow(suggestion)">Send Now</button>
+                                <button class="btn-ghost-modern text-xs py-0.5 px-1.5" @click="logSuggestionManually(suggestion)">Log Manual</button>
+                                <button class="btn-ghost-modern text-xs py-0.5 px-1.5 text-red-500" @click="dismissSuggestion(index)">Dismiss</button>
+                             </div>
+                          </div>
+                       </div>
+                       <div v-else class="text-sm text-gray-500 dark:text-gray-400 italic">No AI suggestions available. Click refresh to check.</div>
+                     </section>
+
+                     <!-- Scheduled Messages Section -->
+                     <section class="card-modern p-4">
+                        <h4 class="text-md font-semibold text-gray-800 dark:text-gray-200 mb-3">Scheduled Messages</h4>
+                        <!-- Placeholder - Requires backend implementation (e.g., filtering ServiceFollowUp by future date/pending status or dedicated model) -->
+                        <p class="text-sm text-gray-500 dark:text-gray-400 italic">Display of scheduled messages/reminders is not yet implemented.</p>
+                     </section>
+
+                     <!-- Logged Follow-ups & Satisfaction Section -->
+                     <section class="card-modern p-4">
+                        <h4 class="text-md font-semibold text-gray-800 dark:text-gray-200 mb-3">Follow-up History & Satisfaction</h4>
+
+                        <!-- Follow-up History Display -->
+                        <div class="mb-4 pb-3 border-b border-gray-200 dark:border-gray-700/50">
+                           <h5 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">History</h5>
+                           <div v-if="loggedFollowUps && loggedFollowUps.length > 0" class="space-y-2 max-h-40 overflow-y-auto pr-1">
+                              <div v-for="followUp in loggedFollowUps" :key="followUp.id" class="text-xs">
+                                 <p>
+                                    <span class="font-medium">{{ new Date(followUp.createdAt).toLocaleDateString() }}:</span>
+                                    Status: {{ followUp.status }}
+                                    <span v-if="followUp.jobId"> (Job #{{ followUp.jobId }})</span>
+                                 </p>
+                                 <p v-if="followUp.feedback" class="italic text-gray-600 dark:text-gray-400 pl-2">"{{ followUp.feedback }}"</p>
+                              </div>
+                           </div>
+                            <p v-else class="text-xs text-gray-500 dark:text-gray-400 italic">No logged follow-up history found.</p>
+                        </div>
+
+
+                        <!-- Post-Service Satisfaction Display -->
+                        <div class=""> <!-- Removed margin/padding top as it's now below history -->
+                           <h5 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Recent Satisfaction</h5>
+                            <!-- TODO: Fetch and loop through recent ServiceFollowUp records -->
+                            <div v-if="serviceFollowUps && serviceFollowUps.length > 0">
+                              <div v-for="followUp in serviceFollowUps.slice(0, 3)" :key="followUp.id" class="text-xs border-b dark:border-gray-700/50 pb-2 mb-2 last:border-b-0 last:pb-0 last:mb-0">
+                                 <p>Job #{{ followUp.jobId }} ({{ followUp.status }})</p>
+                                 <p v-if="followUp.satisfactionRating">
+                                    Rating:
+                                    <span class="text-yellow-500 ml-1">
+                                       <template v-for="i in 5" :key="i">
+                                         <font-awesome-icon :icon="i <= followUp.satisfactionRating ? 'star' : ['far', 'star']" />
+                                       </template>
+                                    </span>
+                                 </p>
+                                 <p v-if="followUp.feedback" class="italic text-gray-600 dark:text-gray-400">"{{ followUp.feedback }}"</p>
+                              </div>
+                            </div>
+                            <p v-else class="text-xs text-gray-500 dark:text-gray-400 italic">No recent satisfaction feedback recorded.</p>
+                            <!-- Optional Button to trigger survey -->
+                            <!-- <button class="btn-ghost-modern text-xs mt-2">Trigger Survey for Last Job</button> -->
+                        </div>
+
+                        <button class="btn-secondary-modern text-sm mt-4">Log Manual Follow-up</button>
+                     </section>
+
+                      <!-- Holiday/Occasion Messages Section -->
+                     <section class="card-modern p-4">
+                        <h4 class="text-md font-semibold text-gray-800 dark:text-gray-200 mb-3">Suggested Greetings</h4>
+                        <!-- Display fetched greetings -->
+                        <div v-if="holidayGreetings && holidayGreetings.length > 0" class="space-y-3">
+                           <div v-for="(greeting, index) in holidayGreetings" :key="index" class="border rounded p-3 text-sm bg-gray-50 dark:bg-gray-700/30">
+                              <p class="font-medium mb-1">{{ greeting.specificOccasion }} ({{ greeting.occasionType }}) - {{ new Date(greeting.occasionDate).toLocaleDateString() }}</p>
+                              <p class="italic bg-gray-100 dark:bg-gray-800/50 p-2 rounded text-xs">"{{ greeting.draftMessage }}"</p>
+                              <div class="flex justify-end space-x-2 mt-2">
+                                 <!-- TODO: Implement actions -->
+                                 <button class="btn-secondary-modern text-xs py-0.5 px-1.5" @click="console.log('Schedule Greeting:', greeting)">Schedule</button>
+                                 <button class="btn-secondary-modern text-xs py-0.5 px-1.5" @click="console.log('Send Greeting Now:', greeting)">Send Now</button>
+                                 <button class="btn-ghost-modern text-xs py-0.5 px-1.5 text-red-500" @click="holidayGreetings.splice(index, 1)">Dismiss</button>
+                              </div>
+                           </div>
+                        </div>
+                        <p v-else class="text-sm text-gray-500 dark:text-gray-400 italic">No suggested greetings available at this time.</p>
+                     </section>
+
                    </div>
                    <!-- Render Specific Activity Type using Accordions -->
                    <div v-else class="space-y-3 h-full">
@@ -863,9 +1517,38 @@ watchEffect(() => {
   :insurance-data="selectedInsurance"
   @insurance-saved="handleInsuranceSaved"
 />
+
+<!-- Add/Edit Appliance Modal -->
+<ApplianceFormModal
+  v-model="showAddApplianceModal"
+  :appliance="selectedAppliance"
+  :customer-id="customer.id"
+  @saved="handleApplianceSaved"
+/>
+
+<!-- Preferred Technician Modal -->
+<PreferredTechnicianModal
+  v-model="showPreferredTechnicianModal"
+  :customer-id="customer.id"
+  :current-technician-id="customer.preferredTechnicianId"
+  @saved="handlePreferredTechnicianSaved"
+/>
+
+<!-- Communication Preferences Modal -->
+<CommunicationPreferencesModal
+  v-model="showCommPrefsModal"
+  :customer-id="customer.id"
+  :current-preferences="{
+    preferredContactMethod: customer.preferredContactMethod,
+    preferredContactTimes: customer.preferredContactTimes,
+    communicationFrequencyPreference: customer.communicationFrequencyPreference,
+    languagePreference: customer.languagePreference
+  }"
+  @saved="handleCommPrefsSaved"
+/>
      
 
-     <!-- Loading Overlay -->
+<!-- Loading Overlay -->
      <div v-if="isLoading" class="fixed inset-0 z-[60] bg-gray-900 bg-opacity-50 dark:bg-opacity-80 flex items-center justify-center">
         <scale-loader :loading="true" color="#4f46e5" height="40px" width="5px" />
      </div>

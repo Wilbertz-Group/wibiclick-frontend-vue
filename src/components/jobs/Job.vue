@@ -53,6 +53,19 @@
 	const heading = ref()
 	const isOpen = ref(false)
 
+	// Helper function for currency formatting (basic example)
+	function formatCurrency(value) {
+	  if (value === null || value === undefined) return 'N/A';
+	  // TODO: Use a more robust currency formatting library or locale-specific formatting
+	  return `R ${Number(value).toFixed(2)}`;
+	}
+
+	// Helper function to determine profit text color
+	function getProfitClass(value) {
+	  if (value === null || value === undefined) return 'text-gray-500';
+	  return value >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400';
+	}
+
 	function closeModal() {
 		isOpen.value = false
 		emit('reloadTimeline')
@@ -167,8 +180,45 @@
 				<p class="text-sm font-bold text-black">Issue: </p>
 				<p class="text-xs text-black">{{ job.issue }}</p>
 			</div>
+
+				  <!-- Reviews Section -->
+				  <div v-if="job.reviews && job.reviews.length > 0" class="mt-3 pt-2 border-t border-gray-200 dark:border-gray-700">
+				    <p class="text-sm font-bold text-black mb-1">Feedback:</p>
+				    <div v-for="review in job.reviews" :key="review.id" class="text-xs text-black mb-2 last:mb-0">
+				      <div class="flex items-center mb-0.5">
+				        <span class="font-medium mr-2">Rating:</span>
+				        <!-- Simple Star Rating Display -->
+				        <span class="text-yellow-500">
+				          <template v-for="i in 5" :key="i">
+				            <font-awesome-icon :icon="i <= review.rating ? 'star' : ['far', 'star']" />
+				          </template>
+				        </span>
+				        <span class="ml-1">({{ review.rating }}/5)</span>
+				      </div>
+				      <p v-if="review.comment" class="pl-1">{{ review.comment }}</p>
+				    </div>
+				  </div>
+
+				  <!-- Financials Section -->
+				  <div class="mt-3 pt-2 border-t border-gray-200 dark:border-gray-700">
+				    <p class="text-sm font-bold text-black mb-1">Financials:</p>
+				    <div class="grid grid-cols-3 gap-x-2 text-xs text-black">
+				      <div class="text-center">
+				        <span class="font-medium block">Payments</span>
+				        <span class="text-green-600 dark:text-green-400">{{ formatCurrency(job.totalPayments) }}</span>
+				      </div>
+				      <div class="text-center">
+				        <span class="font-medium block">Expenses</span>
+				        <span class="text-red-600 dark:text-red-400">{{ formatCurrency(job.totalExpenses) }}</span>
+				      </div>
+				      <div class="text-center">
+				        <span class="font-medium block">Net Profit</span>
+				        <span :class="getProfitClass(job.netProfit)">{{ formatCurrency(job.netProfit) }}</span>
+				      </div>
+				    </div>
+				  </div>
 		</div>
-		  <!-- Action Buttons -->
+				<!-- Action Buttons -->
 		  <div class="flex mt-2 mb-1 justify-between items-center"> <!-- Changed back to justify-between -->
 		    <button @click="$emit('edit-job', job)" class="text-white cursor-pointer inline-block bg-slate-900 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-gray-300 dark:focus:ring-gray-800 shadow-lg shadow-gray-500/50 dark:shadow-lg dark:shadow-gray-800/80 font-medium rounded-lg text-sm px-3 py-1 text-center"> Edit </button>
 		    <button @click="$emit('edit-job', job)" class="text-white cursor-pointer inline-block bg-slate-900 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-gray-300 dark:focus:ring-gray-800 shadow-lg shadow-gray-500/50 dark:shadow-lg dark:shadow-gray-800/80 font-medium rounded-lg text-sm px-3 py-1 text-center"> View </button>
