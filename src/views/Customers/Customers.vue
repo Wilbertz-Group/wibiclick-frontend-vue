@@ -13,7 +13,7 @@
   import "ag-grid-community/styles/ag-grid.css"; // Core grid CSS, always needed
   import "ag-grid-community/styles/ag-theme-alpine.css"; // Optional theme CSS
   import Edit from "@/components/Edit.vue";
-  import Hubspot from "@/components/customers/Hubspot.vue";
+  import Hubspot from "@/components/Customers/Hubspot.vue";
 
   const userStore = useUserStore()
   const selectedContact = ref(null)

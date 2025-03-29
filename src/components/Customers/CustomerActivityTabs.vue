@@ -5,7 +5,7 @@ import { TabGroup, TabList, Tab, TabPanels, TabPanel } from '@headlessui/vue';
 // Import all necessary accordion components used within the tabs
 import accordionPayment from '@/components/payments/PaymentAccordion.vue';
 import accordionJob from '@/components/jobs/accordion.vue';
-import accordionCustomer from '@/components/customers/accordion.vue';
+import accordionCustomer from '@/components/Customers/accordion.vue';
 import accordionView from '@/components/analytics/accordionView.vue';
 import accordionClick from '@/components/analytics/accordionClick.vue';
 import accordionForm from '@/components/analytics/accordionForm.vue';
