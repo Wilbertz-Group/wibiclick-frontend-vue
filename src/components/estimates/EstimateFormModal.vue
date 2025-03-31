@@ -25,7 +25,7 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['update:modelValue', 'estimate-saved']);
+const emit = defineEmits(['update:modelValue', 'estimate-saved', 'invoice-created']); // Added 'invoice-created'
 
 const userStore = useUserStore();
 const toast = useToast();
@@ -411,6 +411,32 @@ const handleSave = () => {
     saveAndDownloadEstimate();
   }
   // WhatsApp is handled by a separate button/function (sendAttachment)
+};
+
+// --- Convert to Invoice ---
+const convertToInvoice = async () => {
+  if (!isEditing.value || !estimateForm.id) {
+    toast.error("Cannot convert a new or unsaved estimate.");
+    return;
+  }
+  loading.value = true;
+  try {
+    // Call the backend endpoint to convert the estimate
+    const response = await axios.post(`estimates/${estimateForm.id}/convert-to-invoice?id=${userStore.currentWebsite}`);
+
+    // Assuming the backend returns the newly created invoice object or its ID
+    const newInvoice = response.data.invoice; // Adjust based on actual backend response structure
+
+    toast.success(`Estimate ${estimateForm.estimate_nr} converted to Invoice successfully!`);
+    emit('invoice-created', newInvoice); // Emit event with the new invoice data
+    closeModal(); // Close the estimate modal
+
+  } catch (error) {
+    console.error("Error converting estimate to invoice:", error);
+    toast.error(`Error converting to invoice: ${error.response?.data?.message || error.message}`);
+  } finally {
+    loading.value = false;
+  }
 };
 
 
@@ -930,10 +956,15 @@ onMounted(() => {
                  <svg class="w-4 h-4 mr-1.5 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                  {{ loading && save_type === 'download' ? 'Saving...' : 'Save & Download' }}
               </button>
+              <!-- Convert to Invoice Button (Only show when editing) -->
+              <button v-if="isEditing" @click="convertToInvoice" type="button" class="btn-primary-modern w-full sm:w-auto bg-purple-600 hover:bg-purple-700 dark:bg-purple-500 dark:hover:bg-purple-600" :disabled="loading">
+                <font-awesome-icon icon="file-invoice-dollar" class="mr-1.5 h-4 w-4" /> <!-- Assuming you have this icon -->
+                {{ loading ? 'Converting...' : 'Convert to Invoice' }}
+              </button>
               <!-- Save Button (acts as primary submit) -->
               <button @click="save_type = 'save'" type="submit" class="btn-primary-modern w-full sm:w-auto" :disabled="loading">
                  <svg class="w-4 h-4 mr-1.5 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                 {{ loading && save_type === 'save' ? 'Saving...' : 'Save Estimate' }}
+                 {{ loading && save_type === 'save' ? 'Saving...' : (isEditing ? 'Save Changes' : 'Save Estimate') }} <!-- Adjusted text -->
               </button>
               <!-- Cancel Button -->
               <button @click="closeModal" type="button" class="btn-secondary-modern w-full sm:w-auto mr-auto"> <!-- Added mr-auto to push cancel left -->

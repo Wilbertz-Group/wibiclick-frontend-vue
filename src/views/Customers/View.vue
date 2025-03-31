@@ -438,6 +438,15 @@ function handleViewInvoice(invoice) {
   openAddInvoiceModal(invoice);
 }
 
+// --- Handle Invoice Creation from Estimate ---
+function handleInvoiceCreated(newInvoice) {
+  console.log("Invoice created from estimate:", newInvoice);
+  reloadTimeline(); // Refresh data to show the new invoice
+  // Optionally, open the new invoice immediately
+  // handleViewInvoice(newInvoice); // Uncomment this line if you want to open the new invoice modal
+  toast.info("Invoice list updated."); // Give feedback that the list is refreshed
+}
+
 // --- Payment Modal Handlers ---
 function openAddPaymentModal(payment = null) {
   selectedPayment.value = payment;
@@ -2132,6 +2141,7 @@ watchEffect(() => {
   :customer-data="customerContextForModal || customer"
   :estimate-data="selectedEstimate"
   @estimate-saved="handleEstimateSaved"
+  @invoice-created="handleInvoiceCreated"
 />
 
 <!-- Add/Edit Invoice Modal -->
