@@ -363,7 +363,8 @@ const submitExpense = async () => {
       date: moment(expenseForm.date).toISOString(),
       type: expenseForm.type,
       description: expenseForm.description,
-      customerId: expenseForm.customerId || undefined,
+      // Only include customerId if a specific job is selected
+      customerId: expenseForm.jobId ? expenseForm.customerId : undefined,
       employeeId: expenseForm.employeeId,
       jobId: expenseForm.jobId || undefined,
     };

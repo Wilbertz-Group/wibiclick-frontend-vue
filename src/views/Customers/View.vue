@@ -250,6 +250,7 @@ async function fetchContacts() {
     // Ensure related arrays exist
     customer.value.payments = customer.value.payments || [];
     customer.value.expenses = customer.value.expenses || [];
+    console.log('fetchContacts - Updated expenses:', JSON.stringify(customer.value.expenses)); // Added log
     customer.value.insurance = customer.value.insurance || [];
     customer.value.jobs = customer.value.jobs || [];
     customer.value.estimate = customer.value.estimate || [];
@@ -1217,6 +1218,7 @@ async function fetchCustomerFinancials() {
     const response = await axios.get(`customers/${route.query.customer_id}/financials?id=${userStore.currentWebsite}`); // Assuming websiteId needed
     // Assuming backend returns { totalRevenue: number, totalCosts: number, netProfit: number }
     customerFinancials.value = response.data;
+    console.log('fetchCustomerFinancials - Received financials:', JSON.stringify(response.data)); // Added log
 
   } catch (error) {
     console.error("Error fetching/calculating customer financials:", error);
