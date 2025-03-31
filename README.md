@@ -109,10 +109,10 @@ This section details the specific AI-powered features and automated workflows im
     *   **Predictive Maintenance:** AI analyzes appliance data and service history to predict potential failures and suggest maintenance.
         *   *Backend:* `POST /appliances/:id/predict-maintenance` (`appliances.ts`), `LlmService`, `llm-prompts.ts` (prompt: `predictiveMaintenanceAlert`). Also run via scheduled task `/tasks/generate-predictive-maintenance` (`tasks.ts`). Results stored in `Appliance` model fields (`predMaint...`). Alert dismissal via `POST /appliances/:id/dismiss-alert`.
         *   *Frontend:* `fetchPredictiveMaintenance` in `View.vue`. Alerts displayed in `ApplianceCard.vue`. `handleDismissAlert` calls dismissal endpoint.
-    *   **Technician Matching:** AI recommends the best technician for a job based on skills, availability, location, and customer history/preference/ratings.
-        *   *Backend:* `POST /jobs/match-technician` (`jobs.ts`), `LlmService`, `llm-prompts.ts` (prompt: `technicianMatching`). Uses `Employee`, `Jobs`, `CustomerTechnicianRating`, `Customers` data.
-        *   *Frontend:* `suggestTechnician` in `JobFormModal.vue` calls endpoint and displays recommendations.
-*   **Automation Goal:** Reduce appliance downtime, optimize technician scheduling, and improve first-time fix rates.
+    *   **Technician Matching:** AI recommends the best technician for a job based on skills, location, customer history/preference/ratings, and **technician availability during the requested job slot**.
+        *   *Backend:* `POST /jobs/match-technician` (`jobs.ts`), `LlmService`, `llm-prompts.ts` (prompt: `technicianMatching`). Uses `Employee`, `Jobs`, `CustomerTechnicianRating`, `Customers` data. Filters technicians based on overlapping jobs during the requested `slotStart` and `slotTime`. **Note:** Currently relies on basic availability checks (active, not on leave) and overlap detection; skills/specialties are placeholders (`[TODO]`).
+        *   *Frontend:* `suggestTechnician` in `JobFormModal.vue` calls endpoint (sending `slotStart` and `slotTime`) and displays recommendations.
+*   **Automation Goal:** Reduce appliance downtime, optimize technician scheduling, and improve first-time fix rates by suggesting the most suitable *and available* technician.
 *   **Improvement Suggestion (99% AI Goal):**
     *   **Automated Service Initiation:** Based on predictive maintenance alert severity and customer communication preferences, allow AI to automatically initiate the service process:
         *   Send a notification to the customer proposing maintenance and suggesting appointment slots (integrating with technician matching/calendars).
@@ -202,14 +202,18 @@ The backend is a Node.js application written in TypeScript, using the Koa.js fra
 *   **`Whatsapp`:** Logs of WhatsApp messages (used for sentiment analysis, timeline, etc.).
 *   **`Payments`, `Invoices`, `Estimates`, `Expenses`, `LineItems`:** Financial records.
 *   **`Activities`:** Centralized log/audit trail (potentially linking various actions).
+*   **Notes on Schema:**
+    *   **Indices:** While newer models include `@@index` definitions, several core models (`Customers`, `Jobs`, `Invoices`, `Estimates`, `Payments`, `Whatsapp`, `Activities`) lack explicit indices on frequently queried fields (like `websiteId`, `customerId`, `employeeId`, status fields, date ranges). Adding these could significantly improve query performance.
+    *   **ID Types:** There's a mix of UUIDs (`String`) and auto-incrementing `Int` IDs across different models. While functional, standardizing might improve consistency.
+    *   **Missing Fields:** Consider adding `Employee.specialties`, `Job.completedAt`, and `Customer.birthday` to support enhanced AI matching, survey triggering, and greeting features.
 
 ### 4.4 API Endpoint Conventions
 
 *   **Base URL:** (Assumed, needs verification - e.g., `/api/v1`)
 *   **Authentication:** Most endpoints require authentication (JWT Bearer token in `Authorization` header), checked by `auth.required` middleware. Scheduled task endpoints use OIDC via `schedulerAuthMiddleware`.
-*   **Resource Naming:** Generally follows RESTful principles (e.g., `GET /customers`, `POST /customers`, `GET /customers/:id`, `PUT /customers/:id`).
-*   **AI Actions:** Often implemented as `POST` requests on specific resources (e.g., `POST /customers/:id/timeline-summary`).
-*   **Context:** Many endpoints likely require a `websiteId` passed as a query parameter (`?id=...`) for authorization or data scoping, enforced by middleware or within controllers.
+*   **Resource Naming:** Generally follows RESTful principles (e.g., `GET /customers`, `GET /jobs`). However, some endpoints combine create/update logic using `POST` (e.g., `POST /add-customer`, `POST /add-job`) based on the presence of an ID in the request body, which deviates from standard REST practices (where `POST` is typically for creation and `PUT`/`PATCH` for updates).
+*   **AI Actions:** Often implemented as `POST` requests on specific resources (e.g., `POST /customers/:id/timeline-summary`), which is a common pattern.
+*   **Context:** Many endpoints require a `websiteId` passed as a query parameter (consistently named `?id=...`) for authorization or data scoping, enforced by middleware or within controllers.
 
 ## 5. Frontend Details (`wibiclick-frontend-vue`)
 
@@ -301,8 +305,9 @@ This section details the Vue 3 frontend application.
 ### 5.3 Key Architectural Points (Frontend)
 
 *   **Modularity:** The codebase is organized by feature, with dedicated folders for views and components related to specific modules (e.g., `src/views/Customers`, `src/components/customers`). The `src/views/Customers/View.vue` component acts as the central hub for the enhanced customer view and engagement features.
-*   **Composition API:** Vue 3's Composition API is used extensively for organizing component logic, particularly within `src/views/Customers/View.vue` for managing state, fetching data, and handling user interactions related to AI features.
-*   **State Management:** Centralized user state management in `UserStore.js` using Pinia. State related to specific views (like customer data, suggestions, alerts) is primarily managed locally within the component using `ref` and `reactive`. **Consideration:** For complex views like `Customer/View.vue`, moving some local state (e.g., suggestions, alerts, scheduled messages) into dedicated Pinia stores could improve state management and simplify prop drilling, especially if this data needs to be accessed or modified by multiple child components (like modals).
+*   **Composition API:** Vue 3's Composition API is used extensively for organizing component logic.
+*   **Component Complexity:** The `src/views/Customers/View.vue` component has become extremely large and complex, managing numerous responsibilities (customer details, related records, activity timeline, multiple AI features, modals). This significantly impacts maintainability. **Recommendation:** Urgently refactor `View.vue` into smaller, single-responsibility components (e.g., `CustomerDetailCard`, `EngagementHub`, `RelatedItemsList`, `ActivityTimeline`) to improve code structure and readability.
+*   **State Management:** Centralized user state management in `UserStore.js` using Pinia. State related to specific views (like customer data, suggestions, alerts in `View.vue`) is primarily managed locally within the component using `ref` and `reactive`. **Recommendation:** Leverage Pinia more extensively for shared state (customer data, related entities, AI results) to simplify complex components like `View.vue`, improve state predictability, and facilitate testing.
 *   **API Interaction:** Axios is used for backend communication. API calls are made directly from component logic (e.g., within `onMounted` or specific action handler functions like `fetchFollowupSuggestions`). The base URL is set globally in `main.js`.
 *   **Authentication Flow:**
     1.  User attempts to access a route.

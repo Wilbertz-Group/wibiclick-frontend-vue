@@ -100,10 +100,19 @@
 4.  **Predictive Maintenance UI:** Added action buttons (Schedule Service, Dismiss) to `ApplianceCard.vue`. Implemented `handleDismissAlert` in `View.vue` to call backend endpoint. Added loading/error state display for the Appliances section. Refined `createFollowupForAlert` placeholder function.
 5.  **Code Cleanup:** Fixed corrupted function definition (`dismissPredMaintAlert`).
 
+
+**Phase 3: Code Review & Refinement (2025-03-31)**
+
+1.  **Code Analysis:** Reviewed key frontend (`View.vue`, `JobFormModal.vue`) and backend (`customers.ts`, `tasks.ts`, `jobs.ts`, `follow-ups.ts`, `llm-service.ts`, `schema.prisma`) files.
+2.  **Identified Issues:** Pinpointed areas for improvement including `View.vue` complexity, non-standard API patterns, missing database indices, and incomplete technician availability logic in AI matching.
+3.  **Implemented Changes:**
+    *   Corrected invoice count logic in `GET /jobs` (`jobs.ts`).
+    *   Enhanced AI technician matching (`POST /jobs/match-technician`) to filter by availability based on the requested job time slot (`slotStart`, `slotTime`). Updated `JobFormModal.vue` to send time slot data.
+4.  **Documentation:** Updated `README.md` to reflect review findings regarding technician matching, API conventions, database schema notes, and frontend component complexity recommendations.
+
 ---
 
 ## Remaining Tasks
-
 ### Backend (`wibiclick_mysql_backend`)
 
 1.  **Refine Task Logic (`src/controllers/tasks.ts`):**

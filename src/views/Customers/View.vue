@@ -49,6 +49,9 @@ import ApplianceCard from '@/components/Customers/ApplianceCard.vue'; // Import 
 import ApplianceFormModal from '@/components/Customers/ApplianceFormModal.vue'; // Import Appliance Form Modal
 import PreferredTechnicianModal from '@/components/Customers/PreferredTechnicianModal.vue'; // Import Preferred Technician Modal
 import CommunicationPreferencesModal from '@/components/Customers/CommunicationPreferencesModal.vue'; // Import Comm Prefs Modal
+import ScheduleModal from '@/components/misc/ScheduleModal.vue'; // Import Schedule Modal
+import ManualLogModal from '@/components/misc/ManualLogModal.vue'; // Import Manual Log Modal
+import TaskFormModal from '@/components/misc/TaskFormModal.vue'; // Import Task Form Modal
 import { formatDistanceToNow } from 'date-fns'; // Import date-fns function
 
 library.add(
@@ -77,6 +80,13 @@ const showAddApplianceModal = ref(false); // State for appliance modal (add/edit
 const selectedAppliance = ref(null); // State for selected appliance being edited/viewed
 const showPreferredTechnicianModal = ref(false); // State for preferred technician modal
 const showCommPrefsModal = ref(false); // State for communication preferences modal
+const showScheduleModal = ref(false); // State for schedule modal
+const suggestionToSchedule = ref(null); // State to hold suggestion being scheduled
+const showManualLogModal = ref(false); // State for manual log modal
+const suggestionToLog = ref(null); // State to hold suggestion being logged
+const greetingToSchedule = ref(null); // State to hold greeting being scheduled
+const showTaskModal = ref(false); // State for task modal
+const initialTaskDataForModal = ref({}); // State to pre-fill task modal
 const technicians = ref([]); // State for technicians list (might be fetched within modal now)
 const customerFinancials = ref({ totalRevenue: null, totalCosts: null, netProfit: null }); // State for customer financials
 
@@ -591,31 +601,60 @@ async function fetchFollowupSuggestions() {
 }
 
 // Placeholder actions for suggestions
-async function scheduleSuggestion(suggestion) {
-  console.log("Scheduling suggestion:", suggestion);
-  // TODO: Implement a date/time picker modal to allow user selection for followUpDate
-  const placeholderScheduleDate = new Date();
-  placeholderScheduleDate.setDate(placeholderScheduleDate.getDate() + 1); // Schedule for tomorrow for now
+function scheduleSuggestion(suggestion) { // Made non-async as it just opens modal
+  console.log("Opening schedule modal for suggestion:", suggestion);
+  suggestionToSchedule.value = suggestion; // Store the suggestion data
+  showScheduleModal.value = true; // Open the modal
+}
 
+async function handleConfirmScheduleSuggestion(selectedDateTime) {
+  if (!suggestionToSchedule.value) {
+    console.error("No suggestion selected for scheduling.");
+    toast.error("An error occurred. Please try again.");
+    return;
+  }
+
+  const suggestion = suggestionToSchedule.value;
   const payload = {
-      customerId: customer.value.id, // Assuming customer.value.id is available
+      customerId: customer.value.id,
       jobId: null, // Suggestions aren't typically tied to a specific job
       status: 'SCHEDULED',
       type: 'AI_SUGGESTION',
       messageContent: suggestion.draftMessage,
-      followUpDate: placeholderScheduleDate.toISOString(),
+      followUpDate: selectedDateTime.toISOString(), // Use date from modal
   };
 
   try {
-      await axios.post(`follow-ups?id=${userStore.currentWebsite}`, payload); // Assuming websiteId needed for auth/context
-      toast.success(`Suggestion scheduled for ${placeholderScheduleDate.toLocaleDateString()}.`);
-      // Optionally remove the suggestion from the list after scheduling
-      // followupSuggestions.value = followupSuggestions.value.filter(s => s !== suggestion); // Need a unique ID on suggestions for this
+      await axios.post(`follow-ups?id=${userStore.currentWebsite}`, payload);
+      toast.success(`Suggestion scheduled for ${selectedDateTime.toLocaleString()}.`);
+
+      // Refetch suggestions and scheduled messages to update UI reliably
+      fetchFollowupSuggestions();
+      fetchScheduledMessages();
+
   } catch (error) {
       console.error("Error scheduling suggestion:", error);
       toast.error(`Failed to schedule suggestion: ${error.response?.data?.message || error.message}`);
+  } finally {
+      suggestionToSchedule.value = null; // Clear the stored suggestion
   }
 }
+// Removed old API call logic from here
+// Removed old API call logic from here
+// Removed old API call logic from here
+// Removed old API call logic from here
+// Removed old API call logic from here
+// Removed old API call logic from here
+// Removed old API call logic from here
+// Removed old API call logic from here
+// Removed old API call logic from here
+// Removed old API call logic from here
+// Removed old API call logic from here
+// Removed old API call logic from here
+// Removed old API call logic from here
+// Removed old API call logic from here
+// Removed old API call logic from here
+// Removed old API call logic from here
 async function sendSuggestionNow(suggestion) {
   console.log("Sending suggestion now:", suggestion);
 
@@ -655,31 +694,61 @@ async function sendSuggestionNow(suggestion) {
   //   toast.error("Failed to send suggestion.");
   // }
 }
-async function logSuggestionManually(suggestion) {
-  console.log("Logging suggestion manually:", suggestion);
-  // TODO: Implement a modal to capture user feedback/notes about the manual interaction.
-  const userFeedback = prompt("Enter notes about the manual interaction (placeholder):"); // Placeholder for modal input
+function logSuggestionManually(suggestion) { // Made non-async
+  console.log("Opening manual log modal for suggestion:", suggestion);
+  suggestionToLog.value = suggestion; // Store the suggestion
+  showManualLogModal.value = true; // Open the modal
+}
 
+async function handleConfirmManualLog(feedbackText) {
+  if (!suggestionToLog.value) {
+    console.error("No suggestion selected for manual logging.");
+    toast.error("An error occurred. Please try again.");
+    return;
+  }
+
+  const suggestion = suggestionToLog.value;
   const payload = {
       customerId: customer.value.id,
       jobId: null,
-      status: 'COMPLETED', // Or 'LOGGED' depending on desired workflow
+      status: 'COMPLETED', // Or 'LOGGED'
       type: 'MANUAL_LOG',
       messageContent: suggestion.draftMessage, // Store original suggestion context
-      feedback: userFeedback || `Manual action based on suggestion: ${suggestion.title}`, // Use user input or default
+      feedback: feedbackText || `Manual action based on suggestion: ${suggestion.title}`, // Use feedback from modal
       followUpDate: new Date().toISOString(), // Log when it happened
   };
 
   try {
       await axios.post(`follow-ups?id=${userStore.currentWebsite}`, payload);
       toast.success(`Manual interaction logged.`);
-      // Optionally remove the suggestion from the list
-      // followupSuggestions.value = followupSuggestions.value.filter(s => s !== suggestion); // Need unique ID
+
+      // Refetch suggestions and logged follow-ups to update UI reliably
+      fetchFollowupSuggestions();
+      fetchLoggedFollowUps();
+
   } catch (error) {
       console.error("Error logging manual interaction:", error);
       toast.error(`Failed to log interaction: ${error.response?.data?.message || error.message}`);
+  } finally {
+      suggestionToLog.value = null; // Clear the stored suggestion
   }
 }
+// Removed old API call logic from here
+// Removed old API call logic from here
+// Removed old API call logic from here
+// Removed old API call logic from here
+// Removed old API call logic from here
+// Removed old API call logic from here
+// Removed old API call logic from here
+// Removed old API call logic from here
+// Removed old API call logic from here
+// Removed old API call logic from here
+// Removed old API call logic from here
+// Removed old API call logic from here
+// Removed old API call logic from here
+// Removed old API call logic from here
+// Removed old API call logic from here
+// Removed old API call logic from here
 async function dismissSuggestion(index) {
   const suggestionToDismiss = followupSuggestions.value[index];
   if (!suggestionToDismiss || !suggestionToDismiss.id) {
@@ -696,8 +765,10 @@ async function dismissSuggestion(index) {
 
   try {
       // Call backend to update status
-      await axios.post(`suggestions/${suggestionId}/dismiss?id=${userStore.currentWebsite}`); // Assuming websiteId needed for auth/context
+      await axios.post(`suggestions/${suggestionId}/dismiss?id=${userStore.currentWebsite}`);
       toast.success(`Suggestion dismissed.`);
+      // Refetch suggestions to ensure UI is accurate (already removed optimistically)
+      fetchFollowupSuggestions();
   } catch (error) {
       console.error("Error dismissing suggestion:", error);
       toast.error(`Failed to dismiss suggestion: ${error.response?.data?.message || error.message}`);
@@ -845,44 +916,72 @@ async function handleDismissAlert(applianceId) {
 }
 
 // Placeholder actions for greetings
-async function scheduleGreeting(greeting) {
-  console.log("Scheduling greeting:", greeting);
-  // TODO: Implement a date/time picker modal to allow user selection/confirmation
-  const scheduleDate = greeting.occasionDate ? new Date(greeting.occasionDate) : new Date(); // Use occasion date or now as fallback
-  // Potentially adjust scheduleDate based on user input from modal in the future
+function scheduleGreeting(greeting) { // Made non-async
+  console.log("Opening schedule modal for greeting:", greeting);
+  // Clear suggestion state in case it was used last
+  suggestionToSchedule.value = null;
+  greetingToSchedule.value = greeting; // Store the greeting data
+  showScheduleModal.value = true; // Open the modal
+}
 
+async function handleConfirmScheduleGreeting(selectedDateTime) {
+  if (!greetingToSchedule.value) {
+    console.error("No greeting selected for scheduling.");
+    toast.error("An error occurred. Please try again.");
+    return;
+  }
+
+  const greeting = greetingToSchedule.value;
   const payload = {
       customerId: customer.value.id,
       jobId: null,
       status: 'SCHEDULED',
-      type: 'GREETING',
+      type: 'GREETING', // Set type to GREETING
       messageContent: greeting.draftMessage,
-      followUpDate: scheduleDate.toISOString(),
+      followUpDate: selectedDateTime.toISOString(), // Use date from modal
   };
 
   try {
-      const response = await axios.post(`follow-ups?id=${userStore.currentWebsite}`, payload);
-      toast.success(`Greeting scheduled for ${scheduleDate.toLocaleDateString()}.`);
+      await axios.post(`follow-ups?id=${userStore.currentWebsite}`, payload);
+      toast.success(`Greeting scheduled for ${selectedDateTime.toLocaleString()}.`);
 
-      // Update the greeting object with the returned followUpId
-      // Find the index of the greeting in the array
-      const index = holidayGreetings.value.findIndex(g => g === greeting); // Assumes object identity works, might need a unique key
-      if (index !== -1 && response.data?.followUp?.id) {
-          holidayGreetings.value[index].followUpId = response.data.followUp.id;
-          // Optionally move to scheduledMessages array instead?
-          // scheduledMessages.value.push(response.data.followUp);
-          // holidayGreetings.value.splice(index, 1);
-      } else {
-          console.warn("Could not find scheduled greeting in array or missing followUpId in response.");
-          // Fetch scheduled messages again to ensure UI consistency if update fails
-          fetchScheduledMessages();
-      }
+      // Refetch greetings and scheduled messages to update UI reliably
+      fetchHolidayGreetings(); // Refetch the list which now comes from scheduled items
+      fetchScheduledMessages();
 
   } catch (error) {
       console.error("Error scheduling greeting:", error);
       toast.error(`Failed to schedule greeting: ${error.response?.data?.message || error.message}`);
+  } finally {
+      greetingToSchedule.value = null; // Clear the stored greeting
   }
 }
+// Removed old API call logic from here
+// Removed old API call logic from here
+// Removed old API call logic from here
+// Removed old API call logic from here
+// Removed old API call logic from here
+// Removed old API call logic from here
+// Removed old API call logic from here
+// Removed old API call logic from here
+// Removed old API call logic from here
+// Removed old API call logic from here
+// Removed old API call logic from here
+// Removed old API call logic from here
+// Removed old API call logic from here
+// Removed old API call logic from here
+// Removed old API call logic from here
+// Removed old API call logic from here
+// Removed old API call logic from here
+// Removed old API call logic from here
+// Removed old API call logic from here
+// Removed old API call logic from here
+// Removed old API call logic from here
+// Removed old API call logic from here
+// Removed old API call logic from here
+// Removed old API call logic from here
+// Removed old API call logic from here
+// Removed old API call logic from here
 
 async function sendGreetingNow(greeting) {
   console.log("Sending greeting now:", greeting);
@@ -1008,90 +1107,22 @@ async function fetchHolidayGreetings() {
     greetingsError.value = null; // Clear previous error
     holidayGreetings.value = []; // Clear previous
     try {
-        const occasions = [];
-        const today = new Date();
-        const currentYear = today.getFullYear();
+        // Fetch SCHEDULED greetings from the backend
+        // The backend task /tasks/generate-scheduled-greetings now handles detection and scheduling.
+        const response = await axios.get(`follow-ups?customerId=${route.query.customer_id}&status=SCHEDULED&type=GREETING&id=${userStore.currentWebsite}`);
+        // Assuming backend returns { followUps: [...] }
+        // We need to map the followUp data to the structure expected by the template if different
+        holidayGreetings.value = (response.data.followUps || []).map(followUp => ({
+            followUpId: followUp.id, // Store the ID for cancellation
+            occasionDate: followUp.followUpDate,
+            draftMessage: followUp.messageContent,
+            // Attempt to extract specific occasion from title/content if needed, otherwise use type
+            specificOccasion: followUp.messageContent?.split('\n')[0] || 'Scheduled Greeting', // Basic extraction attempt
+            occasionType: 'Greeting' // Or derive from followUp.type if more specific types were stored
+        }));
+        console.log("Fetched scheduled greetings:", holidayGreetings.value);
 
-        // --- Placeholder Logic ---
-        // TODO: Replace with robust date checking and potentially a holiday library
-
-        // 1. Customer Birthday (Assuming customer.value.birthday exists as 'YYYY-MM-DD' or Date object)
-        // if (customer.value?.birthday) {
-        //    const birthDate = new Date(customer.value.birthday);
-        //    // Set year to current year for comparison
-        //    birthDate.setFullYear(currentYear);
-        //    // Check if birthday is within the next month (example window)
-        //    const oneMonthLater = new Date(today);
-        //    oneMonthLater.setMonth(today.getMonth() + 1);
-        //    if (birthDate >= today && birthDate <= oneMonthLater) {
-        //        occasions.push({ occasionType: 'Birthday', specificOccasion: 'Happy Birthday!', occasionDate: birthDate.toISOString().split('T')[0] });
-        //    }
-        // }
-
-        // 2. Service Anniversary (Using customer.createdAt)
-        if (customer.value?.createdAt) {
-            const creationDate = new Date(customer.value.createdAt);
-            const anniversaryDate = new Date(creationDate);
-            anniversaryDate.setFullYear(currentYear);
-            // Check if anniversary is today or within the next week (example window)
-            const oneWeekLater = new Date(today);
-            oneWeekLater.setDate(today.getDate() + 7);
-            if (anniversaryDate >= today && anniversaryDate <= oneWeekLater) {
-                const years = currentYear - creationDate.getFullYear();
-                if (years > 0) { // Only add if it's not the creation year
-                    occasions.push({ occasionType: 'Service Anniversary', specificOccasion: `${years} Year Anniversary`, occasionDate: anniversaryDate.toISOString().split('T')[0] });
-                }
-            }
-        }
-
-        // 3. Fixed Public Holidays (Example: Christmas)
-        const christmas = new Date(currentYear, 11, 25); // Month is 0-indexed
-        const oneMonthLater = new Date(today);
-        oneMonthLater.setMonth(today.getMonth() + 1);
-         if (christmas >= today && christmas <= oneMonthLater) {
-            occasions.push({ occasionType: 'Holiday', specificOccasion: 'Christmas', occasionDate: christmas.toISOString().split('T')[0] });
-        }
-        // Add more holidays as needed...
-
-        // --- End Placeholder Logic ---
-
-        if (occasions.length === 0) {
-            console.log("No relevant upcoming occasions found.");
-            // No return here, let finally block run
-        } else {
-            // Call backend for each relevant occasion
-            // Use Promise.allSettled to handle individual failures without stopping others
-            const greetingPromises = occasions.map(async (occasion) => {
-                try {
-                    const response = await axios.post(
-                        `customers/${route.query.customer_id}/generate-greeting?id=${userStore.currentWebsite}`,
-                        occasion // Send occasion details in the body
-                    );
-                    // Assuming backend returns { draftMessage: '...' }
-                    if (response.data.draftMessage) {
-                        return { // Return successful data for aggregation
-                            ...occasion,
-                            draftMessage: response.data.draftMessage
-                        };
-                    }
-                    return null; // Return null if no message generated
-                } catch (error) {
-                    console.error(`Error fetching greeting for ${occasion.specificOccasion}:`, error);
-                    toast.error(`Could not generate greeting for ${occasion.specificOccasion}.`);
-                    return { error: true, occasion: occasion.specificOccasion }; // Indicate error for this occasion
-                }
-            });
-
-            const results = await Promise.allSettled(greetingPromises);
-            const successfulGreetings = results
-                .filter(result => result.status === 'fulfilled' && result.value && !result.value.error)
-                .map(result => result.value);
-
-            holidayGreetings.value = successfulGreetings; // Assign successful results
-        }
-        console.log("Fetched holiday greetings:", holidayGreetings.value);
-    } catch (error) { // Add catch block for overall errors (e.g., initial checks)
-        console.error("Error fetching holiday greetings:", error);
+    } catch (error) {
         greetingsError.value = error.message || "Failed to load greetings.";
         toast.error(`Could not load greetings: ${greetingsError.value}`);
     } finally {
@@ -1102,12 +1133,35 @@ async function fetchHolidayGreetings() {
 
 
 function createFollowupForAlert(alertData) {
-  // TODO: Implement a dedicated Task creation modal/component.
-  // This function would likely:
-  // 1. Construct a preliminary task object from alertData (e.g., title, description linking to customer/appliance).
-  // 2. Emit an event or use a store action to open the task modal with the pre-filled data.
-  console.log("Attempting to create follow-up task for alert:", alertData);
-  toast.info("Task creation from alert: UI Modal needed.");
+  console.log("Opening task modal for alert:", alertData);
+  // Construct initial data for the modal
+  const applianceName = getApplianceName(alertData.applianceId) || `Appliance ID ${alertData.applianceId}`;
+  initialTaskDataForModal.value = {
+      title: `Follow up on Predictive Alert: ${applianceName}`,
+      description: `Predictive maintenance alert triggered for ${applianceName}.\nNeeds: ${alertData.alert?.needs || 'Check Required'}\nRisk: ${alertData.alert?.risk || 'Unknown'}\nDetails: ${alertData.alert?.details || 'N/A'}`,
+      customerId: customer.value.id, // Link task to this customer
+      // assigneeId: null, // Default to unassigned
+      // dueDate: null, // Default to no due date
+  };
+  showTaskModal.value = true; // Open the modal
+}
+
+async function handleSaveTask(taskData) {
+  console.log("Saving task:", taskData);
+  // TODO: Implement backend API call (e.g., POST /tasks)
+  // Ensure the backend endpoint exists and handles task creation,
+  // linking to customerId, assigneeId, etc.
+  try {
+    // Call the backend endpoint to create the task
+    const response = await axios.post(`task?id=${userStore.currentWebsite}`, taskData); // Use singular 'task' endpoint
+    toast.success(`Task "${taskData.title}" created successfully.`);
+    // Optionally refresh a task list if displayed on this page (e.g., if tasks were shown in activity feed)
+    // reloadTimeline(); // Or a specific task list fetch function
+    // Removed placeholder toast
+  } catch (error) {
+    console.error("Error saving task:", error);
+    toast.error(`Failed to save task: ${error.response?.data?.message || error.message}`);
+  }
 }
 
 // This function seems to have been corrupted, restoring definition
@@ -1750,6 +1804,33 @@ watchEffect(() => {
                      </div>
                      <!-- End AI Sentiment Analysis Section -->
 
+                     <!-- AI Profitability Analysis Section -->
+                     <div class="mb-6 p-4 border border-green-200 dark:border-green-800/50 bg-green-50 dark:bg-green-900/20 rounded-lg shadow-sm">
+                       <div class="flex justify-between items-center mb-2">
+                         <h4 class="text-sm font-semibold text-green-800 dark:text-green-300 uppercase tracking-wider">AI Profitability Analysis</h4>
+                         <div class="flex items-center space-x-2">
+                            <span v-if="latestProfitabilityAnalysis?.generatedAt" class="text-xs text-gray-400 dark:text-gray-500 italic">
+                                {{ formatRelativeTime(latestProfitabilityAnalysis.generatedAt) }}
+                            </span>
+                            <button @click="fetchProfitabilityAnalysis" class="btn-ghost-modern text-xs p-1" :disabled="isFetchingProfitabilityAnalysis" aria-label="Refresh AI profitability analysis">
+                                <font-awesome-icon icon="sync" :class="{ 'fa-spin': isFetchingProfitabilityAnalysis }" />
+                            </button>
+                         </div>
+                       </div>
+                       <div v-if="isFetchingProfitabilityAnalysis" class="text-center py-4">
+                         <p class="text-sm text-gray-500 dark:text-gray-400">Analyzing profitability...</p>
+                       </div>
+                       <div v-else-if="profitabilityAnalysisError" class="text-sm text-red-600 dark:text-red-400">
+                         Error analyzing profitability: {{ profitabilityAnalysisError }}
+                       </div>
+                       <!-- Use v-html to render HTML from backend -->
+                       <div v-else-if="latestProfitabilityAnalysis?.content" v-html="latestProfitabilityAnalysis.content" class="text-sm text-gray-700 dark:text-gray-300 space-y-2"></div>
+                       <div v-else class="text-sm text-gray-500 dark:text-gray-400 italic">
+                         Click the refresh button to generate an AI analysis of customer profitability.
+                       </div>
+                     </div>
+                     <!-- End AI Profitability Analysis Section -->
+
                      <p v-if="!customer.activities || customer.activities.length === 0" class="text-center text-gray-500 py-8">No activities recorded yet.</p>
                       <template v-else>
                          <!-- Loop through all activities and try to determine type -->
@@ -2093,6 +2174,29 @@ watchEffect(() => {
     languagePreference: customer.languagePreference
   }"
   @saved="handleCommPrefsSaved"
+/>
+
+<!-- Schedule Modal for Suggestions/Greetings -->
+<ScheduleModal
+  v-model:isOpen="showScheduleModal"
+  :title="suggestionToSchedule ? 'Schedule Suggestion' : (greetingToSchedule ? 'Schedule Greeting' : 'Schedule Message')"
+  :message-preview="suggestionToSchedule?.draftMessage || greetingToSchedule?.draftMessage || ''"
+  :initial-date="suggestionToSchedule?.occasionDate || greetingToSchedule?.occasionDate"
+  @confirm-schedule="suggestionToSchedule ? handleConfirmScheduleSuggestion($event) : handleConfirmScheduleGreeting($event)"
+/>
+
+<!-- Manual Log Modal for Suggestions -->
+<ManualLogModal
+  v-model:isOpen="showManualLogModal"
+  :suggestion-context="suggestionToLog?.draftMessage || suggestionToLog?.title || ''"
+  @confirm-log="handleConfirmManualLog"
+/>
+
+<!-- Task Form Modal -->
+<TaskFormModal
+   v-model:isOpen="showTaskModal"
+   :initial-task-data="initialTaskDataForModal"
+   @save-task="handleSaveTask"
 />
      
 

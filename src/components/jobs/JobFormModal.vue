@@ -183,6 +183,9 @@ async function suggestTechnician() {
       // 3. We could reliably parse the appliance type from jobForm.issue.
       // For now, sending null as the backend should handle its absence.
       applianceType: null,
+      // Send slot start and time for availability checking
+      slotStart: jobForm.slotStart ? moment(jobForm.slotStart).toISOString() : null,
+      slotTime: jobForm.slotTime,
       // Backend will fetch available technicians and customer history
     };
 
