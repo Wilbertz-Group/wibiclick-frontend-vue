@@ -4,18 +4,19 @@ import axios from 'axios';
 import moment from 'moment';
 import { useToast } from 'vue-toast-notification';
 import { useUserStore } from '@/stores/UserStore';
-import ScaleLoader from 'vue-spinner/src/ScaleLoader.vue'; // Added
+import ScaleLoader from 'vue-spinner/src/ScaleLoader.vue';
+import { ArrowUpTrayIcon, PhotoIcon, XCircleIcon, CheckCircleIcon } from '@heroicons/vue/24/outline'; // Added icons
 
 const props = defineProps({
-  modelValue: { // Controls modal visibility (v-model)
+  modelValue: {
     type: Boolean,
     required: true,
   },
-  customerData: { // To link expense to customer (can be null if adding expense not from customer view)
+  customerData: {
     type: Object,
     default: null,
   },
-  expenseData: { // For editing existing expense
+  expenseData: {
     type: Object,
     default: null,
   }
@@ -27,29 +28,43 @@ const userStore = useUserStore();
 const toast = useToast();
 const loading = ref(false); // For save operation
 const loadingRelated = ref(false); // For fetching dropdown data
+const processingImage = ref(false); // For n8n OCR processing
+const imageProcessingError = ref(null); // Error message from n8n
+const imageProcessingSuccess = ref(false); // Flag for successful OCR
+
+// --- Image Upload State ---
+const selectedFile = ref(null);
+const selectedFileName = ref('');
+const selectedFilePreview = ref(null); // For image preview
+const dragOver = ref(false); // For dropzone styling
+const latestJobTechnicianId = ref(null); // Added ref for latest job's tech
+const existingImageUrl = ref(null); // Added ref for existing image URL when editing
 
 // --- Dropdown Data ---
 const employees = ref([]);
-const jobs = ref([]); // Will hold jobs relevant to the customer
+const jobs = ref([]);
 
-// --- Form State (aligned with Add/EditExpense.vue) ---
+// --- Form State ---
 const expenseForm = reactive({
-  id: '', // Will be empty for new expenses
-  customerId: '', // Link to customer (might be prefilled)
+  id: '',
+  customerId: '',
   amount: 0,
   date: moment().format('YYYY-MM-DD'),
-  type: 'OTHER', // Default expense type
+  type: 'OTHER',
   description: '',
-  employeeId: null, // Added
-  jobId: null,      // Added
+  employeeId: null,
+  jobId: null,
+  // We don't store the image URL here yet, backend will handle it
 });
 
-const EXPENSE_TYPES = ['FUEL', 'PARTS', 'BONUS', 'OTHER']; // Match Expense.vue
+const EXPENSE_TYPES = ['FUEL', 'PARTS', 'BONUS', 'OTHER'];
 
 const isEditing = computed(() => !!expenseForm.id);
+const n8nWebhookUrl = 'https://n8n.wilbertzgroup.com/webhook/process-expense-image'; // Configurable?
 
 // --- Fetching Logic ---
 async function fetchEmployees() {
+  // ... (existing code - unchanged)
   if (employees.value.length > 0 || !userStore.currentWebsite) return; // Avoid refetching
   loadingRelated.value = true;
   try {
@@ -67,6 +82,7 @@ async function fetchEmployees() {
 }
 
 async function fetchJobsForCustomer(customerId) {
+  // ... (existing code - unchanged)
   jobs.value = [{ value: null, label: 'No Job' }]; // Start with default
   if (!customerId || !userStore.currentWebsite) {
       loadingRelated.value = false; // Ensure loading stops if no customer
@@ -74,21 +90,44 @@ async function fetchJobsForCustomer(customerId) {
   }
   // loadingRelated is already true from fetchEmployees or set here
   loadingRelated.value = true;
+  latestJobTechnicianId.value = null; // Reset before fetching
   try {
+    // Assuming the backend endpoint returns jobs with employeeId and slotStart
     const response = await axios.get(`jobs-for-contact?id=${userStore.currentWebsite}&contactId=${customerId}`);
-    const customerJobs = response.data.jobs.map(job => ({
-      value: job.id,
-      // Use more descriptive label if possible
-      label: `Job #${job.jobStatus || job.id.substring(0, 5)} - ${job.slotStart ? moment(job.slotStart).format('YYYY-MM-DD') : 'No Date'}`
-    })).sort((a, b) => { // Sort by date descending
-        const dateA = a.label.includes('No Date') ? 0 : new Date(a.label.split(' - ')[1]);
-        const dateB = b.label.includes('No Date') ? 0 : new Date(b.label.split(' - ')[1]);
+    const rawJobs = response.data.jobs || [];
+
+    // Sort raw jobs by date descending (handle null dates)
+    rawJobs.sort((a, b) => {
+        const dateA = a.slotStart ? new Date(a.slotStart) : null;
+        const dateB = b.slotStart ? new Date(b.slotStart) : null;
         if (!dateA && !dateB) return 0;
-        if (!dateA) return 1;
-        if (!dateB) return -1;
-        return dateB - dateA;
+        if (!dateA) return 1; // Put null dates last
+        if (!dateB) return -1; // Put null dates last
+        return dateB - dateA; // Sort descending
     });
-    jobs.value = [...jobs.value, ...customerJobs]; // Add fetched jobs after 'No Job'
+
+    // Map to dropdown format
+    const customerJobsForDropdown = rawJobs.map(job => ({
+      value: job.id,
+      label: `Job #${job.jobStatus || job.id.substring(0, 5)} - ${job.slotStart ? moment(job.slotStart).format('YYYY-MM-DD') : 'No Date'}`
+    }));
+
+    jobs.value = [{ value: null, label: 'No Job' }, ...customerJobsForDropdown]; // Add fetched jobs after 'No Job'
+
+    // Find the latest job (first one after sorting) and its technician
+    if (rawJobs.length > 0) {
+        const latestJob = rawJobs[0];
+        // console.log('Latest Job Data:', JSON.stringify(latestJob)); // DEBUG LOG - Remove later
+        // Access nested employee ID
+        if (latestJob.employee && latestJob.employee.id) {
+            latestJobTechnicianId.value = latestJob.employee.id;
+            // console.log('Found latest job technician ID:', latestJobTechnicianId.value); // DEBUG LOG - Remove later
+        } else {
+            // console.log('Latest job does not have an employee or employee.id.'); // DEBUG LOG - Remove later
+        }
+        // We'll pre-select the job ID in prefillForm
+    }
+
   } catch (error) {
     console.error('Error fetching jobs for customer:', error);
     toast.error("Error fetching jobs for customer");
@@ -103,6 +142,16 @@ const closeModal = () => {
   emit('update:modelValue', false);
 };
 
+const resetImageState = () => {
+    selectedFile.value = null;
+    selectedFileName.value = '';
+    selectedFilePreview.value = null;
+    processingImage.value = false;
+    imageProcessingError.value = null;
+    imageProcessingSuccess.value = false;
+    dragOver.value = false;
+};
+
 const resetExpenseForm = () => {
   Object.assign(expenseForm, {
     id: '',
@@ -111,16 +160,17 @@ const resetExpenseForm = () => {
     date: moment().format('YYYY-MM-DD'),
     type: 'OTHER',
     description: '',
-    employeeId: null, // Reset added field
-    jobId: null,      // Reset added field
+    employeeId: null,
+    jobId: null,
   });
-  // Don't reset employees, reset jobs
   jobs.value = [{ value: null, label: 'No Job' }];
+  existingImageUrl.value = null; // Clear existing image URL
+  resetImageState(); // Also reset image state
 };
 
 const prefillForm = async (customer, expense) => {
-  resetExpenseForm();
-  await fetchEmployees(); // Fetch employees regardless
+  resetExpenseForm(); // Resets image state too
+  await fetchEmployees();
 
   let effectiveCustomerId = '';
   if (expense && expense.customerId) {
@@ -128,88 +178,259 @@ const prefillForm = async (customer, expense) => {
   } else if (customer && customer.id) {
       effectiveCustomerId = customer.id;
   }
-  expenseForm.customerId = effectiveCustomerId; // Set customer ID first
+  expenseForm.customerId = effectiveCustomerId;
 
   if (effectiveCustomerId) {
-      await fetchJobsForCustomer(effectiveCustomerId); // Fetch jobs for the relevant customer
+      await fetchJobsForCustomer(effectiveCustomerId);
   } else {
-      loadingRelated.value = false; // Ensure loading stops if no customer
+      loadingRelated.value = false;
   }
 
-
-  // If editing, populate with existing expense data
   if (expense) {
     Object.assign(expenseForm, {
       id: expense.id,
-      // customerId is already set above
       amount: expense.amount || 0,
       date: expense.date ? moment(expense.date).format('YYYY-MM-DD') : moment().format('YYYY-MM-DD'),
       type: expense.type || 'OTHER',
       description: expense.description || '',
-      employeeId: expense.employeeId || null, // Prefill added field
-      jobId: expense.jobId || null,          // Prefill added field
+      employeeId: expense.employeeId || null,
+      jobId: expense.jobId || null,
     });
-  } else if (customer) {
-      // If adding new FROM customer view, customerId is set
-      // Optionally pre-select employee if needed (e.g., current user)
-      // expenseForm.employeeId = userStore.userId;
+    // Set existing image URL if editing and URL exists
+    if (expense && expense.imageUrl) {
+        existingImageUrl.value = expense.imageUrl;
+    }
+    // Note: We don't prefill the image here as it's for OCR on *new* uploads within the modal session
+  } else if (customer && effectiveCustomerId) {
+      // If adding NEW expense for a customer, try pre-selecting latest job and tech
+      console.log('Prefilling new expense for customer...'); // DEBUG LOG
+      if (jobs.value.length > 1) { // Check if any jobs were loaded besides "No Job"
+          const latestJobOption = jobs.value[1]; // The first actual job after sorting
+          expenseForm.jobId = latestJobOption.value;
+          console.log('Auto-selected latest job ID:', expenseForm.jobId); // DEBUG LOG
+      } else {
+          console.log('No specific latest job found to auto-select.'); // DEBUG LOG
+      }
+
+      console.log('Attempting to auto-select technician. Latest Job Tech ID:', latestJobTechnicianId.value); // DEBUG LOG
+      if (latestJobTechnicianId.value) {
+          const technicianExists = employees.value.some(emp => emp.value === latestJobTechnicianId.value);
+          console.log('Technician exists in employees list:', technicianExists); // DEBUG LOG
+          if (technicianExists) {
+               expenseForm.employeeId = latestJobTechnicianId.value;
+               console.log('Auto-selected employee ID:', expenseForm.employeeId); // DEBUG LOG
+          } else {
+              console.warn(`Latest job technician (${latestJobTechnicianId.value}) not found in employee list.`);
+              // Optionally fetch the specific employee if needed, or leave null
+          }
+      } else {
+           console.log('No latest job technician ID available to auto-select.'); // DEBUG LOG
+      }
   }
 };
 
+// --- Image Handling ---
+const handleFileChange = (event) => {
+  const file = event.target.files?.[0];
+  if (file) {
+    setFile(file);
+  }
+  // Reset input value to allow selecting the same file again
+  if (event.target) event.target.value = '';
+};
+
+const handleDrop = (event) => {
+  dragOver.value = false;
+  const file = event.dataTransfer?.files?.[0];
+  if (file) {
+    setFile(file);
+  }
+};
+
+const setFile = (file) => {
+    // Basic validation (type, size) - adjust as needed
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    const maxSize = 5 * 1024 * 1024; // 5MB
+
+    if (!allowedTypes.includes(file.type)) {
+        toast.error('Invalid file type. Please upload an image (JPG, PNG, GIF, WEBP).');
+        return;
+    }
+    if (file.size > maxSize) {
+        toast.error('File is too large. Maximum size is 5MB.');
+        return;
+    }
+
+    selectedFile.value = file;
+    selectedFileName.value = file.name;
+    imageProcessingError.value = null; // Clear previous errors
+    imageProcessingSuccess.value = false;
+
+    // Create preview
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        selectedFilePreview.value = e.target?.result;
+    };
+    reader.readAsDataURL(file);
+
+    // Automatically trigger processing
+    processImage();
+};
+
+const removeFile = () => {
+    resetImageState();
+};
+
+const processImage = async () => {
+    if (!selectedFile.value) return;
+
+    processingImage.value = true;
+    imageProcessingError.value = null;
+    imageProcessingSuccess.value = false;
+    const formData = new FormData();
+    formData.append('file', selectedFile.value); // n8n expects the file under the key 'file'
+
+    try {
+        const response = await axios.post(n8nWebhookUrl, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        });
+
+        // Assuming n8n returns JSON like: { amount: 123.45, date: '2024-03-30', description: '...', type: 'FUEL' }
+        const data = response.data.output; // Adjust based on actual n8n output structure
+
+        // --- Apply OCR results to form ---
+        let changesMade = false;
+        if (data.amount && !isNaN(parseFloat(data.amount))) {
+            expenseForm.amount = parseFloat(data.amount);
+            changesMade = true;
+        }
+        if (data.date && moment(data.date, moment.ISO_8601, true).isValid()) { // Check if date is valid ISO or common format
+             expenseForm.date = moment(data.date).format('YYYY-MM-DD');
+             changesMade = true;
+        } else if (data.date && moment(data.date, 'YYYY-MM-DD', true).isValid()) {
+             expenseForm.date = data.date; // Already in correct format
+             changesMade = true;
+        }
+        if (data.description && typeof data.description === 'string') {
+            expenseForm.description = data.description.trim();
+            changesMade = true;
+        }
+        if (data.type && typeof data.type === 'string' && EXPENSE_TYPES.includes(data.type.toUpperCase())) {
+            expenseForm.type = data.type.toUpperCase();
+            changesMade = true;
+        } else if (data.type) {
+            // If type is suggested but not exact match, maybe add to description?
+            if (expenseForm.description) {
+                 expenseForm.description += ` (Suggested Type: ${data.type})`;
+            } else {
+                 expenseForm.description = `Suggested Type: ${data.type}`;
+            }
+            changesMade = true; // Still count as change
+        }
+
+        if (changesMade) {
+            toast.success('Expense details extracted from image!');
+            imageProcessingSuccess.value = true;
+        } else {
+            toast.info('Could not extract details from image, or details match current form.');
+            imageProcessingError.value = 'No details extracted or matched.'; // Set a mild error/info state
+        }
+
+    } catch (error) {
+        console.error('Error processing image via n8n:', error);
+        const errorMessage = error.response?.data?.message || error.message || 'Failed to process image.';
+        imageProcessingError.value = `OCR Error: ${errorMessage}`;
+        toast.error(imageProcessingError.value);
+    } finally {
+        processingImage.value = false;
+    }
+};
+
+
+// --- Form Submission ---
 const submitExpense = async () => {
   loading.value = true;
   try {
-    const payload = {
+    // Use FormData ONLY if there's a file to upload
+    const useFormData = !!selectedFile.value;
+    let payload;
+    let headers = { 'Content-Type': 'application/json' }; // Default
+
+    const expenseDetails = {
       amount: parseFloat(expenseForm.amount),
-      date: moment(expenseForm.date).toISOString(), // Send ISO string
+      date: moment(expenseForm.date).toISOString(),
       type: expenseForm.type,
       description: expenseForm.description,
-      customerId: expenseForm.customerId || undefined, // Include customerId if available
-      employeeId: expenseForm.employeeId, // Include employeeId
-      jobId: expenseForm.jobId || undefined, // Include jobId (send undefined if null)
+      customerId: expenseForm.customerId || undefined,
+      employeeId: expenseForm.employeeId,
+      jobId: expenseForm.jobId || undefined,
     };
 
-    // Validate required fields that might be null
-    if (!payload.employeeId) {
-        toast.error("Employee is required.");
-        loading.value = false;
-        return;
+    // --- Validation ---
+    if (!expenseDetails.employeeId) {
+        toast.error("Employee is required."); loading.value = false; return;
     }
-     if (!payload.type) {
-        toast.error("Expense Type is required.");
-        loading.value = false;
-        return;
+    if (!expenseDetails.type) {
+        toast.error("Expense Type is required."); loading.value = false; return;
     }
-     if (!payload.description) {
-        toast.error("Description is required.");
-        loading.value = false;
-        return;
+    if (!expenseDetails.description) {
+        toast.error("Description is required."); loading.value = false; return;
     }
-     if (isNaN(payload.amount) || payload.amount < 0) {
-        toast.error("Valid Amount is required.");
-        loading.value = false;
-        return;
+    if (isNaN(expenseDetails.amount) || expenseDetails.amount < 0) {
+        toast.error("Valid Amount is required."); loading.value = false; return;
     }
+    // --- End Validation ---
 
+
+    if (useFormData) {
+        payload = new FormData();
+        // Append expense data as JSON string under a specific key (e.g., 'data')
+        // The backend needs to expect this structure
+        payload.append('data', JSON.stringify(expenseDetails));
+        payload.append('file', selectedFile.value); // Append the actual file
+        // Let the browser set the Content-Type for FormData
+        headers = {}; // Remove explicit Content-Type
+    } else {
+        payload = expenseDetails; // Send as JSON
+    }
 
     let endpoint = `add-expense?id=${userStore.currentWebsite}`;
     let method = 'post';
 
     if (isEditing.value) {
-      payload.id = expenseForm.id; // Include ID for update payload
+      // If editing, include ID. Decide if image upload is allowed during edit.
+      // For now, assume editing might replace the image if a new one is selected.
+      const editPayload = { ...expenseDetails, id: expenseForm.id };
+      if (useFormData) {
+          payload = new FormData();
+          payload.append('data', JSON.stringify(editPayload));
+          payload.append('file', selectedFile.value);
+          headers = {};
+      } else {
+          payload = editPayload; // Send JSON
+          headers = { 'Content-Type': 'application/json' };
+      }
       method = 'put';
-      // Align endpoint with EditExpense.vue pattern
       endpoint = `expense/${expenseForm.id}?id=${userStore.currentWebsite}`;
     }
 
-    const response = await axios({ method, url: endpoint, data: payload });
+    const response = await axios({
+        method,
+        url: endpoint,
+        data: payload,
+        headers: headers // Pass dynamic headers
+    });
 
     toast.success(response.data.message || 'Expense saved successfully');
     emit('expense-saved');
     closeModal();
   } catch (error) {
     console.error("Error submitting expense:", error);
-    toast.error(`Error submitting expense: ${error.response?.data?.message || error.message}`);
+    // Check if backend sent specific file upload error
+    const backendError = error.response?.data?.message || error.message;
+    toast.error(`Error submitting expense: ${backendError}`);
   } finally {
     loading.value = false;
   }
@@ -218,17 +439,14 @@ const submitExpense = async () => {
 // --- Watchers ---
 watch(() => props.modelValue, (newValue) => {
   if (newValue) {
-    // When modal opens, prefill form
-    // Pass both customerData and expenseData to prefill
     prefillForm(props.customerData, props.expenseData);
   } else {
-      resetExpenseForm(); // Reset when closing
+      resetExpenseForm();
   }
 });
 
-// Watch for direct changes to expenseData prop while modal is open
 watch(() => props.expenseData, (newExpenseData) => {
-    if (props.modelValue) { // Only prefill if modal is already open
+    if (props.modelValue) {
         prefillForm(props.customerData, newExpenseData);
     }
 });
@@ -242,7 +460,7 @@ watch(() => props.expenseData, (newExpenseData) => {
         <!-- Backdrop -->
         <div class="fixed inset-0 bg-gray-500/75 dark:bg-black/80 transition-opacity" aria-hidden="true" @click="closeModal"></div>
         <!-- Modal positioning -->
-        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&amp;#8203;</span>
         <!-- Modal panel -->
         <div class="modal-content-modern sm:max-w-xl"> <!-- Adjusted width -->
           <h3 class="text-lg font-semibold mb-6 text-gray-900 dark:text-white" id="modal-title">
@@ -251,6 +469,79 @@ watch(() => props.expenseData, (newExpenseData) => {
           </h3>
           <form @submit.prevent="submitExpense" class="space-y-4">
             <div class="max-h-[65vh] overflow-y-auto pr-2 space-y-5">
+
+              <!-- Image Upload Section -->
+              <div class="space-y-2">
+                 <!-- Dynamically change label based on editing state and if image exists -->
+                <label class="label-modern">{{ isEditing && existingImageUrl ? 'Receipt Image' : 'Upload Receipt (Optional)' }}</label>
+                <div
+                  :class="[
+                    'mt-1 flex justify-center items-center px-6 pt-5 pb-6 border-2 border-dashed rounded-md transition-colors duration-150 ease-in-out',
+                    dragOver ? 'border-indigo-500 bg-indigo-50 dark:bg-gray-700' : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
+                  ]"
+                  @dragover.prevent="dragOver = true"
+                  @dragleave.prevent="dragOver = false"
+                  @drop.prevent="handleDrop"
+                >
+                  <!-- Show Existing Image when editing and no new file selected -->
+                   <div v-if="isEditing && existingImageUrl && !selectedFile" class="w-full text-left">
+                     <div class="flex items-center space-x-3">
+                       <a :href="existingImageUrl" target="_blank" rel="noopener noreferrer" class="flex-shrink-0" title="Click to view larger">
+                         <img :src="existingImageUrl" alt="Existing Receipt" class="h-16 w-16 object-cover rounded-md border border-gray-200 dark:border-gray-600 hover:opacity-80 transition-opacity">
+                       </a>
+                       <div class="flex-grow min-w-0">
+                         <p class="text-sm font-medium text-gray-700 dark:text-gray-300">Current receipt image.</p>
+                         <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Drop a new file or <label for="file-upload-replace" class="cursor-pointer font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-500">click here</label> to replace.</p>
+                       </div>
+                       <!-- Hidden input still needed for click-to-replace, use different ID -->
+                       <input id="file-upload-replace" name="file-upload-replace" type="file" class="sr-only" @change="handleFileChange" accept="image/png, image/jpeg, image/gif, image/webp">
+                     </div>
+                   </div>
+
+                  <!-- Show Upload Prompt when adding new OR editing without existing image -->
+                  <div class="space-y-1 text-center" v-else-if="!selectedFile">
+                    <PhotoIcon class="mx-auto h-10 w-10 text-gray-400 dark:text-gray-500" />
+                    <div class="flex text-sm text-gray-600 dark:text-gray-400">
+                      <label for="file-upload" class="relative cursor-pointer bg-white dark:bg-transparent rounded-md font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500">
+                        <span>Upload a file</span>
+                        <input id="file-upload" name="file-upload" type="file" class="sr-only" @change="handleFileChange" accept="image/png, image/jpeg, image/gif, image/webp">
+                      </label>
+                      <p class="pl-1">or drag and drop</p>
+                    </div>
+                    <p class="text-xs text-gray-500 dark:text-gray-500">PNG, JPG, GIF, WEBP up to 5MB</p>
+                  </div>
+
+                  <!-- Show New File Preview and Status (when a new file IS selected) -->
+                  <div v-if="selectedFile" class="w-full text-left">
+                    <div class="flex items-start space-x-3">
+                      <img v-if="selectedFilePreview" :src="selectedFilePreview" alt="Preview" class="h-16 w-16 object-cover rounded-md flex-shrink-0">
+                      <PhotoIcon v-else class="h-16 w-16 text-gray-400 dark:text-gray-500 flex-shrink-0" />
+                      <div class="flex-grow min-w-0">
+                        <p class="text-sm font-medium text-gray-900 dark:text-white truncate">{{ selectedFileName }}</p>
+                         <!-- Indicate replacement if applicable -->
+                         <p v-if="isEditing && existingImageUrl" class="text-xs text-orange-500 dark:text-orange-400">Will replace existing image.</p>
+                        <div v-if="processingImage" class="mt-1 flex items-center space-x-2">
+                           <ScaleLoader :loading="true" color="#4f46e5" height="16px" width="3px" />
+                           <span class="text-xs text-indigo-600 dark:text-indigo-400">Processing image...</span>
+                        </div>
+                         <div v-if="imageProcessingSuccess && !processingImage" class="mt-1 flex items-center space-x-1 text-xs text-green-600 dark:text-green-400">
+                           <CheckCircleIcon class="h-4 w-4" />
+                           <span>OCR successful, form updated.</span>
+                        </div>
+                        <div v-if="imageProcessingError && !processingImage" class="mt-1 text-xs text-red-600 dark:text-red-400 break-words">
+                           {{ imageProcessingError }}
+                        </div>
+                      </div>
+                      <button @click="removeFile" type="button" class="text-gray-400 hover:text-red-500 dark:hover:text-red-400 ml-auto flex-shrink-0" :disabled="processingImage">
+                        <XCircleIcon class="h-5 w-5" />
+                        <span class="sr-only">Remove file</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <!-- End Image Upload Section -->
+
 
               <!-- Loading Indicator for related data -->
               <div v-if="loadingRelated" class="text-center py-4">
@@ -302,7 +593,7 @@ watch(() => props.expenseData, (newExpenseData) => {
                   <textarea id="expense-description" v-model="expenseForm.description" rows="3" required class="input-modern" placeholder="Enter expense description"></textarea>
                 </div>
 
-                 <!-- Hidden Customer ID if needed for context, though it's in the form state -->
+                 <!-- Hidden Customer ID -->
                  <input type="hidden" v-model="expenseForm.customerId" />
 
               </div>
@@ -310,11 +601,11 @@ watch(() => props.expenseData, (newExpenseData) => {
             </div>
 
             <div class="pt-5 sm:pt-6 flex flex-col sm:flex-row-reverse gap-3 border-t border-gray-200 dark:border-gray-700/50">
-              <button type="submit" class="btn-primary-modern w-full sm:w-auto" :disabled="loading || loadingRelated">
+              <button type="submit" class="btn-primary-modern w-full sm:w-auto" :disabled="loading || loadingRelated || processingImage">
                 <span v-if="loading">Saving...</span>
                 <span v-else>{{ isEditing ? 'Update Expense' : 'Add Expense' }}</span>
               </button>
-              <button @click="closeModal" type="button" class="btn-secondary-modern w-full sm:w-auto" :disabled="loading">
+              <button @click="closeModal" type="button" class="btn-secondary-modern w-full sm:w-auto" :disabled="loading || processingImage">
                 Cancel
               </button>
             </div>

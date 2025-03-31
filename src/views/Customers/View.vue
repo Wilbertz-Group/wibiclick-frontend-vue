@@ -178,6 +178,7 @@ const activityTabs = computed(() => [
   // { name: 'Views', component: accordionView, type: 'view' }, // Removed Views tab
   // { name: 'Clicks', component: accordionClick, type: 'click' }, // Removed Clicks tab
   { name: 'Forms', component: accordionForm, type: 'form' },
+  { name: 'Receipts', component: null, type: 'receipts' }, // Added Receipts tab
 ]);
 
 // --- Methods ---
@@ -1880,6 +1881,22 @@ watchEffect(() => {
                              </div> -->
                          </div>
                       </template>
+                   </div>
+                   <!-- Render Receipts Gallery -->
+                   <div v-else-if="tab.name === 'Receipts'" class="space-y-4 h-full">
+                      <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Expense Receipts</h3>
+                      <div v-if="!customer.expenses || customer.expenses.filter(e => e.imageUrl).length === 0" class="text-center text-gray-500 py-8">
+                        No expense receipts found for this customer.
+                      </div>
+                      <div v-else class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                        <div v-for="expense in customer.expenses.filter(e => e.imageUrl)" :key="expense.id" class="group relative">
+                          <a :href="expense.imageUrl" target="_blank" rel="noopener noreferrer" class="block aspect-square w-full overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-800">
+                            <img :src="expense.imageUrl" :alt="'Receipt for ' + expense.description" class="pointer-events-none object-cover group-hover:opacity-75 transition-opacity w-full h-full">
+                          </a>
+                          <p class="pointer-events-none mt-1 block truncate text-xs font-medium text-gray-700 dark:text-gray-300">{{ expense.description }}</p>
+                          <p class="pointer-events-none block text-xs font-medium text-gray-500 dark:text-gray-400">{{ new Date(expense.date).toLocaleDateString() }} - {{ formatCurrency(expense.amount) }}</p>
+                        </div>
+                      </div>
                    </div>
                    <!-- Render Engagement Hub -->
                    <div v-else-if="tab.name === 'Engagement'" class="space-y-6 h-full">
