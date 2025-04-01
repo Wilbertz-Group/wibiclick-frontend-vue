@@ -93,6 +93,19 @@ const INVOICE_STATUSES = ['sent', 'pending', 'processing', 'paid', 'accepted'];
 const isEditing = computed(() => !!invoiceForm.id);
 const lineItemTotal = computed(() => (Number(lineItem.amount) * Number(lineItem.quantity)).toFixed(2));
 
+const whatsappMessageBody = computed(() => {
+  const customerName = invoiceForm.customer?.name || 'Valued Customer';
+  const invoiceNumber = invoiceForm.invoice_nr || '[Invoice Number]';
+  const currencySymbol = invoiceForm.company?.currency_symbol || 'R';
+  // Calculate balance due correctly
+  const balanceDue = Math.max(0, Number(invoiceForm.subtotal) - Number(invoiceForm.paid)).toFixed(2);
+  // const dueDate = invoiceForm.invoice_due_date ? moment(invoiceForm.invoice_due_date).format('LL') : '[Due Date]'; // Original due date logic
+  const dueDate = moment().add(1, 'days').format('LL'); // Calculate due date as tomorrow
+  const senderName = profile.value?.firstName || invoiceForm.company?.name || 'Us';
+
+  return `Dear ${customerName},\n\nI hope this message finds you well. Please find attached the invoice #${invoiceNumber} for the services rendered.\n\nThe balance due is ${currencySymbol}${balanceDue} and payment is due by ${dueDate}.\n\nShould you have any questions, feel free to reach out.\n\nBest regards,\n${senderName}`; // Updated narrative
+});
+
 // --- Methods ---
 const closeModal = () => {
   emit('update:modelValue', false);
@@ -731,7 +744,7 @@ onMounted(() => {
             <span v-if="!isEditing && customerData?.name" class="text-base font-normal text-gray-500 dark:text-gray-400"> for {{ customerData.name }}</span>
           </h3>
           <!-- WhatsApp Modal -->
-          <modal v-if="isOpen" :website="userStore.currentWebsite" :body="body" :isOpen="isOpen" :blob="blob" :client="client" :sender="sender" :company="company" :phone="invoiceForm.customer.phone" name="Invoice" @close-modal="closeModalWA"></modal>
+          <modal v-if="isOpen" :website="userStore.currentWebsite" :body="whatsappMessageBody" :isOpen="isOpen" :blob="blob" :client="client" :sender="sender" :company="company" :phone="invoiceForm.customer.phone" name="Invoice" @close-modal="closeModalWA"></modal> <!-- Changed :body="body" to :body="whatsappMessageBody" -->
           
           <form @submit.prevent="handleSave" class="space-y-4">
             <div class="max-h-[60vh] overflow-y-auto pr-2">

@@ -10,7 +10,23 @@
   import axios from 'axios';
   import { useToast } from "vue-toast-notification";
 
-	const props = defineProps(['file', 'isOpen', 'client', 'phone', 'sender', 'company', 'blob', 'website', 'name'])
+	const props = defineProps({
+	   // Keep existing props
+	   file: String,
+	   isOpen: Boolean,
+	   client: String,
+	   phone: String,
+	   sender: String,
+	   company: String,
+	   blob: Blob,
+	   website: String,
+	   name: String,
+	   // Add the body prop
+	   body: {
+	     type: String,
+	     default: '' // Provide a default empty string
+	   }
+	 })
   const emit = defineEmits(['closeModal'])
   const isOpen = ref(false);
   const message = ref('');
@@ -67,15 +83,19 @@
     }
   }
 
-  onMounted(() => {
+  // Use watchEffect to react to prop changes, especially isOpen and body
+  watchEffect(() => {
     isOpen.value = props.isOpen;
-    message.value = `Dear ${props.client},
-
-I hope this message finds you well. As per your request, please find the attached quote for your review. Kindly take a moment to review the quote and let us know if you have any questions or require further clarification. If you're satisfied with the details, please confirm your acceptance so we can proceed with the next steps.
-
-Best regards,
-${props.sender}`
+    if (props.isOpen) {
+      // Prioritize passed body prop, otherwise use a default/fallback
+      message.value = props.body || `Dear ${props.client || 'Customer'},\n\nPlease find the attached document.\n\nBest regards,\n${props.sender || props.company || 'Us'}`;
+    }
   });
+
+  // Remove the onMounted hook as watchEffect handles initialization when isOpen becomes true
+  // onMounted(() => {
+  //   ... old logic ...
+  // });
 
 </script>
 
