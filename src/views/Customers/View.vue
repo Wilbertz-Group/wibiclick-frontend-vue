@@ -35,7 +35,7 @@ import { TabGroup, TabList, Tab, TabPanels, TabPanel, Disclosure, DisclosureButt
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { library } from '@fortawesome/fontawesome-svg-core'
 import {
-  faArrowLeft, faEdit, faStickyNote, faPaperPlane, faPlus, faChevronDown, faChevronUp, faExternalLinkAlt, faPhone, faEnvelope, faMapMarkerAlt, faUser, faUsers, faUserCog, faBuilding, faLink, faInfoCircle, faBriefcase, faFileInvoiceDollar, faReceipt, faMoneyBillWave, faShieldAlt, faListOl, faSync, faStar, faComments, faClock, faSignal, faLanguage, faExclamationTriangle, faMagic // Added icons, faUsers, faStar, faUserCog, comms icons, warning icon, magic icon
+  faArrowLeft, faEdit, faStickyNote, faPaperPlane, faPlus, faChevronDown, faChevronUp, faExternalLinkAlt, faPhone, faEnvelope, faMapMarkerAlt, faUser, faUsers, faUserCog, faBuilding, faLink, faInfoCircle, faBriefcase, faFileInvoiceDollar, faReceipt, faMoneyBillWave, faShieldAlt, faListOl, faSync, faStar, faComments, faClock, faSignal, faLanguage, faExclamationTriangle, faMagic, faCopy // Added faCopy
 } from '@fortawesome/free-solid-svg-icons'
 import { faStar as farStar, faClock as farClock } from '@fortawesome/free-regular-svg-icons' // Added regular star, clock
 import { faWhatsapp } from '@fortawesome/free-brands-svg-icons' // Added WhatsApp brand icon
@@ -55,7 +55,7 @@ import TaskFormModal from '@/components/misc/TaskFormModal.vue'; // Import Task 
 import { formatDistanceToNow } from 'date-fns'; // Import date-fns function
 
 library.add(
-  faArrowLeft, faEdit, faStickyNote, faPaperPlane, faPlus, faChevronDown, faChevronUp, faExternalLinkAlt, faPhone, faEnvelope, faMapMarkerAlt, faUser, faUsers, faUserCog, faBuilding, faLink, faInfoCircle, faBriefcase, faFileInvoiceDollar, faReceipt, faMoneyBillWave, faShieldAlt, faListOl, faWhatsapp, faSync, faStar, farStar, faComments, faClock, farClock, faSignal, faLanguage, faExclamationTriangle, faMagic // Added faUsers, faStar, farStar, faUserCog, comms icons, warning icon, magic icon
+  faArrowLeft, faEdit, faStickyNote, faPaperPlane, faPlus, faChevronDown, faChevronUp, faExternalLinkAlt, faPhone, faEnvelope, faMapMarkerAlt, faUser, faUsers, faUserCog, faBuilding, faLink, faInfoCircle, faBriefcase, faFileInvoiceDollar, faReceipt, faMoneyBillWave, faShieldAlt, faListOl, faWhatsapp, faSync, faStar, farStar, faComments, faClock, farClock, faSignal, faLanguage, faExclamationTriangle, faMagic, faCopy // Added faCopy
 )
 
 // --- State ---
@@ -89,6 +89,7 @@ const showTaskModal = ref(false); // State for task modal
 const initialTaskDataForModal = ref({}); // State to pre-fill task modal
 const technicians = ref([]); // State for technicians list (might be fetched within modal now)
 const customerFinancials = ref({ totalRevenue: null, totalCosts: null, netProfit: null }); // State for customer financials
+const isDetectingAppliances = ref(false); // Loading state for AI appliance detection
 
 // --- AI Analysis State ---
 // Old state (kept for fetch triggers, cleared on load)
@@ -148,6 +149,15 @@ const customerContextForModal = ref(null); // State to hold specific context for
 // --- Computed ---
 const isLoading = computed(() => isFetchingCustomer.value || isUpdatingCustomer.value || isBookingJob.value);
 
+// Computed property to parse sentiment analysis content
+const parsedSentimentContent = computed(() => {
+  if (latestSentimentAnalysis.value?.content && typeof latestSentimentAnalysis.value.content === 'string') {
+    return tryParseJson(latestSentimentAnalysis.value.content); // tryParseJson returns object or null
+  }
+  // If content is already an object (or not a string), return it directly (or null if undefined)
+  return latestSentimentAnalysis.value?.content || null;
+});
+
 const relatedItems = computed(() => {
   // Add safety checks for customer.value and its properties
   const jobs = customer.value?.jobs || [];
@@ -182,6 +192,32 @@ const activityTabs = computed(() => [
 ]);
 
 // --- Methods ---
+
+// Helper to safely parse JSON
+const tryParseJson = (jsonString) => {
+  try {
+    const obj = JSON.parse(jsonString);
+    // Ensure it's an object (and not null) after parsing
+    if (obj && typeof obj === 'object') {
+      return obj;
+    }
+  } catch (e) {
+    // Ignore parsing error, return null
+  }
+  return null; // Return null if not valid JSON or not an object
+};
+
+// Copy to Clipboard Helper
+const copyToClipboard = async (textToCopy, label = 'Text') => {
+  if (!textToCopy) return;
+  try {
+    await navigator.clipboard.writeText(textToCopy);
+    toast.success(`${label} copied to clipboard!`);
+  } catch (err) {
+    console.error('Failed to copy: ', err);
+    toast.error('Failed to copy to clipboard.');
+  }
+};
 
 // Helper function for relative time formatting
 function formatRelativeTime(dateString) {
@@ -1248,6 +1284,30 @@ async function fetchTechnicians() {
   }
 }
 
+// --- AI Appliance Detection ---
+async function detectAppliancesAI() {
+  if (!customer.value?.id) return;
+
+  isDetectingAppliances.value = true;
+  toast.info("AI is analyzing communications for appliances...");
+
+  try {
+    const response = await axios.post(`customers/${customer.value.id}/detect-appliances?id=${userStore.currentWebsite}`);
+    const addedCount = response.data.count || 0;
+    if (addedCount > 0) {
+      toast.success(`AI detection complete. Added ${addedCount} new appliance(s). Refreshing list...`);
+      reloadTimeline(); // Reload customer data to show new appliances
+    } else {
+      toast.info(response.data.message || "AI detection complete. No new appliances found.");
+    }
+  } catch (error) {
+    console.error("Error detecting appliances via AI:", error);
+    toast.error(`AI detection failed: ${error.response?.data?.error || error.message}`);
+  } finally {
+    isDetectingAppliances.value = false;
+  }
+}
+
 function handleAddRelatedItem(routeName, queryKey) {
     // If adding a job, open the job modal instead of navigating
     if (routeName === 'add-job') {
@@ -1455,13 +1515,19 @@ watchEffect(() => {
 
             <!-- Display Mode -->
             <div v-if="!isEditingInfo" class="space-y-3 text-sm">
-              <div v-if="customer.phone" class="flex items-center">
+              <div v-if="customer.phone" class="flex items-center group"> <!-- Added group for hover effect -->
                 <font-awesome-icon icon="phone" class="w-4 h-4 mr-2.5 text-gray-400" />
                 <a :href="'tel:'+customer.phone" class="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400">{{ customer.phone }}</a>
+                <button @click="copyToClipboard(customer.phone, 'Phone number')" class="ml-2 text-gray-400 hover:text-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity duration-150" title="Copy phone number">
+                  <font-awesome-icon icon="copy" class="w-3 h-3" />
+                </button>
               </div>
-              <div v-if="customer.email" class="flex items-center">
+              <div v-if="customer.email" class="flex items-center group"> <!-- Added group for hover effect -->
                 <font-awesome-icon icon="envelope" class="w-4 h-4 mr-2.5 text-gray-400" />
                 <a :href="'mailto:'+customer.email" class="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400">{{ customer.email }}</a>
+                <button @click="copyToClipboard(customer.email, 'Email address')" class="ml-2 text-gray-400 hover:text-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity duration-150" title="Copy email address">
+                  <font-awesome-icon icon="copy" class="w-3 h-3" />
+                </button>
               </div>
               <div v-if="customer.address" class="flex items-start">
                 <font-awesome-icon icon="map-marker-alt" class="w-4 h-4 mr-2.5 text-gray-400 mt-0.5 flex-shrink-0" />
@@ -1600,11 +1666,16 @@ watchEffect(() => {
 
           <!-- Client Appliances Section -->
           <section class="card-modern p-5 sm:p-6">
-            <div class="flex justify-between items-center mb-4">
+            <div class="flex justify-between items-center mb-4 gap-2"> <!-- Added gap -->
               <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Client Appliances</h3>
-              <button @click="openAddApplianceModal()" class="btn-primary-modern text-sm" aria-label="Add new appliance for this client">
-                <font-awesome-icon icon="plus" class="mr-1.5 h-3 w-3" /> Add Appliance
-              </button>
+              <div class="flex items-center gap-2"> <!-- Wrapper for buttons -->
+                <button @click="detectAppliancesAI" class="btn-secondary-modern text-sm" :disabled="isDetectingAppliances" aria-label="Detect appliances using AI">
+                  <font-awesome-icon icon="magic" :class="{'fa-spin': isDetectingAppliances}" class="mr-1.5 h-3 w-3" /> Detect (AI)
+                </button>
+                <button @click="openAddApplianceModal()" class="btn-primary-modern text-sm" aria-label="Add new appliance for this client">
+                  <font-awesome-icon icon="plus" class="mr-1.5 h-3 w-3" /> Add Appliance
+                </button>
+              </div>
             </div>
             <!-- Loading State for Predictive Maintenance -->
             <div v-if="isFetchingPredMaint" class="text-center py-4">
@@ -1782,32 +1853,36 @@ watchEffect(() => {
                        <div v-else-if="sentimentError" class="text-sm text-red-600 dark:text-red-400">
                          Error analyzing sentiment: {{ sentimentError }}
                        </div>
-                       <!-- Display Sentiment Analysis from JSON object -->
+                       <!-- Display Sentiment Analysis -->
                        <div v-else-if="latestSentimentAnalysis?.content" class="text-sm text-gray-700 dark:text-gray-300 space-y-2">
-                          <!-- Display overallSummary directly -->
-                          <p><strong>Overall Summary:</strong> {{ latestSentimentAnalysis.content.overallSummary || 'N/A' }}</p>
-                          <!-- Display individual messages, urgent issues, opportunities -->
-                          <div v-if="latestSentimentAnalysis.content.individualMessages && latestSentimentAnalysis.content.individualMessages.length > 0">
-                            <strong>Individual Messages Summary ({{ latestSentimentAnalysis.content.individualMessages.length }}):</strong>
-                            <ul class="list-disc list-inside ml-1 text-xs max-h-20 overflow-y-auto border dark:border-gray-600 p-1 rounded"> <!-- Added style -->
-                              <li v-for="(msg, mIndex) in latestSentimentAnalysis.content.individualMessages" :key="mIndex">
-                                {{ msg.date }} - {{ msg.sentiment }}: {{ msg.keyPoints?.join(', ') || 'No key points' }}
-                              </li>
-                            </ul>
-                          </div>
-                           <div v-if="latestSentimentAnalysis.content.urgentIssues && latestSentimentAnalysis.content.urgentIssues.length > 0">
-                            <strong>Urgent Issues:</strong>
-                            <ul class="list-disc list-inside ml-1 text-xs text-red-500 dark:text-red-400"> <!-- Style urgent issues -->
-                              <li v-for="(issue, iIndex) in latestSentimentAnalysis.content.urgentIssues" :key="iIndex">{{ issue }}</li>
-                            </ul>
-                          </div>
-                          <div v-if="latestSentimentAnalysis.content.opportunities && latestSentimentAnalysis.content.opportunities.length > 0">
-                            <strong>Opportunities:</strong>
-                            <ul class="list-disc list-inside ml-1 text-xs text-green-600 dark:text-green-400"> <!-- Style opportunities -->
-                              <li v-for="(opp, oIndex) in latestSentimentAnalysis.content.opportunities" :key="oIndex">{{ opp }}</li>
-                            </ul>
-                          </div>
-                          <!-- Timestamp already shown in header -->
+                          <!-- Use computed property for parsed content -->
+                          <template v-if="parsedSentimentContent && typeof parsedSentimentContent === 'object'">
+                            <p><strong>Overall Summary:</strong> {{ parsedSentimentContent.overallSummary || 'N/A' }}</p>
+                            <div v-if="parsedSentimentContent.individualMessages && parsedSentimentContent.individualMessages.length > 0">
+                              <strong>Individual Messages Summary ({{ parsedSentimentContent.individualMessages.length }}):</strong>
+                              <ul class="list-disc list-inside ml-1 text-xs max-h-20 overflow-y-auto border dark:border-gray-600 p-1 rounded">
+                                <li v-for="(msg, mIndex) in parsedSentimentContent.individualMessages" :key="mIndex">
+                                  {{ msg.date }} - {{ msg.sentiment }}: {{ msg.keyPoints?.join(', ') || 'No key points' }}
+                                </li>
+                              </ul>
+                            </div>
+                            <div v-if="parsedSentimentContent.urgentIssues && parsedSentimentContent.urgentIssues.length > 0">
+                              <strong>Urgent Issues:</strong>
+                              <ul class="list-disc list-inside ml-1 text-xs text-red-500 dark:text-red-400">
+                                <li v-for="(issue, iIndex) in parsedSentimentContent.urgentIssues" :key="iIndex">{{ issue }}</li>
+                              </ul>
+                            </div>
+                            <div v-if="parsedSentimentContent.opportunities && parsedSentimentContent.opportunities.length > 0">
+                              <strong>Opportunities:</strong>
+                              <ul class="list-disc list-inside ml-1 text-xs text-green-600 dark:text-green-400">
+                                <li v-for="(opp, oIndex) in parsedSentimentContent.opportunities" :key="oIndex">{{ opp }}</li>
+                              </ul>
+                            </div>
+                          </template>
+                          <!-- Fallback: Display original string content if parsing failed or content wasn't an object -->
+                          <template v-else>
+                            <p class="whitespace-pre-wrap">{{ latestSentimentAnalysis.content }}</p>
+                          </template>
                        </div>
                        <!-- Empty state -->
                        <div v-else class="text-sm text-gray-500 dark:text-gray-400 italic">
@@ -2142,6 +2217,7 @@ watchEffect(() => {
   :estimate-data="selectedEstimate"
   @estimate-saved="handleEstimateSaved"
   @invoice-created="handleInvoiceCreated"
+  :technicians="technicians" 
 />
 
 <!-- Add/Edit Invoice Modal -->
@@ -2150,6 +2226,7 @@ watchEffect(() => {
   :customer-data="customerContextForModal || customer"
   :invoice-data="selectedInvoice"
   @invoice-saved="handleInvoiceSaved"
+  :technicians="technicians"
 />
 
 <!-- Add/Edit Payment Modal -->

@@ -150,12 +150,16 @@ watch(selectedStatus, async (n, o) => {
         <p v-if="estimate.employee?.firstName || estimate.employee?.lastName" class="text-sm text-black">{{ (estimate.employee?.firstName || '') + ' ' + (estimate.employee?.lastName || '') }}</p>
       </div>
       <div class="flex justify-between">
-        <p class="text-sm font-bold text-black">Amount</p>
-        <p class="text-sm text-black">R{{ Number(estimate.sales) || Number(estimate.deposit) }}</p>
+        <p class="text-sm font-bold text-black">Total:</p> <!-- Added label -->
+        <p class="text-sm text-black">R{{ Number(estimate.sales).toFixed(2) }}</p> <!-- Show sales amount, formatted -->
       </div>
       <div class="flex justify-between">
-        <p class="text-sm font-bold text-black">Date</p>
-        <p class="text-sm text-black">{{ universalDateFormatter(estimate.createdAt).includes(':') ? 'Today at '+ universalDateFormatter(estimate.createdAt) : universalDateFormatter(estimate.createdAt) }}</p>
+        <p class="text-sm font-bold text-black">Issued:</p> <!-- Changed label -->
+        <p class="text-sm text-black">{{ universalDateFormatter(estimate.issuedAt) }}</p> <!-- Use issuedAt -->
+      </div>
+      <div class="flex justify-between"> <!-- Added Due Date -->
+        <p class="text-sm font-bold text-black">Expires:</p>
+        <p class="text-sm text-black">{{ universalDateFormatter(estimate.dueAt) }}</p>
       </div>
     </div>
     <div class="flex mt-2 mb-1 justify-between items-center">			

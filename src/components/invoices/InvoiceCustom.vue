@@ -147,12 +147,20 @@ watch(selectedStatus, async (n, o) => {
         <p v-if="invoice.employee?.firstName || invoice.employee?.lastName" class="text-sm text-black">{{ (invoice.employee?.firstName || '') + ' ' + (invoice.employee?.lastName || '') }}</p>
       </div>
       <div class="flex justify-between">
-        <p class="text-sm font-bold text-black">Amount</p>
-        <p class="text-sm text-black">R{{ Number(invoice.sales) || Number(invoice.deposit) }}</p>
+        <p class="text-sm font-bold text-black">Total:</p> <!-- Added label -->
+        <p class="text-sm text-black">R{{ Number(invoice.sales).toFixed(2) }}</p> <!-- Show sales amount, formatted -->
+      </div>
+      <div class="flex justify-between"> <!-- Added Balance Due -->
+        <p class="text-sm font-bold text-black">Balance Due:</p>
+        <p class="text-sm text-black">R{{ (Number(invoice.sales) - Number(invoice.deposit || 0)).toFixed(2) }}</p>
       </div>
       <div class="flex justify-between">
-        <p class="text-sm font-bold text-black">Date</p>
-        <p class="text-sm text-black">{{ universalDateFormatter(invoice.createdAt).includes(':') ? 'Today at '+ universalDateFormatter(invoice.createdAt) : universalDateFormatter(invoice.createdAt) }}</p>
+        <p class="text-sm font-bold text-black">Issued:</p> <!-- Changed label -->
+        <p class="text-sm text-black">{{ universalDateFormatter(invoice.issuedAt) }}</p> <!-- Use issuedAt -->
+      </div>
+      <div class="flex justify-between"> <!-- Added Due Date -->
+        <p class="text-sm font-bold text-black">Due:</p>
+        <p class="text-sm text-black">{{ universalDateFormatter(invoice.dueAt) }}</p>
       </div>
     </div>
     <div class="flex mt-2 mb-1 justify-between items-center">			

@@ -1,5 +1,5 @@
 <script setup>
-	import { ref } from 'vue'
+	import { ref, watch, onUnmounted } from 'vue' // Added watch and onUnmounted
 	import {
 		TransitionRoot,
 		TransitionChild,
@@ -9,6 +9,25 @@
 	} from '@headlessui/vue'
 
 	const props = defineProps(['heading', 'body', 'isOpen'])
+	 const emit = defineEmits(['closeModal']) // Define emits
+
+	 const timerId = ref(null); // Ref to store timeout ID
+
+	 // Watch the isOpen prop to start/clear the timer
+	 watch(() => props.isOpen, (newValue) => {
+	   clearTimeout(timerId.value); // Clear any existing timer
+	   if (newValue) {
+	     // Start timer when modal opens
+	     timerId.value = setTimeout(() => {
+	       emit('closeModal');
+	     }, 3000); // 3 seconds
+	   }
+	 });
+
+	 // Clear timer if component is unmounted while modal is open
+	 onUnmounted(() => {
+	   clearTimeout(timerId.value);
+	 });
 
 </script>
 

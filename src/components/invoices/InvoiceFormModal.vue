@@ -21,6 +21,10 @@ const props = defineProps({
   invoiceData: { // For editing existing invoice
     type: Object,
     default: null,
+  },
+  technicians: { // Accept technicians list
+    type: Array,
+    default: () => [],
   }
 });
 
@@ -41,6 +45,7 @@ const company = ref('');
 const invoiceForm = reactive({
   id: '', // Will be empty for new invoices
   customerId: '',
+  employeeId: null, // Add employeeId field
   name: 'Invoice',
   status: 'sent',
   invoice_nr: 1,
@@ -97,13 +102,19 @@ const whatsappMessageBody = computed(() => {
   const customerName = invoiceForm.customer?.name || 'Valued Customer';
   const invoiceNumber = invoiceForm.invoice_nr || '[Invoice Number]';
   const currencySymbol = invoiceForm.company?.currency_symbol || 'R';
-  // Calculate balance due correctly
-  const balanceDue = Math.max(0, Number(invoiceForm.subtotal) - Number(invoiceForm.paid)).toFixed(2);
-  // const dueDate = invoiceForm.invoice_due_date ? moment(invoiceForm.invoice_due_date).format('LL') : '[Due Date]'; // Original due date logic
-  const dueDate = moment().add(1, 'days').format('LL'); // Calculate due date as tomorrow
   const senderName = profile.value?.firstName || invoiceForm.company?.name || 'Us';
+  // Calculate balance due correctly (as a number for comparison)
+  const balanceDueNumber = Math.max(0, Number(invoiceForm.subtotal) - Number(invoiceForm.paid));
+  const balanceDueFormatted = balanceDueNumber.toFixed(2);
 
-  return `Dear ${customerName},\n\nI hope this message finds you well. Please find attached the invoice #${invoiceNumber} for the services rendered.\n\nThe balance due is ${currencySymbol}${balanceDue} and payment is due by ${dueDate}.\n\nShould you have any questions, feel free to reach out.\n\nBest regards,\n${senderName}`; // Updated narrative
+  if (balanceDueNumber <= 0) {
+    // Message for fully paid invoice
+    return `Dear ${customerName},\n\nThank you for your prompt payment of Invoice #${invoiceNumber}. We greatly appreciate your business and timely settlement of the account.\n\nAttached, you'll find a copy of the paid invoice for your records. If you have any questions or need any further information, please don't hesitate to contact us.\n\nWe look forward to serving you again in the future.\n\nBest regards,\n${senderName}`;
+  } else {
+    // Message for invoice with balance due
+    const dueDate = moment().add(1, 'days').format('LL'); // Calculate due date as tomorrow
+    return `Dear ${customerName},\n\nI hope this message finds you well. Please find attached the invoice #${invoiceNumber} for the services rendered.\n\nThe balance due is ${currencySymbol}${balanceDueFormatted} and payment is due by ${dueDate}.\n\nShould you have any questions, feel free to reach out.\n\nBest regards,\n${senderName}`;
+  }
 });
 
 // --- Methods ---
@@ -115,6 +126,7 @@ const resetInvoiceForm = () => {
   Object.assign(invoiceForm, {
     id: '',
     customerId: '',
+    employeeId: null, // Reset employeeId
     name: 'Invoice',
     status: 'sent',
     invoice_nr: 1,
@@ -201,6 +213,8 @@ const prefillForm = async (customer) => {
     
     // Set invoice number
     invoiceForm.invoice_nr = invoice_number + 1;
+    // Set default employeeId (e.g., from job context or current user)
+    invoiceForm.employeeId = customer.employeeId || userStore.user?.id || null;
   }
   
   // If editing, populate with existing invoice data
@@ -217,6 +231,7 @@ const prefillForm = async (customer) => {
       paid: props.invoiceData.deposit || 0,
       notes: props.invoiceData.notes || '',
       items: props.invoiceData.lineItem || [],
+      employeeId: props.invoiceData.employeeId || customer.employeeId || userStore.user?.id || null, // Set employeeId when editing
     });
   }
 };
@@ -318,10 +333,9 @@ const saveInvoiceOnly = async (closeAfterSave = true) => { // Added parameter
       paid: parseFloat(invoiceForm.paid) || 0, // Add paid field
       notes: invoiceForm.notes,
       customerId: invoiceForm.customer.id || invoiceForm.customerId,
-      // IMPORTANT: Ensure props.customerData.jobId is passed correctly when creating invoice from a job
-      jobId: props.customerData?.jobId,
-      employeeId: props.customerData?.employeeId || userStore.user?.id, // Add employeeId (fallback to current user)
-      websiteId: userStore.currentWebsite, // Add websiteId from store
+      jobId: props.customerData?.jobId, // Pass jobId if available
+      employeeId: invoiceForm.employeeId, // Send selected employeeId
+      websiteId: userStore.currentWebsite,
       items: invoiceForm.items.map(item => {
         const lineItemPayload = {
           item: item.item || item.name,
@@ -773,6 +787,16 @@ onMounted(() => {
                   <div>
                     <label for="invoice-due-date" class="label-modern">Due Date</label>
                     <input type="date" id="invoice-due-date" v-model="invoiceForm.invoice_due_date" required class="input-modern" />
+                  </div>
+                  <!-- Technician Dropdown -->
+                  <div class="sm:col-span-2">
+                    <label for="invoice-technician" class="label-modern">Technician</label>
+                    <select id="invoice-technician" v-model="invoiceForm.employeeId" class="input-modern input-modern--select">
+                      <option :value="null">-- Select Technician --</option>
+                      <option v-for="tech in technicians" :key="tech.id" :value="tech.id">
+                        {{ tech.firstName }} {{ tech.lastName }}
+                      </option>
+                    </select>
                   </div>
                 </div>
               </div>

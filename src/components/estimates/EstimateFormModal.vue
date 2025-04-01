@@ -22,6 +22,10 @@ const props = defineProps({
   estimateData: { // For editing existing estimate
     type: Object,
     default: null,
+  },
+  technicians: { // Accept technicians list
+    type: Array,
+    default: () => [],
   }
 });
 
@@ -42,6 +46,7 @@ const company = ref('');
 const estimateForm = reactive({
   id: '', // Will be empty for new estimates
   customerId: '',
+  employeeId: null, // Add employeeId field
   name: 'Estimate',
   status: 'sent',
   estimate_nr: 1,
@@ -94,6 +99,14 @@ const ESTIMATE_STATUSES = ['sent', 'accepted', 'rejected', 'pending', 'processin
 const isEditing = computed(() => !!estimateForm.id);
 const lineItemTotal = computed(() => (Number(lineItem.amount) * Number(lineItem.quantity)).toFixed(2));
 
+// Computed property for the Estimate WhatsApp message body
+const whatsappMessageBody = computed(() => {
+  const customerName = estimateForm.customer?.name || 'Valued Customer';
+  const senderName = profile.value?.firstName || estimateForm.company?.name || 'Us';
+  // Using the original quote message template
+  return `Dear ${customerName},\n\nI hope this message finds you well. As per your request, please find the attached quote for your review. Kindly take a moment to review the quote and let us know if you have any questions or require further clarification. If you're satisfied with the details, please confirm your acceptance so we can proceed with the next steps.\n\nBest regards,\n${senderName}`;
+});
+
 // --- Methods ---
 const closeModal = () => {
   emit('update:modelValue', false);
@@ -110,6 +123,7 @@ const resetEstimateForm = () => {
     estimate_due_date: moment().add(3, 'days').format('YYYY-MM-DD'),
     subtotal: 0,
     paid: 0,
+    employeeId: null, // Reset employeeId
     notes: '',
     items: [],
     customer: {
@@ -189,6 +203,8 @@ const prefillForm = async (customer) => {
     
     // Set estimate number
     estimateForm.estimate_nr = estimate_number + 1;
+    // Set default employeeId (e.g., from job context or current user)
+    estimateForm.employeeId = customer.employeeId || userStore.user?.id || null;
   }
   
   // If editing, populate with existing estimate data
@@ -205,6 +221,7 @@ const prefillForm = async (customer) => {
       paid: props.estimateData.deposit || 0,
       notes: props.estimateData.notes || '',
       items: props.estimateData.lineItem || [],
+      employeeId: props.estimateData.employeeId || customer.employeeId || userStore.user?.id || null, // Set employeeId when editing
     });
 
     // Re-apply customer details from the main customer prop to ensure address is present
@@ -318,10 +335,9 @@ const saveEstimateOnly = async (closeAfterSave = true) => { // Added parameter
       paid: parseFloat(estimateForm.paid) || 0, // Add paid field
       notes: estimateForm.notes,
       customerId: estimateForm.customer.id || estimateForm.customerId,
-      // IMPORTANT: Ensure props.customerData.jobId is passed correctly when creating estimate from a job
-      jobId: props.customerData?.jobId,
-      employeeId: props.customerData?.employeeId || userStore.user?.id, // Add employeeId (fallback to current user)
-      websiteId: userStore.currentWebsite, // Add websiteId from store
+      jobId: props.customerData?.jobId, // Pass jobId if available
+      employeeId: estimateForm.employeeId, // Send selected employeeId
+      websiteId: userStore.currentWebsite,
       items: estimateForm.items.map(item => {
         const lineItemPayload = {
           item: item.item || item.name,
@@ -773,7 +789,7 @@ onMounted(() => {
             <span v-if="!isEditing && customerData?.name" class="text-base font-normal text-gray-500 dark:text-gray-400"> for {{ customerData.name }}</span>
           </h3>
           <!-- WhatsApp Modal -->
-          <modal v-if="isOpen" :website="userStore.currentWebsite" :body="body" :isOpen="isOpen" :blob="blob" :client="client" :sender="sender" :company="company" :phone="estimateForm.customer.phone" name="Estimate" @close-modal="closeModalWA"></modal>
+          <modal v-if="isOpen" :website="userStore.currentWebsite" :body="whatsappMessageBody" :isOpen="isOpen" :blob="blob" :client="client" :sender="sender" :company="company" :phone="estimateForm.customer.phone" name="Estimate" @close-modal="closeModalWA"></modal> <!-- Pass the computed body -->
           
           <form @submit.prevent="handleSave" class="space-y-4">
             <div class="max-h-[60vh] overflow-y-auto pr-2">
@@ -802,6 +818,16 @@ onMounted(() => {
                   <div>
                     <label for="estimate-due-date" class="label-modern">Due Date</label>
                     <input type="date" id="estimate-due-date" v-model="estimateForm.estimate_due_date" required class="input-modern" />
+                  </div>
+                  <!-- Technician Dropdown -->
+                  <div class="sm:col-span-2">
+                    <label for="estimate-technician" class="label-modern">Technician</label>
+                    <select id="estimate-technician" v-model="estimateForm.employeeId" class="input-modern input-modern--select">
+                      <option :value="null">-- Select Technician --</option>
+                      <option v-for="tech in technicians" :key="tech.id" :value="tech.id">
+                        {{ tech.firstName }} {{ tech.lastName }}
+                      </option>
+                    </select>
                   </div>
                 </div>
               </div>
