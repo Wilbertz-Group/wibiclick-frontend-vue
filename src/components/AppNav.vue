@@ -2,10 +2,15 @@
 import axios from "axios";
 import notifications from "./notification/notifications.vue";
 import { useUserStore } from "@/stores/UserStore"
-import { 
-  Disclosure, 
-  DisclosureButton, 
-  DisclosurePanel, 
+import { useUIStore } from '@/stores/UIStore'; // Assuming this path - ADDED IMPORT
+import { useRouter } from 'vue-router'; // Added for search navigation
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'; // Added for search icons
+import { faSearch, faSpinner, faTimes } from '@fortawesome/free-solid-svg-icons'; // Added search icons
+import { library } from '@fortawesome/fontawesome-svg-core'; // Added for search icons
+import {
+  Disclosure,
+  DisclosureButton,
+  DisclosurePanel,
   Menu, MenuButton, 
   MenuItem, 
   MenuItems,
@@ -16,15 +21,19 @@ import {
   ListboxOption,
 } from '@headlessui/vue'
 
-import { ref, computed, onMounted, watch } from "vue";
+import { ref, computed, onMounted, watch, onBeforeUnmount } from "vue"; // Added onBeforeUnmount
 import { storeToRefs } from 'pinia'
 import ScaleLoader from 'vue-spinner/src/ScaleLoader.vue'
 import { useToast } from 'vue-toast-notification';
-import Ably from "ably";
+// import Ably from "ably"; // Ably seems unused, commented out
+
+library.add(faSearch, faSpinner, faTimes); // Add search icons to library
 
 const toast = useToast();
 const userStore = useUserStore()
 const { currentWebsite, websites } = storeToRefs(userStore)
+const router = useRouter(); // Added for search navigation
+const uiStore = useUIStore(); // Instantiate the store
 
 const addModal = ref(false)
 const submitted = ref(false)
@@ -35,6 +44,115 @@ const dropdownMarketing = ref(false)
 const dropdownSales = ref(false)
 const unreadNotifications = ref([]);
 //const ably = new Ably.Realtime(userStore.ableyk);
+
+// --- Universal Search State & Logic ---
+const searchQuery = ref('');
+const searchResults = ref([]);
+const isSearching = ref(false);
+const showResultsDropdown = ref(false);
+const debounceTimer = ref(null);
+const searchInputRef = ref(null); // Ref for the input element
+const searchResultsRef = ref(null); // Ref for the results dropdown
+
+// Debounced Search Function
+const performSearch = async () => {
+  if (searchQuery.value.length < 2) {
+    searchResults.value = [];
+    showResultsDropdown.value = false;
+    isSearching.value = false;
+    return;
+  }
+
+  isSearching.value = true;
+  try {
+    // Use await here
+    const response = await axios.get('/universal-search', {
+      params: {
+        id: userStore.currentWebsite,
+        q: searchQuery.value,
+        limit: 10 // Adjust limit as needed
+      }
+    });
+    searchResults.value = response.data.results || [];
+    showResultsDropdown.value = searchResults.value.length > 0;
+  } catch (error) {
+    console.error("Search failed:", error);
+    searchResults.value = [];
+    showResultsDropdown.value = false;
+    toast.error("Search failed. Please try again."); // Added user feedback
+  } finally {
+    isSearching.value = false;
+  }
+};
+
+// Watch search query with debounce
+watch(searchQuery, (newValue) => {
+  clearTimeout(debounceTimer.value);
+  if (newValue.length >= 2) {
+    debounceTimer.value = setTimeout(() => {
+      performSearch();
+    }, 500); // 500ms debounce
+  } else {
+    searchResults.value = [];
+    showResultsDropdown.value = false;
+  }
+});
+
+// Navigate to selected result
+const navigateToResult = (result) => {
+  console.log("Navigating to:", result);
+  let routeName = '';
+  let queryParams = {};
+
+  switch (result.type) {
+    case 'Customer':
+      routeName = 'contact'; // Corrected route name based on user feedback
+      queryParams = { customer_id: result.id };
+      break;
+    case 'Invoice':
+      routeName = 'view-invoice';
+      queryParams = { invoice_id: result.id };
+      break;
+    case 'Estimate':
+      routeName = 'view-estimate';
+      queryParams = { estimate_id: result.id };
+      break;
+    case 'Job':
+      // routeName = 'view-job'; // Remove routing
+      // queryParams = { job_id: result.id }; // Remove routing
+      uiStore.openGlobalJobModal(result.id); // Call store action instead
+      break;
+    // Add cases for other types if needed
+  }
+
+  // Handle navigation for non-Job types
+  if (routeName) {
+    router.push({ name: routeName, query: queryParams });
+  }
+
+  // Always clear search after handling the result (navigation or modal open)
+  searchQuery.value = '';
+  searchResults.value = [];
+  showResultsDropdown.value = false;
+};
+
+// Clear search input
+const clearSearch = () => {
+  searchQuery.value = '';
+  searchResults.value = [];
+  showResultsDropdown.value = false;
+};
+
+// Click away handler
+const handleClickOutside = (event) => {
+  if (
+    searchInputRef.value && !searchInputRef.value.contains(event.target) &&
+    searchResultsRef.value && !searchResultsRef.value.contains(event.target)
+  ) {
+    showResultsDropdown.value = false;
+  }
+};
+// --- End Universal Search ---
 
 const selectedWebsite = computed({
   get: () => currentWebsite.value,
@@ -223,8 +341,15 @@ onMounted(() => {
   } else {
     //iniABLY();
     fetchWebsites();
+    document.addEventListener('click', handleClickOutside); // Add click listener for search
   }
 })
+
+// Add unmount hook for search click listener cleanup
+onBeforeUnmount(() => {
+  document.removeEventListener('click', handleClickOutside);
+  clearTimeout(debounceTimer.value); // Clear timer on unmount
+});
 
 watch(selectedWebsite, (newValue) => {
   if (newValue && newValue !== 'default') {
@@ -454,9 +579,66 @@ watch(selectedWebsite, (newValue) => {
         </div>
 
         <div class="hidden md:block">
-          <div class="ml-4 flex items-center md:ml-6">  
+          <div class="ml-4 flex items-center md:ml-6">
+
+            <!-- Universal Search Input -->
+            <div class="relative w-full max-w-xs sm:max-w-sm md:max-w-md mr-4" ref="searchInputRef">
+              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <font-awesome-icon icon="search" class="h-5 w-5 text-gray-400" />
+              </div>
+              <input
+                type="text"
+                v-model="searchQuery"
+                placeholder="Search..."
+                class="block w-full pl-10 pr-10 py-2 border border-gray-600 rounded-md leading-5 bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:placeholder-gray-500 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              />
+              <div v-if="isSearching || searchQuery" class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                <font-awesome-icon v-if="isSearching" icon="spinner" class="fa-spin h-5 w-5 text-gray-400" />
+                <button v-else-if="searchQuery" @click="clearSearch" class="text-gray-400 hover:text-gray-300 focus:outline-none">
+                  <font-awesome-icon icon="times" class="h-5 w-5" />
+                </button>
+              </div>
+
+              <!-- Search Results Dropdown -->
+              <transition
+                enter-active-class="transition ease-out duration-100"
+                enter-from-class="transform opacity-0 scale-95"
+                enter-to-class="transform opacity-100 scale-100"
+                leave-active-class="transition ease-in duration-75"
+                leave-from-class="transform opacity-100 scale-100"
+                leave-to-class="transform opacity-0 scale-95"
+              >
+                <div
+                  v-if="showResultsDropdown && searchResults.length > 0"
+                  ref="searchResultsRef"
+                  class="origin-top-right absolute right-0 mt-2 w-full rounded-md shadow-lg bg-white dark:bg-gray-700 ring-1 ring-black ring-opacity-5 focus:outline-none z-50 max-h-96 overflow-y-auto"
+                >
+                  <div class="py-1" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
+                    <a
+                      v-for="result in searchResults"
+                      :key="result.type + '-' + result.id"
+                      href="#"
+                      @click.prevent="navigateToResult(result)"
+                      class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600"
+                      role="menuitem"
+                    >
+                      <div class="font-semibold">{{ result.title }} <span class="text-xs text-gray-500 dark:text-gray-400">({{ result.type }})</span></div>
+                      <div class="text-xs text-gray-600 dark:text-gray-300 truncate">{{ result.details }}</div>
+                    </a>
+                  </div>
+                </div>
+                <div
+                  v-else-if="showResultsDropdown && searchResults.length === 0 && !isSearching"
+                  ref="searchResultsRef"
+                  class="origin-top-right absolute right-0 mt-2 w-full rounded-md shadow-lg bg-white dark:bg-gray-700 ring-1 ring-black ring-opacity-5 focus:outline-none z-50"
+                 >
+                   <div class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">No results found.</div>
+                 </div>
+              </transition>
+            </div>
+            <!-- End Universal Search -->
                     
-            <div class="relative w-52 mr-5">              
+            <div class="relative w-52 mr-5">
               <Listbox v-model="selectedWebsite">
               <div class="relative mt-1">
                 <ListboxButton

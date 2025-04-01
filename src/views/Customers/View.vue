@@ -1891,32 +1891,7 @@ watchEffect(() => {
                      </div>
                      <!-- End AI Sentiment Analysis Section -->
 
-                     <!-- AI Profitability Analysis Section -->
-                     <div class="mb-6 p-4 border border-green-200 dark:border-green-800/50 bg-green-50 dark:bg-green-900/20 rounded-lg shadow-sm">
-                       <div class="flex justify-between items-center mb-2">
-                         <h4 class="text-sm font-semibold text-green-800 dark:text-green-300 uppercase tracking-wider">AI Profitability Analysis</h4>
-                         <div class="flex items-center space-x-2">
-                            <span v-if="latestProfitabilityAnalysis?.generatedAt" class="text-xs text-gray-400 dark:text-gray-500 italic">
-                                {{ formatRelativeTime(latestProfitabilityAnalysis.generatedAt) }}
-                            </span>
-                            <button @click="fetchProfitabilityAnalysis" class="btn-ghost-modern text-xs p-1" :disabled="isFetchingProfitabilityAnalysis" aria-label="Refresh AI profitability analysis">
-                                <font-awesome-icon icon="sync" :class="{ 'fa-spin': isFetchingProfitabilityAnalysis }" />
-                            </button>
-                         </div>
-                       </div>
-                       <div v-if="isFetchingProfitabilityAnalysis" class="text-center py-4">
-                         <p class="text-sm text-gray-500 dark:text-gray-400">Analyzing profitability...</p>
-                       </div>
-                       <div v-else-if="profitabilityAnalysisError" class="text-sm text-red-600 dark:text-red-400">
-                         Error analyzing profitability: {{ profitabilityAnalysisError }}
-                       </div>
-                       <!-- Use v-html to render HTML from backend -->
-                       <div v-else-if="latestProfitabilityAnalysis?.content" v-html="latestProfitabilityAnalysis.content" class="text-sm text-gray-700 dark:text-gray-300 space-y-2"></div>
-                       <div v-else class="text-sm text-gray-500 dark:text-gray-400 italic">
-                         Click the refresh button to generate an AI analysis of customer profitability.
-                       </div>
-                     </div>
-                     <!-- End AI Profitability Analysis Section -->
+                     <!-- AI Profitability Analysis Section Removed -->
 
                      <p v-if="!customer.activities || customer.activities.length === 0" class="text-center text-gray-500 py-8">No activities recorded yet.</p>
                       <template v-else>
