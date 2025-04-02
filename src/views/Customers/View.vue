@@ -260,8 +260,7 @@ async function fetchContacts() {
         h => h.analysisType === 'sentimentAnalysis'
       ) || null;
 
-      // Log found history for debugging
-      // Removed debug logs for AI history
+      // AI history processing complete
     }
     // --- End AI History Processing ---
 
@@ -284,7 +283,6 @@ async function fetchContacts() {
     // Ensure related arrays exist
     customer.value.payments = customer.value.payments || [];
     customer.value.expenses = customer.value.expenses || [];
-    // Removed debug log for expenses
     customer.value.insurance = customer.value.insurance || [];
     customer.value.jobs = customer.value.jobs || [];
     customer.value.estimate = customer.value.estimate || [];
@@ -842,7 +840,6 @@ async function fetchPredictiveMaintenance() {
 
   // Need customer appliances to exist first
   if (!appliances || appliances.length === 0) {
-      // Removed debug log
       isFetchingPredMaint.value = false;
       return;
   }
@@ -2081,8 +2078,6 @@ watchEffect(() => {
                       <p v-if="!customer.activities || customer.activities.filter(a => a.type === tab.type).length === 0" class="text-center text-gray-500 py-8">No {{ tab.name.toLowerCase() }} recorded yet.</p>
                       <template v-else>
                         <template v-for="activity in customer.activities.filter(a => a.type === tab.type)" :key="(tab.name === 'Whatsapp' ? wkey : nkey) + activity.uid">
-                           <!-- Add logging here -->
-                           <!-- Removed console.log -->
                            <component
                              :is="tab.component"
                              :[tab.type]="activity"

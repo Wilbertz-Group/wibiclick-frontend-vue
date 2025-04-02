@@ -1,4 +1,5 @@
 <script setup>
+import { Disclosure, DisclosureButton, DisclosurePanel } from '@headlessui/vue' // Added Disclosure
 import { ref, reactive, watch, computed, onMounted, nextTick } from 'vue'; // Added nextTick
 import axios from 'axios';
 // PDFDocument and blobStream will be loaded via script tags
@@ -10,6 +11,7 @@ import modal from "@/components/misc/modalWAMessage.vue";
 import imageHolder from '@/helpers/logo.js';
 import { getBase64FromUrl, generateTableRow } from '@/helpers/index.js'; // Assuming these exist in helpers
 import JobFormModal from '@/components/jobs/JobFormModal.vue'; // Import Job Modal
+import RecipientProfileFormModal from '@/components/Customers/RecipientProfileFormModal.vue'; // Import Recipient Profile Modal
 
 const props = defineProps({
   modelValue: { // Controls modal visibility (v-model)
@@ -47,6 +49,14 @@ const blob = ref(null); // PDF blob for WhatsApp
 const client = ref('');
 const sender = ref('');
 const company = ref('');
+const recipientProfiles = ref([]); // To store fetched profiles
+const selectedRecipientProfileId = ref(null); // ID of the selected profile
+const isFetchingProfiles = ref(false); // Loading state for profiles
+
+// --- Recipient Profile Modal State ---
+const showRecipientProfileModal = ref(false);
+const selectedProfileForEdit = ref(null); // To pass data for editing
+
 // --- Form State ---
 const estimateForm = reactive({
   id: '', // Will be empty for new estimates
@@ -313,6 +323,9 @@ const prefillForm = async (customer) => {
     estimateForm.estimate_nr = estimate_number + 1;
     // Set default employeeId (e.g., from job context or current user)
     estimateForm.employeeId = customer.employeeId || userStore.user?.id || null;
+
+    // --- Fetch Recipient Profiles ---
+    await fetchRecipientProfiles(customer.id); // Fetch profiles for this customer
   }
   
   // If editing, populate with existing estimate data
@@ -330,12 +343,16 @@ const prefillForm = async (customer) => {
       notes: props.estimateData.notes || '',
       items: props.estimateData.lineItem || [],
       // Explicitly use estimateData.employeeId if it exists, otherwise fallback
-      // Explicitly use estimateData.employeeId if it exists, otherwise fallback
       employeeId: props.estimateData.employeeId ?? (customer.employeeId || userStore.user?.id || null),
     });
-    // Removed debug log
-  } // End of if (props.estimateData)
-} // End of if (customer && customer.id)
+    
+    // --- Set Selected Recipient Profile ID if editing ---
+    if (props.estimateData?.recipientProfileId) {
+      selectedRecipientProfileId.value = props.estimateData.recipientProfileId;
+    }
+    // If creating and no default was set by fetchRecipientProfiles, selectedRecipientProfileId remains null
+  }
+  
   // Calculate initial sum after potentially loading items
   getSum(estimateForm.items);
 
@@ -344,21 +361,20 @@ const prefillForm = async (customer) => {
 
   // If no jobId on the estimate, default to the most recent customer job
   if (!initialJobId && props.customerJobs && props.customerJobs.length > 0) {
-      // Use the computed jobOptions which are already sorted
-      const mostRecentJob = jobOptions.value[0]; // First item is the most recent
-      if (mostRecentJob && mostRecentJob.value) {
-          initialJobId = mostRecentJob.value;
-          // Removed console.log
-      }
-    // Removed extra closing brace here
+    // Use the computed jobOptions which are already sorted
+    const mostRecentJob = jobOptions.value[0]; // First item is the most recent
+    if (mostRecentJob && mostRecentJob.value) {
+      initialJobId = mostRecentJob.value;
+    }
+  }
 
   estimateForm.jobId = initialJobId; // Set the determined jobId in the form
 
   // Fetch associated job details only if we have a valid jobId
   if (estimateForm.jobId) {
-      fetchAssociatedJob(estimateForm.jobId);
+    fetchAssociatedJob(estimateForm.jobId);
   } else {
-      associatedJob.value = null; // Reset associated job data if no ID
+    associatedJob.value = null; // Reset associated job data if no ID
   }
 };
 
@@ -373,6 +389,51 @@ const fetchProfile = async () => {
     toast.warning("Failed to get profile data");
     loading.value = false;
   }
+};
+
+const fetchRecipientProfiles = async (customerId) => {
+  if (!customerId) return;
+  isFetchingProfiles.value = true;
+  recipientProfiles.value = []; // Clear previous
+  selectedRecipientProfileId.value = null; // Reset selection
+
+  try {
+    const response = await axios.get(`/customers/${customerId}/recipient-profiles?id=${userStore.currentWebsite}`);
+    recipientProfiles.value = response.data.recipientProfiles || [];
+
+    // Find the default profile or the first one if none is default
+    const defaultProfile = recipientProfiles.value.find(p => p.isDefault) || recipientProfiles.value[0];
+     if (defaultProfile && !isEditing.value) { // Only set default for NEW estimates
+        selectedRecipientProfileId.value = defaultProfile.id;
+    }
+
+  } catch (error) {
+    // console.error("Error fetching recipient profiles:", error); // Keep console.error here for now until generate fixed
+    toast.error("Could not load recipient profiles for this customer.");
+    // Keep profiles empty on error
+  } finally {
+    isFetchingProfiles.value = false;
+  }
+};
+
+// --- Recipient Profile Modal Handlers ---
+const openAddEditRecipientProfileModal = (profile = null) => {
+  selectedProfileForEdit.value = profile; // Set to null for adding, or profile object for editing
+  showRecipientProfileModal.value = true;
+};
+
+const handleRecipientProfileSaved = async (savedProfile) => {
+  // Refetch the profiles list to include the new/updated one
+  if (estimateForm.customerId) {
+    await fetchRecipientProfiles(estimateForm.customerId);
+    // Optionally, try to select the newly saved profile
+    // Need to wait for the list to update
+    await nextTick();
+    if (savedProfile && savedProfile.id) {
+        selectedRecipientProfileId.value = savedProfile.id;
+    }
+  }
+  // Modal closes itself via v-model
 };
 
 // --- Fetch Associated Job ---
@@ -416,9 +477,7 @@ const handleJobSaved = async () => {
   // The JobFormModal closes itself via v-model
 };
 
-// Functions moved above prefillForm
-
-const saveEstimateOnly = async (closeAfterSave = true) => { // Added parameter
+const saveEstimateOnly = async (closeAfterSave = true) => {
   loading.value = true;
   try {
     const payload = {
@@ -447,7 +506,9 @@ const saveEstimateOnly = async (closeAfterSave = true) => { // Added parameter
           lineItemPayload.id = item.id;
         }
         return lineItemPayload;
-      })
+      }),
+      // --- Add Selected Recipient Profile ID ---
+      selectedRecipientProfileId: selectedRecipientProfileId.value, // Add the selected profile ID
     };
 
     // If editing, include the ID
@@ -487,11 +548,12 @@ const saveEstimateOnly = async (closeAfterSave = true) => { // Added parameter
     if (closeAfterSave) {
       closeModal();
     }
-    return true; // Indicate success
+    // Return the saved estimate data from the response
+    return response.data?.estimate || payload; // Return saved data or fallback to payload
   } catch (error) {
     // Removed console.error
     toast.error(`Error submitting estimate: ${error.response?.data?.message || error.message}`);
-    return false; // Indicate failure
+    return null; // Indicate failure by returning null
   } finally {
     loading.value = false;
   }
@@ -499,23 +561,26 @@ const saveEstimateOnly = async (closeAfterSave = true) => { // Added parameter
 
 const saveAndDownloadEstimate = async () => {
   // First, save the estimate data without closing the modal
-  const savedSuccessfully = await saveEstimateOnly(false); 
+  // Capture the returned saved estimate object
+  const savedEstimateData = await saveEstimateOnly(false);
 
-  if (savedSuccessfully) {
+  if (savedEstimateData) { // Check if save was successful (returned data)
     // If save was successful, prepare and download the PDF
     // Ensure profile is loaded
     if (!profile.value) {
       toast.warning("Company profile not loaded yet. Please wait.");
       await fetchProfile(); // Wait for profile
     }
-    if (profile.value) {
-       prepareAndGeneratePDF(estimateForm, `${estimateForm.customer.name || 'Estimate'}.pdf`, 'download');
+    // Use the savedEstimateData (which includes populated recipientProfile) for PDF generation
+    if (profile.value && savedEstimateData) {
+       prepareAndGeneratePDF(savedEstimateData, `${savedEstimateData.customer?.name || 'Estimate'}.pdf`, 'download');
        closeModal(); // Close modal after download starts
     } else {
       toast.error("Could not load profile data to generate PDF.");
     }
-  } else {
-    toast.error("Failed to save estimate, cannot download PDF.");
+  } else { // Save failed (saveEstimateOnly returned null)
+    // Error toast is already shown in saveEstimateOnly
+    // toast.error("Failed to save estimate, cannot download PDF.");
   }
 };
 
@@ -649,13 +714,17 @@ const createEstimatePDF = (estimate, path, action = 'download') => {
       .text("Billed To:", 50, billed_to)
       .font("Helvetica")
       .text("Name:", 50, billed_to + 15)
-      .text(estimate.customer.name || '', 130, billed_to + 15)
+      // Use selected recipient profile name, fallback to linked customer name
+      .text(estimate.recipientProfile?.name || estimate.customer?.name || '', 130, billed_to + 15)
       .text("Address:", 50, billed_to + 30)
-      .text(estimate.customer.address || '', 130, billed_to + 30)
+      // Use selected recipient profile address, fallback to linked customer address
+      .text(estimate.recipientProfile?.address || estimate.customer?.address || '', 130, billed_to + 30)
       .text("Phone:", 50, billed_to + 45)
-      .text(estimate.customer.phone || '', 130, billed_to + 45)
+      // Use selected recipient profile phone, fallback to linked customer phone
+      .text(estimate.recipientProfile?.phone || estimate.customer?.phone || '', 130, billed_to + 45)
       .text("VAT:", 50, billed_to + 60)
-      .text(estimate.customer.vat || '', 130, billed_to + 60)
+      // Use selected recipient profile VAT, fallback to linked customer VAT
+      .text(estimate.recipientProfile?.vatNumber || estimate.customer?.vat || '', 130, billed_to + 60) // Use vatNumber from profile
       .moveDown();
 
     generateHr(doc, 400);
@@ -811,31 +880,65 @@ const prepareAndGeneratePDF = async (estimate, path, action = 'download') => {
     } else {
       img = imageHolder; // Use placeholder if no logo URL
     }
-    createEstimatePDF(estimate, path, action);
+    // Construct the data object for the PDF, ensuring all required fields are present
+    const pdfData = {
+       // Core fields likely returned from backend save
+      id: estimate.id || estimateForm.id,
+      estimate_nr: estimate.number || estimateForm.estimate_nr, // Use 'number' from backend response if available
+      estimate_date: estimate.issuedAt ? moment(estimate.issuedAt).format('YYYY-MM-DD') : estimateForm.estimate_date,
+      estimate_due_date: estimate.dueAt ? moment(estimate.dueAt).format('YYYY-MM-DD') : estimateForm.estimate_due_date,
+      subtotal: estimate.subtotal || estimateForm.subtotal,
+      paid: estimate.deposit || estimateForm.paid, // Use 'deposit' from backend if available
+      notes: estimate.notes || estimateForm.notes,
+      // Use recipient profile from backend response if available, otherwise construct from local state (less ideal)
+      recipientProfile: estimate.recipientProfile || recipientProfiles.value.find(p => p.id === selectedRecipientProfileId.value) || null,
+      // Use items from the local form state (guaranteed to be present)
+      items: estimateForm.items || [],
+      // Use customer details from local form state (safer than assuming backend returns it)
+      customer: estimateForm.customer || {},
+      // Use company and banking details from the fetched profile
+      company: profile.value?.company || {},
+      banking: profile.value?.banking || {},
+    };
+    createEstimatePDF(pdfData, path, action); // Call the PDF creation logic with carefully constructed data
   } catch (error) {
-    // Removed console.error
-    toast.error("Error preparing PDF for download/sending.");
+    console.error("Error in prepareAndGeneratePDF (Estimate):", error); // Log the specific error
+    toast.error(`Error preparing PDF: ${error.message || 'Unknown error'}`); // Show more specific error
     img = imageHolder; // Fallback image
-    // Optionally try generating PDF with fallback image
+    // Optionally try generating PDF with fallback image - commented out for now
     // createEstimatePDF(estimate, path, action);
   } finally {
     loading.value = false;
   }
 };
 
-const sendAttachment = () => {
+const sendAttachment = async () => { // Make async
   client.value = estimateForm.customer?.name || 'Customer';
   sender.value = profile.value?.firstName || 'Sender';
   company.value = profile.value?.company?.company_name || 'Company';
 
+  // --- Save estimate first (if not editing or if changes exist - simpler to just save) ---
+  // Call saveEstimateOnly without closing the modal to get the latest data
+  const savedEstimateData = await saveEstimateOnly(false);
+
+  if (!savedEstimateData) {
+    toast.error("Failed to save estimate before sending. Cannot generate PDF.");
+    return; // Stop if save failed
+  }
+
+  // --- Use saved data for PDF generation ---
   // Ensure profile is loaded before attempting to generate PDF
   if (!profile.value) {
     toast.warning("Company profile not loaded yet. Please wait.");
-    fetchProfile().then(() => {
-      prepareAndGeneratePDF(estimateForm, `${estimateForm.customer.name || 'Estimate'}.pdf`, 'whatsapp');
-    });
+    // Refetch profile just in case, although save should ideally ensure it's loaded
+    await fetchProfile();
+  }
+
+  if (profile.value) {
+     // Use the savedEstimateData for PDF generation
+     prepareAndGeneratePDF(savedEstimateData, `${savedEstimateData.customer?.name || 'Estimate'}.pdf`, 'whatsapp');
   } else {
-    prepareAndGeneratePDF(estimateForm, `${estimateForm.customer.name || 'Estimate'}.pdf`, 'whatsapp');
+     toast.error("Could not load profile data to generate PDF for sending.");
   }
 };
 
@@ -966,27 +1069,68 @@ if (!document.querySelector('script[src*="blob-stream.js"]')) {
                 </div>
               </div>
 
-              <!-- Customer Details Section -->
+              <!-- Linked Customer Disclosure Section -->
+              <Disclosure as="div" class="mb-6 border border-gray-200 dark:border-gray-700 rounded-md overflow-hidden" v-slot="{ open }">
+                <DisclosureButton class="flex w-full justify-between items-center px-4 py-3 text-left text-sm font-medium text-gray-800 dark:text-gray-200 bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus-visible:ring focus-visible:ring-indigo-500 focus-visible:ring-opacity-75 transition-colors">
+                  <span>Linked Customer ({{ estimateForm.customer.name || 'N/A' }})</span>
+                  <font-awesome-icon :icon="open ? 'chevron-up' : 'chevron-down'" class="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                </DisclosureButton>
+                <transition
+                  enter-active-class="transition duration-100 ease-out"
+                  enter-from-class="transform scale-95 opacity-0"
+                  enter-to-class="transform scale-100 opacity-100"
+                  leave-active-class="transition duration-75 ease-out"
+                  leave-from-class="transform scale-100 opacity-100"
+                  leave-to-class="transform scale-95 opacity-0"
+                >
+                  <DisclosurePanel class="px-4 pt-4 pb-2 text-sm text-gray-500 dark:text-gray-300">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label for="customer-name" class="label-modern">Name</label>
+                        <input type="text" id="customer-name" v-model="estimateForm.customer.name" required class="input-modern" />
+                      </div>
+                      <div>
+                        <label for="customer-phone" class="label-modern">Phone</label>
+                        <input type="tel" id="customer-phone" v-model="estimateForm.customer.phone" required class="input-modern" />
+                      </div>
+                      <div class="sm:col-span-2">
+                        <label for="customer-address" class="label-modern">Address</label>
+                        <textarea id="customer-address" v-model="estimateForm.customer.address" rows="2" class="input-modern"></textarea>
+                      </div>
+                      <div>
+                        <label for="customer-vat" class="label-modern">VAT (Optional)</label>
+                        <input type="text" id="customer-vat" v-model="estimateForm.customer.vat" class="input-modern" />
+                      </div>
+                    </div>
+                  </DisclosurePanel>
+                </transition>
+              </Disclosure>
+
+              <!-- Estimate Recipient Selection Section -->
               <div class="mb-6">
-                <h4 class="text-md font-semibold mb-3 text-gray-800 dark:text-gray-200">Customer Details</h4>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label for="customer-name" class="label-modern">Name</label>
-                    <input type="text" id="customer-name" v-model="estimateForm.customer.name" required class="input-modern" />
-                  </div>
-                  <div>
-                    <label for="customer-phone" class="label-modern">Phone</label>
-                    <input type="tel" id="customer-phone" v-model="estimateForm.customer.phone" required class="input-modern" />
-                  </div>
-                  <div class="sm:col-span-2">
-                    <label for="customer-address" class="label-modern">Address</label>
-                    <textarea id="customer-address" v-model="estimateForm.customer.address" rows="2" class="input-modern"></textarea>
-                  </div>
-                  <div>
-                    <label for="customer-vat" class="label-modern">VAT (Optional)</label>
-                    <input type="text" id="customer-vat" v-model="estimateForm.customer.vat" class="input-modern" />
-                  </div>
-                </div>
+                 <h4 class="text-md font-semibold mb-3 text-gray-800 dark:text-gray-200">Estimate Recipient</h4>
+                 <div class="sm:col-span-2">
+                   <label for="recipient-profile-estimate" class="label-modern">Select Recipient Profile</label>
+                   <div v-if="isFetchingProfiles" class="text-sm text-gray-500 dark:text-gray-400">Loading profiles...</div>
+                   <select v-else id="recipient-profile-estimate" v-model="selectedRecipientProfileId" class="input-modern input-modern--select">
+                     <option :value="null">-- Select Recipient --</option>
+                     <option v-for="profile in recipientProfiles" :key="profile.id" :value="profile.id">
+                       {{ profile.profileName }} ({{ profile.name || 'No Name' }})
+                     </option>
+                     <!-- Optional: Add option to enter manually? -->
+                   </select>
+                   <p v-if="!isFetchingProfiles && recipientProfiles.length === 0" class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                     No recipient profiles found for this customer.
+                   </p>
+                   <button
+                     type="button"
+                     @click="openAddEditRecipientProfileModal()"
+                     class="btn-secondary-modern text-xs mt-2"
+                   >
+                     <font-awesome-icon icon="plus" class="mr-1" /> Add New Profile
+                   </button>
+                   <!-- TODO: Add button to edit selected profile -->
+                 </div>
               </div>
 
               <!-- Line Items Section -->
@@ -1141,6 +1285,14 @@ if (!document.querySelector('script[src*="blob-stream.js"]')) {
       </div>
     </div>
   </transition>
+
+  <!-- Recipient Profile Add/Edit Modal -->
+  <RecipientProfileFormModal
+    v-model="showRecipientProfileModal"
+    :customer-id="estimateForm.customerId"
+    :profile-data="selectedProfileForEdit"
+    @profile-saved="handleRecipientProfileSaved"
+  />
 </template>
 
 <style scoped>

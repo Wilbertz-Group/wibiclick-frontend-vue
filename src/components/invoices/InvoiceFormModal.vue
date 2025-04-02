@@ -1,4 +1,5 @@
 <script setup>
+import { Disclosure, DisclosureButton, DisclosurePanel } from '@headlessui/vue' // Added Disclosure
 import { ref, reactive, watch, computed, onMounted, nextTick } from 'vue'; // Added nextTick
 import axios from 'axios';
 import moment from 'moment';
@@ -9,6 +10,7 @@ import modal from "@/components/misc/modalWAMessage.vue";
 import imageHolder from '@/helpers/logo.js';
 import { getBase64FromUrl, generateTableRow } from '@/helpers/index.js'; // Assuming these exist in helpers
 import JobFormModal from '@/components/jobs/JobFormModal.vue'; // Import Job Modal
+import RecipientProfileFormModal from '@/components/Customers/RecipientProfileFormModal.vue'; // Import Recipient Profile Modal
 
 const props = defineProps({
   modelValue: { // Controls modal visibility (v-model)
@@ -46,6 +48,15 @@ const blob = ref(null); // PDF blob for WhatsApp
 const client = ref('');
 const sender = ref('');
 const company = ref('');
+// State for recipient profiles (already present from previous attempt, ensure it's correct)
+const recipientProfiles = ref([]); // To store fetched profiles
+const selectedRecipientProfileId = ref(null); // ID of the selected profile
+const isFetchingProfiles = ref(false); // Loading state for profiles
+
+// --- Recipient Profile Modal State ---
+const showRecipientProfileModal = ref(false);
+const selectedProfileForEdit = ref(null); // To pass data for editing
+
 // --- Form State ---
 const invoiceForm = reactive({
   id: '', // Will be empty for new invoices
@@ -87,6 +98,11 @@ const invoiceForm = reactive({
     account_type: '',
     branch_code: '',
   },
+  // --- Invoice Recipient Specific Details ---
+  invoiceRecipientName: '',
+  invoiceRecipientAddress: '',
+  invoiceRecipientPhone: '',
+  invoiceRecipientVat: '',
 });
 
 // --- Job Modal State ---
@@ -231,13 +247,29 @@ const prefillForm = async (customer) => {
   }
   
   if (customer && customer.id) {
+    // --- Set main customer reference ---
+    invoiceForm.customerId = customer.id;
     invoiceForm.customer.id = customer.id;
+    // --- Explicitly populate the linked customer fields ---
     invoiceForm.customer.name = customer.name || '';
     invoiceForm.customer.phone = customer.phone || '';
     invoiceForm.customer.address = customer.address || '';
-    invoiceForm.customerId = customer.id;
-    
-    // Set company and banking details from profile
+    invoiceForm.customer.vat = customer.vat || ''; // Assuming customer might have VAT
+// --- Set company and banking details from profile ---
+if (profile.value) {
+  invoiceForm.company = profile.value.company || invoiceForm.company;
+  invoiceForm.banking = profile.value.banking || invoiceForm.banking;
+}
+
+// Set invoice number
+invoiceForm.invoice_nr = invoice_number + 1;
+// Set default employeeId (e.g., from job context or current user)
+invoiceForm.employeeId = customer.employeeId || userStore.user?.id || null;
+
+// --- Fetch Recipient Profiles ---
+await fetchRecipientProfiles(customer.id); // Fetch profiles for this customer
+
+    // --- Set company and banking details from profile ---
     if (profile.value) {
       invoiceForm.company = profile.value.company || invoiceForm.company;
       invoiceForm.banking = profile.value.banking || invoiceForm.banking;
@@ -249,11 +281,13 @@ const prefillForm = async (customer) => {
     invoiceForm.employeeId = customer.employeeId || userStore.user?.id || null;
   }
   
-  // If editing, populate with existing invoice data
+  // --- If editing, populate with existing invoice data, overriding defaults ---
   if (props.invoiceData) {
+    // Assign core invoice data
     Object.assign(invoiceForm, {
       id: props.invoiceData.id,
-      customerId: props.invoiceData.customerId,
+      // customerId is already set from customerData, ensure consistency if needed
+      // customerId: props.invoiceData.customerId,
       name: props.invoiceData.name || 'Invoice',
       status: props.invoiceData.reason || 'sent',
       invoice_nr: props.invoiceData.number || (invoice_number + 1),
@@ -263,12 +297,20 @@ const prefillForm = async (customer) => {
       paid: props.invoiceData.deposit || 0,
       notes: props.invoiceData.notes || '',
       items: props.invoiceData.lineItem || [],
-      // Explicitly use invoiceData.employeeId if it exists, otherwise fallback
       employeeId: props.invoiceData.employeeId ?? (customer.employeeId || userStore.user?.id || null),
+      jobId: props.invoiceData.jobId || null, // Populate jobId if editing
     });
-    // Removed debug log
-  }
-  // Removed extra closing brace here
+
+    // --- Set Selected Recipient Profile ID if editing ---
+    if (props.invoiceData?.recipientProfileId) {
+        selectedRecipientProfileId.value = props.invoiceData.recipientProfileId;
+    }
+    // If creating and no default was set by fetchRecipientProfiles, selectedRecipientProfileId remains null (default logic is in fetchRecipientProfiles)
+
+  } // End of if (props.invoiceData)
+
+  // Calculate initial sum after potentially loading items
+  getSum(invoiceForm.items);
 
   // Determine the initial jobId
   let initialJobId = props.invoiceData?.jobId || null;
@@ -303,6 +345,52 @@ const fetchProfile = async () => {
     // Removed console.error
     toast.warning("Failed to get profile data");
     loading.value = false;
+  }
+};
+
+// --- Recipient Profile Modal Handlers ---
+const openAddEditRecipientProfileModal = (profile = null) => {
+  selectedProfileForEdit.value = profile; // Set to null for adding, or profile object for editing
+  showRecipientProfileModal.value = true;
+};
+
+const handleRecipientProfileSaved = async (savedProfile) => {
+  // Refetch the profiles list to include the new/updated one
+  if (invoiceForm.customerId) {
+    await fetchRecipientProfiles(invoiceForm.customerId);
+    // Optionally, try to select the newly saved profile
+    await nextTick(); // Wait for list update
+    if (savedProfile && savedProfile.id) {
+        selectedRecipientProfileId.value = savedProfile.id;
+    }
+  }
+  // Modal closes itself via v-model
+};
+
+// Ensure fetchRecipientProfiles function exists and is correct
+const fetchRecipientProfiles = async (customerId) => {
+  if (!customerId) return;
+  isFetchingProfiles.value = true;
+  recipientProfiles.value = []; // Clear previous
+  selectedRecipientProfileId.value = null; // Reset selection
+
+  try {
+    const response = await axios.get(`/customers/${customerId}/recipient-profiles?id=${userStore.currentWebsite}`);
+    recipientProfiles.value = response.data.recipientProfiles || [];
+
+    // Find the default profile or the first one if none is default
+    const defaultProfile = recipientProfiles.value.find(p => p.isDefault) || recipientProfiles.value[0];
+    // Set default only if creating a NEW invoice and a default/first profile exists
+    if (defaultProfile && !isEditing.value) {
+        selectedRecipientProfileId.value = defaultProfile.id;
+    }
+
+  } catch (error) {
+    // console.error("Error fetching recipient profiles:", error); // Keep console.error commented for now
+    toast.error("Could not load recipient profiles for this customer.");
+    // Keep profiles empty on error
+  } finally {
+    isFetchingProfiles.value = false;
   }
 };
 
@@ -446,7 +534,9 @@ const saveInvoiceOnly = async (closeAfterSave = true) => { // Added parameter
           lineItemPayload.id = item.id;
         }
         return lineItemPayload;
-      })
+      }),
+     // --- Add Selected Recipient Profile ID ---
+     selectedRecipientProfileId: selectedRecipientProfileId.value, // Add the selected profile ID
     };
     
     // If editing, include the ID
@@ -487,11 +577,12 @@ const response = await axios.post('add-invoice?id=' + userStore.currentWebsite, 
     if (closeAfterSave) {
       closeModal();
     }
-    return true; // Indicate success
+    // Return the saved invoice data from the response
+    return response.data?.invoice || payload; // Return saved data or fallback to payload
   } catch (error) {
     // Removed console.error
     toast.error(`Error submitting invoice: ${error.response?.data?.message || error.message}`);
-    return false; // Indicate failure
+    return null; // Indicate failure by returning null
   } finally {
     loading.value = false;
   }
@@ -499,23 +590,26 @@ const response = await axios.post('add-invoice?id=' + userStore.currentWebsite, 
 
 const saveAndDownloadInvoice = async () => {
   // First, save the invoice data without closing the modal
-  const savedSuccessfully = await saveInvoiceOnly(false);
+  // Capture the returned saved invoice object
+  const savedInvoiceData = await saveInvoiceOnly(false);
 
-  if (savedSuccessfully) {
+  if (savedInvoiceData) { // Check if save was successful (returned data)
     // If save was successful, prepare and download the PDF
     // Ensure profile is loaded
     if (!profile.value) {
       toast.warning("Company profile not loaded yet. Please wait.");
       await fetchProfile(); // Wait for profile
     }
-    if (profile.value) {
-       prepareAndGeneratePDF(invoiceForm, `${invoiceForm.customer.name || 'Invoice'}.pdf`, 'download');
+    // Use the savedInvoiceData (which includes populated recipientProfile) for PDF generation
+    if (profile.value && savedInvoiceData) {
+       prepareAndGeneratePDF(savedInvoiceData, `${savedInvoiceData.customer?.name || 'Invoice'}.pdf`, 'download');
        closeModal(); // Close modal after download starts
     } else {
       toast.error("Could not load profile data to generate PDF.");
     }
-  } else {
-    toast.error("Failed to save invoice, cannot download PDF.");
+  } else { // Save failed (saveInvoiceOnly returned null)
+    // Error toast is already shown in saveInvoiceOnly
+    // toast.error("Failed to save invoice, cannot download PDF.");
   }
 };
 
@@ -621,13 +715,17 @@ const createInvoicePDF = (invoice, path, action = 'download') => {
       .text("Billed To:", 50, billed_to)
       .font("Helvetica")
       .text("Name:", 50, billed_to + 15)
-      .text(invoice.customer.name || '', 130, billed_to + 15)
+      // Use selected recipient profile name, fallback to linked customer name
+      .text(invoice.recipientProfile?.name || invoice.customer?.name || '', 130, billed_to + 15)
       .text("Address:", 50, billed_to + 30)
-      .text(invoice.customer.address || '', 130, billed_to + 30)
+      // Use selected recipient profile address, fallback to linked customer address
+      .text(invoice.recipientProfile?.address || invoice.customer?.address || '', 130, billed_to + 30)
       .text("Phone:", 50, billed_to + 45)
-      .text(invoice.customer.phone || '', 130, billed_to + 45)
+      // Use selected recipient profile phone, fallback to linked customer phone
+      .text(invoice.recipientProfile?.phone || invoice.customer?.phone || '', 130, billed_to + 45)
       .text("VAT:", 50, billed_to + 60)
-      .text(invoice.customer.vat || '', 130, billed_to + 60)
+      // Use selected recipient profile VAT, fallback to linked customer VAT
+      .text(invoice.recipientProfile?.vatNumber || invoice.customer?.vat || '', 130, billed_to + 60) // Use vatNumber from profile
       .moveDown();
 
     generateHr(doc, 400);
@@ -782,29 +880,63 @@ const prepareAndGeneratePDF = async (invoice, path, action = 'download') => {
     } else {
       img = imageHolder; // Use placeholder if no logo URL
     }
-    createInvoicePDF(invoice, path, action);
+    // Construct the data object for the PDF, ensuring all required fields are present
+    const pdfData = {
+      // Core fields likely returned from backend save
+      id: invoice.id || invoiceForm.id,
+      invoice_nr: invoice.number || invoiceForm.invoice_nr, // Use 'number' from backend response if available
+      invoice_date: invoice.issuedAt ? moment(invoice.issuedAt).format('YYYY-MM-DD') : invoiceForm.invoice_date,
+      invoice_due_date: invoice.dueAt ? moment(invoice.dueAt).format('YYYY-MM-DD') : invoiceForm.invoice_due_date,
+      subtotal: invoice.subtotal || invoiceForm.subtotal,
+      paid: invoice.deposit || invoiceForm.paid, // Use 'deposit' from backend if available
+      notes: invoice.notes || invoiceForm.notes,
+      // Use recipient profile from backend response if available, otherwise construct from local state (less ideal)
+      recipientProfile: invoice.recipientProfile || recipientProfiles.value.find(p => p.id === selectedRecipientProfileId.value) || null,
+      // Use items from the local form state (guaranteed to be present)
+      items: invoiceForm.items || [],
+      // Use customer details from local form state (safer than assuming backend returns it)
+      customer: invoiceForm.customer || {},
+      // Use company and banking details from the fetched profile
+      company: profile.value?.company || {},
+      banking: profile.value?.banking || {},
+    };
+    createInvoicePDF(pdfData, path, action); // Call the PDF creation logic with carefully constructed data
   } catch (error) {
-    // Removed console.error
-    toast.error("Error preparing PDF for download/sending.");
+    console.error("Error in prepareAndGeneratePDF (Invoice):", error); // Log the specific error
+    toast.error(`Error preparing PDF: ${error.message || 'Unknown error'}`); // Show more specific error
     img = imageHolder; // Fallback image
   } finally {
     loading.value = false;
   }
 };
 
-const sendAttachment = () => {
+const sendAttachment = async () => { // Make async
   client.value = invoiceForm.customer?.name || 'Customer';
   sender.value = profile.value?.firstName || 'Sender';
   company.value = profile.value?.company?.company_name || 'Company';
 
+  // --- Save invoice first (if not editing or if changes exist - simpler to just save) ---
+  // Call saveInvoiceOnly without closing the modal to get the latest data
+  const savedInvoiceData = await saveInvoiceOnly(false);
+
+  if (!savedInvoiceData) {
+    toast.error("Failed to save invoice before sending. Cannot generate PDF.");
+    return; // Stop if save failed
+  }
+
+  // --- Use saved data for PDF generation ---
   // Ensure profile is loaded before attempting to generate PDF
   if (!profile.value) {
     toast.warning("Company profile not loaded yet. Please wait.");
-    fetchProfile().then(() => {
-      prepareAndGeneratePDF(invoiceForm, `${invoiceForm.customer.name || 'Invoice'}.pdf`, 'whatsapp');
-    });
+    // Refetch profile just in case
+    await fetchProfile();
+  }
+
+  if (profile.value) {
+     // Use the savedInvoiceData for PDF generation
+     prepareAndGeneratePDF(savedInvoiceData, `${savedInvoiceData.customer?.name || 'Invoice'}.pdf`, 'whatsapp');
   } else {
-    prepareAndGeneratePDF(invoiceForm, `${invoiceForm.customer.name || 'Invoice'}.pdf`, 'whatsapp');
+     toast.error("Could not load profile data to generate PDF for sending.");
   }
 };
 
@@ -934,27 +1066,68 @@ onMounted(() => {
                 </div>
               </div>
 
-              <!-- Customer Details Section -->
+              <!-- Linked Customer Disclosure Section -->
+              <Disclosure as="div" class="mb-6 border border-gray-200 dark:border-gray-700 rounded-md overflow-hidden" v-slot="{ open }">
+                <DisclosureButton class="flex w-full justify-between items-center px-4 py-3 text-left text-sm font-medium text-gray-800 dark:text-gray-200 bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus-visible:ring focus-visible:ring-indigo-500 focus-visible:ring-opacity-75 transition-colors">
+                  <span>Linked Customer ({{ invoiceForm.customer.name || 'N/A' }})</span>
+                  <font-awesome-icon :icon="open ? 'chevron-up' : 'chevron-down'" class="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                </DisclosureButton>
+                <transition
+                  enter-active-class="transition duration-100 ease-out"
+                  enter-from-class="transform scale-95 opacity-0"
+                  enter-to-class="transform scale-100 opacity-100"
+                  leave-active-class="transition duration-75 ease-out"
+                  leave-from-class="transform scale-100 opacity-100"
+                  leave-to-class="transform scale-95 opacity-0"
+                >
+                  <DisclosurePanel class="px-4 pt-4 pb-2 text-sm text-gray-500 dark:text-gray-300">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label for="customer-name" class="label-modern">Name</label>
+                        <input type="text" id="customer-name" v-model="invoiceForm.customer.name" required class="input-modern" />
+                      </div>
+                      <div>
+                        <label for="customer-phone" class="label-modern">Phone</label>
+                        <input type="tel" id="customer-phone" v-model="invoiceForm.customer.phone" required class="input-modern" />
+                      </div>
+                      <div class="sm:col-span-2">
+                        <label for="customer-address" class="label-modern">Address</label>
+                        <textarea id="customer-address" v-model="invoiceForm.customer.address" rows="2" class="input-modern"></textarea>
+                      </div>
+                      <div>
+                        <label for="customer-vat" class="label-modern">VAT (Optional)</label>
+                        <input type="text" id="customer-vat" v-model="invoiceForm.customer.vat" class="input-modern" />
+                      </div>
+                    </div>
+                  </DisclosurePanel>
+                </transition>
+              </Disclosure>
+
+              <!-- Invoice Recipient Selection Section -->
               <div class="mb-6">
-                <h4 class="text-md font-semibold mb-3 text-gray-800 dark:text-gray-200">Customer Details</h4>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label for="customer-name" class="label-modern">Name</label>
-                    <input type="text" id="customer-name" v-model="invoiceForm.customer.name" required class="input-modern" />
-                  </div>
-                  <div>
-                    <label for="customer-phone" class="label-modern">Phone</label>
-                    <input type="tel" id="customer-phone" v-model="invoiceForm.customer.phone" required class="input-modern" />
-                  </div>
-                  <div class="sm:col-span-2">
-                    <label for="customer-address" class="label-modern">Address</label>
-                    <textarea id="customer-address" v-model="invoiceForm.customer.address" rows="2" class="input-modern"></textarea>
-                  </div>
-                  <div>
-                    <label for="customer-vat" class="label-modern">VAT (Optional)</label>
-                    <input type="text" id="customer-vat" v-model="invoiceForm.customer.vat" class="input-modern" />
-                  </div>
-                </div>
+                 <h4 class="text-md font-semibold mb-3 text-gray-800 dark:text-gray-200">Invoice Recipient</h4>
+                 <div class="sm:col-span-2">
+                   <label for="recipient-profile-invoice" class="label-modern">Select Recipient Profile</label> <!-- Changed ID -->
+                   <div v-if="isFetchingProfiles" class="text-sm text-gray-500 dark:text-gray-400">Loading profiles...</div>
+                   <select v-else id="recipient-profile-invoice" v-model="selectedRecipientProfileId" class="input-modern input-modern--select"> <!-- Changed ID -->
+                     <option :value="null">-- Select Recipient --</option>
+                     <option v-for="profile in recipientProfiles" :key="profile.id" :value="profile.id">
+                       {{ profile.profileName }} ({{ profile.name || 'No Name' }})
+                     </option>
+                     <!-- Optional: Add option to enter manually? -->
+                   </select>
+                   <p v-if="!isFetchingProfiles && recipientProfiles.length === 0" class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                     No recipient profiles found for this customer.
+                   </p>
+                    <button
+                     type="button"
+                     @click="openAddEditRecipientProfileModal()"
+                     class="btn-secondary-modern text-xs mt-2"
+                   >
+                     <font-awesome-icon icon="plus" class="mr-1" /> Add New Profile
+                   </button>
+                   <!-- TODO: Add button to edit selected profile -->
+                 </div>
               </div>
 
               <!-- Line Items Section -->
@@ -1104,6 +1277,14 @@ onMounted(() => {
       </div>
     </div>
   </transition>
+
+  <!-- Recipient Profile Add/Edit Modal -->
+  <RecipientProfileFormModal
+    v-model="showRecipientProfileModal"
+    :customer-id="invoiceForm.customerId"
+    :profile-data="selectedProfileForEdit"
+    @profile-saved="handleRecipientProfileSaved"
+  />
 </template>
 
 <style scoped>

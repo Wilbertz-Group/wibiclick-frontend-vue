@@ -53,6 +53,14 @@
 	const heading = ref()
 	const isOpen = ref(false)
 
+	// Watch for external changes to the job status prop
+	watch(() => props.job.jobStatus, (newStatusValue) => {
+	  const newStatusObject = statuses.find(s => s.value === newStatusValue);
+	  if (newStatusObject && selectedStatus.value?.value !== newStatusObject.value) {
+	    selectedStatus.value = newStatusObject;
+	  }
+	});
+
 	// Helper function for currency formatting
 	function formatCurrency(value) {
 	  if (value === null || value === undefined || isNaN(Number(value))) return 'N/A';

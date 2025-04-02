@@ -32,6 +32,19 @@ const body = ref()
 const heading = ref()
 const isOpen = ref(false)
 
+// Helper function to find status object
+const findStatus = (reason) => statuses.find(s => s.value === reason);
+
+// Watch for external changes to the invoice status prop (reason field)
+watch(() => props.invoice?.reason, (newReasonValue) => {
+  const newStatusObject = findStatus(newReasonValue);
+  if (newStatusObject && selectedStatus.value?.value !== newStatusObject.value) {
+    selectedStatus.value = newStatusObject;
+  } else if (!newStatusObject && selectedStatus.value?.value !== null) {
+    // Handle case where the new reason might not be in the list, reset to default/N/A
+    selectedStatus.value = statuses.find(s => s.value === 'sent') || { name: 'N/A', value: null };
+  }
+});
 function closeModal() {
   isOpen.value = false
   emit('reloadTimeline')
