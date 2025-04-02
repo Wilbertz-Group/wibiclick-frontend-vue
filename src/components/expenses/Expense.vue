@@ -53,7 +53,7 @@ watch(selectedType, async (n, o) => {
     isOpen.value = true
   } catch (error) {
     toast.error('Failed to update the expense type, please contact the administrator')
-    console.log(error)
+    // Removed console.log
   }
 })
 </script>

@@ -25,7 +25,7 @@ function login(credentials) {
     .catch((err) => {
       loading.value = false;
       toast.error(err.message);
-      console.log(err);
+      // Removed console.log
     });
 }
 </script>

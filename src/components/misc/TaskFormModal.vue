@@ -156,7 +156,7 @@ async function fetchEmployees() {
     const response = await axios.get(`employees?id=${userStore.currentWebsite}`);
     employees.value = response.data.employees || [];
   } catch (error) {
-    console.error("Error fetching employees:", error);
+    // Removed console.error
     fetchEmployeesError.value = "Failed to load employees.";
   } finally {
     isFetchingEmployees.value = false;

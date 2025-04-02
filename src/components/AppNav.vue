@@ -76,7 +76,7 @@ const performSearch = async () => {
     searchResults.value = response.data.results || [];
     showResultsDropdown.value = searchResults.value.length > 0;
   } catch (error) {
-    console.error("Search failed:", error);
+    // Removed console.error
     searchResults.value = [];
     showResultsDropdown.value = false;
     toast.error("Search failed. Please try again."); // Added user feedback
@@ -100,7 +100,7 @@ watch(searchQuery, (newValue) => {
 
 // Navigate to selected result
 const navigateToResult = (result) => {
-  console.log("Navigating to:", result);
+  // Removed console.log
   let routeName = '';
   let queryParams = {};
 
@@ -195,7 +195,7 @@ async function fetchWebsites() {
     }
     loading.value = false
   } catch (error) {
-    console.error('Error fetching websites:', error);
+    // Removed console.error
     toast.error("Error getting website data");
     loading.value = false
   }
@@ -209,7 +209,7 @@ async function fetchWebsiteAnalytics(id) {
     userStore.updateAnalytics(analytics.value)
     loading.value = false
   } catch (error) {
-    console.log(error)
+    // Removed console.log
     toast.error("Error getting website analytics data")
     loading.value = false
   }
@@ -222,7 +222,7 @@ async function fetchSettings(id) {
     userStore.updateSettings(response.data.setting)
     loading.value = false
   } catch (error) {
-    console.log(error)
+    // Removed console.log
     toast.error("Error getting website settings")
     loading.value = false
   }
@@ -237,7 +237,7 @@ async function addWebsite(credentials) {
     toast.success("Website added successfully")
     loading.value = false
   } catch (error) {
-    console.log(error)
+    // Removed console.log
     toast.error('Error Adding website')
     loading.value = false
   }
@@ -275,7 +275,7 @@ function iniABLY(){
     }
 
     if (!("Notification" in window)) {
-      console.log("This browser does not support desktop notification");
+      // Removed console.log
     } else if (Notification.permission === "granted") {
       const notification = new Notification(message.data.name, optns);
     } else if (Notification.permission !== "denied") {

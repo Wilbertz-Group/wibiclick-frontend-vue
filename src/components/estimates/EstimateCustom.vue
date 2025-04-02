@@ -66,9 +66,11 @@ watch(selectedStatus, async (n, o) => {
     isOpen.value = true
   } catch (error) {
     toast.error('Failed to update the estimate status, please contact the administrator')
-    console.log(error)
+    // Removed console.log
   }
-})
+});
+// Removed debug log
+// Removed extra closing brace
 
 </script>
 

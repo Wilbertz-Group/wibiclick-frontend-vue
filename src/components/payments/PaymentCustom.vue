@@ -57,7 +57,7 @@ watch(selectedStatus, async (n, o) => {
     emit('reloadTimeline'); // Reload data after successful update
   } catch (error) {
     toast.error('Failed to update payment status. Please try again.')
-    console.error("Error updating payment status:", error);
+    // Removed console.error
     selectedStatus.value = o; // Revert status on error
   }
 })

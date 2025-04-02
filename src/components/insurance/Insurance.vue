@@ -55,7 +55,7 @@
 			isOpen.value = true
     } catch (error) {
 			toast.error('Failed to update the insurance report status, please contact the administrator')
-      console.log(error)
+      // Removed console.log
     }
 	})
 </script>

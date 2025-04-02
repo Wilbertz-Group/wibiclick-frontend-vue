@@ -185,7 +185,7 @@ async function saveAppliance() {
 
     if (isEditing.value) {
       // PUT request for updating
-      console.log("Updating appliance:", props.appliance.id, payload);
+      // Removed console.log
       // Actual API call
       response = await axios.put(`appliances/${props.appliance.id}?id=${websiteId}`, payload);
       // Removed simulation code
@@ -193,7 +193,7 @@ async function saveAppliance() {
       toast.success('Appliance updated successfully');
     } else {
       // POST request for creating
-      console.log("Adding new appliance:", payload);
+      // Removed console.log
       // Actual API call
       response = await axios.post(`appliances?id=${websiteId}`, payload);
       // Removed simulation code
@@ -201,12 +201,12 @@ async function saveAppliance() {
       toast.success('Appliance added successfully');
     }
 
-    console.log('API Response:', response.data);
+    // Removed console.log
     emit('saved'); // Notify parent component
     closeModal();
 
   } catch (error) {
-    console.error("Error saving appliance:", error);
+    // Removed console.error
     errorMessage.value = `Failed to save appliance: ${error.response?.data?.message || error.message || 'Unknown error'}`;
     toast.error(errorMessage.value);
   } finally {

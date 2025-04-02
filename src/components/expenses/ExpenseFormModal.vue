@@ -74,7 +74,7 @@ async function fetchEmployees() {
       label: `${employee.firstName} ${employee.lastName}`
     }));
   } catch (error) {
-    console.error('Error fetching employees:', error);
+    // Removed console.error
     toast.error("Error fetching employees");
   } finally {
     // Keep loadingRelated true until jobs are also fetched if needed
@@ -117,19 +117,19 @@ async function fetchJobsForCustomer(customerId) {
     // Find the latest job (first one after sorting) and its technician
     if (rawJobs.length > 0) {
         const latestJob = rawJobs[0];
-        // console.log('Latest Job Data:', JSON.stringify(latestJob)); // DEBUG LOG - Remove later
+        // Removed console.log
         // Access nested employee ID
         if (latestJob.employee && latestJob.employee.id) {
             latestJobTechnicianId.value = latestJob.employee.id;
-            // console.log('Found latest job technician ID:', latestJobTechnicianId.value); // DEBUG LOG - Remove later
+            // Removed console.log
         } else {
-            // console.log('Latest job does not have an employee or employee.id.'); // DEBUG LOG - Remove later
+            // Removed console.log
         }
         // We'll pre-select the job ID in prefillForm
     }
 
   } catch (error) {
-    console.error('Error fetching jobs for customer:', error);
+    // Removed console.error
     toast.error("Error fetching jobs for customer");
   } finally {
     loadingRelated.value = false; // Finish loading related data
@@ -203,28 +203,28 @@ const prefillForm = async (customer, expense) => {
     // Note: We don't prefill the image here as it's for OCR on *new* uploads within the modal session
   } else if (customer && effectiveCustomerId) {
       // If adding NEW expense for a customer, try pre-selecting latest job and tech
-      console.log('Prefilling new expense for customer...'); // DEBUG LOG
+      // Removed console.log
       if (jobs.value.length > 1) { // Check if any jobs were loaded besides "No Job"
           const latestJobOption = jobs.value[1]; // The first actual job after sorting
           expenseForm.jobId = latestJobOption.value;
-          console.log('Auto-selected latest job ID:', expenseForm.jobId); // DEBUG LOG
+          // Removed console.log
       } else {
-          console.log('No specific latest job found to auto-select.'); // DEBUG LOG
+          // Removed console.log
       }
 
-      console.log('Attempting to auto-select technician. Latest Job Tech ID:', latestJobTechnicianId.value); // DEBUG LOG
+      // Removed console.log
       if (latestJobTechnicianId.value) {
           const technicianExists = employees.value.some(emp => emp.value === latestJobTechnicianId.value);
-          console.log('Technician exists in employees list:', technicianExists); // DEBUG LOG
+          // Removed console.log
           if (technicianExists) {
                expenseForm.employeeId = latestJobTechnicianId.value;
-               console.log('Auto-selected employee ID:', expenseForm.employeeId); // DEBUG LOG
+               // Removed console.log
           } else {
               console.warn(`Latest job technician (${latestJobTechnicianId.value}) not found in employee list.`);
               // Optionally fetch the specific employee if needed, or leave null
           }
       } else {
-           console.log('No latest job technician ID available to auto-select.'); // DEBUG LOG
+           // Removed console.log
       }
   }
 };
@@ -339,7 +339,7 @@ const processImage = async () => {
         }
 
     } catch (error) {
-        console.error('Error processing image via n8n:', error);
+        // Removed console.error
         const errorMessage = error.response?.data?.message || error.message || 'Failed to process image.';
         imageProcessingError.value = `OCR Error: ${errorMessage}`;
         toast.error(imageProcessingError.value);
@@ -428,7 +428,7 @@ const submitExpense = async () => {
     emit('expense-saved');
     closeModal();
   } catch (error) {
-    console.error("Error submitting expense:", error);
+    // Removed console.error
     // Check if backend sent specific file upload error
     const backendError = error.response?.data?.message || error.message;
     toast.error(`Error submitting expense: ${backendError}`);

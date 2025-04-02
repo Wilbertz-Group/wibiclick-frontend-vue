@@ -120,7 +120,7 @@ async function fetchTechnicians() {
   try {
     // Actual API call to fetch technicians
     const response = await axios.get(`employees?id=${userStore.currentWebsite}`); // Use relative path and websiteId query param
-    console.log("Fetching technicians for website:", userStore.currentWebsite);
+    // Removed console.log
     // Removed simulation code
     // Removed simulation code
     // Removed simulation code
@@ -129,7 +129,7 @@ async function fetchTechnicians() {
     // Removed simulation code
     technicians.value = response.data.employees || []; // Assuming API returns { employees: [...] }
   } catch (error) {
-    console.error("Error fetching technicians:", error);
+    // Removed console.error
     fetchError.value = `Failed to load technicians: ${error.response?.data?.message || error.message}`;
     toast.error(fetchError.value);
   } finally {
@@ -155,7 +155,7 @@ async function savePreference() {
     const apiUrl = import.meta.env.VITE_API_URL;
     const payload = { technicianId: selectedTechnicianId.value }; // API expects { technicianId: number | null }
 
-    console.log(`Saving preferred technician for customer ${props.customerId}:`, payload);
+    // Removed console.log
     // Actual API call: PUT /customers/:id/preferred-technician
     const websiteId = userStore.currentWebsite;
     if (!websiteId) {
@@ -172,7 +172,7 @@ async function savePreference() {
     closeModal();
 
   } catch (error) {
-    console.error("Error saving preferred technician:", error);
+    // Removed console.error
     saveError.value = `Failed to save preference: ${error.response?.data?.message || error.message}`;
     toast.error(saveError.value);
   } finally {

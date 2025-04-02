@@ -146,7 +146,7 @@ const submitJob = async () => {
     emit('job-saved'); // Notify parent
     closeModal();
   } catch (error) {
-    console.error('Error submitting job:', error);
+    // Removed console.error
     toast.error(`Error submitting job: ${error.response?.data?.message || error.message}`);
   } finally {
     loading.value = false;
@@ -160,13 +160,13 @@ const fetchTechnicians = async () => {
     const response = await axios.get(`employees?id=${userStore.currentWebsite}`);
     technicians.value = response.data.employees || [];
   } catch (error) {
-    console.error('Error fetching technicians:', error);
+    // Removed console.error
     // toast.error('Error fetching technicians'); // Optional
   }
 };
 
 async function suggestTechnician() {
-  console.log("Suggesting technician...");
+  // Removed console.log
   isSuggestingTechnician.value = true;
   suggestionError.value = null;
   suggestedTechnicians.value = []; // Clear previous suggestions
@@ -215,7 +215,7 @@ async function suggestTechnician() {
     }
 
   } catch (error) {
-    console.error("Error suggesting technician:", error);
+    // Removed console.error
     suggestionError.value = error.response?.data?.message || error.message || "Failed to get suggestion.";
     toast.error(`Error suggesting technician: ${suggestionError.value}`);
   } finally {

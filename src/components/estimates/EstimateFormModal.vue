@@ -1,5 +1,5 @@
 <script setup>
-import { ref, reactive, watch, computed, onMounted } from 'vue';
+import { ref, reactive, watch, computed, onMounted, nextTick } from 'vue'; // Added nextTick
 import axios from 'axios';
 // PDFDocument and blobStream will be loaded via script tags
 import moment from 'moment';
@@ -9,6 +9,7 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import modal from "@/components/misc/modalWAMessage.vue";
 import imageHolder from '@/helpers/logo.js';
 import { getBase64FromUrl, generateTableRow } from '@/helpers/index.js'; // Assuming these exist in helpers
+import JobFormModal from '@/components/jobs/JobFormModal.vue'; // Import Job Modal
 
 const props = defineProps({
   modelValue: { // Controls modal visibility (v-model)
@@ -24,6 +25,10 @@ const props = defineProps({
     default: null,
   },
   technicians: { // Accept technicians list
+    type: Array,
+    default: () => [],
+  },
+  customerJobs: { // Accept customer jobs list
     type: Array,
     default: () => [],
   }
@@ -46,6 +51,7 @@ const company = ref('');
 const estimateForm = reactive({
   id: '', // Will be empty for new estimates
   customerId: '',
+  jobId: null, // Added jobId field
   employeeId: null, // Add employeeId field
   name: 'Estimate',
   status: 'sent',
@@ -84,6 +90,10 @@ const estimateForm = reactive({
   },
 });
 
+// --- Job Modal State ---
+const showJobModal = ref(false);
+const associatedJob = ref(null); // To store fetched job data
+
 const lineItem = reactive({
   name: '',
   description: '',
@@ -98,6 +108,28 @@ const ESTIMATE_STATUSES = ['sent', 'accepted', 'rejected', 'pending', 'processin
 
 const isEditing = computed(() => !!estimateForm.id);
 const lineItemTotal = computed(() => (Number(lineItem.amount) * Number(lineItem.quantity)).toFixed(2));
+
+// Computed property for Job Dropdown Options
+const jobOptions = computed(() => {
+  if (!props.customerJobs || props.customerJobs.length === 0) {
+    return [{ value: null, label: 'No jobs found for customer' }];
+  }
+  // Sort jobs by createdAt descending (most recent first)
+  const sortedJobs = [...props.customerJobs].sort((a, b) => {
+    const dateA = a.createdAt ? new Date(a.createdAt) : 0;
+    const dateB = b.createdAt ? new Date(b.createdAt) : 0;
+    if (isNaN(dateA) && isNaN(dateB)) return 0;
+    if (isNaN(dateA)) return 1;
+    if (isNaN(dateB)) return -1;
+    return dateB - dateA;
+  });
+
+  return sortedJobs.map(job => ({
+    value: job.id,
+    // Format label: Job #ID - Date - Issue Snippet
+    label: `Job #${job.id} - ${moment(job.createdAt).format('YYYY-MM-DD')} - ${job.issue?.substring(0, 30) || 'No Issue'}...`
+  }));
+});
 
 // Computed property for the Estimate WhatsApp message body
 const whatsappMessageBody = computed(() => {
@@ -167,86 +199,18 @@ const resetLineItemForm = () => {
   });
 };
 
-const prefillForm = async (customer) => {
-  resetEstimateForm();
-  
-  // Fetch profile data if not already loaded
-  if (!profile.value) {
-    await fetchProfile();
-  }
-  
-  // Fetch estimate number
-  let estimate_number = 0;
-  try {
-    loading.value = true;
-    const response = await axios.get('estimate_number?id=' + userStore.currentWebsite);
-    estimate_number = response.data.estimate_number;
-    loading.value = false;
-  } catch (error) {
-    console.error("Failed to get estimate number", error);
-    toast.warning("Failed to get estimate number");
-    loading.value = false;
-  }
-  
-  if (customer && customer.id) {
-    estimateForm.customer.id = customer.id;
-    estimateForm.customer.name = customer.name || '';
-    estimateForm.customer.phone = customer.phone || '';
-    estimateForm.customer.address = customer.address || '';
-    estimateForm.customerId = customer.id;
-    
-    // Set company and banking details from profile
-    if (profile.value) {
-      estimateForm.company = profile.value.company || estimateForm.company;
-      estimateForm.banking = profile.value.banking || estimateForm.banking;
-    }
-    
-    // Set estimate number
-    estimateForm.estimate_nr = estimate_number + 1;
-    // Set default employeeId (e.g., from job context or current user)
-    estimateForm.employeeId = customer.employeeId || userStore.user?.id || null;
-  }
-  
-  // If editing, populate with existing estimate data
-  if (props.estimateData) {
-    Object.assign(estimateForm, {
-      id: props.estimateData.id,
-      customerId: props.estimateData.customerId,
-      name: props.estimateData.name || 'Estimate',
-      status: props.estimateData.reason || 'sent',
-      estimate_nr: props.estimateData.number || (estimate_number + 1),
-      estimate_date: props.estimateData.issuedAt ? moment(props.estimateData.issuedAt).format('YYYY-MM-DD') : moment().format('YYYY-MM-DD'),
-      estimate_due_date: props.estimateData.dueAt ? moment(props.estimateData.dueAt).format('YYYY-MM-DD') : moment().add(3, 'days').format('YYYY-MM-DD'),
-      subtotal: props.estimateData.subtotal || 0,
-      paid: props.estimateData.deposit || 0,
-      notes: props.estimateData.notes || '',
-      items: props.estimateData.lineItem || [],
-      employeeId: props.estimateData.employeeId || customer.employeeId || userStore.user?.id || null, // Set employeeId when editing
-    });
+// --- Line Item Management Functions (Moved Before prefillForm) ---
 
-    // Re-apply customer details from the main customer prop to ensure address is present
-    if (customer && customer.id) {
-        estimateForm.customer.id = customer.id; // Ensure ID is consistent
-        estimateForm.customer.name = customer.name || '';
-        estimateForm.customer.phone = customer.phone || '';
-        estimateForm.customer.address = customer.address || '';
-        // estimateForm.customerId = customer.id; // Already set by Object.assign if present in estimateData
-    }
-  }
-  // Calculate initial sum after potentially loading items
-  getSum(estimateForm.items);
-};
-
-const fetchProfile = async () => {
-  try {
-    loading.value = true;
-    const response = await axios.get('profile?id=' + userStore.currentWebsite);
-    profile.value = response.data;
-    loading.value = false;
-  } catch (error) {
-    console.error("Failed to get profile data", error);
-    toast.warning("Failed to get profile data");
-    loading.value = false;
+const getSum = (array) => {
+  if (array && array.length) { // Added check for array existence
+    // Ensure quantity and amount are treated as numbers
+    let values = array.map(item => (Number(item.quantity) || 0) * (Number(item.amount) || 0));
+    let total = values.reduce((a, b) => a + b, 0);
+    estimateForm.subtotal = total; // Assign the calculated total
+    return total;
+  } else {
+    estimateForm.subtotal = 0;
+    return 0;
   }
 };
 
@@ -308,18 +272,151 @@ const removeItem = (index) => {
   getSum(estimateForm.items);
 };
 
-const getSum = (array) => {
-  if (array && array.length) { // Added check for array existence
-    // Ensure quantity and amount are treated as numbers
-    let values = array.map(item => (Number(item.quantity) || 0) * (Number(item.amount) || 0));
-    let total = values.reduce((a, b) => a + b, 0);
-    estimateForm.subtotal = total; // Assign the calculated total
-    return total;
+// --- End Line Item Management Functions ---
+
+
+const prefillForm = async (customer) => {
+  resetEstimateForm();
+  
+  // Fetch profile data if not already loaded
+  if (!profile.value) {
+    await fetchProfile();
+  }
+  
+  // Fetch estimate number
+  let estimate_number = 0;
+  try {
+    loading.value = true;
+    const response = await axios.get('estimate_number?id=' + userStore.currentWebsite);
+    estimate_number = response.data.estimate_number;
+    loading.value = false;
+  } catch (error) {
+    // Removed console.error
+    toast.warning("Failed to get estimate number");
+    loading.value = false;
+  }
+  
+  if (customer && customer.id) {
+    estimateForm.customer.id = customer.id;
+    estimateForm.customer.name = customer.name || '';
+    estimateForm.customer.phone = customer.phone || '';
+    estimateForm.customer.address = customer.address || '';
+    estimateForm.customerId = customer.id;
+    
+    // Set company and banking details from profile
+    if (profile.value) {
+      estimateForm.company = profile.value.company || estimateForm.company;
+      estimateForm.banking = profile.value.banking || estimateForm.banking;
+    }
+    
+    // Set estimate number
+    estimateForm.estimate_nr = estimate_number + 1;
+    // Set default employeeId (e.g., from job context or current user)
+    estimateForm.employeeId = customer.employeeId || userStore.user?.id || null;
+  }
+  
+  // If editing, populate with existing estimate data
+  if (props.estimateData) {
+    Object.assign(estimateForm, {
+      id: props.estimateData.id,
+      customerId: props.estimateData.customerId,
+      name: props.estimateData.name || 'Estimate',
+      status: props.estimateData.reason || 'sent',
+      estimate_nr: props.estimateData.number || (estimate_number + 1),
+      estimate_date: props.estimateData.issuedAt ? moment(props.estimateData.issuedAt).format('YYYY-MM-DD') : moment().format('YYYY-MM-DD'),
+      estimate_due_date: props.estimateData.dueAt ? moment(props.estimateData.dueAt).format('YYYY-MM-DD') : moment().add(3, 'days').format('YYYY-MM-DD'),
+      subtotal: props.estimateData.subtotal || 0,
+      paid: props.estimateData.deposit || 0,
+      notes: props.estimateData.notes || '',
+      items: props.estimateData.lineItem || [],
+      // Explicitly use estimateData.employeeId if it exists, otherwise fallback
+      // Explicitly use estimateData.employeeId if it exists, otherwise fallback
+      employeeId: props.estimateData.employeeId ?? (customer.employeeId || userStore.user?.id || null),
+    });
+    // Removed debug log
+  } // End of if (props.estimateData)
+} // End of if (customer && customer.id)
+  // Calculate initial sum after potentially loading items
+  getSum(estimateForm.items);
+
+  // Determine the initial jobId
+  let initialJobId = props.estimateData?.jobId || null;
+
+  // If no jobId on the estimate, default to the most recent customer job
+  if (!initialJobId && props.customerJobs && props.customerJobs.length > 0) {
+      // Use the computed jobOptions which are already sorted
+      const mostRecentJob = jobOptions.value[0]; // First item is the most recent
+      if (mostRecentJob && mostRecentJob.value) {
+          initialJobId = mostRecentJob.value;
+          // Removed console.log
+      }
+    // Removed extra closing brace here
+
+  estimateForm.jobId = initialJobId; // Set the determined jobId in the form
+
+  // Fetch associated job details only if we have a valid jobId
+  if (estimateForm.jobId) {
+      fetchAssociatedJob(estimateForm.jobId);
   } else {
-    estimateForm.subtotal = 0;
-    return 0;
+      associatedJob.value = null; // Reset associated job data if no ID
   }
 };
+
+const fetchProfile = async () => {
+  try {
+    loading.value = true;
+    const response = await axios.get('profile?id=' + userStore.currentWebsite);
+    profile.value = response.data;
+    loading.value = false;
+  } catch (error) {
+    // Removed console.error
+    toast.warning("Failed to get profile data");
+    loading.value = false;
+  }
+};
+
+// --- Fetch Associated Job ---
+const fetchAssociatedJob = async (jobId) => {
+  if (!jobId) {
+    associatedJob.value = null;
+    return;
+  }
+  loading.value = true; // Use main loading indicator
+  try {
+    // Use query parameters for both job and website ID
+    const response = await axios.get(`jobs?jobId=${jobId}&id=${userStore.currentWebsite}`);
+    associatedJob.value = response.data.job; // Adjust based on actual API response
+    // Removed console.log
+  } catch (error) {
+    // Removed console.error
+    toast.error("Could not load associated job details.");
+    associatedJob.value = null;
+  } finally {
+    loading.value = false;
+  }
+};
+
+// --- Open Job Modal ---
+const openEditJobModal = () => {
+  if (associatedJob.value) {
+    showJobModal.value = true;
+  } else {
+    toast.warning("No associated job found or loaded.");
+  }
+};
+
+// --- Handle Job Saved ---
+const handleJobSaved = async () => {
+  // Refetch the job data after it's saved to update the UI if needed
+  if (estimateForm.jobId) {
+    await fetchAssociatedJob(estimateForm.jobId);
+  }
+  // Optionally show a toast or confirmation
+  toast.info("Associated job updated.");
+  // The JobFormModal closes itself via v-model
+};
+
+// Functions moved above prefillForm
 
 const saveEstimateOnly = async (closeAfterSave = true) => { // Added parameter
   loading.value = true;
@@ -335,7 +432,7 @@ const saveEstimateOnly = async (closeAfterSave = true) => { // Added parameter
       paid: parseFloat(estimateForm.paid) || 0, // Add paid field
       notes: estimateForm.notes,
       customerId: estimateForm.customer.id || estimateForm.customerId,
-      jobId: props.customerData?.jobId, // Pass jobId if available
+      jobId: estimateForm.jobId, // Use jobId from the form state
       employeeId: estimateForm.employeeId, // Send selected employeeId
       websiteId: userStore.currentWebsite,
       items: estimateForm.items.map(item => {
@@ -358,6 +455,8 @@ const saveEstimateOnly = async (closeAfterSave = true) => { // Added parameter
       payload.id = estimateForm.id;
     }
 
+    // Removed debug log
+
     // First save the estimate
     const response = await axios.post('add-estimate?id=' + userStore.currentWebsite, payload);
     
@@ -372,9 +471,9 @@ const saveEstimateOnly = async (closeAfterSave = true) => { // Added parameter
               item: { id: item.id },
               customerId: estimateForm.customerId
             });
-            console.log(`Removed line item ${item.id} from estimate ${estimateForm.id}`);
+            // Removed console.log
           } catch (error) {
-            console.error(`Failed to remove line item ${item.id}:`, error);
+            // Removed console.error
             // Continue with other items even if one fails
           }
         }
@@ -384,13 +483,13 @@ const saveEstimateOnly = async (closeAfterSave = true) => { // Added parameter
     }
     
     toast.success(response.data.message || 'Estimate saved successfully');
-    emit('estimate-saved');
+    emit('estimate-saved', payload.id || response.data?.estimate?.id); // Emit saved ID
     if (closeAfterSave) {
       closeModal();
     }
     return true; // Indicate success
   } catch (error) {
-    console.error("Error submitting estimate:", error);
+    // Removed console.error
     toast.error(`Error submitting estimate: ${error.response?.data?.message || error.message}`);
     return false; // Indicate failure
   } finally {
@@ -448,7 +547,7 @@ const convertToInvoice = async () => {
     closeModal(); // Close the estimate modal
 
   } catch (error) {
-    console.error("Error converting estimate to invoice:", error);
+    // Removed console.error
     toast.error(`Error converting to invoice: ${error.response?.data?.message || error.message}`);
   } finally {
     loading.value = false;
@@ -467,13 +566,13 @@ const createEstimatePDF = (estimate, path, action = 'download') => {
   // Check if PDFDocument is available on window
   if (!window.PDFDocument || !window.blobStream) {
       toast.error("PDF generation library not loaded yet. Please wait a moment and try again.");
-      console.error("PDFKit or BlobStream not found on window object.");
+      // Removed console.error
       return;
   }
   try {
     doc = new window.PDFDocument({ size: "A4", margin: 50 });
   } catch (error) {
-    console.error("PDFKit Error:", error);
+    // Removed console.error
     toast.error("Failed to initialize PDF generation. Reload and try again!");
     return; // Stop if PDFDocument fails
   }
@@ -714,7 +813,7 @@ const prepareAndGeneratePDF = async (estimate, path, action = 'download') => {
     }
     createEstimatePDF(estimate, path, action);
   } catch (error) {
-    console.error("Error preparing PDF:", error);
+    // Removed console.error
     toast.error("Error preparing PDF for download/sending.");
     img = imageHolder; // Fallback image
     // Optionally try generating PDF with fallback image
@@ -742,27 +841,45 @@ const sendAttachment = () => {
 
 // --- Watchers ---
 watch(() => props.modelValue, (newValue) => {
-  if (newValue) {
-    // When modal opens, prefill form with customer data
-    prefillForm(props.customerData);
-  }
+if (newValue) {
+  // When modal opens, prefill form with customer data
+  // This will also handle setting the initial jobId and fetching the job
+  prefillForm(props.customerData);
+} else {
+    // Reset associated job when modal closes
+    associatedJob.value = null;
+}
 });
+
+// Watch for changes in the selected Job ID dropdown
+watch(() => estimateForm.jobId, (newJobId, oldJobId) => {
+if (newJobId !== oldJobId) {
+  // Removed console.log
+  fetchAssociatedJob(newJobId); // Fetch details for the newly selected job
+}
+});
+
 
 // --- Lifecycle ---
 onMounted(() => {
-  // Fetch profile data initially
-  fetchProfile();
+// Fetch profile data initially
+fetchProfile();
 
-  // Load PDFKit and BlobStream via script tags
+// Load PDFKit and BlobStream via script tags
+// Ensure these aren't loaded multiple times if the modal is opened repeatedly without page refresh
+if (!document.querySelector('script[src*="pdfkit.standalone.js"]')) {
   let pdfKitTag = document.createElement("script");
-  pdfKitTag.setAttribute("src", "https://github.com/foliojs/pdfkit/releases/download/v0.13.0/pdfkit.standalone.js"); // Use latest version if possible
+  pdfKitTag.setAttribute("src", "https://github.com/foliojs/pdfkit/releases/download/v0.13.0/pdfkit.standalone.js");
   pdfKitTag.setAttribute("type", "text/javascript");
   document.head.append(pdfKitTag);
+}
 
+if (!document.querySelector('script[src*="blob-stream.js"]')) {
   let blobStreamTag = document.createElement("script");
   blobStreamTag.setAttribute("src", "https://github.com/devongovett/blob-stream/releases/download/v0.1.3/blob-stream.js");
   blobStreamTag.setAttribute("type", "text/javascript");
   document.head.append(blobStreamTag);
+}
 
   // Cleanup script tags on component unmount (optional but good practice)
   // import { onUnmounted } from 'vue'; // Add this import at the top
@@ -790,7 +907,14 @@ onMounted(() => {
           </h3>
           <!-- WhatsApp Modal -->
           <modal v-if="isOpen" :website="userStore.currentWebsite" :body="whatsappMessageBody" :isOpen="isOpen" :blob="blob" :client="client" :sender="sender" :company="company" :phone="estimateForm.customer.phone" name="Estimate" @close-modal="closeModalWA"></modal> <!-- Pass the computed body -->
-          
+        
+          <!-- Nested Job Form Modal -->
+          <JobFormModal
+            v-model="showJobModal"
+            :customer-data="estimateForm.customer"
+            :job-data="associatedJob"
+            @job-saved="handleJobSaved"
+          />
           <form @submit.prevent="handleSave" class="space-y-4">
             <div class="max-h-[60vh] overflow-y-auto pr-2">
               <!-- Estimate Details Section -->
@@ -829,6 +953,16 @@ onMounted(() => {
                       </option>
                     </select>
                   </div>
+                  <!-- Job Selection Dropdown -->
+                   <div class="sm:col-span-2">
+                     <label for="estimate-job" class="label-modern">Associated Job (Optional)</label>
+                     <select id="estimate-job" v-model="estimateForm.jobId" class="input-modern input-modern--select">
+                       <option :value="null">-- Select Job --</option>
+                       <option v-for="job in jobOptions" :key="job.value" :value="job.value">
+                         {{ job.label }}
+                       </option>
+                     </select>
+                   </div>
                 </div>
               </div>
 
@@ -973,6 +1107,11 @@ onMounted(() => {
             </div>
 
             <div class="pt-5 sm:pt-6 flex flex-col sm:flex-row-reverse gap-3 border-t border-gray-200 dark:border-gray-700/50">
+              <!-- Edit Job Button (Conditional) -->
+              <button v-if="isEditing && associatedJob" @click="openEditJobModal" type="button" class="btn-secondary-modern w-full sm:w-auto" :disabled="loading">
+                 <font-awesome-icon icon="briefcase" class="mr-1.5 h-4 w-4" /> <!-- Assuming briefcase icon -->
+                 Edit Job #{{ associatedJob.id }}
+              </button>
               <!-- WhatsApp Button -->
               <button @click="sendAttachment" type="button" class="btn-secondary-modern w-full sm:w-auto bg-green-100 dark:bg-green-900/50 border-green-300 dark:border-green-700 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-800/50" :disabled="loading">
                 <font-awesome-icon :icon="['fab', 'whatsapp']" class="mr-1.5 h-4 w-4" /> WhatsApp

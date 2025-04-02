@@ -27,7 +27,7 @@ function forgotPassword(credentials) {
     .catch((err) => {
       loading.value = false;
       toast.error(err);
-      console.log(err);
+      // Removed console.log
     });
 }
 </script>

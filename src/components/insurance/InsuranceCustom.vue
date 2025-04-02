@@ -59,7 +59,7 @@ watch(selectedStatus, async (n, o) => {
     emit('reloadTimeline');
   } catch (error) {
     toast.error('Failed to update report status. Please try again.')
-    console.error("Error updating insurance report status:", error);
+    // Removed console.error
     selectedStatus.value = o; // Revert status on error
   }
 })

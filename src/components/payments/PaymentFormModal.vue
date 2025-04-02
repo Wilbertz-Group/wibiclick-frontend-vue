@@ -71,7 +71,7 @@ async function fetchTechnicians() {
       label: `${tech.firstName} ${tech.lastName}`
     }));
   } catch (error) {
-    console.error('Error fetching technicians:', error);
+    // Removed console.error
     toast.error("Error fetching technicians");
   } finally {
     loadingRelated.value = false;
@@ -107,7 +107,7 @@ async function fetchJobs(customerId) {
     }
 
   } catch (error) {
-    console.error("Error fetching jobs:", error);
+    // Removed console.error
     toast.error("Error fetching jobs");
     jobs.value = []; // Clear on error
   } finally {
@@ -131,7 +131,7 @@ async function fetchInvoices(customerId, jobId = null) {
       amount: invoice.sales * 100 // Store amount in cents
     }));
   } catch (error) {
-    console.error("Error fetching invoices:", error);
+    // Removed console.error
     toast.error("Error fetching invoices");
     invoices.value = []; // Clear on error
   } finally {
@@ -154,7 +154,7 @@ async function fetchEstimates(customerId, jobId = null) {
       label: `Est #${estimate.number || estimate.id.substring(0,5)} - R${estimate.sales}` // Simplified label
     }));
   } catch (error) {
-    console.error("Error fetching estimates:", error);
+    // Removed console.error
     toast.error("Error fetching estimates");
     estimates.value = []; // Clear on error
   } finally {
@@ -322,7 +322,7 @@ const submitPayment = async () => {
     emit('payment-saved');
     closeModal();
   } catch (error) {
-    console.error("Error submitting payment:", error);
+    // Removed console.error
     toast.error(`Error submitting payment: ${error.response?.data?.message || error.message}`);
   } finally {
     loading.value = false;

@@ -19,7 +19,7 @@ async function register(credentials) {
     })
     .catch(err => {
       loading.value = false;
-      console.log(err)
+      // Removed console.log
     })
 }
 

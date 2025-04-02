@@ -214,7 +214,7 @@ const copyToClipboard = async (textToCopy, label = 'Text') => {
     await navigator.clipboard.writeText(textToCopy);
     toast.success(`${label} copied to clipboard!`);
   } catch (err) {
-    console.error('Failed to copy: ', err);
+    // Removed console.error
     toast.error('Failed to copy to clipboard.');
   }
 };
@@ -225,7 +225,7 @@ function formatRelativeTime(dateString) {
   try {
     return formatDistanceToNow(new Date(dateString), { addSuffix: true });
   } catch (error) {
-    console.error("Error formatting date:", error);
+    // Removed console.error
     return ''; // Return empty string on error
   }
 }
@@ -261,9 +261,7 @@ async function fetchContacts() {
       ) || null;
 
       // Log found history for debugging
-      console.log("Latest Profitability:", latestProfitabilityAnalysis.value);
-      console.log("Latest Summary:", latestTimelineSummary.value);
-      console.log("Latest Sentiment:", latestSentimentAnalysis.value);
+      // Removed debug logs for AI history
     }
     // --- End AI History Processing ---
 
@@ -286,7 +284,7 @@ async function fetchContacts() {
     // Ensure related arrays exist
     customer.value.payments = customer.value.payments || [];
     customer.value.expenses = customer.value.expenses || [];
-    console.log('fetchContacts - Updated expenses:', JSON.stringify(customer.value.expenses)); // Added log
+    // Removed debug log for expenses
     customer.value.insurance = customer.value.insurance || [];
     customer.value.jobs = customer.value.jobs || [];
     customer.value.estimate = customer.value.estimate || [];
@@ -320,7 +318,7 @@ async function fetchContacts() {
     fetchServiceFollowUps();
 
   } catch (error) {
-    console.error("Error fetching customer data:", error);
+    // Removed console.error
     toast.error("Error fetching customer data. Please try again.");
   } finally {
     isFetchingCustomer.value = false;
@@ -330,12 +328,13 @@ async function fetchContacts() {
   }
 }
 
-function reloadTimeline() {
+function reloadTimeline() { // Reverted signature
   fetchContacts().then(() => {
     // Fetch financials after main customer data is loaded/refreshed
     fetchCustomerFinancials();
     fetchLoggedFollowUps(); // Fetch logged follow-ups on reload
     fetchScheduledMessages(); // Fetch scheduled messages on reload
+    // Removed debug log block
   });
   wkey.value += 1;
   nkey.value += 1;
@@ -380,7 +379,7 @@ async function updateCustomer() {
     isEditingInfo.value = false; // Exit edit mode
     reloadTimeline(); // Call reloadTimeline to refresh data consistently
   } catch (error) {
-    console.error("Error updating customer:", error);
+    // Removed console.error
     toast.error(`Error updating customer: ${error.response?.data?.message || error.message}`);
   } finally {
     isUpdatingCustomer.value = false;
@@ -395,7 +394,7 @@ async function aiBookJob(customerId) {
     toast.success("Customer job booked successfully");
     reloadTimeline();
   } catch (error) {
-    console.error("Error booking job via AI:", error);
+    // Removed console.error
     toast.error("Error booking job via AI. Please try again.");
   } finally {
     isBookingJob.value = false;
@@ -448,9 +447,10 @@ function openAddEstimateModal(estimate = null) {
   showAddEstimateModal.value = true;
 }
 
+// Modified to accept emitted ID
 function handleEstimateSaved() {
   // No need to explicitly close modal, v-model handles it
-  reloadTimeline(); // Refresh customer data (including estimates list)
+  reloadTimeline(); // Refresh customer data
 }
 
 function handleViewEstimate(estimate) {
@@ -464,9 +464,10 @@ function openAddInvoiceModal(invoice = null) {
   showAddInvoiceModal.value = true;
 }
 
+// Modified to accept emitted ID
 function handleInvoiceSaved() {
   // No need to explicitly close modal, v-model handles it
-  reloadTimeline(); // Refresh customer data (including invoices list)
+  reloadTimeline(); // Refresh customer data
 }
 
 function handleViewInvoice(invoice) {
@@ -476,7 +477,7 @@ function handleViewInvoice(invoice) {
 
 // --- Handle Invoice Creation from Estimate ---
 function handleInvoiceCreated(newInvoice) {
-  console.log("Invoice created from estimate:", newInvoice);
+  // Removed debug log
   reloadTimeline(); // Refresh data to show the new invoice
   // Optionally, open the new invoice immediately
   // handleViewInvoice(newInvoice); // Uncomment this line if you want to open the new invoice modal
@@ -535,7 +536,6 @@ function handleViewInsurance(insurance) {
 function openAddApplianceModal() {
   selectedAppliance.value = null;
   showAddApplianceModal.value = true;
-  console.log("Opening Add Appliance Modal");
   // TODO: Implement actual modal display logic & component
   // Actual modal component will handle display
 }
@@ -545,7 +545,6 @@ function openEditApplianceModal(applianceToEdit) {
   if (applianceToEdit) {
     selectedAppliance.value = { ...applianceToEdit }; // Clone to avoid direct mutation
     showAddApplianceModal.value = true; // Reuse the same modal flag for add/edit
-    console.log("Opening Edit Appliance Modal for:", applianceToEdit.id);
     // Actual modal component will handle display
   } else {
     toast.error("Could not find appliance to edit.");
@@ -553,7 +552,6 @@ function openEditApplianceModal(applianceToEdit) {
 }
 
 async function handleDeleteAppliance(applianceId) {
-  console.log("Attempting to delete appliance:", applianceId);
   // TODO: Add a more robust confirmation dialog (e.g., using a modal library)
   if (!confirm('Are you sure you want to delete this appliance? This action cannot be undone.')) {
       return;
@@ -566,7 +564,7 @@ async function handleDeleteAppliance(applianceId) {
     // Refresh data after deletion
     await reloadTimeline(); // Ensure data is refreshed
   } catch (error) {
-    console.error("Error deleting appliance:", error);
+    // Removed console.error
     toast.error(`Error deleting appliance: ${error.response?.data?.message || error.message}`);
   }
 }
@@ -579,7 +577,6 @@ function handleApplianceSaved() {
 
 // --- Preferred Technician Modal Handler ---
 function openEditPreferredTechnicianModal() {
-  console.log("Opening Edit Preferred Technician Modal");
   showPreferredTechnicianModal.value = true; // Open the modal
 }
 
@@ -590,7 +587,6 @@ function handlePreferredTechnicianSaved() {
 
 // --- Communication Preferences Modal Handler ---
 function openEditCommPrefsModal() {
-  console.log("Opening Edit Communication Preferences Modal");
   showCommPrefsModal.value = true; // Open the modal
 }
 
@@ -603,7 +599,6 @@ function handleCommPrefsSaved() {
 // These functions now trigger the backend to generate AND save the analysis.
 // The result displayed will be from the latest history fetched in fetchContacts.
 async function fetchTimelineSummary() {
-  console.log("Fetching AI Timeline Summary...");
   isFetchingTimelineSummary.value = true;
   timelineSummaryError.value = null;
   // Don't clear latestTimelineSummary.value here, let fetchContacts handle update
@@ -615,7 +610,7 @@ async function fetchTimelineSummary() {
     // Reload all customer data to get the latest history entry
     await fetchContacts();
   } catch (error) {
-    console.error("Error fetching timeline summary:", error);
+    // Removed console.error
     timelineSummaryError.value = error.response?.data?.message || error.message || "Failed to generate summary.";
     toast.error(`Error generating timeline summary: ${timelineSummaryError.value}`);
   } finally {
@@ -624,7 +619,6 @@ async function fetchTimelineSummary() {
 }
 
 async function fetchFollowupSuggestions() {
-  console.log("Fetching AI Follow-up Suggestions...");
   isFetchingSuggestions.value = true;
   suggestionsError.value = null;
   followupSuggestions.value = [];
@@ -639,7 +633,7 @@ async function fetchFollowupSuggestions() {
 
 
   } catch (error) {
-    console.error("Error fetching suggestions:", error);
+    // Removed console.error
     suggestionsError.value = error.response?.data?.message || error.message || "Failed to load suggestions.";
     toast.error(`Error loading suggestions: ${suggestionsError.value}`);
   } finally {
@@ -649,14 +643,13 @@ async function fetchFollowupSuggestions() {
 
 // Placeholder actions for suggestions
 function scheduleSuggestion(suggestion) { // Made non-async as it just opens modal
-  console.log("Opening schedule modal for suggestion:", suggestion);
   suggestionToSchedule.value = suggestion; // Store the suggestion data
   showScheduleModal.value = true; // Open the modal
 }
 
 async function handleConfirmScheduleSuggestion(selectedDateTime) {
   if (!suggestionToSchedule.value) {
-    console.error("No suggestion selected for scheduling.");
+    // Removed console.error
     toast.error("An error occurred. Please try again.");
     return;
   }
@@ -680,7 +673,7 @@ async function handleConfirmScheduleSuggestion(selectedDateTime) {
       fetchScheduledMessages();
 
   } catch (error) {
-      console.error("Error scheduling suggestion:", error);
+      // Removed console.error
       toast.error(`Failed to schedule suggestion: ${error.response?.data?.message || error.message}`);
   } finally {
       suggestionToSchedule.value = null; // Clear the stored suggestion
@@ -703,7 +696,6 @@ async function handleConfirmScheduleSuggestion(selectedDateTime) {
 // Removed old API call logic from here
 // Removed old API call logic from here
 async function sendSuggestionNow(suggestion) {
-  console.log("Sending suggestion now:", suggestion);
 
   // Determine channel (use customer preference or default, e.g., WhatsApp)
   const channel = customer.value?.preferredContactMethod || 'WHATSAPP'; // Default to WhatsApp if not set
@@ -724,7 +716,7 @@ async function sendSuggestionNow(suggestion) {
       // Optionally remove the suggestion from the list
       // followupSuggestions.value = followupSuggestions.value.filter(s => s !== suggestion); // Need unique ID
   } catch (error) {
-      console.error("Error sending suggestion now:", error);
+      // Removed console.error
       toast.error(`Failed to send suggestion: ${error.response?.data?.message || error.message}`);
   }
   // Removed example comment block
@@ -742,14 +734,13 @@ async function sendSuggestionNow(suggestion) {
   // }
 }
 function logSuggestionManually(suggestion) { // Made non-async
-  console.log("Opening manual log modal for suggestion:", suggestion);
   suggestionToLog.value = suggestion; // Store the suggestion
   showManualLogModal.value = true; // Open the modal
 }
 
 async function handleConfirmManualLog(feedbackText) {
   if (!suggestionToLog.value) {
-    console.error("No suggestion selected for manual logging.");
+    // Removed console.error
     toast.error("An error occurred. Please try again.");
     return;
   }
@@ -774,7 +765,7 @@ async function handleConfirmManualLog(feedbackText) {
       fetchLoggedFollowUps();
 
   } catch (error) {
-      console.error("Error logging manual interaction:", error);
+      // Removed console.error
       toast.error(`Failed to log interaction: ${error.response?.data?.message || error.message}`);
   } finally {
       suggestionToLog.value = null; // Clear the stored suggestion
@@ -799,12 +790,11 @@ async function handleConfirmManualLog(feedbackText) {
 async function dismissSuggestion(index) {
   const suggestionToDismiss = followupSuggestions.value[index];
   if (!suggestionToDismiss || !suggestionToDismiss.id) {
-      console.error("Cannot dismiss suggestion: ID missing.", suggestionToDismiss);
+      // Removed console.error
       toast.error("Cannot dismiss suggestion: ID missing.");
       return;
   }
   const suggestionId = suggestionToDismiss.id;
-  console.log("Dismissing suggestion:", suggestionId);
 
   // Optimistic UI update
   const originalSuggestions = [...followupSuggestions.value];
@@ -817,7 +807,7 @@ async function dismissSuggestion(index) {
       // Refetch suggestions to ensure UI is accurate (already removed optimistically)
       fetchFollowupSuggestions();
   } catch (error) {
-      console.error("Error dismissing suggestion:", error);
+      // Removed console.error
       toast.error(`Failed to dismiss suggestion: ${error.response?.data?.message || error.message}`);
       // Revert UI change on error
       followupSuggestions.value = originalSuggestions;
@@ -825,7 +815,6 @@ async function dismissSuggestion(index) {
 }
 
 async function fetchProfitabilityAnalysis() {
-  console.log("Fetching AI Profitability Analysis...");
   isFetchingProfitabilityAnalysis.value = true;
   profitabilityAnalysisError.value = null;
   // Don't clear latestProfitabilityAnalysis.value here
@@ -837,7 +826,7 @@ async function fetchProfitabilityAnalysis() {
     // Reload all customer data to get the latest history entry
     await fetchContacts();
   } catch (error) {
-    console.error("Error fetching profitability analysis:", error);
+    // Removed console.error
     profitabilityAnalysisError.value = error.response?.data?.message || error.message || "Failed to load analysis.";
     toast.error(`Error loading profitability analysis: ${profitabilityAnalysisError.value}`);
   } finally {
@@ -846,7 +835,6 @@ async function fetchProfitabilityAnalysis() {
 }
 
 async function fetchPredictiveMaintenance() {
-  console.log("Fetching Predictive Maintenance Alerts...");
   isFetchingPredMaint.value = true;
   predMaintError.value = null;
   predictiveMaintenanceAlerts.value = [];
@@ -854,7 +842,7 @@ async function fetchPredictiveMaintenance() {
 
   // Need customer appliances to exist first
   if (!appliances || appliances.length === 0) {
-      console.log("No appliances found for predictive maintenance check.");
+      // Removed debug log
       isFetchingPredMaint.value = false;
       return;
   }
@@ -870,7 +858,7 @@ async function fetchPredictiveMaintenance() {
         }
         return null;
       } catch (err) {
-        console.error(`Error fetching prediction for appliance ${appliance.id}:`, err.response?.data || err.message);
+        // Removed console.error
         // Optionally add error state per appliance or just log it
         return null; // Return null on error for this appliance
       }
@@ -878,10 +866,9 @@ async function fetchPredictiveMaintenance() {
 
     const results = await Promise.all(alertPromises);
     predictiveMaintenanceAlerts.value = results.filter(alert => alert !== null); // Filter out nulls from errors or no-alert responses
-    console.log("Fetched predictive maintenance alerts:", predictiveMaintenanceAlerts.value);
 
   } catch (error) { // Catch errors from Promise.all or initial checks
-    console.error("Error fetching predictive maintenance:", error);
+    // Removed console.error
     predMaintError.value = error.response?.data?.message || error.message || "Failed to load predictions.";
     toast.error(`Error loading predictions: ${predMaintError.value}`);
   } finally {
@@ -890,7 +877,6 @@ async function fetchPredictiveMaintenance() {
 }
 
 async function fetchServiceFollowUps() {
-  console.log("Fetching Service Follow-ups...");
   serviceFollowUps.value = []; // Clear previous
   try {
     // Actual API call
@@ -898,10 +884,9 @@ async function fetchServiceFollowUps() {
     const response = await axios.get(`follow-ups?customerId=${route.query.customer_id}&id=${userStore.currentWebsite}`);
     // Assuming backend returns { followUps: [...] }
     serviceFollowUps.value = response.data.followUps || [];
-    console.log("Fetched service follow-ups:", serviceFollowUps.value);
 
   } catch (error) {
-     console.error("Error fetching service follow-ups:", error);
+     // Removed console.error
      toast.error("Could not load service follow-up data.");
   }
 }
@@ -914,7 +899,6 @@ function getApplianceName(applianceId) {
 
 // Renamed function
 function handleScheduleServiceFromAlert(payload) { // payload contains { appliance, alert }
-  console.log("Scheduling service for alert:", payload.alert, "for appliance:", payload.appliance);
   // TODO: Implement scheduling from alert.
   // 1. Construct a preliminary job object based on the appliance and alert details.
   //    - Use customer ID, appliance details (type, brand, serial), alert reason (e.g., "Predictive Maintenance Alert: " + payload.alert.needs).
@@ -941,7 +925,6 @@ function handleScheduleServiceFromAlert(payload) { // payload contains { applian
 
 // Handler for dismissing a predictive maintenance alert
 async function handleDismissAlert(applianceId) {
-    console.log("Dismissing alert for appliance ID:", applianceId);
     const alertIndex = predictiveMaintenanceAlerts.value.findIndex(a => a.applianceId === applianceId);
     if (alertIndex === -1) return; // Alert not found
 
@@ -954,7 +937,7 @@ async function handleDismissAlert(applianceId) {
       toast.success(`Alert for ${getApplianceName(applianceId)} dismissed.`);
       // UI already updated optimistically
     } catch (error) {
-      console.error("Error dismissing alert on backend:", error);
+      // Removed console.error
       toast.error(`Failed to dismiss alert on server: ${error.response?.data?.message || error.message}. It might reappear.`);
       // Revert UI change if backend call failed
       predictiveMaintenanceAlerts.value.splice(alertIndex, 0, dismissedAlert);
@@ -964,7 +947,6 @@ async function handleDismissAlert(applianceId) {
 
 // Placeholder actions for greetings
 function scheduleGreeting(greeting) { // Made non-async
-  console.log("Opening schedule modal for greeting:", greeting);
   // Clear suggestion state in case it was used last
   suggestionToSchedule.value = null;
   greetingToSchedule.value = greeting; // Store the greeting data
@@ -973,7 +955,7 @@ function scheduleGreeting(greeting) { // Made non-async
 
 async function handleConfirmScheduleGreeting(selectedDateTime) {
   if (!greetingToSchedule.value) {
-    console.error("No greeting selected for scheduling.");
+    // Removed console.error
     toast.error("An error occurred. Please try again.");
     return;
   }
@@ -997,7 +979,7 @@ async function handleConfirmScheduleGreeting(selectedDateTime) {
       fetchScheduledMessages();
 
   } catch (error) {
-      console.error("Error scheduling greeting:", error);
+      // Removed console.error
       toast.error(`Failed to schedule greeting: ${error.response?.data?.message || error.message}`);
   } finally {
       greetingToSchedule.value = null; // Clear the stored greeting
@@ -1031,7 +1013,6 @@ async function handleConfirmScheduleGreeting(selectedDateTime) {
 // Removed old API call logic from here
 
 async function sendGreetingNow(greeting) {
-  console.log("Sending greeting now:", greeting);
 
   // Determine channel (use customer preference or default, e.g., WhatsApp)
   const channel = customer.value?.preferredContactMethod || 'WHATSAPP'; // Default to WhatsApp if not set
@@ -1052,7 +1033,7 @@ async function sendGreetingNow(greeting) {
       // Optionally remove the greeting from the list
       // holidayGreetings.value = holidayGreetings.value.filter(g => g !== greeting); // Need unique ID
   } catch (error) {
-      console.error("Error sending greeting now:", error);
+      // Removed console.error
       toast.error(`Failed to send greeting: ${error.response?.data?.message || error.message}`);
   }
   // Removed example comment block
@@ -1069,7 +1050,6 @@ async function sendGreetingNow(greeting) {
 }
 
 async function fetchScheduledMessages() {
-  console.log("Fetching Scheduled Messages...");
   isFetchingScheduled.value = true;
   scheduledError.value = null;
   scheduledMessages.value = [];
@@ -1078,9 +1058,8 @@ async function fetchScheduledMessages() {
     const response = await axios.get(`follow-ups?customerId=${route.query.customer_id}&status=SCHEDULED&id=${userStore.currentWebsite}`);
     // Assuming backend returns { followUps: [...] }
     scheduledMessages.value = response.data.followUps || [];
-    console.log("Fetched scheduled messages:", scheduledMessages.value);
   } catch (error) {
-     console.error("Error fetching scheduled messages:", error);
+     // Removed console.error
      scheduledError.value = error.response?.data?.message || error.message || "Failed to load scheduled messages.";
      toast.error(`Could not load scheduled messages: ${scheduledError.value}`);
   } finally {
@@ -1089,7 +1068,6 @@ async function fetchScheduledMessages() {
 }
 
 async function cancelScheduledMessage(followUpId) {
-  console.log("Cancelling scheduled message:", followUpId);
 
   // Optimistically remove from UI first for better UX
   const originalMessages = [...scheduledMessages.value];
@@ -1101,7 +1079,7 @@ async function cancelScheduledMessage(followUpId) {
       toast.success("Scheduled message cancelled.");
       // No need to filter again, already done optimistically
   } catch (error) {
-      console.error("Error cancelling scheduled message:", error);
+      // Removed console.error
       toast.error(`Failed to cancel message: ${error.response?.data?.message || error.message}`);
       // Revert UI change if backend call failed
       scheduledMessages.value = originalMessages;
@@ -1110,7 +1088,6 @@ async function cancelScheduledMessage(followUpId) {
 }
 
 async function fetchSentimentAnalysis() {
-  console.log("Fetching Sentiment Analysis...");
   isFetchingSentiment.value = true;
   sentimentError.value = null;
   // Don't clear latestSentimentAnalysis.value here
@@ -1122,7 +1099,7 @@ async function fetchSentimentAnalysis() {
     // Reload all customer data to get the latest history entry
     await fetchContacts();
   } catch (error) {
-     console.error("Error fetching sentiment analysis:", error);
+     // Removed console.error
      sentimentError.value = error.response?.data?.message || error.message || "Failed to load sentiment analysis.";
      toast.error(`Could not load sentiment analysis: ${sentimentError.value}`);
   } finally {
@@ -1133,23 +1110,20 @@ async function fetchSentimentAnalysis() {
 
 // Fetch logged/historical follow-ups for Engagement Hub
 async function fetchLoggedFollowUps() {
-  console.log("Fetching Logged Follow-ups...");
   loggedFollowUps.value = []; // Clear previous
   try {
     // Call the backend endpoint, filtering for completed/relevant statuses if needed
     const response = await axios.get(`follow-ups?customerId=${route.query.customer_id}&id=${userStore.currentWebsite}`); // Assuming websiteId needed
     // Assuming backend returns { followUps: [...] }
     loggedFollowUps.value = response.data.followUps || [];
-    console.log("Fetched logged follow-ups:", loggedFollowUps.value);
   } catch (error) {
-     console.error("Error fetching logged follow-ups:", error);
+     // Removed console.error
      toast.error("Could not load follow-up history.");
   }
 }
 
 // Fetch suggested holiday/occasion greetings
 async function fetchHolidayGreetings() {
-    console.log("Fetching Holiday/Occasion Greetings...");
     isFetchingGreetings.value = true; // Set loading state
     greetingsError.value = null; // Clear previous error
     holidayGreetings.value = []; // Clear previous
@@ -1167,7 +1141,6 @@ async function fetchHolidayGreetings() {
             specificOccasion: followUp.messageContent?.split('\n')[0] || 'Scheduled Greeting', // Basic extraction attempt
             occasionType: 'Greeting' // Or derive from followUp.type if more specific types were stored
         }));
-        console.log("Fetched scheduled greetings:", holidayGreetings.value);
 
     } catch (error) {
         greetingsError.value = error.message || "Failed to load greetings.";
@@ -1180,7 +1153,6 @@ async function fetchHolidayGreetings() {
 
 
 function createFollowupForAlert(alertData) {
-  console.log("Opening task modal for alert:", alertData);
   // Construct initial data for the modal
   const applianceName = getApplianceName(alertData.applianceId) || `Appliance ID ${alertData.applianceId}`;
   initialTaskDataForModal.value = {
@@ -1194,7 +1166,6 @@ function createFollowupForAlert(alertData) {
 }
 
 async function handleSaveTask(taskData) {
-  console.log("Saving task:", taskData);
   // TODO: Implement backend API call (e.g., POST /tasks)
   // Ensure the backend endpoint exists and handles task creation,
   // linking to customerId, assigneeId, etc.
@@ -1206,14 +1177,13 @@ async function handleSaveTask(taskData) {
     // reloadTimeline(); // Or a specific task list fetch function
     // Removed placeholder toast
   } catch (error) {
-    console.error("Error saving task:", error);
+    // Removed console.error
     toast.error(`Failed to save task: ${error.response?.data?.message || error.message}`);
   }
 }
 
 // This function seems to have been corrupted, restoring definition
 function dismissPredMaintAlert(applianceId) {
-  console.log("Dismissing predictive maintenance alert for appliance:", applianceId);
   // Remove from local state - Note: Backend call is handled by handleDismissAlert
   predictiveMaintenanceAlerts.value = predictiveMaintenanceAlerts.value.filter(a => a.applianceId !== applianceId);
 }
@@ -1232,7 +1202,7 @@ function formatCurrency(value) {
       maximumFractionDigits: 2,
     }).format(Number(value));
   } catch (error) {
-    console.error("Currency formatting error:", error);
+    // Removed console.error
     // Fallback to basic formatting on error
     return `R ${Number(value).toFixed(2)}`;
   }
@@ -1255,7 +1225,6 @@ function getSentimentClass(sentiment) {
 // --- Data Fetching ---
 async function fetchCustomerFinancials() {
   // Placeholder: Fetch or calculate customer financials
-  console.log("Fetching customer financials...");
   // Reset state before fetching
   customerFinancials.value = { totalRevenue: null, totalCosts: null, netProfit: null };
   try {
@@ -1263,10 +1232,9 @@ async function fetchCustomerFinancials() {
     const response = await axios.get(`customers/${route.query.customer_id}/financials?id=${userStore.currentWebsite}`); // Assuming websiteId needed
     // Assuming backend returns { totalRevenue: number, totalCosts: number, netProfit: number }
     customerFinancials.value = response.data;
-    console.log('fetchCustomerFinancials - Received financials:', JSON.stringify(response.data)); // Added log
 
   } catch (error) {
-    console.error("Error fetching/calculating customer financials:", error);
+    // Removed console.error
     toast.error("Could not load customer financial summary.");
     customerFinancials.value = { totalRevenue: null, totalCosts: null, netProfit: null }; // Reset on error
   }
@@ -1279,7 +1247,7 @@ async function fetchTechnicians() {
     const response = await axios.get(`employees?id=${userStore.currentWebsite}`);
     technicians.value = response.data.employees || [];
   } catch (error) {
-    console.error('Error fetching technicians:', error);
+    // Removed console.error
     // toast.error('Error fetching technicians'); // Optional
   }
 }
@@ -1301,7 +1269,7 @@ async function detectAppliancesAI() {
       toast.info(response.data.message || "AI detection complete. No new appliances found.");
     }
   } catch (error) {
-    console.error("Error detecting appliances via AI:", error);
+    // Removed console.error
     toast.error(`AI detection failed: ${error.response?.data?.error || error.message}`);
   } finally {
     isDetectingAppliances.value = false;
@@ -2114,7 +2082,7 @@ watchEffect(() => {
                       <template v-else>
                         <template v-for="activity in customer.activities.filter(a => a.type === tab.type)" :key="(tab.name === 'Whatsapp' ? wkey : nkey) + activity.uid">
                            <!-- Add logging here -->
-                           <!-- {{ tab.type === 'whatsapp' ? console.log(`WhatsApp Activity (${tab.name} Tab):`, JSON.stringify(activity)) : '' }} -->
+                           <!-- Removed console.log -->
                            <component
                              :is="tab.component"
                              :[tab.type]="activity"
@@ -2192,7 +2160,8 @@ watchEffect(() => {
   :estimate-data="selectedEstimate"
   @estimate-saved="handleEstimateSaved"
   @invoice-created="handleInvoiceCreated"
-  :technicians="technicians" 
+  :technicians="technicians"
+  :customer-jobs="customer.jobs" 
 />
 
 <!-- Add/Edit Invoice Modal -->
@@ -2202,6 +2171,7 @@ watchEffect(() => {
   :invoice-data="selectedInvoice"
   @invoice-saved="handleInvoiceSaved"
   :technicians="technicians"
+  :customer-jobs="customer.jobs" 
 />
 
 <!-- Add/Edit Payment Modal -->

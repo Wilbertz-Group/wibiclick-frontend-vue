@@ -107,7 +107,7 @@ async function fetchNextReportNumber() {
     const lastNumber = response.data?.insurance_number || 0;
     return Number(lastNumber) + 1; // Return the next number
   } catch (error) {
-    console.error("Error fetching next insurance report number:", error);
+    // Removed console.error
     toast.error("Could not fetch the next report number.");
     return null; // Indicate failure
   } finally {
@@ -144,7 +144,7 @@ const saveInsuranceOnly = async (closeAfterSave = true) => { // Renamed and adde
     }
     return true; // Indicate success
   } catch (error) {
-    console.error("Error submitting insurance report:", error);
+    // Removed console.error
     toast.error(`Error submitting report: ${error.response?.data?.message || error.message}`);
     return false; // Indicate failure
   } finally {
@@ -191,7 +191,7 @@ const fetchProfile = async () => {
     profile.value = response.data;
     loading.value = false;
   } catch (error) {
-    console.error("Failed to get profile data", error);
+    // Removed console.error
     toast.warning("Failed to get profile data for PDF generation.");
     loading.value = false;
   }
@@ -208,13 +208,13 @@ const createInsurancePDF = (report, path, action = 'download') => {
   let doc;
   if (!window.PDFDocument || !window.blobStream) {
       toast.error("PDF generation library not loaded yet. Please wait and try again.");
-      console.error("PDFKit or BlobStream not found on window object.");
+      // Removed console.error
       return;
   }
   try {
     doc = new window.PDFDocument({ size: "A4", margin: 50 });
   } catch (error) {
-    console.error("PDFKit Error:", error);
+    // Removed console.error
     toast.error("Failed to initialize PDF generation.");
     return;
   }
@@ -369,7 +369,7 @@ const createInsurancePDF = (report, path, action = 'download') => {
                                     }
                                     processTextContent(child, currentIndent + 10);
                                 } catch (err) {
-                                    console.error("Error rendering bullet point:", err);
+                                    // Removed console.error
                                     // Fallback to basic bullet point
                                     doc.text('• ' + child.textContent.trim());
                                 }
@@ -391,7 +391,7 @@ const createInsurancePDF = (report, path, action = 'download') => {
                                     doc.text(`${itemNumber}. `, xPos, { continued: true });
                                     processTextContent(child, currentIndent + 15);
                                 } catch (err) {
-                                    console.error("Error rendering numbered list item:", err);
+                                    // Removed console.error
                                     // Fallback to basic numbered list item
                                     doc.text(`${itemNumber}. ` + child.textContent.trim());
                                 }
@@ -411,7 +411,7 @@ const createInsurancePDF = (report, path, action = 'download') => {
                             doc.text('', xPos, { continued: false });
                             processTextContent(node, currentIndent + 20);
                         } catch (err) {
-                            console.error("Error rendering blockquote:", err);
+                            // Removed console.error
                             // Fallback to basic blockquote
                             doc.text(node.textContent.trim());
                         }
@@ -469,7 +469,7 @@ const createInsurancePDF = (report, path, action = 'download') => {
                                 doc.text(renderText, { continued: true, width: 500 - indent });
                         }
                     } catch (err) {
-                         console.error("Error rendering inline text segment:", err, renderText);
+                         // Removed console.error
                          // Fallback: render plain text and restore font
                          doc.font(originalFont);
                          doc.text(renderText, { continued: true });
@@ -486,7 +486,7 @@ const createInsurancePDF = (report, path, action = 'download') => {
             processNode(node);
         });
         } catch (error) {
-            console.error("Error processing HTML content for PDF:", error);
+            // Removed console.error
             // Fallback to basic text rendering if HTML processing fails
             doc.text(report.notes.replace(/<[^>]+>/g, ''), {
                 align: "left",
@@ -514,7 +514,7 @@ const createInsurancePDF = (report, path, action = 'download') => {
     generateNotes(doc, report);
     generateFooter(doc);
   } catch (error) {
-    console.error("Error generating PDF content:", error);
+    // Removed console.error
     // Add a simple error message to the PDF
     doc.fontSize(14).font('Helvetica-Bold').text('Error generating formatted content', 50, 300);
     doc.fontSize(10).font('Helvetica').text('The report content could not be fully formatted. Please try again or contact support.', 50, 330);
@@ -561,7 +561,7 @@ const prepareAndGeneratePDF = async (report, path, action = 'download') => {
     }
     createInsurancePDF(report, path, action);
   } catch (error) {
-    console.error("Error preparing PDF:", error);
+    // Removed console.error
     toast.error("Error preparing PDF for download/sending.");
     img = imageHolder; // Fallback image
   } finally {

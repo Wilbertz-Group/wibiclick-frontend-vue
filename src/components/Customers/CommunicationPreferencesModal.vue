@@ -193,7 +193,7 @@ async function savePreferences() {
     if (payload.languagePreference === '') payload.languagePreference = 'en'; // Default to 'en' if empty
 
 
-    console.log(`Saving communication preferences for customer ${props.customerId}:`, payload);
+    // Removed console.log
     // Actual API call: PUT /customers/:id/communication-preferences
     const websiteId = userStore.currentWebsite;
     if (!websiteId) {
@@ -210,7 +210,7 @@ async function savePreferences() {
     closeModal();
 
   } catch (error) {
-    console.error("Error saving communication preferences:", error);
+    // Removed console.error
     saveError.value = `Failed to save preferences: ${error.response?.data?.message || error.message}`;
     toast.error(saveError.value);
   } finally {

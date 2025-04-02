@@ -66,7 +66,7 @@
 	      maximumFractionDigits: 2,
 	    }).format(Number(value));
 	  } catch (error) {
-	    console.error("Currency formatting error:", error);
+	    // Removed console.error
 	    // Fallback to basic formatting on error
 	    return `R ${Number(value).toFixed(2)}`;
 	  }
@@ -101,7 +101,7 @@
 			isOpen.value = true
     } catch (error) {
 			toast.error('Failed to update the job status, please contact the administrator')
-      console.log(error)
+      // Removed console.log
     }
 	})
 

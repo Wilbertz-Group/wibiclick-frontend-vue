@@ -62,7 +62,7 @@ watch(selectedType, async (n, o) => {
     emit('reloadTimeline'); // Reload data after successful update
   } catch (error) {
     toast.error('Failed to update expense type. Please try again.')
-    console.error("Error updating expense type:", error);
+    // Removed console.error
     selectedType.value = o; // Revert type on error
   }
 })

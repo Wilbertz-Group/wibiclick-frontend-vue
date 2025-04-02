@@ -51,12 +51,12 @@
  			try {
  				const accordion = new Accordion(accordionItems, options);
  			} catch (e) {
- 				console.error("Failed to initialize Flowbite Accordion:", e, accordionItems);
+ 				// Removed console.error
  			}
  		}
  	} else {
  		// Handle case where there is no email activity object or nested email details
- 		// console.log('No email activity object to initialize accordion for.'); // Optional logging
+ 		// Removed console.log
  	}
  });
 </script>

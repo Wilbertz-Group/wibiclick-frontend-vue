@@ -57,12 +57,12 @@
   			// Optional: Store accordion instance if needed for programmatic control later
   			// accordionInstance.value = accordion;
   		} catch (e) {
-  			console.error("Failed to initialize Flowbite Accordion:", e, accordionItems);
+  			// Removed console.error
   		}
   	}
   } else {
   	// Handle case where there is no message object
-  	// console.log('No whatsapp message object to initialize accordion for.'); // Optional logging
+  	// Removed console.log
   }
  });
 </script>

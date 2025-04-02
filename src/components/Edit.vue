@@ -1,7 +1,7 @@
 <template>	
 	<div class="flex items-center -space-x-4 hover:space-x-1">
 		<button
-			class="z-20 block p-3 text-blue-700 bg-blue-100 border-2 border-white rounded-full transition-all active:bg-blue-50 hover:scale-110 focus:outline-none focus:ring"
+			class="btn-ghost-modern p-1" 
 			type="button"
 		>
 			<svg class="w-3 h-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">

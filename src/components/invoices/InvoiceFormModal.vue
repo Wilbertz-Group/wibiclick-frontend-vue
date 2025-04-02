@@ -1,5 +1,5 @@
 <script setup>
-import { ref, reactive, watch, computed, onMounted } from 'vue';
+import { ref, reactive, watch, computed, onMounted, nextTick } from 'vue'; // Added nextTick
 import axios from 'axios';
 import moment from 'moment';
 import { useToast } from 'vue-toast-notification';
@@ -8,6 +8,7 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import modal from "@/components/misc/modalWAMessage.vue";
 import imageHolder from '@/helpers/logo.js';
 import { getBase64FromUrl, generateTableRow } from '@/helpers/index.js'; // Assuming these exist in helpers
+import JobFormModal from '@/components/jobs/JobFormModal.vue'; // Import Job Modal
 
 const props = defineProps({
   modelValue: { // Controls modal visibility (v-model)
@@ -23,6 +24,10 @@ const props = defineProps({
     default: null,
   },
   technicians: { // Accept technicians list
+    type: Array,
+    default: () => [],
+  },
+  customerJobs: { // Accept customer jobs list
     type: Array,
     default: () => [],
   }
@@ -45,6 +50,7 @@ const company = ref('');
 const invoiceForm = reactive({
   id: '', // Will be empty for new invoices
   customerId: '',
+  jobId: null, // Added jobId field
   employeeId: null, // Add employeeId field
   name: 'Invoice',
   status: 'sent',
@@ -83,6 +89,10 @@ const invoiceForm = reactive({
   },
 });
 
+// --- Job Modal State ---
+const showJobModal = ref(false);
+const associatedJob = ref(null); // To store fetched job data
+
 const lineItem = reactive({
   name: '',
   description: '',
@@ -97,6 +107,28 @@ const INVOICE_STATUSES = ['sent', 'pending', 'processing', 'paid', 'accepted'];
 
 const isEditing = computed(() => !!invoiceForm.id);
 const lineItemTotal = computed(() => (Number(lineItem.amount) * Number(lineItem.quantity)).toFixed(2));
+
+// Computed property for Job Dropdown Options
+const jobOptions = computed(() => {
+  if (!props.customerJobs || props.customerJobs.length === 0) {
+    return [{ value: null, label: 'No jobs found for customer' }];
+  }
+  // Sort jobs by createdAt descending (most recent first)
+  const sortedJobs = [...props.customerJobs].sort((a, b) => {
+    const dateA = a.createdAt ? new Date(a.createdAt) : 0;
+    const dateB = b.createdAt ? new Date(b.createdAt) : 0;
+    if (isNaN(dateA) && isNaN(dateB)) return 0;
+    if (isNaN(dateA)) return 1;
+    if (isNaN(dateB)) return -1;
+    return dateB - dateA;
+  });
+
+  return sortedJobs.map(job => ({
+    value: job.id,
+    // Format label: Job #ID - Date - Issue Snippet
+    label: `Job - ${moment(job.createdAt).format('YYYY-MM-DD')} - ${job.issue?.substring(0, 30) || 'No Issue'}...`
+  }));
+});
 
 const whatsappMessageBody = computed(() => {
   const customerName = invoiceForm.customer?.name || 'Valued Customer';
@@ -193,7 +225,7 @@ const prefillForm = async (customer) => {
     invoice_number = response.data.invoice_number;
     loading.value = false;
   } catch (error) {
-    console.error("Failed to get invoice number", error);
+    // Removed console.error
     toast.warning("Failed to get invoice number");
     loading.value = false;
   }
@@ -231,8 +263,33 @@ const prefillForm = async (customer) => {
       paid: props.invoiceData.deposit || 0,
       notes: props.invoiceData.notes || '',
       items: props.invoiceData.lineItem || [],
-      employeeId: props.invoiceData.employeeId || customer.employeeId || userStore.user?.id || null, // Set employeeId when editing
+      // Explicitly use invoiceData.employeeId if it exists, otherwise fallback
+      employeeId: props.invoiceData.employeeId ?? (customer.employeeId || userStore.user?.id || null),
     });
+    // Removed debug log
+  }
+  // Removed extra closing brace here
+
+  // Determine the initial jobId
+  let initialJobId = props.invoiceData?.jobId || null;
+
+  // If no jobId on the invoice, default to the most recent customer job
+  if (!initialJobId && props.customerJobs && props.customerJobs.length > 0) {
+      // Use the computed jobOptions which are already sorted
+      const mostRecentJob = jobOptions.value[0]; // First item is the most recent
+      if (mostRecentJob && mostRecentJob.value) {
+          initialJobId = mostRecentJob.value;
+          // Removed console.log
+      }
+  }
+
+  invoiceForm.jobId = initialJobId; // Set the determined jobId in the form
+
+  // Fetch associated job details only if we have a valid jobId
+  if (invoiceForm.jobId) {
+      //fetchAssociatedJob(invoiceForm.jobId);
+  } else {
+      associatedJob.value = null; // Reset associated job data if no ID
   }
 };
 
@@ -243,10 +300,51 @@ const fetchProfile = async () => {
     profile.value = response.data;
     loading.value = false;
   } catch (error) {
-    console.error("Failed to get profile data", error);
+    // Removed console.error
     toast.warning("Failed to get profile data");
     loading.value = false;
   }
+};
+
+// --- Fetch Associated Job ---
+const fetchAssociatedJob = async (jobId) => {
+  if (!jobId) {
+    associatedJob.value = null;
+    return;
+  }
+  loading.value = true; // Use main loading indicator
+  try {
+    // Use query parameters for both job and website ID
+    const response = await axios.get(`jobs?jobId=${jobId}&id=${userStore.currentWebsite}`);
+    associatedJob.value = response.data.job; // Adjust based on actual API response
+    // Removed console.log
+  } catch (error) {
+    // Removed console.error
+    toast.error("Could not load associated job details.");
+    associatedJob.value = null;
+  } finally {
+    loading.value = false;
+  }
+};
+
+// --- Open Job Modal ---
+const openEditJobModal = () => {
+  if (associatedJob.value) {
+    showJobModal.value = true;
+  } else {
+    toast.warning("No associated job found or loaded.");
+  }
+};
+
+// --- Handle Job Saved ---
+const handleJobSaved = async () => {
+  // Refetch the job data after it's saved to update the UI if needed
+  if (invoiceForm.jobId) {
+    await fetchAssociatedJob(invoiceForm.jobId);
+  }
+  // Optionally show a toast or confirmation
+  toast.info("Associated job updated.");
+  // The JobFormModal closes itself via v-model
 };
 
 const editItem = (item, index) => {
@@ -333,7 +431,7 @@ const saveInvoiceOnly = async (closeAfterSave = true) => { // Added parameter
       paid: parseFloat(invoiceForm.paid) || 0, // Add paid field
       notes: invoiceForm.notes,
       customerId: invoiceForm.customer.id || invoiceForm.customerId,
-      jobId: props.customerData?.jobId, // Pass jobId if available
+      jobId: invoiceForm.jobId, // Use jobId from the form state
       employeeId: invoiceForm.employeeId, // Send selected employeeId
       websiteId: userStore.currentWebsite,
       items: invoiceForm.items.map(item => {
@@ -355,9 +453,11 @@ const saveInvoiceOnly = async (closeAfterSave = true) => { // Added parameter
     if (isEditing.value) {
       payload.id = invoiceForm.id;
     }
+// Removed debug log
 
-    // First save the invoice
-    const response = await axios.post('add-invoice?id=' + userStore.currentWebsite, payload);
+// First save the invoice
+const response = await axios.post('add-invoice?id=' + userStore.currentWebsite, payload);
+    // Removed duplicate line above
     
     // If we're editing and have removed items, disconnect them from the invoice
     if (isEditing.value && removedItems.value.length > 0) {
@@ -370,9 +470,9 @@ const saveInvoiceOnly = async (closeAfterSave = true) => { // Added parameter
               item: { id: item.id },
               customerId: invoiceForm.customerId
             });
-            console.log(`Removed line item ${item.id} from invoice ${invoiceForm.id}`);
+            // Removed console.log
           } catch (error) {
-            console.error(`Failed to remove line item ${item.id}:`, error);
+            // Removed console.error
             // Continue with other items even if one fails
           }
         }
@@ -382,14 +482,14 @@ const saveInvoiceOnly = async (closeAfterSave = true) => { // Added parameter
     }
     
     toast.success(response.data.message || 'Invoice saved successfully');
-    emit('invoice-saved');
+    emit('invoice-saved', payload.id || response.data?.invoice?.id); // Emit saved ID
     
     if (closeAfterSave) {
       closeModal();
     }
     return true; // Indicate success
   } catch (error) {
-    console.error("Error submitting invoice:", error);
+    // Removed console.error
     toast.error(`Error submitting invoice: ${error.response?.data?.message || error.message}`);
     return false; // Indicate failure
   } finally {
@@ -440,13 +540,13 @@ const createInvoicePDF = (invoice, path, action = 'download') => {
   // Check if PDFDocument is available on window
   if (!window.PDFDocument || !window.blobStream) {
       toast.error("PDF generation library not loaded yet. Please wait a moment and try again.");
-      console.error("PDFKit or BlobStream not found on window object.");
+      // Removed console.error
       return;
   }
   try {
     doc = new window.PDFDocument({ size: "A4", margin: 50 });
   } catch (error) {
-    console.error("PDFKit Error:", error);
+    // Removed console.error
     toast.error("Failed to initialize PDF generation. Reload and try again!");
     return; // Stop if PDFDocument fails
   }
@@ -684,7 +784,7 @@ const prepareAndGeneratePDF = async (invoice, path, action = 'download') => {
     }
     createInvoicePDF(invoice, path, action);
   } catch (error) {
-    console.error("Error preparing PDF:", error);
+    // Removed console.error
     toast.error("Error preparing PDF for download/sending.");
     img = imageHolder; // Fallback image
   } finally {
@@ -712,7 +812,23 @@ const sendAttachment = () => {
 watch(() => props.modelValue, (newValue) => {
   if (newValue) {
     // When modal opens, prefill form with customer data
+    // This will also handle setting the initial jobId and fetching the job
     prefillForm(props.customerData);
+  } else {
+      // Reset associated job when modal closes
+      associatedJob.value = null;
+  }
+});
+
+// Watch for changes in the selected Job ID dropdown
+watch(() => invoiceForm.jobId, (newJobId, oldJobId) => {
+  // Only fetch if the ID changed AND the new ID is not null
+  if (newJobId !== oldJobId && newJobId !== null) {
+    // Removed console.log
+    //fetchAssociatedJob(newJobId); // Fetch details for the newly selected job
+  } else if (newJobId === null) {
+    // Explicitly clear associated job data if "-- Select Job --" is chosen
+    associatedJob.value = null;
   }
 });
 
@@ -759,7 +875,14 @@ onMounted(() => {
           </h3>
           <!-- WhatsApp Modal -->
           <modal v-if="isOpen" :website="userStore.currentWebsite" :body="whatsappMessageBody" :isOpen="isOpen" :blob="blob" :client="client" :sender="sender" :company="company" :phone="invoiceForm.customer.phone" name="Invoice" @close-modal="closeModalWA"></modal> <!-- Changed :body="body" to :body="whatsappMessageBody" -->
-          
+        
+          <!-- Nested Job Form Modal -->
+          <JobFormModal
+            v-model="showJobModal"
+            :customer-data="invoiceForm.customer"
+            :job-data="associatedJob"
+            @job-saved="handleJobSaved"
+          />
           <form @submit.prevent="handleSave" class="space-y-4">
             <div class="max-h-[60vh] overflow-y-auto pr-2">
               <!-- Invoice Details Section -->
@@ -798,6 +921,16 @@ onMounted(() => {
                       </option>
                     </select>
                   </div>
+                  <!-- Job Selection Dropdown -->
+                   <div class="sm:col-span-2">
+                     <label for="invoice-job" class="label-modern">Associated Job (Optional)</label>
+                     <select id="invoice-job" v-model="invoiceForm.jobId" class="input-modern input-modern--select">
+                       <option :value="null">-- Select Job --</option>
+                       <option v-for="job in jobOptions" :key="job.value" :value="job.value">
+                         {{ job.label }}
+                       </option>
+                     </select>
+                   </div>
                 </div>
               </div>
 
@@ -942,6 +1075,11 @@ onMounted(() => {
             </div>
 
             <div class="pt-5 sm:pt-6 flex flex-col sm:flex-row-reverse gap-3 border-t border-gray-200 dark:border-gray-700/50">
+              <!-- Edit Job Button (Conditional) -->
+              <button v-if="isEditing && associatedJob" @click="openEditJobModal" type="button" class="btn-secondary-modern w-full sm:w-auto" :disabled="loading">
+                 <font-awesome-icon icon="briefcase" class="mr-1.5 h-4 w-4" /> <!-- Assuming briefcase icon -->
+                 Edit Job #{{ associatedJob.id }}
+              </button>
               <!-- WhatsApp Button -->
               <button @click="sendAttachment" type="button" class="btn-secondary-modern w-full sm:w-auto bg-green-100 dark:bg-green-900/50 border-green-300 dark:border-green-700 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-800/50" :disabled="loading">
                 <font-awesome-icon :icon="['fab', 'whatsapp']" class="mr-1.5 h-4 w-4" /> WhatsApp

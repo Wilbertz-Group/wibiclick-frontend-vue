@@ -79,7 +79,7 @@
       toast.success(`Attachment and message have been sent successfully`)
 
     } catch (error) {
-      console.error(error);
+      // Removed console.error
     }
   }
 
