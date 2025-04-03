@@ -48,7 +48,7 @@ const paymentForm = reactive({
   employeeId: null,
   paymentMethod: 'card', // How payment was made (card, eft, cash)
   notes: '',
-  // payment_date: moment().format('YYYY-MM-DD'), // Removed, rely on backend createdAt/updatedAt
+  paymentDate: moment().format('YYYY-MM-DD'), // Added payment date
 });
 
 // --- Constants ---
@@ -223,6 +223,7 @@ const resetPaymentForm = () => {
     employeeId: null,
     paymentMethod: 'card',
     notes: '',
+    paymentDate: moment().format('YYYY-MM-DD'), // Reset date to today
   });
   // Clear dropdowns
   jobs.value = [];
@@ -257,6 +258,8 @@ const prefillForm = async (customer, payment) => {
       // Prioritize actual paymentMethod field from backend data
       paymentMethod: payment.paymentMethod || 'other', // Default to 'other' if missing
       notes: payment.notes || '',
+      // Format existing date if present, otherwise default to today
+      paymentDate: payment.paymentDate ? moment(payment.paymentDate).format('YYYY-MM-DD') : moment().format('YYYY-MM-DD'),
     });
 
     // If editing, fetch invoices/estimates related to the specific job
@@ -297,6 +300,7 @@ const submitPayment = async () => {
       employeeId: paymentForm.employeeId || undefined,
       paymentMethod: paymentForm.paymentMethod, // card, eft, cash etc.
       notes: paymentForm.notes,
+      paymentDate: paymentForm.paymentDate, // Add payment date to payload
     };
 
     // If editing, include the ID
@@ -389,6 +393,13 @@ watch(() => props.paymentData, (newPaymentData) => {
                  </div>
 
                  <div>
+                   <label for="payment-type" class="label-modern">Payment Type</label>
+                   <select id="payment-type" v-model="paymentForm.type" required class="input-modern input-modern--select">
+                     <option v-for="type in PAYMENT_TYPES" :key="type" :value="type">{{ type }}</option>
+                   </select>
+                 </div>
+
+                 <div>
                    <label for="payment-method" class="label-modern">Payment Method</label>
                    <select id="payment-method" v-model="paymentForm.paymentMethod" required class="input-modern input-modern--select">
                      <option v-for="method in PAYMENT_METHODS" :key="method" :value="method">{{ method }}</option>
@@ -400,6 +411,11 @@ watch(() => props.paymentData, (newPaymentData) => {
                    <select id="payment-status" v-model="paymentForm.status" required class="input-modern input-modern--select">
                      <option v-for="status in PAYMENT_STATUSES" :key="status" :value="status">{{ status }}</option>
                    </select>
+                 </div>
+
+                 <div>
+                   <label for="payment-date" class="label-modern">Payment Date</label>
+                   <input type="date" id="payment-date" v-model="paymentForm.paymentDate" required class="input-modern" />
                  </div>
 
                  <!-- Linkage Section -->

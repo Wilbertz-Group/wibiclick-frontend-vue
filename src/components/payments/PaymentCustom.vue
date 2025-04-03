@@ -158,8 +158,8 @@ function handleViewPayment() {
         <p class="text-sm text-black dark:text-gray-100 capitalize">{{ payment.type }}</p> <!-- Adjusted text color -->
       </div>
       <div class="flex justify-between">
-        <p class="text-sm font-bold text-black dark:text-gray-300">Date</p> <!-- Adjusted text color -->
-        <p class="text-sm text-black dark:text-gray-100">{{ universalDateFormatter(payment.createdAt).includes(':') ? 'Today at '+ universalDateFormatter(payment.createdAt) : universalDateFormatter(payment.createdAt) }}</p> <!-- Adjusted text color -->
+        <p class="text-sm font-bold text-black dark:text-gray-300">Payment Date</p> <!-- Changed Label -->
+        <p class="text-sm text-black dark:text-gray-100">{{ payment.paymentDate ? universalDateFormatter(payment.paymentDate) : universalDateFormatter(payment.createdAt) }}</p> <!-- Display paymentDate if available, fallback to createdAt -->
       </div>
     </div>
     <!-- Action Buttons styled like InvoiceCustom -->
