@@ -5,12 +5,17 @@ import { watch, ref } from "vue";
 import modal from "../misc/modal.vue"; // Keep if status update modal is needed
 import { useUserStore } from "@/stores/UserStore"
 import { universalDateFormatter } from '../../helpers';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome' // Added for delete icon
+import { library } from '@fortawesome/fontawesome-svg-core' // Added for delete icon
+import { faTrash } from '@fortawesome/free-solid-svg-icons' // Added for delete icon
 import {
   Listbox,
   ListboxButton,
   ListboxOptions,
   ListboxOption,
 } from '@headlessui/vue'
+
+library.add(faTrash) // Added for delete icon
 
 const emit = defineEmits(['reloadTimeline', 'edit-insurance', 'view-insurance'])
 const props = defineProps(['insurance']) // Changed prop name
@@ -71,6 +76,25 @@ function handleEditInsurance() {
 
 function handleViewInsurance() {
   emit('view-insurance', props.insurance);
+}
+
+async function deleteInsuranceReport() {
+  if (!props.insurance || !props.insurance.id) {
+    toast.error('Cannot delete insurance report: ID missing.');
+    return;
+  }
+
+  if (confirm(`Are you sure you want to delete insurance report #${props.insurance.number || props.insurance.id}? This action cannot be undone.`)) {
+    try {
+      // Use the confirmed endpoint: DELETE /insurance-report?custId={id}&id={websiteId}
+      await axios.delete(`/insurance-report?custId=${props.insurance.id}&id=${userStore.currentWebsite}`);
+      toast.success('Insurance report deleted successfully.');
+      emit('reloadTimeline'); // Refresh the parent list
+    } catch (error) {
+      console.error("Error deleting insurance report:", error);
+      toast.error(`Failed to delete insurance report: ${error.response?.data?.message || error.message}`);
+    }
+  }
 }
 
 </script>
@@ -159,6 +183,10 @@ function handleViewInsurance() {
     <div class="flex mt-2 mb-1 justify-between items-center">
       <button @click="handleEditInsurance" class="text-white cursor-pointer inline-block bg-slate-900 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-gray-300 dark:focus:ring-gray-800 shadow-lg shadow-gray-500/50 dark:shadow-lg dark:shadow-gray-800/80 font-medium rounded-lg text-sm px-3 py-1 text-center"> Edit </button>
       <button @click="handleViewInsurance" class="text-white cursor-pointer inline-block bg-slate-900 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-gray-300 dark:focus:ring-gray-800 shadow-lg shadow-gray-500/50 dark:shadow-lg dark:shadow-gray-800/80 font-medium rounded-lg text-sm px-3 py-1 text-center"> View </button>
+      <!-- Delete Button -->
+      <button @click="deleteInsuranceReport" class="text-white cursor-pointer inline-block bg-red-600 hover:bg-red-700 focus:ring-4 focus:outline-none focus:ring-red-300 dark:focus:ring-red-800 shadow-lg shadow-red-500/50 dark:shadow-lg dark:shadow-red-800/80 font-medium rounded-lg text-sm px-3 py-1 text-center" title="Delete Insurance Report">
+        <font-awesome-icon icon="trash" />
+      </button>
     </div>
   </div>
 </template>

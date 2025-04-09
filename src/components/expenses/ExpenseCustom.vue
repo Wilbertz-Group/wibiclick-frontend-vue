@@ -5,12 +5,17 @@ import { watch, ref } from "vue";
 import modal from "../misc/modal.vue"; // Keep if status update modal is needed
 import { useUserStore } from "@/stores/UserStore"
 import { universalDateFormatter } from '../../helpers';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome' // Added for delete icon
+import { library } from '@fortawesome/fontawesome-svg-core' // Added for delete icon
+import { faTrash } from '@fortawesome/free-solid-svg-icons' // Added for delete icon
 import {
   Listbox,
   ListboxButton,
   ListboxOptions,
   ListboxOption,
 } from '@headlessui/vue'
+
+library.add(faTrash) // Added for delete icon
 
 const emit = defineEmits(['reloadTimeline', 'edit-expense', 'view-expense'])
 const props = defineProps(['expense'])
@@ -75,6 +80,25 @@ function handleEditExpense() {
 function handleViewExpense() {
   // View and Edit might use the same modal/handler in this context
   emit('view-expense', props.expense);
+}
+
+async function deleteExpense() {
+  if (!props.expense || !props.expense.id) {
+    toast.error('Cannot delete expense: ID missing.');
+    return;
+  }
+
+  if (confirm(`Are you sure you want to delete this expense: "${props.expense.description}"? This action cannot be undone.`)) {
+    try {
+      // Use the confirmed endpoint: DELETE /expense/{id}?id={websiteId}
+      await axios.delete(`/expense/${props.expense.id}?id=${userStore.currentWebsite}`);
+      toast.success('Expense deleted successfully.');
+      emit('reloadTimeline'); // Refresh the parent list
+    } catch (error) {
+      console.error("Error deleting expense:", error);
+      toast.error(`Failed to delete expense: ${error.response?.data?.message || error.message}`);
+    }
+  }
 }
 
 </script>
@@ -164,6 +188,10 @@ function handleViewExpense() {
     <div class="flex mt-2 mb-1 justify-between items-center">
       <button @click="handleEditExpense" class="text-white cursor-pointer inline-block bg-slate-900 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-gray-300 dark:focus:ring-gray-800 shadow-lg shadow-gray-500/50 dark:shadow-lg dark:shadow-gray-800/80 font-medium rounded-lg text-sm px-3 py-1 text-center"> Edit </button>
       <button @click="handleViewExpense" class="text-white cursor-pointer inline-block bg-slate-900 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-gray-300 dark:focus:ring-gray-800 shadow-lg shadow-gray-500/50 dark:shadow-lg dark:shadow-gray-800/80 font-medium rounded-lg text-sm px-3 py-1 text-center"> View </button>
+      <!-- Delete Button -->
+      <button @click="deleteExpense" class="text-white cursor-pointer inline-block bg-red-600 hover:bg-red-700 focus:ring-4 focus:outline-none focus:ring-red-300 dark:focus:ring-red-800 shadow-lg shadow-red-500/50 dark:shadow-lg dark:shadow-red-800/80 font-medium rounded-lg text-sm px-3 py-1 text-center" title="Delete Expense">
+        <font-awesome-icon icon="trash" />
+      </button>
     </div>
   </div>
 </template>

@@ -5,7 +5,10 @@ import { watch, ref } from "vue";
 import modal from "../misc/modal.vue";
 import { useUserStore } from "@/stores/UserStore"
 import { universalDateFormatter, dateFormatter, universalTimeFormatter } from '../../helpers';
-import { 
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome' // Added for delete icon
+import { library } from '@fortawesome/fontawesome-svg-core' // Added for delete icon
+import { faTrash } from '@fortawesome/free-solid-svg-icons' // Added for delete icon
+import {
   Listbox,
   ListboxLabel,
   ListboxButton,
@@ -13,10 +16,12 @@ import {
   ListboxOption,
 } from '@headlessui/vue'
 
+library.add(faTrash) // Added for delete icon
+
 const emit = defineEmits(['reloadTimeline', 'edit-invoice', 'view-invoice'])
 const props = defineProps(['invoice'])
 const userStore = useUserStore()
-const toast = useToast() 
+const toast = useToast()
 
 const statuses = [
   { value: "pending", name: "Pending" },
@@ -62,11 +67,11 @@ watch(selectedStatus, async (n, o) => {
   toast.success('updating the status of the invoice')
   body.value = `Invoice status changed from <b>${o.value}</b> to <b>${n.value}</b>`
   heading.value = "Invoice Status"
-  
-  const data = { 
-    id: props.invoice.id, 
-    reason: n.value, 
-    customerId: props.invoice.customerId, 
+
+  const data = {
+    id: props.invoice.id,
+    reason: n.value,
+    customerId: props.invoice.customerId,
     employeeId: props.invoice.employeeId
   }
 
@@ -79,6 +84,25 @@ watch(selectedStatus, async (n, o) => {
     // Removed console.log
   }
 });
+
+async function deleteInvoice() {
+  if (!props.invoice || !props.invoice.id) {
+    toast.error('Cannot delete invoice: ID missing.');
+    return;
+  }
+
+  if (confirm(`Are you sure you want to delete invoice #${props.invoice.number}? This action cannot be undone.`)) {
+    try {
+      // Use the confirmed endpoint: DELETE /invoice?custId={id}&id={websiteId}
+      await axios.delete(`/invoice?custId=${props.invoice.id}&id=${userStore.currentWebsite}`);
+      toast.success('Invoice deleted successfully.');
+      emit('reloadTimeline'); // Refresh the parent list
+    } catch (error) {
+      console.error("Error deleting invoice:", error);
+      toast.error(`Failed to delete invoice: ${error.response?.data?.message || error.message}`);
+    }
+  }
+}
 // Removed debug log
 
 </script>
@@ -90,10 +114,10 @@ watch(selectedStatus, async (n, o) => {
       <div class="flex justify-between mb-2">
         <div class="flex flex-col justify-center">
           <p class="text-lg text-black" ></p>
-        </div>				
+        </div>
         <div class="relative">
           <Listbox v-model="selectedStatus">
-            <div class="relative mt-1">						
+            <div class="relative mt-1">
               <ListboxButton
                 class="relative w-full cursor-default rounded-lg bg-slate-900 py-1 pl-3 pr-5 min-w-[120px] text-left shadow-md focus:outline-none focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-opacity-75 focus-visible:ring-offset-2 focus-visible:ring-offset-orange-300 sm:text-sm"
               >
@@ -177,9 +201,13 @@ watch(selectedStatus, async (n, o) => {
         <p class="text-sm text-black">{{ universalDateFormatter(invoice.dueAt) }}</p>
       </div>
     </div>
-    <div class="flex mt-2 mb-1 justify-between items-center">			
+    <div class="flex mt-2 mb-1 justify-between items-center">
       <button @click="handleEditInvoice" class="text-white cursor-pointer inline-block bg-slate-900 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-gray-300 dark:focus:ring-gray-800 shadow-lg shadow-gray-500/50 dark:shadow-lg dark:shadow-gray-800/80 font-medium rounded-lg text-sm px-3 py-1 text-center"> Edit </button>
       <button @click="handleViewInvoice" class="text-white cursor-pointer inline-block bg-slate-900 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-gray-300 dark:focus:ring-gray-800 shadow-lg shadow-gray-500/50 dark:shadow-lg dark:shadow-gray-800/80 font-medium rounded-lg text-sm px-3 py-1 text-center"> View </button>
+      <!-- Delete Button -->
+      <button @click="deleteInvoice" class="text-white cursor-pointer inline-block bg-red-600 hover:bg-red-700 focus:ring-4 focus:outline-none focus:ring-red-300 dark:focus:ring-red-800 shadow-lg shadow-red-500/50 dark:shadow-lg dark:shadow-red-800/80 font-medium rounded-lg text-sm px-3 py-1 text-center" title="Delete Invoice">
+        <font-awesome-icon icon="trash" />
+      </button>
     </div>
   </div>
 </template>

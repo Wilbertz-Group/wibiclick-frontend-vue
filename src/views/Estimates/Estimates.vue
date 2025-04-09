@@ -1,88 +1,70 @@
 <script setup>
   import axios from "axios";
-  import Header from "@/components/Header.vue";  
+  // import Header from "@/components/Header.vue"; // Removed old header
   import { useUserStore } from "@/stores/UserStore"
-  import { onMounted, ref, reactive, watchEffect } from "vue";
+  import { onMounted, ref, reactive, watchEffect, computed } from "vue"; // Added computed
   import moment from 'moment'
-  import _ from 'lodash';
+  // import _ from 'lodash'; // Removed lodash, not needed for basic filtering
   import { useRouter } from "vue-router";
   import { useToast } from 'vue-toast-notification';
-  import ScaleLoader from 'vue-spinner/src/ScaleLoader.vue'
+  import ScaleLoader from 'vue-spinner/src/ScaleLoader.vue' // Keep for loading state
+  import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome' // Added FontAwesome
+  import { library } from '@fortawesome/fontawesome-svg-core' // Added FontAwesome library
+  import {
+    faSun, faMoon, faSync, faPlus, faEdit, faEye, faFileInvoiceDollar, faSearch, // Added icons
+    faChevronLeft, faChevronRight // Added pagination icons
+  } from '@fortawesome/free-solid-svg-icons'
 
-  import { AgGridVue } from "ag-grid-vue3";
-  import "ag-grid-community/styles/ag-grid.css"; // Core grid CSS, always needed
-  import "ag-grid-community/styles/ag-theme-alpine.css"; // Optional theme CSS
-  import Edit from "@/components/estimates/Edit.vue";
-  import View from "@/components/estimates/View.vue";
-  import Status from "@/components/estimates/Status.vue";
-  import Draggable from "vue3-draggable";
+  // Removed AG Grid imports
+  // import { AgGridVue } from "ag-grid-vue3";
+  // import "ag-grid-community/styles/ag-grid.css";
+  // import "ag-grid-community/styles/ag-theme-alpine.css";
+  // import Edit from "@/components/estimates/Edit.vue"; // Will replace with modal logic
+  // import View from "@/components/estimates/View.vue"; // Will replace with router link or modal
+  // import Status from "@/components/estimates/Status.vue"; // Will replace with styled span
+  // import Draggable from "vue3-draggable"; // Removed draggable
+
+  // Removed ApexCharts imports
+  import EstimateFormModal from '@/components/estimates/EstimateFormModal.vue'; // Import estimate modal
+
+  library.add(
+    faSun, faMoon, faSync, faPlus, faEdit, faEye, faFileInvoiceDollar, faSearch,
+    faChevronLeft, faChevronRight
+  )
 
   const userStore = useUserStore()
   const toast = useToast();
-  const loading = ref(false)
-  const options = ref()
-  const series = ref()
-  const router = useRouter()
+  const loading = ref(false);
+  const isDarkMode = ref(localStorage.getItem('darkMode') === 'true'); // Added dark mode state
+  // Removed ApexCharts options and series refs
+  // const options = ref();
+  // const series = ref();
+  const router = useRouter();
+  const estimates = ref([]); // Renamed from estimatesApi
+  const currentPage = ref(1); // Added pagination state
 
   const selectedEstimate = ref({})
-  const paginationPageSize = ref(12)
-  const modalOpen = ref(false)
-  const status = ref(userStore.status)
-  const estimatesApi = ref([])
-  const estimatesStatusesApi = ref([])
-  const colors = ref({
-    rejected: "bg-red-600",
-    accepted: "bg-green-500",
-    sent: "bg-blue-600",
-  })
+  const paginationPageSize = ref(10); // Standardized page size
+  const technicians = ref([]); // Added technicians ref
+  const editModalOpen = ref(false);
+  const modalCustomerJobs = ref([]); // Added state for modal-specific jobs
+  const isFetchingModalData = ref(false); // Added loading state for modal data
+  const availableStatuses = ref([]); // New ref for actual statuses found in data
+  // Removed estimatesApi, estimatesStatusesApi, colors refs (will handle status styling differently)
+  // const estimatesApi = ref([])
+  // const estimatesStatusesApi = ref([])
+  // const colors = ref({...})
 
-  options.value = {
-    chart: {
-      height: 350,
-      type: 'bar'
-    },
-    dataLabels: {
-      enabled: false
-    },
-    stroke: {
-      curve: 'smooth'
-    },
-    xaxis: {
-      type: 'datetime',
-      labels: {
-      datetimeUTC: false
-    },
-      categories: []
-    },
-    tooltip: {
-      x: {
-        format: 'dd MMM yyyy'
-      },
-    },
-  },
+  // Add filters reactive object
+  const filters = reactive({
+    search: '',
+    status: '', // Add status filter
+    // Add other filters if needed (e.g., date range)
+  });
 
-  series.value = [{
-      name: 'estimates',
-      data: []
-  }]
+  // Removed ApexCharts default options/series setup
 
-  const groups = (() => {
-      const byDay = (item) => moment(item.x).format('MMM DD YYYY'),
-          byHour = (item) => moment(byDay(item) + ' ' + moment(item.x).format('hh a'), "dd MMM yyyy").toISOString(),
-          by6Hour = (item) => {
-              const m = moment(item.x);
-              return byDay(item) + ' ' + ['first', 'second', 'third', 'fourth'][Number(m.format('k')) % 6] + ' 6 hours';
-          },
-          byMonth = (item) => moment(item.x).format('MMM YYYY'),
-          byWeek = (item) => byMonth(item) + ' ' + moment(item.x).format('ww');
-      return {
-          byDay,
-          byHour,
-          by6Hour,
-          byMonth,
-          byWeek,
-      };
-  })();
+  // Removed unused groups variable
 
   async function fetchEstimates() {
     try {
@@ -91,425 +73,534 @@
         `estimates?id=${userStore.currentWebsite}&limit=1500&offset=0`
       );
 
-      rowData.value = response.data.estimates
+      estimates.value = response.data.estimates; // Assign to the new ref
 
-      let fEstimates = {}, estAp = []
-
-      response.data.estimates.forEach((itm) => {
-        if (fEstimates[itm.reason]) {
-          fEstimates[itm.reason].push(itm);
-        } else {
-          fEstimates[itm.reason] = [itm];
-        }
-      });
-
-      Object.keys(fEstimates).forEach((itm) => {
-        estAp.push({
-          title: itm,
-          estimates: fEstimates[itm]
-        })
-      });
-
-      estimatesApi.value = estAp.filter(e => e);
-
-      estimatesStatusesApi.value = Object.keys(fEstimates)
-
-      let estimatess = [];
-
-      for (const estimates of response.data.estimates) {
-        estimatess.push({
-          x: estimates.issuedAt,
-          y: 1,
-        });
-      }
-
-      const data = _.sortBy(estimatess, 'x')
-
-      const currentGroup = 'byDay';
-      const grouped = _.groupBy(data, groups[currentGroup])
-      const seriesData = Object.values(grouped).map( a => a.length )
-      const optionsData = Object.keys(grouped)
-          
-      options.value = {
-          chart: {
-            height: 350,
-            type: 'bar',
-            toolbar: {
-              autoSelected: "pan",
-              show: false
-            } 
-          },
-          dataLabels: {
-            enabled: false
-          },
-          stroke: {
-            curve: 'smooth'
-          },
-          xaxis: {
-            type: 'datetime',
-            labels: {
-      datetimeUTC: false
-    },
-            categories: optionsData,
-            labels: {
-              style: {
-                colors: '#FFFFFF'
-              }
-            }
-          },
-          yaxis: {
-            min: 0,
-            tickAmount: 4,
-            labels: {
-              style: {
-                colors: '#FFFFFF'
-              }
-            }
-          },
-          fill: {
-            gradient: {
-              enabled: true,
-              opacityFrom: 0.55,
-              opacityTo: 0
-            }
-          },
-          grid: {
-            borderColor: "#fff",
-            strokeDashArray: 2,
-            clipMarkers: false,
-            yaxis: {
-              lines: {
-                show: true
-              }
-            }
-          },
-          markers: {
-            size: 5,
-            colors: ["#ffffff"],
-            strokeColor: "#00BAEC",
-            strokeWidth: 3
-          },
-          tooltip: {
-            theme: "dark",
-            x: {
-              format: 'dd MMM yyyy'
-            },
-          },
-      }
-      series.value = [{
-        name: 'estimates',
-        data: seriesData
-      }]
+      // Extract unique statuses from the fetched estimates
+      const uniqueStatuses = [...new Set(response.data.estimates.map(est => est.reason).filter(Boolean))];
+      availableStatuses.value = uniqueStatuses.sort();
 
       loading.value = false;
     } catch (error) {
       console.log(error);
       loading.value = false;
-      toast.error("Error getting estimates data")
+      toast.error("Error getting estimates data");
     }
   }
 
-  const gridApi = ref(null); 
-  const onGridReady = (params) => {
-    gridApi.value = params.api;
-  };
-  const rowData = reactive({}); 
+  // Add computed properties for filtering and pagination
+  const filteredEstimates = computed(() => {
+    return estimates.value.filter(est => {
+      const searchLower = filters.search.toLowerCase();
+      const matchesSearch = !searchLower ||
+                           (est.number?.toLowerCase().includes(searchLower)) ||
+                           (est.customer?.name?.toLowerCase().includes(searchLower)) ||
+                           (est.employee?.firstName?.toLowerCase().includes(searchLower)) ||
+                           (est.employee?.lastName?.toLowerCase().includes(searchLower));
+      const matchesStatus = !filters.status || est.reason === filters.status; // Filter by 'reason' field
 
-  const dateFormatter = (params) => {
-    let dt = params.value
-    return params.value ? moment().isSame(dt, 'day') ? moment(dt).format('h:mm a') : moment(dt).format('MMM DD, YYYY') : '-';
-  }
-
-  const nameFormatter = (params) => {
-    return  params.data.employee.firstName + ' ' + params.data.employee.lastName
-  }
-
-  const universalDateFormatter = (dat) => {
-    let dt = dat
-    return moment().isSame(dt, 'day') ? moment(dt).format('h:mm a') : moment(dt).format("dddd, DD MMMM YYYY");
-  }
-
-  const amountFormatter = (params) => {
-    return  'R' + params.data.sales
-  }
-
-  const columnDefs = reactive({
-    value: [
-      { field: "number", headerName: 'Estimate #', sort: 'desc', maxWidth: 150, },      
-      { 
-        field: "customer.name", 
-        headerName: 'Client',
-        cellRenderer: (params) => {
-            const link = document.createElement("a");
-            link.href = './estimates';
-            link.classList.add("text-blue-600", "hover:underline", "dark:text-blue-500");
-            link.innerText = params.value;
-            link.addEventListener("click", e => {
-              e.preventDefault();
-              router.push({ path: '/contact', query: { customer_id: params.data.customer.id } })
-            });
-            return link;
-        }
-      }, 
-      { field: "createdAt", valueFormatter: dateFormatter },
-      { field: "sales", headerName: 'Amount', valueFormatter: amountFormatter }, 
-      { field: "reason", headerName: 'Status', cellRendererSelector: params => {
-          return {
-              component: Status,
-              params
-          };
-        }
-      },              
-      { 
-        field: "id", 
-        headerName: 'Edit',
-        maxWidth: 80,
-        cellRendererSelector: params => {
-          return {
-              component: Edit,
-              params
-          };
-        } 
-      },  
-      { 
-        field: "id", 
-        headerName: 'View',
-        maxWidth: 85,
-        cellRendererSelector: params => {
-          return {
-              component: View,
-              params
-          };
-        } 
-      },       
-    ],
+      return matchesSearch && matchesStatus;
+    });
   });
 
-  const defaultColDef = {
-    sortable: true,
-    filter: true,
-    flex: 1,
+  const totalEstimates = computed(() => filteredEstimates.value.length);
+  const totalPages = computed(() => Math.ceil(totalEstimates.value / paginationPageSize.value));
+  const startIndex = computed(() => (currentPage.value - 1) * paginationPageSize.value);
+  const endIndex = computed(() => Math.min(startIndex.value + paginationPageSize.value, totalEstimates.value));
+
+  const paginatedEstimates = computed(() => {
+    return filteredEstimates.value.slice(startIndex.value, endIndex.value);
+  });
+
+  // Add pagination functions
+  const prevPage = () => {
+    if (currentPage.value > 1) currentPage.value--;
+  }
+  const nextPage = () => {
+    if (currentPage.value < totalPages.value) currentPage.value++;
+  }
+
+  // Add clearFilters function
+  const clearFilters = () => {
+    filters.search = '';
+    filters.status = '';
+    // Reset other filters
+    // Removed duplicated catch block
+  }
+
+  // Removed AG Grid specific variables
+  // const gridApi = ref(null);
+  // const onGridReady = (params) => { ... };
+  // const rowData = reactive({});
+
+  // Updated dateFormatter to accept date string directly
+  const dateFormatter = (dateString) => {
+    if (!dateString) return '-';
+    const dt = moment(dateString); // Assuming dateString is ISO or parsable by moment
+    return moment().isSame(dt, 'day') ? dt.format('h:mm A') : dt.format('MMM DD, YYYY h:mm A');
+  }
+
+  // Removed unused AG Grid formatters
+  // const nameFormatter = (params) => { ... }
+  // const universalDateFormatter = (dat) => { ... }
+  // const amountFormatter = (params) => { ... }
+
+  // Removed AG Grid columnDefs and defaultColDef
+
+  // --- Fetch Technicians ---
+  async function fetchTechnicians() {
+    // Assuming endpoint is similar to Jobs/Users view
+    try {
+      const response = await axios.get(`employees?id=${userStore.currentWebsite}`);
+      technicians.value = response.data.employees || [];
+    } catch (error) {
+      console.error('Error fetching technicians:', error);
+      // Optional: toast.error('Could not load technicians');
+    }
   }
 
   async function update(credentials) {
     try {
       loading.value = true
       const response = await axios.post('add-estimate?id='+ userStore.currentWebsite, credentials);
-      loading.value = false
-      modalOpen.value = false
-      fetchEstimates() 
-      toast.success("Successfully updated estimate details")
+      loading.value = false;
+      editModalOpen.value = false;
+      fetchEstimates(); // Refetch data after update
+      toast.success("Successfully updated estimate details");
     } catch (error) {
-      console.log(error)
-      loading.value = false
+      console.log(error);
+      loading.value = false;
+      toast.error(`Error updating estimate: ${error.response?.data?.message || error.message}`);
+    } finally {
+      // Ensure loading is always turned off
+      loading.value = false;
     }
   }
 
-  const toggleEditModal = (event) => {
-    if( event.value === undefined ){
-      let data = event.data
-      data.issuedAt = moment(data.issuedAt).format('YYYY-MM-DDTHH:MM')
-      selectedEstimate.value = data      
-      modalOpen.value = !modalOpen.value
-    } 
+  // --- Modal Control Functions ---
+
+  // Separate async function to fetch jobs for the modal
+  async function fetchJobsForModal(customerId) {
+    if (!customerId) {
+      modalCustomerJobs.value = [];
+      return;
+    }
+    isFetchingModalData.value = true;
+    modalCustomerJobs.value = []; // Clear previous jobs
+    try {
+      const response = await axios.get(`customer?id=${userStore.currentWebsite}&custId=${customerId}`);
+      const customerData = response.data.customer;
+      const jobs = customerData?.jobs || [];
+
+      // Sort jobs by createdAt descending (most recent first)
+      const sortedJobs = [...jobs].sort((a, b) => {
+          const dateA = a.createdAt ? new Date(a.createdAt) : 0;
+          const dateB = b.createdAt ? new Date(b.createdAt) : 0;
+          if (isNaN(dateA) && isNaN(dateB)) return 0;
+          if (isNaN(dateA)) return 1;
+          if (isNaN(dateB)) return -1;
+          return dateB - dateA;
+      });
+
+      modalCustomerJobs.value = sortedJobs; // Store fetched & sorted jobs
+
+      // Set default jobId if estimate doesn't have one and jobs exist
+      // Ensure selectedEstimate is accessed safely as it might change
+      if (selectedEstimate.value && !selectedEstimate.value.jobId && sortedJobs.length > 0) {
+        selectedEstimate.value.jobId = sortedJobs[0].id; // Default to most recent job
+      }
+
+    } catch (error) {
+      console.error("Error fetching customer jobs for modal:", error);
+      toast.error("Could not load associated jobs for the modal.");
+      modalCustomerJobs.value = []; // Ensure it's empty on error
+    } finally {
+      isFetchingModalData.value = false;
+    }
   }
 
-  // onMounted(() => {
-  //   if(userStore.currentWebsite && userStore.user){
-  //     fetchEstimates()  
-  //   }
-  // })
+  const openEditModal = (estimate) => {
+    // 1. Format and set the selected estimate
+    const formattedEstimate = {
+      ...estimate,
+      issuedAt: estimate.issuedAt ? moment(estimate.issuedAt).format('YYYY-MM-DDTHH:mm') : '',
+      customer: estimate.customer || {} // Ensure customer object exists
+    };
+    selectedEstimate.value = formattedEstimate;
 
-  watchEffect(() => {    
+    // 2. Open the modal immediately
+    editModalOpen.value = true;
+
+    // 3. Trigger async job fetching (don't await here)
+    fetchJobsForModal(selectedEstimate.value.customer?.id);
+  };
+
+  const closeEditModal = () => {
+    editModalOpen.value = false;
+    selectedEstimate.value = {};
+    modalCustomerJobs.value = []; // Clear jobs when closing
+  };
+
+  // Handle modal save event
+  const handleEstimateSaved = () => {
+    // Modal closing is handled by v-model
+    fetchEstimates(); // Refresh the list
+  };
+
+  // --- Helper function for status badge styling ---
+  const getEstimateStatusClass = (status) => {
+    const baseClasses = 'status-badge-modern '; // Keep space at the end
+    const lowerStatus = status?.toLowerCase() || 'default';
+
+    // Map estimate statuses (reason field) to style classes
+    // Adjust these cases based on the actual values in estimate.reason
+    switch (lowerStatus) {
+      case 'sent':
+      case 'pending': // Example: Grouping similar statuses
+        return baseClasses + 'status-badge--active'; // Blueish
+      case 'accepted':
+        return baseClasses + 'status-badge--positive'; // Greenish
+      case 'rejected':
+      case 'cancelled': // Example: Grouping
+        return baseClasses + 'status-badge--negative'; // Reddish
+      case 'draft':
+        return baseClasses + 'status-badge--default'; // Greyish
+      // Add more cases as needed for other statuses like 'viewed', 'expired', etc.
+      default:
+        return baseClasses + 'status-badge--default'; // Default grey
+    }
+  };
+
+  // Add dark mode toggle function
+  const toggleDarkMode = () => {
+    isDarkMode.value = !isDarkMode.value;
+    localStorage.setItem('darkMode', isDarkMode.value);
+    document.documentElement.classList.toggle('dark', isDarkMode.value);
+  };
+
+  onMounted(() => {
+    document.documentElement.classList.toggle('dark', isDarkMode.value); // Apply on initial load
     if(userStore.currentWebsite){
-      fetchEstimates(selectedEstimate)  
+      fetchEstimates();
+      fetchTechnicians(); // Fetch technicians on mount
     }
-  })
+  });
+
+  watchEffect(() => {
+    if(userStore.currentWebsite){
+      // Refetch when website changes (optional, depends on desired behavior)
+      // fetchEstimates();
+    }
+    // Add other watchers if needed (e.g., for chart updates if re-added)
+  });
 
 </script>
 
 <template>
-  <Header title="Estimates" /> 
-  <scale-loader :loading="loading" color="#23293b" height="50px" class="vld-overlay is-active is-full-page" width="6px">
-  </scale-loader>
-  <div class="mx-auto py-6 sm:px-6 lg:px-8">
-    <div class="px-2 py-6 sm:px-0">
-      <div>
-        <div class="">
-          <div class="md:col-span-1">
-               
-          </div>
-          <div class="mt-3 md:col-span-2">
-              <div v-if="userStore.currentWebsite" class="shadow p-10 sm:rounded-md sm:overflow-hidden">
+ <!-- Main container with background and padding -->
+ <div :class="{ 'dark': isDarkMode }" class="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 dark:from-gray-900 dark:via-gray-950 dark:to-blue-950 text-gray-800 dark:text-gray-200 font-sans transition-colors duration-300">
+   <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-12">
 
-                <div class="grid gap-3 text-right lg:grid-cols-3 md:grid-cols-2 sm:grid-cols-1">
-                  <div><h2 class="text-xl font-semibold text-left">All Estimates</h2> </div>
-                  <div class="relative text-right"></div>
-                  <div class="relative text-right">
-                    <router-link :to="{name: 'add-estimate'}" class="text-white bg-gray-800 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-gray-300 dark:focus:ring-gray-800 shadow-lg shadow-gray-500/50 dark:shadow-lg dark:shadow-gray-800/80 font-medium rounded-lg text-sm px-5 py-2.5 text-center mb-5">Add Estimate <svg class="w-6 h-6 inline pb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></router-link> 
-                  </div>
-                </div> 
+     <!-- Header Section -->
+     <header class="flex flex-col md:flex-row justify-between items-center mb-10 md:mb-14 space-y-4 md:space-y-0">
+       <h1 class="text-3xl sm:text-4xl font-bold tracking-tight text-gray-900 dark:text-white flex items-center">
+         <font-awesome-icon icon="file-invoice-dollar" class="mr-3 text-indigo-500 dark:text-indigo-400" /> Manage Estimates
+       </h1>
+       <div class="flex items-center space-x-2 sm:space-x-3">
+         <!-- Add Website Selector if needed -->
+         <button @click="fetchEstimates" class="btn-icon-modern" title="Reload Estimates">
+            <font-awesome-icon icon="sync" :class="{ 'fa-spin': loading }" />
+         </button>
+         <button @click="toggleDarkMode" class="btn-icon-modern" title="Toggle Dark Mode">
+            <font-awesome-icon :icon="isDarkMode ? 'sun' : 'moon'" />
+         </button>
+         <router-link :to="{name: 'add-estimate'}" class="btn-primary-modern">
+            <font-awesome-icon icon="plus" class="mr-1.5 h-4 w-4" /> Add Estimate
+         </router-link>
+       </div>
+     </header>
 
-                <ag-grid-vue
-                    class="ag-theme-alpine"
-                    style="height:580px"
-                    :columnDefs="columnDefs.value"
-                    :rowData="rowData.value"
-                    :defaultColDef="defaultColDef"
-                    :pagination="true"
-                    :paginationPageSize="paginationPageSize"
-                    rowSelection="multiple"
-                    animateRows="true"
-                    @grid-ready="onGridReady"
-                    @cell-clicked="toggleEditModal"
-                  >
-                </ag-grid-vue>
+     <!-- Filter Section -->
+     <section class="mb-10 p-5 sm:p-6 card-modern">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-5 gap-y-4 items-end">
+           <!-- Search Input -->
+           <div class="relative sm:col-span-2 lg:col-span-1">
+              <font-awesome-icon icon="search" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+              <input v-model="filters.search" placeholder="Search #, customer, tech..." class="input-modern pl-10 pr-3" />
+           </div>
+           <!-- Status Select -->
+           <select v-model="filters.status" class="input-modern input-modern--select">
+             <option value="">All Statuses</option>
+             <!-- Assuming estimateStatuses holds the possible status values -->
+             <option v-for="status in availableStatuses" :key="status" :value="status">{{ status }}</option>
+           </select>
 
-                <div class="grid gap-3 text-right lg:grid-cols-3 md:grid-cols-2 sm:grid-cols-1  mx-auto py-6">
-                  <div></div>
-                  <div class="relative text-right"></div>
-                  <div class="relative text-right">
-                    
-                  </div>
-                </div> 
+           <!-- Filter Actions -->
+           <div class="flex items-center justify-end space-x-2 mt-2 sm:mt-0 lg:col-start-3">
+              <button @click="clearFilters" class="btn-secondary-modern text-xs sm:text-sm whitespace-nowrap">
+                 Clear Filters
+              </button>
+           </div>
+        </div>
+     </section>
 
-                <div class="flex justify-center mb-24">    
-                  <div class="flex min-h-[70vh] overflow-x-scroll overflow-y-scroll shadow bg-slate-100 w-full py-6 sm:px-6 lg:px-8 h-20 ">
-                  
-                    <div
-                        v-for="column in estimatesApi"
-                        :key="column.title"
-                        class="rounded-lg px-3 py-3 column-width mr-4 h-20"
-                      >
-                      <p :class="colors[column.title]" class="text-white font-bold font-sans tracking-wide text-xl rounded-lg capitalize px-3 py-3">{{column.title}}</p>
-
-                      <draggable v-model="column.estimates">
-                          <template v-slot:item="{item}">
-                              <div class="bg-white shadow rounded px-3 pt-3 pb-1 border border-white mt-3 cursor-move w-96">
-                                <div class="flex justify-between mb-0">
-                                  <p class="text-black font-bold font-sans tracking-wide text-xl capitalize">{{item.customer?.name}}</p>
-
-                                  <p :class="colors[column.title]" class="text-sm text-white rounded-full shadow-md px-3 py-1.5 my-1 w-fit">{{item.reason}}</p>
-                                </div>
-
-                                <!-- <p class="text-lg text-black -mt-3 mb-3">{{item.employee?.firstName + ' ' + item.employee?.lastName}}</p> -->
-
-                                <div class="mt-3 mb-4 p-2 shadow rounded-2xl bg-slate-100">
-                                  <div class="flex justify-between">
-                                    <p class="text-md font-bold text-black">Estimate Number</p>
-                                    <p class="text-md text-black">#{{item.number}}</p>                                  
-                                  </div>
-
-                                  <div class="flex justify-between">
-                                    <p class="text-md font-bold text-black">Amount</p>
-                                    <p class="text-md text-black">{{'R' + item.sales}}</p>                                  
-                                  </div>
-
-                                  <div class="flex justify-between">
-                                    <p class="text-md font-bold text-black">Date</p>
-                                    <p class="text-md text-black">{{universalDateFormatter(item.createdAt)}}</p>                                  
-                                  </div>
-                                </div>
-                                                  
-                                <div class="flex mt-4 mb-1 justify-between items-center">
-                                  <router-link :to="{ name: 'edit-estimate', query:{ estimate_id: item.id } }" class="text-white cursor-pointer inline-block bg-gray-800 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-gray-300 dark:focus:ring-gray-800 shadow-lg shadow-gray-500/50 dark:shadow-lg dark:shadow-gray-800/80 font-medium rounded-lg text-sm px-3 py-1 text-center">
-                                    Edit
-                                  </router-link>
-                                  <router-link :to="{ name: 'view-estimate', query:{ estimate_id: item.id } }" class="text-white cursor-pointer inline-block bg-gray-800 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-gray-300 dark:focus:ring-gray-800 shadow-lg shadow-gray-500/50 dark:shadow-lg dark:shadow-gray-800/80 font-medium rounded-lg text-sm px-3 py-1 text-center">
-                                    View
-                                  </router-link>
-                                </div>
-                              </div>
-                          </template>
-                      </draggable>
-                    </div>
-
-
-                  </div>
-                </div>
-
-                <div class="text-center mt-10 mb-10 pb-6 pr-3 shadow-lg rounded-lg bg-blueGray-800">
-                  <div class="rounded-t mb-0 px-4 py-3 bg-transparent">
-                    <div class="flex flex-wrap items-center">
-                      <div class="relative w-full max-w-full flex-grow flex-1 text-left">
-                        <h6 class="uppercase mb-1 text-xs font-semibold text-blueGray-200">
-                          Overview
-                        </h6>
-                        <h2 class="text-xl font-semibold text-white">Last sent estimates</h2>
+     <!-- Estimate List Section -->
+     <section>
+        <!-- Loading Skeleton -->
+        <div v-if="loading" class="animate-pulse">
+           <div class="hidden md:block bg-white dark:bg-gray-800/50 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700/50 overflow-hidden">
+              <table class="min-w-full">
+                <thead class="border-b border-gray-200 dark:border-gray-700">
+                  <tr>
+                    <th class="th-modern"><div class="h-4 bg-gray-300 dark:bg-gray-700 rounded w-1/4"></div></th>
+                    <th class="th-modern"><div class="h-4 bg-gray-300 dark:bg-gray-700 rounded w-3/4"></div></th>
+                    <th class="th-modern"><div class="h-4 bg-gray-300 dark:bg-gray-700 rounded w-1/2"></div></th>
+                    <th class="th-modern"><div class="h-4 bg-gray-300 dark:bg-gray-700 rounded w-1/2"></div></th>
+                    <th class="th-modern"><div class="h-4 bg-gray-300 dark:bg-gray-700 rounded w-1/4"></div></th>
+                    <th class="th-modern"><div class="h-4 bg-gray-300 dark:bg-gray-700 rounded w-1/4"></div></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="n in 5" :key="`skel-row-${n}`" class="border-b border-gray-100 dark:border-gray-700/50">
+                    <td class="td-modern"><div class="h-4 bg-gray-300 dark:bg-gray-700 rounded w-full"></div></td>
+                    <td class="td-modern"><div class="h-4 bg-gray-300 dark:bg-gray-700 rounded w-4/5"></div></td>
+                    <td class="td-modern"><div class="h-4 bg-gray-300 dark:bg-gray-700 rounded w-1/2"></div></td>
+                    <td class="td-modern"><div class="h-4 bg-gray-300 dark:bg-gray-700 rounded w-1/2"></div></td>
+                    <td class="td-modern"><div class="h-5 bg-gray-300 dark:bg-gray-700 rounded-full w-20"></div></td>
+                    <td class="td-modern text-right">
+                      <div class="flex justify-end space-x-2">
+                        <div class="h-6 bg-gray-300 dark:bg-gray-700 rounded w-10"></div>
+                        <div class="h-6 bg-gray-300 dark:bg-gray-700 rounded w-10"></div>
                       </div>
-                    </div>
-                  </div>
-                  <apexchart type="bar" height="450" :options="options" :series="series"></apexchart>
-                </div>                
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+           </div>
+           <!-- Add Mobile Skeleton if needed -->
+        </div>
+
+        <!-- Estimate Table (Desktop) -->
+        <div v-if="!loading && paginatedEstimates.length > 0" class="hidden md:block bg-white dark:bg-gray-800/50 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700/50 overflow-hidden">
+            <table class="min-w-full divide-y divide-gray-100 dark:divide-gray-700/50">
+               <thead class="bg-gray-50 dark:bg-gray-900/30">
+                  <tr>
+                     <th scope="col" class="th-modern">Estimate #</th>
+                     <th scope="col" class="th-modern">Client</th>
+                     <th scope="col" class="th-modern">Created At</th>
+                     <th scope="col" class="th-modern">Amount</th>
+                     <th scope="col" class="th-modern">Status</th>
+                     <th scope="col" class="th-modern text-right">Actions</th>
+                  </tr>
+               </thead>
+               <tbody class="divide-y divide-gray-100 dark:divide-gray-700/50">
+                  <tr v-for="estimate in paginatedEstimates" :key="estimate.id" class="hover:bg-gray-50/50 dark:hover:bg-white/5 transition-colors duration-150">
+                     <td class="td-modern font-medium text-gray-900 dark:text-white">#{{ estimate.number }}</td>
+                     <td class="td-modern">
+                        <router-link :to="{ path: '/contact', query: { customer_id: estimate.customer?.id } }" class="text-indigo-600 dark:text-indigo-400 hover:underline">
+                          {{ estimate.customer?.name || 'N/A' }}
+                        </router-link>
+                     </td>
+                     <td class="td-modern text-gray-500 dark:text-gray-400 whitespace-nowrap">{{ dateFormatter(estimate.createdAt) }}</td>
+                     <td class="td-modern text-gray-500 dark:text-gray-400">R{{ estimate.sales }}</td>
+                     <td class="td-modern">
+                        <!-- Add styled status span here -->
+                        <span :class="getEstimateStatusClass(estimate.reason)" class="status-badge-modern">
+                          {{ estimate.reason }}
+                        </span>
+                     </td>
+                     <td class="td-modern text-right space-x-2 whitespace-nowrap">
+                        <button @click="openEditModal(estimate)" class="btn-ghost-modern" title="Edit Estimate">
+                          <font-awesome-icon icon="edit" /> Edit
+                        </button>
+                        <button @click="openEditModal(estimate)" class="btn-ghost-modern" title="View Estimate">
+                          <font-awesome-icon icon="eye" /> View
+                        </button>
+                     </td>
+                  </tr>
+               </tbody>
+            </table>
+        </div>
+
+        <!-- Estimate Cards (Mobile) - Placeholder -->
+        <div class="md:hidden space-y-4">
+           <div v-if="!loading && paginatedEstimates.length > 0" v-for="estimate in paginatedEstimates" :key="estimate.id" class="card-modern p-4">
+              <div class="flex justify-between items-start mb-3 gap-2">
+                 <span class="text-base font-semibold text-gray-900 dark:text-white leading-tight">
+                    Estimate #{{ estimate.number }}
+                 </span>
+                 <span :class="getEstimateStatusClass(estimate.reason)" class="status-badge-modern flex-shrink-0">
+                    {{ estimate.reason }}
+                 </span>
               </div>
-              <div v-else class="shadow p-10 sm:rounded-md sm:overflow-hidden">Please select website on the navigation first</div>
-          </div>
+              <p class="text-sm text-gray-600 dark:text-gray-400 mb-1">
+                Client:
+                <router-link :to="{ path: '/contact', query: { customer_id: estimate.customer?.id } }" class="text-indigo-600 dark:text-indigo-400 hover:underline">
+                  {{ estimate.customer?.name || 'N/A' }}
+                </router-link>
+              </p>
+              <div class="text-xs text-gray-500 dark:text-gray-400 space-y-1">
+                <p>Amount: R{{ estimate.sales }}</p>
+                <p>Created: {{ dateFormatter(estimate.createdAt) }}</p>
+              </div>
+              <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700/50 flex justify-end space-x-2">
+                 <button @click="openEditModal(estimate)" class="btn-ghost-modern">Edit/View</button>
+                 <!-- Removed separate view link -->
+              </div>
+           </div>
         </div>
-      </div>
 
-      <div class="hidden sm:block" aria-hidden="true">
-        <div class="py-5">
-          <div class="border-t border-gray-200" />
+        <!-- Pagination -->
+        <nav v-if="!loading && totalPages > 1" class="mt-6 flex flex-col sm:flex-row justify-between items-center text-sm">
+           <p class="text-gray-600 dark:text-gray-400 mb-2 sm:mb-0">
+              Showing <span class="font-medium">{{ startIndex + 1 }}</span> to <span class="font-medium">{{ endIndex }}</span> of <span class="font-medium">{{ totalEstimates }}</span> results
+           </p>
+           <div class="flex space-x-1">
+              <button :disabled="currentPage === 1" @click="prevPage" class="btn-pagination-modern">
+                 <font-awesome-icon icon="chevron-left" class="h-3 w-3 mr-1" /> Previous
+              </button>
+              <button :disabled="currentPage === totalPages" @click="nextPage" class="btn-pagination-modern">
+                 Next <font-awesome-icon icon="chevron-right" class="h-3 w-3 ml-1" />
+              </button>
+           </div>
+        </nav>
+
+        <!-- No Results Message -->
+        <div v-if="!loading && paginatedEstimates.length === 0" class="text-center py-16 text-gray-500">
+           <font-awesome-icon icon="file-invoice-dollar" class="mx-auto h-12 w-12 text-gray-400" />
+           <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">No estimates found</h3>
+           <p class="mt-1 text-sm text-gray-500">Try adjusting your search or filter criteria, or add a new estimate.</p>
         </div>
-      </div>
 
-    </div>
-  </div>
+     </section>
 
-  <div id="modalOpen" tabindex="-1" :class="{ flex: modalOpen, hidden: !modalOpen }" class="overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 w-full md:inset-0 h-modal md:h-full justify-center items-center">
-    <div class="relative p-4 w-full max-w-2xl h-full md:h-auto">
-      <!-- Modal content -->
-      <div class="relative bg-white rounded-lg shadow dark:bg-gray-700">
-        <!-- Modal header -->
-        <div class="flex justify-between items-start p-4 rounded-t border-b dark:border-gray-600">
-          <h3 class="text-xl font-semibold text-gray-900 dark:text-white">
-            Update Estimate Details
-          </h3>
-          <button ref="closeDefaultModal" type="button"
-            class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center dark:hover:bg-gray-600 dark:hover:text-white"
-            @click="modalOpen = false">
-            <svg aria-hidden="true" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"
-              xmlns="http://www.w3.org/2000/svg">
-              <path fill-rule="evenodd"
-                d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                clip-rule="evenodd"></path>
-            </svg>
-            <span class="sr-only">Close modal</span>
-          </button>
-        </div>
-        <!-- Modal body -->
-        <div class="p-6 space-y-6">
-          <FormKit type="form" v-if="selectedEstimate" id="estimate" submit-label="Add" @submit="update" :actions="false" >
+   </div> <!-- End container -->
 
-            <FormKit type="hidden" v-model="selectedEstimate.jobId" name="jobId" label="Job" />                     
+   <!-- Loading Overlay -->
+   <div v-if="loading" class="fixed inset-0 z-[60] bg-gray-900 bg-opacity-50 dark:bg-opacity-80 flex items-center justify-center">
+      <scale-loader :loading="true" color="#4f46e5" height="40px" width="5px" />
+   </div>
 
-            <div class="double">
-              <FormKit type="select" v-model="selectedEstimate.reason" name="reason" label="Estimate Stage" :options="status" />  
-              <FormKit type="text" v-model="selectedEstimate.name" name="name" label="Estimate Name" placeholder="Estimate Name" outer-class="text-left" />                   
-            </div>
+   <!-- Add/Edit Estimate Modal -->
+   <!-- Pass customer data if available on estimate -->
+   <!-- Pass fetched technicians -->
+   <!-- Pass customer jobs if available -->
+   <!-- Pass actual statuses -->
+   <EstimateFormModal
+     v-model="editModalOpen"
+     :customer-data="selectedEstimate?.customer"
+     :estimate-data="selectedEstimate"
+     @estimate-saved="handleEstimateSaved"
+     :technicians="technicians"
+     :customer-jobs="modalCustomerJobs"
+     :available-statuses="availableStatuses"
+   ></EstimateFormModal>
 
-            <div class="double">
-              <FormKit type="text" v-model="selectedEstimate.number" name="number" label="Estimate Number" placeholder="Estimate Number" outer-class="text-left" />
-              <FormKit type="text" v-model="selectedEstimate.url" name="url" label="Estimate Url" placeholder="Estimate Url" outer-class="text-left" />
-            </div>                    
-
-            <div class="double">
-              <FormKit type="datetime-local" v-model="selectedEstimate.issuedAt" name="issuedAt" label="Issued Date" placeholder="Issued Date" outer-class="text-left" />
-              <FormKit type="text" v-model="selectedEstimate.amount" name="amount" label="Estimate Amount" placeholder="Estimate Amount" outer-class="text-left" />
-            </div>   
-
-            <FormKit type="textarea" v-model="selectedEstimate.notes" name="notes" label="Estimate Notes" placeholder="Estimate Notes" outer-class="text-left" />
-            
-            <FormKit type="hidden" v-model="selectedEstimate.id" name="id" label="ID" /> 
-
-            <FormKit type="submit" label="Update estimate" />
-
-          </FormKit>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div v-if="modalOpen" class="bg-gray-900 bg-opacity-50 dark:bg-opacity-80 fixed inset-0 z-40"></div>
-
+ </div> <!-- End main div -->
 </template>
+
+<style scoped>
+/* Add modern styles */
+.input-modern {
+ @apply block w-full px-3 py-2 text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600/50 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500;
+ @apply focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:focus:ring-indigo-400 dark:focus:border-indigo-400;
+ @apply transition duration-150 ease-in-out;
+}
+.input-modern--select {
+ @apply pr-8 appearance-none bg-no-repeat bg-right;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 0.5rem center;
+  background-size: 1.5em 1.5em;
+}
+.dark .input-modern--select {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+}
+
+.label-modern {
+ @apply block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1;
+}
+
+.btn-primary-modern {
+ @apply inline-flex items-center justify-center px-3.5 py-2 text-sm font-semibold text-white bg-indigo-600 dark:bg-indigo-500 rounded-md shadow-sm;
+ @apply hover:bg-indigo-700 dark:hover:bg-indigo-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600;
+ @apply transition-colors duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed;
+}
+.btn-secondary-modern {
+ @apply inline-flex items-center justify-center px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600/50 rounded-md shadow-sm;
+ @apply hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:focus:ring-indigo-400;
+ @apply transition-colors duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed;
+}
+.btn-ghost-modern {
+ @apply inline-flex items-center justify-center px-2 py-1 text-xs font-medium text-indigo-600 dark:text-indigo-400 rounded;
+ @apply hover:bg-indigo-100 dark:hover:bg-indigo-900/50 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:focus:ring-indigo-400;
+ @apply transition-colors duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed;
+}
+.btn-icon-modern {
+ @apply inline-flex items-center justify-center w-8 h-8 text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600/50 rounded-md shadow-sm;
+ @apply hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:focus:ring-indigo-400;
+ @apply transition-colors duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed;
+}
+.btn-pagination-modern {
+ @apply inline-flex items-center px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md;
+ @apply hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed;
+ @apply transition-colors duration-150 ease-in-out;
+}
+
+.card-modern {
+ @apply bg-white dark:bg-gray-800/60 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700/50 backdrop-blur-sm;
+}
+
+.th-modern {
+ @apply px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider;
+}
+.td-modern {
+ @apply px-4 py-3 text-sm;
+}
+
+/* Status Badge Styles */
+.status-badge-modern {
+ @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium capitalize whitespace-nowrap;
+}
+/* Add specific status colors based on estimate.reason */
+/* Example - adjust based on actual statuses */
+.status-badge--sent { @apply bg-blue-100 text-blue-800 dark:bg-blue-800/50 dark:text-blue-300; }
+.status-badge--accepted { @apply bg-green-100 text-green-800 dark:bg-green-800/50 dark:text-green-300; }
+.status-badge--rejected { @apply bg-red-100 text-red-800 dark:bg-red-800/50 dark:text-red-300; }
+.status-badge--draft { @apply bg-gray-100 text-gray-800 dark:bg-gray-700/50 dark:text-gray-300; }
+.status-badge--default { @apply bg-gray-100 text-gray-800 dark:bg-gray-700/50 dark:text-gray-300; }
+
+
+.modal-content-modern {
+ @apply inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:w-full p-6 sm:p-8;
+}
+.modal-fade-enter-active,
+.modal-fade-leave-active {
+ transition: opacity 0.3s ease;
+}
+.modal-fade-enter-from,
+.modal-fade-leave-to {
+ opacity: 0;
+}
+.modal-fade-enter-active .modal-content-modern,
+.modal-fade-leave-active .modal-content-modern {
+ transition: all 0.3s ease;
+}
+.modal-fade-enter-from .modal-content-modern,
+.modal-fade-leave-to .modal-content-modern {
+  transform: translateY(20px) scale(0.98);
+  opacity: 0;
+}
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { @apply bg-gray-100 dark:bg-gray-800/50; }
+::-webkit-scrollbar-thumb { @apply bg-gray-300 dark:bg-gray-600 rounded; }
+::-webkit-scrollbar-thumb:hover { @apply bg-gray-400 dark:bg-gray-500; }
+
+/* Ensure date/time inputs are stylable */
+input[type="datetime-local"] {
+ @apply appearance-none;
+}
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+ @apply filter dark:invert opacity-50 cursor-pointer;
+}
+
+</style>

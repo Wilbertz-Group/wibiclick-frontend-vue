@@ -5,7 +5,10 @@
 	import modal from "../misc/modal.vue";
 	import { useUserStore } from "@/stores/UserStore"
 	import { universalDateFormatter, dateFormatter, universalTimeFormatter } from '../../helpers';
-	import { 
+	import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome' // Added for delete icon
+	import { library } from '@fortawesome/fontawesome-svg-core' // Added for delete icon
+	import { faTrash } from '@fortawesome/free-solid-svg-icons' // Added for delete icon
+	import {
   Listbox,
   ListboxLabel,
   ListboxButton,
@@ -13,10 +16,12 @@
   ListboxOption,
 } from '@headlessui/vue'
 
+	library.add(faTrash) // Added for delete icon
+
 	const emit = defineEmits(['reloadTimeline', 'edit-job']) // Add edit-job emit
 	const props = defineProps(['job'])
 	const userStore = useUserStore()
-	const toast = useToast() 
+	const toast = useToast()
 
 	const statuses = [
 		{ value: "scheduled", name: "Scheduled" },
@@ -64,7 +69,7 @@
 	// Helper function for currency formatting
 	function formatCurrency(value) {
 	  if (value === null || value === undefined || isNaN(Number(value))) return 'N/A';
-	
+
 	  // Use Intl.NumberFormat for locale-aware currency formatting
 	  try {
 	    return new Intl.NumberFormat('en-ZA', { // Use South African locale
@@ -79,7 +84,7 @@
 	    return `R ${Number(value).toFixed(2)}`;
 	  }
 	}
-	
+
 	// Helper function to determine profit text color
 	function getProfitClass(value) {
 	  if (value === null || value === undefined) return 'text-gray-500';
@@ -95,11 +100,11 @@
 		toast.success('updating the status of the job')
 		body.value = `Job status changed from <b>${o.value}</b> to <b>${n.value}</b>`
 		heading.value = "Job Status"
-		
-		const data = { 
-			id: props.job.id, 
-			jobStatus: n.value, 
-			customerId: props.job.customerId, 
+
+		const data = {
+			id: props.job.id,
+			jobStatus: n.value,
+			customerId: props.job.customerId,
 			employeeId: props.job.employeeId
 		}
 
@@ -112,6 +117,25 @@
       // Removed console.log
     }
 	})
+
+	async function deleteJob() {
+	  if (!props.job || !props.job.id) {
+	    toast.error('Cannot delete job: ID missing.');
+	    return;
+	  }
+
+	  if (confirm(`Are you sure you want to delete job for ${props.job.name}? This action cannot be undone.`)) {
+	    try {
+	      // Use the confirmed endpoint: DELETE /job?custId={id}&id={websiteId}
+	      await axios.delete(`/job?custId=${props.job.id}&id=${userStore.currentWebsite}`);
+	      toast.success('Job deleted successfully.');
+	      emit('reloadTimeline'); // Refresh the parent list
+	    } catch (error) {
+	      console.error("Error deleting job:", error);
+	      toast.error(`Failed to delete job: ${error.response?.data?.message || error.message}`);
+	    }
+	  }
+	}
 
 </script>
 
@@ -242,6 +266,10 @@
 		  <div class="flex mt-2 mb-1 justify-between items-center"> <!-- Changed back to justify-between -->
 		    <button @click="$emit('edit-job', job)" class="text-white cursor-pointer inline-block bg-slate-900 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-gray-300 dark:focus:ring-gray-800 shadow-lg shadow-gray-500/50 dark:shadow-lg dark:shadow-gray-800/80 font-medium rounded-lg text-sm px-3 py-1 text-center"> Edit </button>
 		    <button @click="$emit('edit-job', job)" class="text-white cursor-pointer inline-block bg-slate-900 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-gray-300 dark:focus:ring-gray-800 shadow-lg shadow-gray-500/50 dark:shadow-lg dark:shadow-gray-800/80 font-medium rounded-lg text-sm px-3 py-1 text-center"> View </button>
+				<!-- Delete Button -->
+				<button @click="deleteJob" class="text-white cursor-pointer inline-block bg-red-600 hover:bg-red-700 focus:ring-4 focus:outline-none focus:ring-red-300 dark:focus:ring-red-800 shadow-lg shadow-red-500/50 dark:shadow-lg dark:shadow-red-800/80 font-medium rounded-lg text-sm px-3 py-1 text-center" title="Delete Job">
+					<font-awesome-icon icon="trash" />
+				</button>
 		  </div>
 	</div>
 </template>
