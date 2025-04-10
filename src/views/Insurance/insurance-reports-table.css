@@ -1,0 +1,225 @@
+/* Enhanced AG Grid Styling for Insurance Reports Table */
+
+/* Base table styling */
+.ag-theme-alpine,
+.ag-theme-alpine-dark {
+  --ag-border-color: rgba(229, 231, 235, 0.5);
+  --ag-row-border-color: rgba(229, 231, 235, 0.3);
+  --ag-header-column-separator-display: block;
+  --ag-header-column-separator-height: 75%;
+  --ag-header-column-separator-width: 1px;
+  --ag-header-column-separator-color: rgba(229, 231, 235, 0.5);
+  --ag-row-hover-color: rgba(243, 244, 246, 0.3);
+  --ag-selected-row-background-color: rgba(79, 70, 229, 0.1);
+  --ag-font-size: 0.875rem;
+  --ag-font-family: 'Inter', sans-serif;
+  --ag-cell-horizontal-padding: 1rem;
+  --ag-header-height: 48px;
+  --ag-row-height: 52px;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+}
+
+/* Dark mode specific styling */
+.ag-theme-alpine-dark {
+  --ag-border-color: rgba(55, 65, 81, 0.5);
+  --ag-row-border-color: rgba(55, 65, 81, 0.3);
+  --ag-header-column-separator-color: rgba(55, 65, 81, 0.5);
+  --ag-row-hover-color: rgba(31, 41, 55, 0.4);
+  --ag-selected-row-background-color: rgba(79, 70, 229, 0.15);
+}
+
+/* Header styling */
+.ag-theme-alpine .ag-header,
+.ag-theme-alpine-dark .ag-header {
+  border-bottom: 2px solid var(--ag-border-color);
+}
+
+.ag-theme-alpine .ag-header-cell,
+.ag-theme-alpine-dark .ag-header-cell {
+  font-weight: 600;
+}
+
+/* Row styling */
+.ag-theme-alpine .ag-row,
+.ag-theme-alpine-dark .ag-row {
+  border-bottom-width: 1px;
+  transition: background-color 0.2s ease;
+}
+
+.ag-theme-alpine .ag-row-even,
+.ag-theme-alpine-dark .ag-row-even {
+  background-color: rgba(249, 250, 251, 0.4);
+}
+
+.ag-theme-alpine-dark .ag-row-even {
+  background-color: rgba(31, 41, 55, 0.2);
+}
+
+.ag-theme-alpine .ag-row:hover,
+.ag-theme-alpine-dark .ag-row:hover {
+  background-color: var(--ag-row-hover-color);
+  transform: translateY(-1px);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+/* Cell styling */
+.ag-theme-alpine .ag-cell,
+.ag-theme-alpine-dark .ag-cell {
+  display: flex;
+  align-items: center;
+  line-height: 1.5;
+}
+
+/* Pagination styling */
+.ag-theme-alpine .ag-paging-panel,
+.ag-theme-alpine-dark .ag-paging-panel {
+  border-top: 1px solid var(--ag-border-color);
+  padding: 0.75rem 1rem;
+  font-weight: 500;
+}
+
+.ag-theme-alpine .ag-paging-button,
+.ag-theme-alpine-dark .ag-paging-button {
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  transition: all 0.2s ease;
+}
+
+.ag-theme-alpine .ag-paging-button:hover,
+.ag-theme-alpine-dark .ag-paging-button:hover {
+  background-color: rgba(79, 70, 229, 0.1);
+  color: rgb(79, 70, 229);
+}
+
+/* Filter styling */
+.ag-theme-alpine .ag-filter-toolpanel-header,
+.ag-theme-alpine-dark .ag-filter-toolpanel-header,
+.ag-theme-alpine .ag-filter-toolpanel-search,
+.ag-theme-alpine-dark .ag-filter-toolpanel-search {
+  border-bottom: 1px solid var(--ag-border-color);
+}
+
+/* Floating filter styling */
+.ag-theme-alpine .ag-floating-filter-input,
+.ag-theme-alpine-dark .ag-floating-filter-input {
+  border-radius: 0.25rem;
+  border: 1px solid var(--ag-border-color);
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+}
+
+/* Custom column styling */
+.ag-theme-alpine .ag-cell[col-id="customer.name"] a,
+.ag-theme-alpine-dark .ag-cell[col-id="customer.name"] a {
+  color: rgb(79, 70, 229);
+  font-weight: 500;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.ag-theme-alpine .ag-cell[col-id="customer.name"] a:hover,
+.ag-theme-alpine-dark .ag-cell[col-id="customer.name"] a:hover {
+  color: rgb(67, 56, 202);
+  text-decoration: underline;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .ag-theme-alpine,
+  .ag-theme-alpine-dark {
+    --ag-cell-horizontal-padding: 0.5rem;
+    --ag-header-height: 40px;
+    --ag-row-height: 48px;
+    }
+  }
+  
+  /* Additional styling for the insurance reports table */
+  .insurance-reports-table {
+    position: relative;
+  }
+  
+  /* Add a subtle box shadow to the table */
+  .insurance-reports-table .ag-root-wrapper {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  }
+  
+  /* Improve the pagination controls */
+  .insurance-reports-table .ag-paging-panel {
+    padding: 1rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: rgba(249, 250, 251, 0.5);
+  }
+  
+  .dark .insurance-reports-table .ag-paging-panel {
+    background-color: rgba(31, 41, 55, 0.2);
+  }
+  
+  /* Style the pagination buttons */
+  .insurance-reports-table .ag-paging-button {
+    border-radius: 0.375rem;
+    padding: 0.375rem 0.75rem;
+    transition: all 0.2s ease;
+  }
+  
+  .insurance-reports-table .ag-paging-button:hover:not(.ag-disabled) {
+    background-color: rgba(79, 70, 229, 0.1);
+    color: rgb(79, 70, 229);
+  }
+  
+  /* Style the row selection checkbox */
+  .insurance-reports-table .ag-checkbox-input-wrapper {
+    border-radius: 0.25rem;
+    width: 1.25rem;
+    height: 1.25rem;
+    border: 2px solid rgba(209, 213, 219, 0.8);
+    transition: all 0.2s ease;
+  }
+  
+  .insurance-reports-table .ag-checkbox-input-wrapper.ag-checked {
+    background-color: rgb(79, 70, 229);
+    border-color: rgb(79, 70, 229);
+  }
+  
+  .insurance-reports-table .ag-checkbox-input-wrapper.ag-checked::after {
+    color: white;
+  }
+  
+  /* Add a subtle transition effect to rows */
+  .insurance-reports-table .ag-row {
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+  }
+  
+  .insurance-reports-table .ag-row:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    z-index: 1;
+  }
+  
+  /* Style the column headers */
+  .insurance-reports-table .ag-header-cell-label {
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+  }
+  
+  /* Add a subtle animation to the sort icons */
+  .insurance-reports-table .ag-header-cell-sorted-asc .ag-icon-asc,
+  .insurance-reports-table .ag-header-cell-sorted-desc .ag-icon-desc {
+    color: rgb(79, 70, 229);
+    transition: transform 0.2s ease;
+  }
+  
+  .insurance-reports-table .ag-header-cell-sorted-asc .ag-icon-asc {
+    transform: translateY(-1px);
+  }
+  
+  .insurance-reports-table .ag-header-cell-sorted-desc .ag-icon-desc {
+    transform: translateY(1px);
+  }

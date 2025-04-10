@@ -2,7 +2,7 @@
   import axios from "axios";
   // Removed Header import
   import { useUserStore } from "@/stores/UserStore"
-  import { onMounted, ref, reactive, watchEffect, computed, nextTick, watch } from "vue"; // Added watch
+  import { onMounted, ref, reactive, watchEffect, computed, nextTick, watch, h, render } from "vue"; // Added h and render for component rendering
   import moment from 'moment'
   import _ from 'lodash';
   import { useRouter } from "vue-router";
@@ -12,6 +12,9 @@
   import "ag-grid-community/styles/ag-grid.css"; // Core grid CSS, always needed
   import "ag-grid-community/styles/ag-theme-alpine.css"; // Optional theme CSS
   import "ag-grid-community/styles/ag-theme-balham.css"; // Optional theme CSS (needed for dark mode potentially)
+  
+  // Custom CSS for enhanced table styling
+  import "./insurance-reports-table.css"; // Import custom table styling
   import Edit from "@/components/insurance/Edit.vue";
   import View from "@/components/insurance/View.vue";
   import Status from "@/components/insurance/Status.vue";
@@ -326,12 +329,18 @@
     const seriesData = Object.values(grouped).map(a => a.length);
     const optionsData = Object.keys(grouped);
     
-    // Format x-axis labels based on time period
+    // Format x-axis labels based on time period and determine axis type
     let xaxisFormat = 'dd MMM';
+    let xaxisType = 'datetime';
+    
+    // For weekly and monthly views, we'll use category type instead of datetime
+    // This avoids the need for JavaScript Date objects
     if (currentGroup === 'byMonth') {
       xaxisFormat = 'MMM yyyy';
+      xaxisType = 'category';
     } else if (currentGroup === 'byWeek') {
       xaxisFormat = 'wo [week] yyyy'; // Week number format
+      xaxisType = 'category';
     }
     
     // Update chart options
@@ -343,10 +352,11 @@
       },
       xaxis: {
         ...options.value.xaxis,
+        type: xaxisType, // Use the determined axis type
         categories: optionsData,
         labels: {
           ...options.value.xaxis.labels,
-          format: xaxisFormat,
+          format: xaxisType === 'datetime' ? xaxisFormat : undefined, // Only use format for datetime type
           style: {
             colors: isDarkMode.value ? '#9ca3af' : '#6b7280'
           }
@@ -464,21 +474,31 @@ const onGridReady = (params) => {
 
   const columnDefs = reactive({
     value: [
-      { field: "number", headerName: 'Insurance #', sort: 'desc', maxWidth: 180, filter: 'agTextColumnFilter', floatingFilter: true }, // Re-enabled floating filter
+      {
+        field: "number",
+        headerName: 'Insurance #',
+        sort: 'desc',
+        minWidth: 140,
+        maxWidth: 180,
+        filter: 'agTextColumnFilter',
+        floatingFilter: true,
+        cellClass: 'font-medium text-gray-900 dark:text-gray-100'
+      },
       {
         field: "customer.name",
         headerName: 'Client',
-        filter: 'agTextColumnFilter', // Added filter
-        floatingFilter: true, // Re-enabled floating filter
+        filter: 'agTextColumnFilter',
+        floatingFilter: true,
+        minWidth: 180,
         cellRenderer: (params) => {
-            if (!params.value) return ''; // Handle null/undefined customer names
+            if (!params.value) return '';
             const link = document.createElement("a");
             link.href = '#'; // Prevent default navigation
-            link.classList.add("text-indigo-600", "hover:text-indigo-800", "dark:text-indigo-400", "dark:hover:text-indigo-300", "font-medium"); // Modern link style
+            link.classList.add("text-indigo-600", "hover:text-indigo-800", "dark:text-indigo-400", "dark:hover:text-indigo-300", "font-medium", "hover:underline");
             link.innerText = params.value;
             link.addEventListener("click", e => {
               e.preventDefault();
-              if (params.data.customer?.id) { // Check if customer ID exists
+              if (params.data.customer?.id) {
                   router.push({ path: '/contact', query: { customer_id: params.data.customer.id } })
               } else {
                   toast.warning("Customer ID not found for this report.");
@@ -487,46 +507,74 @@ const onGridReady = (params) => {
             return link;
         }
       },
-      { field: "issuedAt", headerName: 'Issued', valueFormatter: dateFormatter, filter: 'agDateColumnFilter', floatingFilter: true, maxWidth: 150 }, // Re-enabled floating filter
+      {
+        field: "issuedAt",
+        headerName: 'Issued',
+        valueFormatter: dateFormatter,
+        filter: 'agDateColumnFilter',
+        floatingFilter: true,
+        minWidth: 130,
+        maxWidth: 150,
+        cellClass: 'text-gray-700 dark:text-gray-300'
+      },
       {
         field: "status",
         headerName: 'Status',
-        maxWidth: 120,
-        filter: 'agSetColumnFilter', // Use set filter for distinct statuses
-        floatingFilter: false, // Explicitly disable floating filter for set filter
+        minWidth: 140,
+        maxWidth: 160,
+        filter: 'agSetColumnFilter',
+        floatingFilter: false,
         cellRendererSelector: params => {
           return { component: Status, params };
-        }
+        },
+        cellClass: 'flex justify-center'
       },
-      { 
-        field: "id", 
-        headerName: 'Edit',
-        maxWidth: 80, // Adjusted width
-        sortable: false, // Actions usually aren't sortable
-        filter: false, // Actions usually aren't filterable
-        cellRendererSelector: params => {
-          return { component: Edit, params };
-        }
-      },
-      { 
-        field: "id", 
-        headerName: 'View',
-        maxWidth: 80, // Adjusted width
+      {
+        field: "id",
+        headerName: 'Actions',
+        minWidth: 200,
+        maxWidth: 220,
         sortable: false,
         filter: false,
-        cellRendererSelector: params => {
-          return { component: View, params };
-        }
-      },
+        cellRenderer: (params) => {
+          const container = document.createElement('div');
+          container.className = 'flex items-center justify-center space-x-2';
+          
+          // Create a wrapper for the Edit component
+          const editWrapper = document.createElement('div');
+          const editInstance = h(Edit, { params });
+          render(editInstance, editWrapper);
+          
+          // Create a wrapper for the View component
+          const viewWrapper = document.createElement('div');
+          const viewInstance = h(View, { params });
+          render(viewInstance, viewWrapper);
+          
+          // Add both components to the container
+          container.appendChild(editWrapper);
+          container.appendChild(viewWrapper);
+          
+          return container;
+        },
+        cellClass: 'flex justify-center'
+      }
     ],
   });
 
   const defaultColDef = {
     sortable: true,
-    filter: true, // Enable filtering by default
-    flex: 1, // Allow columns to resize
-    resizable: true, // Allow manual resizing
-    // floatingFilter: true, // Removed default floating filter - enable per column if needed
+    filter: true,
+    flex: 1,
+    resizable: true,
+    suppressMovable: false,
+    wrapHeaderText: true,
+    autoHeaderHeight: true,
+    cellStyle: {
+      display: 'flex',
+      alignItems: 'center',
+      padding: '0.5rem 1rem'
+    },
+    headerClass: 'text-gray-700 dark:text-gray-300 font-semibold'
   }
 
   async function update(credentials) {
@@ -588,6 +636,8 @@ const onGridReady = (params) => {
       },
       xaxis: {
         ...options.value.xaxis,
+        // Preserve the current xaxis type when updating for dark mode
+        type: options.value.xaxis.type,
         labels: {
           ...options.value.xaxis.labels,
           style: { colors: newVal ? '#9ca3af' : '#6b7280' }
@@ -721,20 +771,35 @@ const onGridReady = (params) => {
         </section>
 
         <!-- Table Card -->
-        <section class="card-modern"> <!-- Removed padding here, add to inner elements -->
+        <section class="card-modern overflow-hidden"> <!-- Added overflow-hidden -->
            <div class="flex justify-between items-center p-5 sm:p-6 border-b border-gray-200 dark:border-gray-700/50">
               <h2 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
                 <font-awesome-icon icon="file-invoice-dollar" class="mr-2 text-indigo-500" />
                 All Insurance Reports
               </h2>
-              <!-- Add filtering/search controls here if needed -->
+              
+              <!-- Search and filter controls -->
+              <div class="flex items-center space-x-2">
+                <div class="relative">
+                  <input
+                    type="text"
+                    placeholder="Search reports..."
+                    class="pl-9 pr-4 py-2 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:text-gray-300 w-48 md:w-64"
+                  />
+                  <div class="absolute left-3 top-2.5 text-gray-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
            </div>
 
-           <div class="p-5 sm:p-6"> <!-- Add padding to the content area -->
-              <div v-if="userStore.currentWebsite">
+           <div class="p-0 sm:p-0"> <!-- Removed padding for better table appearance -->
+              <div v-if="userStore.currentWebsite" class="insurance-reports-table">
                 <ag-grid-vue
                     :class="gridTheme"
-                    style="height: 580px; width: 100%;" 
+                    style="height: 580px; width: 100%; border-radius: 0;"
                     :columnDefs="columnDefs.value"
                     :rowData="rowData.value"
                     :defaultColDef="defaultColDef"
@@ -744,9 +809,13 @@ const onGridReady = (params) => {
                     animateRows="true"
                     @grid-ready="onGridReady"
                     @cell-clicked="toggleEditModal"
-                    :tooltipShowDelay="0" 
-                    :tooltipHideDelay="2000" 
-                    enableCellTextSelection="true" 
+                    :tooltipShowDelay="0"
+                    :tooltipHideDelay="2000"
+                    enableCellTextSelection="true"
+                    suppressCellFocus="true"
+                    suppressRowHoverHighlight="false"
+                    :rowHeight="52"
+                    :headerHeight="48"
                   >
                 </ag-grid-vue>
               </div>
@@ -831,3 +900,22 @@ const onGridReady = (params) => {
 
 </div> <!-- End Main Container -->
 </template>
+
+<style>
+      /* Modern button styles */
+      .btn-icon-modern {
+        @apply flex items-center justify-center w-10 h-10 rounded-full bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900;
+      }
+      
+      .btn-primary-modern {
+        @apply inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200 ease-in-out dark:focus:ring-offset-gray-900;
+      }
+      
+      .btn-secondary-modern {
+        @apply inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200 ease-in-out dark:focus:ring-offset-gray-900;
+      }
+      
+      .card-modern {
+        @apply bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 overflow-hidden transition-all duration-200 ease-in-out;
+      }
+    </style>
