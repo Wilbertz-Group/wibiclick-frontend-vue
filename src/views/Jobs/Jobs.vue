@@ -1,6 +1,6 @@
 <template>
   <!-- Main container with background placeholder and padding -->
-  <div :class="{ 'dark': isDarkMode }" class="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-800 dark:text-gray-200 font-sans transition-colors duration-300">
+  <div class="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-800 dark:text-gray-200 font-sans transition-colors duration-300">
     <!-- Placeholder for sophisticated background - replace with actual gradient/texture -->
     <!-- <div class="absolute inset-0 bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-blue-950 dark:to-purple-950 opacity-50 -z-10"></div> -->
 
@@ -38,9 +38,6 @@
 
           <button @click="reloadJobs" class="btn-icon-modern" title="Reload Jobs">
              <font-awesome-icon icon="sync" :class="{ 'fa-spin': loading }" />
-          </button>
-          <button @click="toggleDarkMode" class="btn-icon-modern" title="Toggle Dark Mode">
-             <font-awesome-icon :icon="isDarkMode ? 'sun' : 'moon'" />
           </button>
           <button @click="openAddJobModal" class="btn-primary-modern">
              <font-awesome-icon icon="plus" class="mr-1.5 h-4 w-4" /> Add Job
@@ -377,6 +374,7 @@ import Chart from 'chart.js/auto'
 import annotationPlugin from 'chartjs-plugin-annotation'
 import 'chartjs-adapter-moment';
 import { useUserStore } from '@/stores/UserStore'
+import { useThemeStore } from '@/stores/theme'; // Import the theme store
 import { useToast } from 'vue-toast-notification'
 import ScaleLoader from 'vue-spinner/src/ScaleLoader.vue' // Keep for potential future use?
 import { storeToRefs } from 'pinia'
@@ -389,21 +387,22 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { library } from '@fortawesome/fontawesome-svg-core'
 import {
-  faSun, faMoon, faCalendar, faUser, faMapMarkerAlt,
+  faCalendar, faUser, faMapMarkerAlt,
   faChevronDown, faCheck, faSearch, faClock, faSync, faPlus,
   faChevronLeft, faChevronRight // Added icons
 } from '@fortawesome/free-solid-svg-icons'
 
 library.add(
-  faSun, faMoon, faCalendar, faUser, faMapMarkerAlt, faChevronDown,
+  faCalendar, faUser, faMapMarkerAlt, faChevronDown,
   faCheck, faSearch, faClock, faSync, faPlus, faChevronLeft, faChevronRight
 )
 
 const userStore = useUserStore()
 const toast = useToast()
+const themeStore = useThemeStore(); // Instantiate the theme store
+const { isDarkMode } = storeToRefs(themeStore); // Get reactive isDarkMode
 const { currentWebsite, websites } = storeToRefs(userStore)
 
-const isDarkMode = ref(localStorage.getItem('darkMode') === 'true')
 const loading = ref(false)
 const showAdvancedFilters = ref(false)
 const jobs = ref([])
@@ -504,13 +503,6 @@ const paginatedJobs = computed(() => {
 // formatDate, formatDateForInput, formatDateTimeForInput, updateDateFilter, updateSlotStartFilter,
 // prevPage, nextPage, toggleIssue, createCharts, calculateMovingAverage, processBookingData, reloadJobs
 // ... (Keep all these functions as they were) ...
-const toggleDarkMode = () => {
-  isDarkMode.value = !isDarkMode.value
-  localStorage.setItem('darkMode', isDarkMode.value)
-  // Apply class to html element for broader dark mode styling if needed
-  document.documentElement.classList.toggle('dark', isDarkMode.value)
-}
-
 const fetchJobs = async () => {
   try {
     loading.value = true
@@ -877,22 +869,22 @@ const createCharts = () => {
           type: 'category', // Change axis type to category for months
           // Remove time, min, max settings
           grid: { display: false }, // Cleaner look
-          ticks: { color: isDarkMode.value ? '#9ca3af' : '#6b7280', maxRotation: 0, autoSkip: false }, // autoSkip false to show all months
+          ticks: { color: isDarkMode.value ? '#9ca3af' : '#6b7280', maxRotation: 0, autoSkip: false }, // Use isDarkMode from store
         },
         y: {
           beginAtZero: true,
-          grid: { color: isDarkMode.value ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)' }, // Subtle grid
-          ticks: { color: isDarkMode.value ? '#9ca3af' : '#6b7280', precision: 0, stepSize: 5 },
+          grid: { color: isDarkMode.value ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)' }, // Use isDarkMode from store
+          ticks: { color: isDarkMode.value ? '#9ca3af' : '#6b7280', precision: 0, stepSize: 5 }, // Use isDarkMode from store
         }
       },
       plugins: {
         legend: { display: false }, // Simpler, maybe add label in title
         tooltip: {
           mode: 'index', intersect: false,
-          backgroundColor: isDarkMode.value ? '#1f2937' : '#ffffff',
-          titleColor: isDarkMode.value ? '#f3f4f6' : '#111827',
-          bodyColor: isDarkMode.value ? '#d1d5db' : '#374151',
-          borderColor: isDarkMode.value ? '#374151' : '#e5e7eb',
+          backgroundColor: isDarkMode.value ? '#1f2937' : '#ffffff', // Use isDarkMode from store
+          titleColor: isDarkMode.value ? '#f3f4f6' : '#111827', // Use isDarkMode from store
+          bodyColor: isDarkMode.value ? '#d1d5db' : '#374151', // Use isDarkMode from store
+          borderColor: isDarkMode.value ? '#374151' : '#e5e7eb', // Use isDarkMode from store
           borderWidth: 1,
           padding: 10,
           callbacks: {
@@ -971,7 +963,6 @@ const reloadJobs = async () => {
 // Keep onMounted and watchEffect, ensure createCharts is called safely
 onMounted(() => {
   // Apply dark mode class on initial load
-  document.documentElement.classList.toggle('dark', isDarkMode.value)
 
   if (currentWebsite.value) {
     fetchJobs().then(() => {
@@ -1011,24 +1002,6 @@ watch(selectedCustomerIdInModal, (newCustomerId) => {
     // jobForm.name = '';
     // jobForm.phone = '';
     // jobForm.address = '';
-  }
-});
-
-// Watch dark mode changes to update chart options if needed
-watchEffect(() => {
-  if (jobBookingTrendChart.value) {
-    const chart = Chart.getChart(jobBookingTrendChart.value);
-    if (chart) {
-      // Update colors based on dark mode
-      chart.options.scales.x.ticks.color = isDarkMode.value ? '#9ca3af' : '#6b7280';
-      chart.options.scales.y.ticks.color = isDarkMode.value ? '#9ca3af' : '#6b7280';
-      chart.options.scales.y.grid.color = isDarkMode.value ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)';
-      chart.options.plugins.tooltip.backgroundColor = isDarkMode.value ? '#1f2937' : '#ffffff';
-      chart.options.plugins.tooltip.titleColor = isDarkMode.value ? '#f3f4f6' : '#111827';
-      chart.options.plugins.tooltip.bodyColor = isDarkMode.value ? '#d1d5db' : '#374151';
-      chart.options.plugins.tooltip.borderColor = isDarkMode.value ? '#374151' : '#e5e7eb';
-      chart.update();
-    }
   }
 });
 

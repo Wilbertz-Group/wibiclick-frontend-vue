@@ -35,7 +35,7 @@
   const userStore = useUserStore()
   const toast = useToast();
   const loading = ref(false);
-  const isDarkMode = ref(localStorage.getItem('darkMode') === 'true'); // Added dark mode state
+  // Removed local isDarkMode state - using global theme store now
   // Removed ApexCharts options and series refs
   // const options = ref();
   // const series = ref();
@@ -270,15 +270,10 @@
     }
   };
 
-  // Add dark mode toggle function
-  const toggleDarkMode = () => {
-    isDarkMode.value = !isDarkMode.value;
-    localStorage.setItem('darkMode', isDarkMode.value);
-    document.documentElement.classList.toggle('dark', isDarkMode.value);
-  };
+  // Removed local toggleDarkMode function - using global theme store now
 
   onMounted(() => {
-    document.documentElement.classList.toggle('dark', isDarkMode.value); // Apply on initial load
+    // document.documentElement.classList.toggle('dark', isDarkMode.value); // Removed local dark mode application
     if(userStore.currentWebsite){
       fetchEstimates();
       fetchTechnicians(); // Fetch technicians on mount
@@ -297,7 +292,7 @@
 
 <template>
  <!-- Main container with background and padding -->
- <div :class="{ 'dark': isDarkMode }" class="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 dark:from-gray-900 dark:via-gray-950 dark:to-blue-950 text-gray-800 dark:text-gray-200 font-sans transition-colors duration-300">
+ <div class="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 dark:from-gray-900 dark:via-gray-950 dark:to-blue-950 text-gray-800 dark:text-gray-200 font-sans transition-colors duration-300">
    <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-12">
 
      <!-- Header Section -->
@@ -310,9 +305,7 @@
          <button @click="fetchEstimates" class="btn-icon-modern" title="Reload Estimates">
             <font-awesome-icon icon="sync" :class="{ 'fa-spin': loading }" />
          </button>
-         <button @click="toggleDarkMode" class="btn-icon-modern" title="Toggle Dark Mode">
-            <font-awesome-icon :icon="isDarkMode ? 'sun' : 'moon'" />
-         </button>
+         <!-- Removed local dark mode toggle button -->
          <router-link :to="{name: 'add-estimate'}" class="btn-primary-modern">
             <font-awesome-icon icon="plus" class="mr-1.5 h-4 w-4" /> Add Estimate
          </router-link>

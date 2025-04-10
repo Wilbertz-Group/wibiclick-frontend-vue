@@ -2,11 +2,12 @@
 import axios from "axios";
 import notifications from "./notification/notifications.vue";
 import { useUserStore } from "@/stores/UserStore"
-import { useUIStore } from '@/stores/UIStore'; // Assuming this path - ADDED IMPORT
+import { useUIStore } from '@/stores/UIStore';
+import { useThemeStore } from '@/stores/theme'; // Import the theme store
 import { useRouter } from 'vue-router'; // Added for search navigation
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'; // Added for search icons
-import { faSearch, faSpinner, faTimes } from '@fortawesome/free-solid-svg-icons'; // Added search icons
-import { library } from '@fortawesome/fontawesome-svg-core'; // Added for search icons
+import { faSearch, faSpinner, faTimes, faSun, faMoon } from '@fortawesome/free-solid-svg-icons'; // Added search, sun, moon icons
+import { library } from '@fortawesome/fontawesome-svg-core';
 import {
   Disclosure,
   DisclosureButton,
@@ -27,13 +28,14 @@ import ScaleLoader from 'vue-spinner/src/ScaleLoader.vue'
 import { useToast } from 'vue-toast-notification';
 // import Ably from "ably"; // Ably seems unused, commented out
 
-library.add(faSearch, faSpinner, faTimes); // Add search icons to library
+library.add(faSearch, faSpinner, faTimes, faSun, faMoon); // Add search, sun, moon icons to library
 
 const toast = useToast();
 const userStore = useUserStore()
 const { currentWebsite, websites } = storeToRefs(userStore)
 const router = useRouter(); // Added for search navigation
-const uiStore = useUIStore(); // Instantiate the store
+const uiStore = useUIStore();
+const themeStore = useThemeStore(); // Instantiate the theme store
 
 const addModal = ref(false)
 const submitted = ref(false)
@@ -697,9 +699,20 @@ watch(selectedWebsite, (newValue) => {
                 </transition>
               </div>
             </Listbox>
-            </div>    
+            </div>
             
-            <notifications></notifications>  
+            <!-- Dark Mode Toggle Button -->
+            <button
+              @click="themeStore.toggleDarkMode"
+              type="button"
+              class="ml-3 p-1 rounded-full text-gray-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white"
+              title="Toggle Dark Mode"
+            >
+              <span class="sr-only">Toggle Dark Mode</span>
+              <font-awesome-icon :icon="themeStore.isDarkMode ? 'sun' : 'moon'" class="h-6 w-6" />
+            </button>
+
+            <notifications></notifications>
 
             <p class="text-white text-sm">Hello, {{ userStore.user.firstName }}.</p>
 
