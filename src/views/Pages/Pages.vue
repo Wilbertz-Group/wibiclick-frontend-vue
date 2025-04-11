@@ -1,5 +1,6 @@
 <script setup>
   // import Header from "@/components/Header.vue"; // Removed old header
+  import PageInteractionsTrendChart from "@/components/Pages/PageInteractionsTrendChart.vue";
   import { useUserStore } from "@/stores/UserStore"
   import { onMounted, ref, reactive, watchEffect, computed } from "vue"; // Added computed
   import moment from 'moment'
@@ -425,9 +426,11 @@
        <!-- Chart Section -->
        <section v-if="!loading && pages.length > 0" class="mt-10 card-modern p-5 sm:p-6">
           <h3 class="text-lg font-semibold mb-6 text-gray-900 dark:text-white">Page Interactions Trend</h3>
-          <div class="relative w-full h-96"> <!-- Added height constraint -->
-            <apexchart type="bar" height="100%" :options="options" :series="series"></apexchart>
-          </div>
+          <PageInteractionsTrendChart
+            :rawData="pages"
+            :loading="loading"
+            :isDarkMode="isDarkMode"
+          />
        </section>
 
      </div> <!-- End grid -->
