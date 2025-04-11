@@ -1,4 +1,5 @@
 <script setup>
+  import VisitorTrendChart from "@/components/Visitors/VisitorTrendChart.vue";
   // import Header from "@/components/Header.vue"; // Removed old header
   import { useUserStore } from "@/stores/UserStore"
   import { onMounted, ref, reactive, watchEffect, computed, watch } from "vue"; // Added computed, watch
@@ -459,8 +460,12 @@
      <!-- Chart Section -->
       <section class="mt-12 card-modern p-6">
          <h3 class="text-lg font-semibold mb-6 text-gray-900 dark:text-white">Visitor Trend</h3>
-         <div class="relative w-full h-96"> <!-- Added height constraint -->
-           <apexchart type="bar" height="100%" width="100%" :options="options" :series="series"></apexchart>
+         <div class="relative w-full min-h-[200px]">
+           <VisitorTrendChart
+             :rawData="visitors"
+             :loading="loading"
+             :isDarkMode="isDarkMode"
+           />
          </div>
       </section>
 
