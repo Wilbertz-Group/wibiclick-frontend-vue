@@ -1,19 +1,30 @@
 <script setup>
 	import axios from "axios";
 	import moment from 'moment'
-	import { ref, onMounted } from 'vue';
+	import { ref, onMounted, computed, watch, nextTick, onUnmounted } from 'vue';
 	import { TransitionRoot, TransitionChild, Dialog, DialogPanel, DialogOverlay } from '@headlessui/vue';
 	import Swal from 'sweetalert2';
 	import { useUserStore } from "@/stores/UserStore";
+	import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+	import { library } from '@fortawesome/fontawesome-svg-core';
+	import { faStickyNote, faPlus, faStar, faTag, faEdit, faTrash, faEye, faFilter, faChartLine } from '@fortawesome/free-solid-svg-icons';
+	import ScaleLoader from 'vue-spinner/src/ScaleLoader.vue';
+
+	// Add FontAwesome icons to the library
+	library.add(faStickyNote, faPlus, faStar, faTag, faEdit, faTrash, faEye, faFilter, faChartLine);
 
 	const store = useUserStore();
+	const isDarkMode = ref(localStorage.getItem('darkMode') === 'true');
+	const window = ref({
+		innerWidth: globalThis.window?.innerWidth || 1280
+	});
 	const defaultParams = ref({
-			id: null,
-			title: '',
-			description: '',
-			tag: '',
-			user: '',
-			thumb: '',
+		id: null,
+		title: '',
+		description: '',
+		tag: '',
+		user: '',
+		thumb: '',
 	});
 	const isAddNoteModal = ref(false);
 	const isDeleteNoteModal = ref(false);
@@ -21,35 +32,106 @@
 	const params = ref(JSON.parse(JSON.stringify(defaultParams.value)));
 	const isShowNoteMenu = ref(false);
 	const notesList = ref([]);
-	const filterdNotesList= ref('');
+	const filterdNotesList = ref([]);
 	const users = ref([]);
-	const selectedTab= ref('all');
-	const deletedNote= ref(null);
-	const selectedNote= ref({
-			id: null,
-			title: '',
-			description: '',
-			tag: '',
-			user: '',
-			thumb: '',
+	const selectedTab = ref('all');
+	const deletedNote = ref(null);
+	const loading = ref(false);
+	const searchQuery = ref('');
+	const selectedNote = ref({
+		id: null,
+		title: '',
+		description: '',
+		tag: '',
+		user: '',
+		thumb: '',
 	});
+
+	// Statistics for notes
+	const notesStats = computed(() => {
+		if (!notesList.value.length) return { total: 0, favorites: 0, tags: {} };
+		
+		const stats = {
+			total: notesList.value.length,
+			favorites: notesList.value.filter(note => note.isFav).length,
+			tags: {}
+		};
+		
+		// Count notes by tag
+		notesList.value.forEach(note => {
+			if (note.tag) {
+				stats.tags[note.tag] = (stats.tags[note.tag] || 0) + 1;
+			}
+		});
+		
+		return stats;
+	});
+
+	// Watch for dark mode changes
+	watch(isDarkMode, (newVal) => {
+		localStorage.setItem('darkMode', newVal);
+		document.documentElement.classList.toggle('dark', newVal);
+	});
+
+	// Handle window resize
+	const handleResize = () => {
+		window.value.innerWidth = globalThis.window?.innerWidth || 1280;
+		if (window.value.innerWidth >= 1280) {
+			isShowNoteMenu.value = false;
+		}
+	};
 
 	onMounted(() => {
+		document.documentElement.classList.toggle('dark', isDarkMode.value);
 		fetchNotes();
 		fetchContacts();
+		
+		// Add resize listener
+		globalThis.window?.addEventListener('resize', handleResize);
 	});
 
-	const searchNotes = () => {
-			if (selectedTab.value != 'fav') {
-					if (selectedTab.value != 'all' || selectedTab.value === 'delete') {
-							filterdNotesList.value = notesList.value.filter((d) => d.tag === selectedTab.value);
-					} else {
-							filterdNotesList.value = notesList.value;
-					}
-			} else {
-					filterdNotesList.value = notesList.value.filter((d) => d.isFav);
-			}
-	};
+	onUnmounted(() => {
+		// Remove resize listener
+		globalThis.window?.removeEventListener('resize', handleResize);
+	});
+
+	// Enhanced search function with query support
+const searchNotes = () => {
+	   console.log('Starting searchNotes with:', {
+	       totalNotes: notesList.value.length,
+	       selectedTab: selectedTab.value,
+	       searchQuery: searchQuery.value
+	   });
+	   
+	   let filtered = [...notesList.value];
+	   console.log('Initial filtered count:', filtered.length);
+	   
+	   if (selectedTab.value === 'fav') {
+	       filtered = filtered.filter((d) => d.isFav);
+	       console.log('After fav filter:', filtered.length);
+	   } else if (selectedTab.value !== 'all') {
+	       filtered = filtered.filter((d) => d.tag === selectedTab.value);
+	       console.log('After tag filter:', filtered.length);
+	   }
+	   
+	   if (searchQuery.value.trim()) {
+	       const query = searchQuery.value.toLowerCase();
+	       filtered = filtered.filter(note =>
+	           note.title?.toLowerCase().includes(query) ||
+	           note.description?.toLowerCase().includes(query) ||
+	           note.user?.toLowerCase().includes(query)
+	       );
+	       console.log('After search query filter:', filtered.length);
+	   }
+	   
+	   filterdNotesList.value = filtered;
+	   console.log('Final filtered notes:', filterdNotesList.value);
+};
+
+	// Watch for search query changes
+	watch(searchQuery, () => {
+		searchNotes();
+	});
 
 	const saveNote = async () => {
 			if (!params.value.title) {
@@ -164,16 +246,27 @@
 			});
 	};
 
-	const fetchNotes = async (n) => {
-		try {
-			const response = await axios.get(`notes?id=${store.currentWebsite}&limit=1500&offset=0`);
-			notesList.value = response.data.notes
-			searchNotes();
-		} catch (error) {
-			console.log(error)
-			showMessage('Error getting notes data', 'error');
-		}
-	}
+const fetchNotes = async () => {
+	   try {
+	       loading.value = true;
+	       console.log('Fetching notes with params:', {
+	           id: store.currentWebsite,
+	           limit: 1500,
+	           offset: 0
+	       });
+	       const response = await axios.get(`notes?id=${store.currentWebsite}&limit=1500&offset=0`);
+	       console.log('API Response:', response.data);
+	       notesList.value = response.data.notes;
+	       console.log('Notes list after assignment:', notesList.value);
+	       searchNotes();
+	       loading.value = false;
+	   } catch (error) {
+	       console.error('Error in fetchNotes:', error);
+	       console.log('Error response:', error.response?.data);
+	       showMessage('Error getting notes data', 'error');
+	       loading.value = false;
+	   }
+}
 
 	const updateNote = async (n) => {
 		try {
@@ -185,17 +278,20 @@
 		}
 	}
 
-	const addNote = async (n) => {
-		try {
-			const response = await axios.post(`add-notes?id=${store.currentWebsite}`, n);
-			await searchNotes();
-			let msg = 'note has been added to' + n.tag;
-			showMessage(`${n.user} ${msg}`, 'success');
-		} catch (error) {
-			console.log(error)
-			showMessage('Error updating notes data', 'error');
-		}
-	}
+const addNote = async (n) => {
+	   try {
+	       console.log('Adding note with data:', n);
+	       const response = await axios.post(`add-notes?id=${store.currentWebsite}`, n);
+	       console.log('Add note response:', response.data);
+	       await searchNotes();
+	       let msg = 'note has been added to ' + n.tag;
+	       showMessage(`${n.user} ${msg}`, 'success');
+	   } catch (error) {
+	       console.error('Error in addNote:', error);
+	       console.log('Error response:', error.response?.data);
+	       showMessage('Error updating notes data', 'error');
+	   }
+}
 
 	const fetchContacts = async() => {
 		try {
@@ -214,59 +310,129 @@
 		}
 	}
 
+	// Enhanced card class function with more subtle gradients and hover effect
 	const getCardClass = (note) => {
-    switch (note.tag) {
+		// Added transform for scaling effect on hover
+		const baseClass = 'note-card transition-all duration-300 ease-in-out hover:shadow-xl dark:hover:shadow-2xl hover:scale-[1.02] transform';
+		
+		// Adjusted gradients for more subtlety and consistency
+		switch (note.tag) {
 			case 'pending':
-				return 'bg-blue-300 shadow-md dark:shadow-dark';
+				return `${baseClass} bg-gradient-to-br from-blue-50 via-blue-100 to-indigo-100 dark:from-blue-950/50 dark:via-blue-900/40 dark:to-indigo-900/40 border-l-4 border-blue-400 dark:border-blue-600`;
 			case 'attention':
-				return 'bg-yellow-300 shadow-md';
+				return `${baseClass} bg-gradient-to-br from-amber-50 via-amber-100 to-yellow-100 dark:from-amber-950/50 dark:via-amber-900/40 dark:to-yellow-900/40 border-l-4 border-amber-400 dark:border-amber-600`;
 			case 'general':
-				return 'bg-cyan-300 shadow-md';
+				return `${baseClass} bg-gradient-to-br from-cyan-50 via-cyan-100 to-sky-100 dark:from-cyan-950/50 dark:via-cyan-900/40 dark:to-sky-900/40 border-l-4 border-cyan-400 dark:border-cyan-600`;
 			case 'important':
-				return 'bg-pink-300 shadow-md';
+				return `${baseClass} bg-gradient-to-br from-rose-50 via-rose-100 to-pink-100 dark:from-rose-950/50 dark:via-rose-900/40 dark:to-pink-900/40 border-l-4 border-rose-400 dark:border-rose-600`;
 			case 'done':
-				return 'bg-green-300 shadow-md';
+				return `${baseClass} bg-gradient-to-br from-emerald-50 via-emerald-100 to-green-100 dark:from-emerald-950/50 dark:via-emerald-900/40 dark:to-green-900/40 border-l-4 border-emerald-400 dark:border-emerald-600`;
 			default:
-				return '';
+				// Slightly adjusted default gradient
+				return `${baseClass} bg-gradient-to-br from-gray-50 via-gray-100 to-slate-100 dark:from-gray-800/50 dark:via-gray-800/40 dark:to-slate-800/40 border-l-4 border-gray-400 dark:border-gray-600`;
 		}
-  }
+	}
+
+	// Get tag color for text and icons - Adjusted for better contrast (WCAG AA+)
+	const getTagColor = (tag) => {
+		switch (tag) {
+			// Using darker shades for light mode, lighter for dark mode
+			case 'pending': return 'text-blue-700 dark:text-blue-300';
+			case 'attention': return 'text-amber-700 dark:text-amber-300';
+			case 'general': return 'text-cyan-700 dark:text-cyan-300';
+			case 'important': return 'text-rose-700 dark:text-rose-300';
+			case 'done': return 'text-emerald-700 dark:text-emerald-300';
+			default: return 'text-gray-700 dark:text-gray-300'; // Improved default contrast
+		}
+	}
+
+	// Toggle dark mode
+	const toggleDarkMode = () => {
+		isDarkMode.value = !isDarkMode.value;
+	}
 </script>
 
 
 <template>
-	<div>
-			<div class="flex gap-5 m-2 relative sm:h-[calc(100vh_-_80px)] h-full">
+	<div :class="{ 'dark': isDarkMode }" class="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 dark:from-gray-900 dark:via-gray-950 dark:to-blue-950 text-gray-800 dark:text-gray-200 font-sans transition-all duration-300">
+		<!-- Added fade transition for loader -->
+		<Transition name="fade">
+			<scale-loader v-if="loading" color="#4f46e5" height="50px" class="vld-overlay is-active is-full-page" width="6px"></scale-loader>
+		</Transition>
+		
+		<!-- Improved conta0iner padding -->
+		<div class="container mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8 lg:py-10">
+			<div class="flex gap-4 md:gap-6 relative sm:h-[calc(100vh_-_120px)] min-h-0">
+				<!-- Overlay for mobile sidebar with fade transition -->
+				<Transition name="fade">
 					<div
-							class="bg-black/60 z-10 w-full h-full rounded-md absolute hidden"
-							:class="{ '!block xl:!hidden': isShowNoteMenu }"
-							@click="isShowNoteMenu = !isShowNoteMenu"
+						v-if="isShowNoteMenu"
+						class="bg-black/60 z-10 w-full h-full rounded-md absolute xl:hidden"
+						@click="isShowNoteMenu = !isShowNoteMenu"
 					></div>
+				</Transition>
+				
+				<!-- Sidebar with slide transition -->
+				<Transition name="slide-x">
 					<div
-							class="bg-custom-gray text-white panel p-4 flex-none w-[240px] absolute xl:relative z-3 space-y-4 h-full xl:h-auto hidden xl:block lg:rounded-r-md rounded-r-none rtl:lg:rounded-l-md rtl:rounded-l-none overflow-hidden"
-							:class="{ 'hidden shadow': !isShowNoteMenu, '!block h-full left-0 rtl:right-0': isShowNoteMenu }"
+						v-if="isShowNoteMenu || window.innerWidth >= 1280"
+						class="bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 card-modern p-4 flex-none w-[280px] absolute xl:relative z-30 space-y-4 h-full xl:h-auto overflow-hidden shadow-lg xl:shadow-none transition-all duration-300 transform"
 					>
-							<div class="flex flex-col h-full pb-16">
-									<div class="flex text-center items-center">
-											<div>
-													<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5">
-															<path
-																	d="M20.3116 12.6473L20.8293 10.7154C21.4335 8.46034 21.7356 7.3328 21.5081 6.35703C21.3285 5.58657 20.9244 4.88668 20.347 4.34587C19.6157 3.66095 18.4881 3.35883 16.2331 2.75458C13.978 2.15033 12.8504 1.84821 11.8747 2.07573C11.1042 2.25537 10.4043 2.65945 9.86351 3.23687C9.27709 3.86298 8.97128 4.77957 8.51621 6.44561C8.43979 6.7254 8.35915 7.02633 8.27227 7.35057L8.27222 7.35077L7.75458 9.28263C7.15033 11.5377 6.84821 12.6652 7.07573 13.641C7.25537 14.4115 7.65945 15.1114 8.23687 15.6522C8.96815 16.3371 10.0957 16.6392 12.3508 17.2435L12.3508 17.2435C14.3834 17.7881 15.4999 18.0873 16.415 17.9744C16.5152 17.9621 16.6129 17.9448 16.7092 17.9223C17.4796 17.7427 18.1795 17.3386 18.7203 16.7612C19.4052 16.0299 19.7074 14.9024 20.3116 12.6473Z"
-																	stroke="currentColor"
-																	stroke-width="1.5"
-															/>
-															<path
-																	opacity="0.5"
-																	d="M16.415 17.9741C16.2065 18.6126 15.8399 19.1902 15.347 19.6519C14.6157 20.3368 13.4881 20.6389 11.2331 21.2432C8.97798 21.8474 7.85044 22.1495 6.87466 21.922C6.10421 21.7424 5.40432 21.3383 4.86351 20.7609C4.17859 20.0296 3.87647 18.9021 3.27222 16.647L2.75458 14.7151C2.15033 12.46 1.84821 11.3325 2.07573 10.3567C2.25537 9.58627 2.65945 8.88638 3.23687 8.34557C3.96815 7.66065 5.09569 7.35853 7.35077 6.75428C7.77741 6.63996 8.16368 6.53646 8.51621 6.44531"
-																	stroke="currentColor"
-																	stroke-width="1.5"
-															/>
-															<path d="M11.7769 10L16.6065 11.2941" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-															<path opacity="0.5" d="M11 12.8975L13.8978 13.6739" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-													</svg>
-											</div>
-											<h3 class="text-lg font-semibold ml-3 rtl:mr-3">Notes</h3>
-									</div>
-									<div class="h-px w-full border-b border-[#1b2e4b] my-4"></div>
+					<div class="flex flex-col h-full pb-16">
+						<!-- Header -->
+						<div class="flex items-center justify-between mb-6">
+							<div class="flex items-center">
+								<font-awesome-icon icon="sticky-note" class="text-indigo-600 dark:text-indigo-400 h-5 w-5" />
+								<h3 class="text-xl font-bold ml-3 rtl:mr-3 text-gray-900 dark:text-white">Notes</h3>
+							</div>
+							<button
+								@click="toggleDarkMode"
+								class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+								:title="isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'"
+							>
+								<svg v-if="isDarkMode" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+								</svg>
+								<svg v-else xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+								</svg>
+							</button>
+						</div>
+						
+						<!-- Search Box -->
+						<div class="relative mb-6">
+							<input
+								type="text"
+								v-model="searchQuery"
+								placeholder="Search notes..."
+								class="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
+							/>
+							<div class="absolute left-3 top-2.5 text-gray-400">
+								<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+								</svg>
+							</div>
+						</div>
+						
+						<!-- Stats Card -->
+						<div class="bg-indigo-50 dark:bg-indigo-900/30 rounded-lg p-4 mb-6">
+							<h4 class="text-sm font-semibold text-indigo-800 dark:text-indigo-300 flex items-center mb-3">
+								<font-awesome-icon icon="chart-line" class="mr-2" />
+								Notes Statistics
+							</h4>
+							<div class="grid grid-cols-2 gap-2 text-xs">
+								<div class="bg-white dark:bg-gray-800 rounded-md p-2 shadow-sm">
+									<div class="text-gray-500 dark:text-gray-400">Total</div>
+									<div class="text-lg font-bold text-gray-800 dark:text-white">{{ notesStats.total }}</div>
+								</div>
+								<div class="bg-white dark:bg-gray-800 rounded-md p-2 shadow-sm">
+									<div class="text-gray-500 dark:text-gray-400">Favorites</div>
+									<div class="text-lg font-bold text-amber-500">{{ notesStats.favorites }}</div>
+								</div>
+							</div>
+						</div>
+						
+						<div class="h-px w-full border-b border-gray-200 dark:border-gray-700 mb-4"></div>
 									<perfect-scrollbar
 											:options="{
 													swipeEasing: true,
@@ -274,217 +440,172 @@
 											}"
 											class="relative pr-3.5 -mr-3.5 h-full grow"
 									>
-											<div class="space-y-1">
+											<div class="space-y-2">
+												<button
+													type="button"
+													class="w-full flex justify-between items-center p-3 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors duration-200 font-medium"
+													:class="{ 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300': selectedTab === 'all' }"
+													@click="tabChanged('all')"
+												>
+													<div class="flex items-center">
+														<font-awesome-icon icon="sticky-note" class="w-5 h-5" />
+														<div class="ml-3 rtl:mr-3">All Notes</div>
+													</div>
+													<span class="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs font-medium px-2.5 py-0.5 rounded-full">
+														{{ notesStats.total }}
+													</span>
+												</button>
+												<button
+													type="button"
+													class="w-full flex justify-between items-center p-3 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors duration-200 font-medium"
+													:class="{ 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300': selectedTab === 'fav' }"
+													@click="tabChanged('fav')"
+												>
+													<div class="flex items-center">
+														<font-awesome-icon icon="star" class="w-5 h-5 text-amber-500" />
+														<div class="ml-3 rtl:mr-3">Favorites</div>
+													</div>
+													<span class="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs font-medium px-2.5 py-0.5 rounded-full">
+														{{ notesStats.favorites }}
+													</span>
+												</button>
+													<div class="h-px w-full border-b border-gray-200 dark:border-gray-700 my-4"></div>
+													<div class="px-1 py-2 text-sm font-semibold text-gray-500 dark:text-gray-400 flex items-center">
+														<font-awesome-icon icon="tag" class="mr-2" />
+														Tags
+													</div>
 													<button
-															type="button"
-															class="w-full flex justify-between items-center p-2 hover:bg-white-dark/10 rounded-md dark:hover:text-primary hover:text-primary dark:hover:bg-[#181F32] font-medium h-10"
-															:class="{ 'bg-gray-100 dark:text-primary text-primary dark:bg-[#181F32]': selectedTab === 'all' }"
-															@click="tabChanged('all')"
+														type="button"
+														class="w-full flex items-center p-3 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors duration-200 font-medium"
+														:class="{ 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300': selectedTab === 'pending' }"
+														@click="tabChanged('pending')"
 													>
-															<div class="flex items-center">
-																	<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5">
-																			<path
-																					d="M18.18 8.03933L18.6435 7.57589C19.4113 6.80804 20.6563 6.80804 21.4241 7.57589C22.192 8.34374 22.192 9.58868 21.4241 10.3565L20.9607 10.82M18.18 8.03933C18.18 8.03933 18.238 9.02414 19.1069 9.89309C19.9759 10.762 20.9607 10.82 20.9607 10.82M18.18 8.03933L13.9194 12.2999C13.6308 12.5885 13.4865 12.7328 13.3624 12.8919C13.2161 13.0796 13.0906 13.2827 12.9882 13.4975C12.9014 13.6797 12.8368 13.8732 12.7078 14.2604L12.2946 15.5L12.1609 15.901M20.9607 10.82L16.7001 15.0806C16.4115 15.3692 16.2672 15.5135 16.1081 15.6376C15.9204 15.7839 15.7173 15.9094 15.5025 16.0118C15.3203 16.0986 15.1268 16.1632 14.7396 16.2922L13.5 16.7054L13.099 16.8391M13.099 16.8391L12.6979 16.9728C12.5074 17.0363 12.2973 16.9867 12.1553 16.8447C12.0133 16.7027 11.9637 16.4926 12.0272 16.3021L12.1609 15.901M13.099 16.8391L12.1609 15.901"
-																					stroke="currentColor"
-																					stroke-width="1.5"
-																			/>
-																			<path d="M8 13H10.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-																			<path d="M8 9H14.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-																			<path d="M8 17H9.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-																			<path
-																					opacity="0.5"
-																					d="M3 10C3 6.22876 3 4.34315 4.17157 3.17157C5.34315 2 7.22876 2 11 2H13C16.7712 2 18.6569 2 19.8284 3.17157C21 4.34315 21 6.22876 21 10V14C21 17.7712 21 19.6569 19.8284 20.8284C18.6569 22 16.7712 22 13 22H11C7.22876 22 5.34315 22 4.17157 20.8284C3 19.6569 3 17.7712 3 14V10Z"
-																					stroke="currentColor"
-																					stroke-width="1.5"
-																			/>
-																	</svg>
-
-																	<div class="ml-3 rtl:mr-3">All Notes</div>
-															</div>
+														<span class="w-3 h-3 rounded-full bg-blue-500 mr-3 rtl:ml-3"></span>
+														Pending
+														<span v-if="notesStats.tags.pending" class="ml-auto bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs font-medium px-2.5 py-0.5 rounded-full">
+															{{ notesStats.tags.pending }}
+														</span>
 													</button>
 													<button
-															type="button"
-															class="w-full flex justify-between items-center p-2 hover:bg-white-dark/10 rounded-md dark:hover:text-primary hover:text-primary dark:hover:bg-[#181F32] font-medium h-10"
-															:class="{ 'bg-gray-100 dark:text-primary text-primary dark:bg-[#181F32]': selectedTab === 'fav' }"
-															@click="tabChanged('fav')"
+														type="button"
+														class="w-full flex items-center p-3 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors duration-200 font-medium"
+														:class="{ 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300': selectedTab === 'attention' }"
+														@click="tabChanged('attention')"
 													>
-															<div class="flex items-center">
-																	<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5">
-																			<path
-																					d="M9.15316 5.40838C10.4198 3.13613 11.0531 2 12 2C12.9469 2 13.5802 3.13612 14.8468 5.40837L15.1745 5.99623C15.5345 6.64193 15.7144 6.96479 15.9951 7.17781C16.2757 7.39083 16.6251 7.4699 17.3241 7.62805L17.9605 7.77203C20.4201 8.32856 21.65 8.60682 21.9426 9.54773C22.2352 10.4886 21.3968 11.4691 19.7199 13.4299L19.2861 13.9372C18.8096 14.4944 18.5713 14.773 18.4641 15.1177C18.357 15.4624 18.393 15.8341 18.465 16.5776L18.5306 17.2544C18.7841 19.8706 18.9109 21.1787 18.1449 21.7602C17.3788 22.3417 16.2273 21.8115 13.9243 20.7512L13.3285 20.4768C12.6741 20.1755 12.3469 20.0248 12 20.0248C11.6531 20.0248 11.3259 20.1755 10.6715 20.4768L10.0757 20.7512C7.77268 21.8115 6.62118 22.3417 5.85515 21.7602C5.08912 21.1787 5.21588 19.8706 5.4694 17.2544L5.53498 16.5776C5.60703 15.8341 5.64305 15.4624 5.53586 15.1177C5.42868 14.773 5.19043 14.4944 4.71392 13.9372L4.2801 13.4299C2.60325 11.4691 1.76482 10.4886 2.05742 9.54773C2.35002 8.60682 3.57986 8.32856 6.03954 7.77203L6.67589 7.62805C7.37485 7.4699 7.72433 7.39083 8.00494 7.17781C8.28555 6.96479 8.46553 6.64194 8.82547 5.99623L9.15316 5.40838Z"
-																					stroke="currentColor"
-																					stroke-width="1.5"
-																			></path>
-																	</svg>
-																	<div class="ml-3 rtl:mr-3">Favourites</div>
-															</div>
+														<span class="w-3 h-3 rounded-full bg-amber-500 mr-3 rtl:ml-3"></span>
+														Need Attention
+														<span v-if="notesStats.tags.attention" class="ml-auto bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs font-medium px-2.5 py-0.5 rounded-full">
+															{{ notesStats.tags.attention }}
+														</span>
 													</button>
-													<div class="h-px w-full border-b border-[#e0e6ed] dark:border-[#1b2e4b]"></div>
-													<div class="px-1 py-3">Tags</div>
 													<button
-															type="button"
-															class="w-full flex items-center h-10 p-1 hover:bg-white-dark/10 rounded-md dark:hover:bg-[#181F32] font-medium text-primary hover:pl-3 rtl:hover:pr-3 duration-300"
-															:class="{ 'pl-3 rtl:pr-3 bg-gray-100 dark:bg-[#181F32]': selectedTab === 'pending' }"
-															@click="tabChanged('pending')"
+														type="button"
+														class="w-full flex items-center p-3 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors duration-200 font-medium"
+														:class="{ 'bg-cyan-50 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-300': selectedTab === 'general' }"
+														@click="tabChanged('general')"
 													>
-															<svg
-																	width="24"
-																	height="24"
-																	viewBox="0 0 24 24"
-																	fill="none"
-																	xmlns="http://www.w3.org/2000/svg"
-																	class="w-3 h-3 rotate-45 fill-primary"
-															>
-																	<path
-																			d="M2 12C2 7.28595 2 4.92893 3.46447 3.46447C4.92893 2 7.28595 2 12 2C16.714 2 19.0711 2 20.5355 3.46447C22 4.92893 22 7.28595 22 12C22 16.714 22 19.0711 20.5355 20.5355C19.0711 22 16.714 22 12 22C7.28595 22 4.92893 22 3.46447 20.5355C2 19.0711 2 16.714 2 12Z"
-																			stroke="currentColor"
-																			stroke-width="1.5"
-																	></path>
-															</svg>
-															<div class="ml-3 rtl:mr-3">Pending</div>
+														<span class="w-3 h-3 rounded-full bg-cyan-500 mr-3 rtl:ml-3"></span>
+														General
+														<span v-if="notesStats.tags.general" class="ml-auto bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs font-medium px-2.5 py-0.5 rounded-full">
+															{{ notesStats.tags.general }}
+														</span>
 													</button>
-
 													<button
-															type="button"
-															class="w-full flex items-center h-10 p-1 hover:bg-white-dark/10 rounded-md dark:hover:bg-[#181F32] font-medium text-warning hover:pl-3 rtl:hover:pr-3 duration-300"
-															:class="{ 'pl-3 rtl:pr-3 bg-gray-100 dark:bg-[#181F32]': selectedTab === 'attention' }"
-															@click="tabChanged('attention')"
+														type="button"
+														class="w-full flex items-center p-3 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors duration-200 font-medium"
+														:class="{ 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300': selectedTab === 'done' }"
+														@click="tabChanged('done')"
 													>
-															<svg
-																	width="24"
-																	height="24"
-																	viewBox="0 0 24 24"
-																	fill="none"
-																	xmlns="http://www.w3.org/2000/svg"
-																	class="w-3 h-3 rotate-45 fill-warning"
-															>
-																	<path
-																			d="M2 12C2 7.28595 2 4.92893 3.46447 3.46447C4.92893 2 7.28595 2 12 2C16.714 2 19.0711 2 20.5355 3.46447C22 4.92893 22 7.28595 22 12C22 16.714 22 19.0711 20.5355 20.5355C19.0711 22 16.714 22 12 22C7.28595 22 4.92893 22 3.46447 20.5355C2 19.0711 2 16.714 2 12Z"
-																			stroke="currentColor"
-																			stroke-width="1.5"
-																	></path>
-															</svg>
-															<div class="ml-3 rtl:mr-3">Need Attention</div>
+														<span class="w-3 h-3 rounded-full bg-emerald-500 mr-3 rtl:ml-3"></span>
+														Done
+														<span v-if="notesStats.tags.done" class="ml-auto bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs font-medium px-2.5 py-0.5 rounded-full">
+															{{ notesStats.tags.done }}
+														</span>
 													</button>
-
 													<button
-															type="button"
-															class="w-full flex items-center h-10 p-1 hover:bg-white-dark/10 rounded-md dark:hover:bg-[#181F32] font-medium text-info hover:pl-3 rtl:hover:pr-3 duration-300"
-															:class="{ 'pl-3 rtl:pr-3 bg-gray-100 dark:bg-[#181F32]': selectedTab === 'general' }"
-															@click="tabChanged('general')"
+														type="button"
+														class="w-full flex items-center p-3 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors duration-200 font-medium"
+														:class="{ 'bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300': selectedTab === 'important' }"
+														@click="tabChanged('important')"
 													>
-															<svg
-																	width="24"
-																	height="24"
-																	viewBox="0 0 24 24"
-																	fill="none"
-																	xmlns="http://www.w3.org/2000/svg"
-																	class="w-3 h-3 rotate-45 bg-cyan-400"
-															>
-																	<path
-																			d="M2 12C2 7.28595 2 4.92893 3.46447 3.46447C4.92893 2 7.28595 2 12 2C16.714 2 19.0711 2 20.5355 3.46447C22 4.92893 22 7.28595 22 12C22 16.714 22 19.0711 20.5355 20.5355C19.0711 22 16.714 22 12 22C7.28595 22 4.92893 22 3.46447 20.5355C2 19.0711 2 16.714 2 12Z"
-																			stroke="currentColor"
-																			stroke-width="1.5"
-																	></path>
-															</svg>
-															<div class="ml-3 rtl:mr-3">General</div>
-													</button>
-
-													<button
-															type="button"
-															class="w-full flex items-center h-10 p-1 hover:bg-white-dark/10 rounded-md dark:hover:bg-[#181F32] font-medium text-green-700 hover:pl-3 rtl:hover:pr-3 duration-300"
-															:class="{ 'pl-3 rtl:pr-3 bg-gray-100 dark:bg-[#181F32]': selectedTab === 'done' }"
-															@click="tabChanged('done')"
-													>
-															<svg
-																	width="24"
-																	height="24"
-																	viewBox="0 0 24 24"
-																	fill="none"
-																	xmlns="http://www.w3.org/2000/svg"
-																	class="w-3 h-3 rotate-45 bg-green-400"
-															>
-																	<path
-																			d="M2 12C2 7.28595 2 4.92893 3.46447 3.46447C4.92893 2 7.28595 2 12 2C16.714 2 19.0711 2 20.5355 3.46447C22 4.92893 22 7.28595 22 12C22 16.714 22 19.0711 20.5355 20.5355C19.0711 22 16.714 22 12 22C7.28595 22 4.92893 22 3.46447 20.5355C2 19.0711 2 16.714 2 12Z"
-																			stroke="currentColor"
-																			stroke-width="1.5"
-																	></path>
-															</svg>
-															<div class="ml-3 rtl:mr-3">Done</div>
-													</button>
-
-													<button
-															type="button"
-															class="w-full flex items-center h-10 p-1 hover:bg-white-dark/10 rounded-md dark:hover:bg-[#181F32] font-medium text-danger hover:pl-3 rtl:hover:pr-3 duration-300"
-															:class="{ 'pl-3 rtl:pr-3 bg-gray-100 dark:bg-[#181F32]': selectedTab === 'important' }"
-															@click="tabChanged('important')"
-													>
-															<svg
-																	width="24"
-																	height="24"
-																	viewBox="0 0 24 24"
-																	fill="none"
-																	xmlns="http://www.w3.org/2000/svg"
-																	class="w-3 h-3 rotate-45 fill-danger"
-															>
-																	<path
-																			d="M2 12C2 7.28595 2 4.92893 3.46447 3.46447C4.92893 2 7.28595 2 12 2C16.714 2 19.0711 2 20.5355 3.46447C22 4.92893 22 7.28595 22 12C22 16.714 22 19.0711 20.5355 20.5355C19.0711 22 16.714 22 12 22C7.28595 22 4.92893 22 3.46447 20.5355C2 19.0711 2 16.714 2 12Z"
-																			stroke="currentColor"
-																			stroke-width="1.5"
-																	></path>
-															</svg>
-															<div class="ml-3 rtl:mr-3">Important</div>
+														<span class="w-3 h-3 rounded-full bg-rose-500 mr-3 rtl:ml-3"></span>
+														Important
+														<span v-if="notesStats.tags.important" class="ml-auto bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs font-medium px-2.5 py-0.5 rounded-full">
+															{{ notesStats.tags.important }}
+														</span>
 													</button>
 											</div>
 									</perfect-scrollbar>
 							</div>
-							<div class="left-0 rtl:right-0 absolute bottom-0 p-4 w-full">
-									<button class="btn btn-primary w-full" type="button" @click="editNote()">
-											<svg
-													xmlns="http://www.w3.org/2000/svg"
-													width="24px"
-													height="24px"
-													viewBox="0 0 24 24"
-													fill="none"
-													stroke="currentColor"
-													stroke-width="1.5"
-													stroke-linecap="round"
-													stroke-linejoin="round"
-													class="w-5 h-5 mr-2 rtl:ml-2"
-											>
-													<line x1="12" y1="5" x2="12" y2="19"></line>
-													<line x1="5" y1="12" x2="19" y2="12"></line>
-											</svg>
-											Add New Note
-									</button>
+							<div class="left-0 rtl:right-0 absolute bottom-0 p-4 w-full border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+								<button
+									class="w-full flex items-center justify-center px-4 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold transition-colors duration-200 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
+									type="button"
+									@click="editNote()"
+								>
+									<font-awesome-icon icon="plus" class="w-4 h-4 mr-2 rtl:ml-2" />
+									Add New Note
+								</button>
 							</div>
-					</div>
 
-					<div class="panel flex-1 overflow-auto h-full">
-							<div class="pb-5">
-									<button type="button" class="xl:hidden hover:text-primary" @click="isShowNoteMenu = !isShowNoteMenu">
-											<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-6 h-6">
-													<path d="M20 7L4 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
-													<path opacity="0.5" d="M20 12L4 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
-													<path d="M20 17L4 17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
-											</svg>
-									</button>
+					</div>
+				</Transition>
+			<!-- Main Content Area -->
+					<div class="flex-1 min-h-0 overflow-auto bg-transparent p-0">
+						<div class="pb-5 flex justify-between items-center">
+							<!-- Mobile Menu Toggle -->
+							<button type="button" class="xl:hidden hover:text-indigo-600 dark:hover:text-indigo-400" @click="isShowNoteMenu = !isShowNoteMenu">
+								<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-6 h-6">
+									<path d="M20 7L4 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+									<path opacity="0.5" d="M20 12L4 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+									<path d="M20 17L4 17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+								</svg>
+							</button>
+							<!-- Filter/View Options (Optional) -->
+							<div class="flex items-center space-x-2">
+								<!-- Add filter/view options here if needed -->
 							</div>
-							<template v-if="!filterdNotesList.length">
-									<div class="flex justify-center items-center sm:min-h-[300px] min-h-[400px] font-semibold text-lg h-full">No data available</div>
-							</template>
-							<template v-if="filterdNotesList.length">
-									<div class="sm:min-h-[300px] min-h-[400px]">
-											<div class="grid 2xl:grid-cols-4 lg:grid-cols-3 sm:grid-cols-2 grid-cols-1 gap-5">
-													<template v-for="note in filterdNotesList" :key="note.id">
-															<div
-																	class="panel pb-12 note-card"
-																	:class="getCardClass(note)"																	
-															>
-																	<div class="min-h-[142px] pb-6">
-																			<div class="flex justify-between">
-																					<div class="flex items-center w-max">
-																							<div class="flex-none">
+						</div>
+						
+						<!-- No Notes Message -->
+						<template v-if="!filterdNotesList.length">
+							<div class="flex flex-col justify-center items-center sm:min-h-[300px] min-h-[400px] h-full text-center text-gray-500 dark:text-gray-400">
+								<svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mb-4 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+								</svg>
+								<h3 class="text-xl font-semibold mb-2">No notes found</h3>
+								<p class="text-sm">Try adjusting your filters or add a new note.</p>
+							</div>
+						</template>
+						
+						<!-- Notes Grid -->
+						<!-- Added fade transition for list -->
+						<template v-if="filterdNotesList.length">
+							<div class="sm:min-h-[300px] min-h-[400px]">
+								<!-- Improved responsive grid with better spacing -->
+								<div class="grid 2xl:grid-cols-4 xl:grid-cols-3 md:grid-cols-2 grid-cols-1 gap-4 md:gap-6 transition-all duration-300">
+									<TransitionGroup
+										name="note-list"
+										tag="div"
+										class="contents"
+										appear
+									>
+										<template v-for="note in filterdNotesList" :key="note.id">
+										<!-- Modern Note Card - Adjusted Padding and added focus styles -->
+										<div
+											tabindex="0"
+											class="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden relative group focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
+											:class="getCardClass(note)"
+											:aria-labelledby="'note-title-' + note.id"
+											:aria-describedby="'note-desc-' + note.id"
+										>
+											<!-- Adjusted padding (p-4) and added space-y-3 -->
+											<div class="p-4 flex flex-col h-full space-y-3">
+												<!-- Card Header - Removed mb-3 (using space-y now) -->
+												<div class="flex justify-between items-start">
+													<div class="flex items-center">
+														<!-- User Avatar/Initial - Adjusted margin -->
+														<div class="flex-none mr-3">
 																									<div v-if="note.thumb" class="p-0.5 bg-gray-300 dark:bg-gray-700 rounded-full">
 																											<img class="h-8 w-8 rounded-full object-cover" :src="`/assets/images/${note.thumb}`" />
 																									</div>
@@ -520,23 +641,30 @@
 																									</div>
 																							</div>
 																							<div class="ml-2 rtl:mr-2">
-																									<div class="font-semibold text-gray-800">{{ note.user }}</div>
-																									<div class="font-nunito text-sm text-gray-700">{{ moment(note.date).format('ddd, DD MMMM YYYY') }}</div>
+																									<!-- Improved contrast for user name -->
+																									<div class="font-semibold text-gray-800 dark:text-gray-100">{{ note.user }}</div>
+																									<!-- Improved contrast for date -->
+																									<div class="font-nunito text-sm text-gray-600 dark:text-gray-400">{{ moment(note.date).format('ddd, DD MMMM YYYY') }}</div>
 																							</div>
 																					</div>
 																					<div class="dropdown">
 																							<Popper :placement="store.rtlClass === 'rtl' ? 'bottom-start' : 'bottom-end'" offsetDistance="0">
-																									<button type="button" class="text-primary">
+																									<!-- Added aria-label and improved focus style -->
+																									<button
+																										type="button"
+																										class="text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 p-1 rounded-full focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1 dark:focus:ring-offset-gray-800"
+																										aria-label="Note options"
+																									>
 																											<svg
 																													width="24"
 																													height="24"
 																													viewBox="0 0 24 24"
 																													fill="none"
 																													xmlns="http://www.w3.org/2000/svg"
-																													class="w-5 h-5 rotate-90 opacity-70 hover:opacity-100"
+																													class="w-5 h-5 rotate-90" 
 																											>
 																													<circle cx="5" cy="12" r="2" stroke="currentColor" stroke-width="1.5"></circle>
-																													<circle opacity="0.5" cx="12" cy="12" r="2" stroke="currentColor" stroke-width="1.5"></circle>
+																													<circle opacity="0.7" cx="12" cy="12" r="2" stroke="currentColor" stroke-width="1.5"></circle> <!-- Adjusted opacity -->
 																													<circle cx="19" cy="12" r="2" stroke="currentColor" stroke-width="1.5"></circle>
 																											</svg>
 																									</button>
@@ -645,213 +773,117 @@
 																							</Popper>
 																					</div>
 																			</div>
-																			<div>
-																					<h4 class="text-lg font-semibold mb-2 text-gray-800 mt-4">{{ note.title }}</h4>
-																					<p class="mt-2 font-nunito text-sm text-gray-700" v-html="note.description"></p>
+																			<!-- Card Body - Removed mt-4 (using space-y now) -->
+																			<div class="flex-grow">
+																					<!-- Added ID for aria-labelledby -->
+																					<h4 :id="'note-title-' + note.id" class="text-lg font-semibold mb-1 text-gray-800 dark:text-gray-100">{{ note.title }}</h4>
+																					<!-- Added ID for aria-describedby, improved contrast, line-clamp -->
+																					<p :id="'note-desc-' + note.id" class="font-nunito text-sm text-gray-600 dark:text-gray-300 line-clamp-3" v-html="note.description"></p>
 																			</div>
 																	</div>
-																	<div class="absolute bottom-5 left-0 w-full px-5">
-																			<div class="py-4 border-b">
-																				<span class="text-xs text-gray-500"></span>
-																				<span class="text-xs text-gray-500 float-right">by: {{ note.author }}</span>
+																	<!-- Card Footer - Adjusted positioning and padding -->
+																	<div class="pt-3 mt-auto">
+																			<!-- Removed border-b, adjusted text contrast -->
+																			<div class="flex justify-between items-center text-xs text-gray-500 dark:text-gray-400">
+																				<span><!-- Placeholder if needed --></span>
+																				<span>by: {{ note.author || 'Unknown' }}</span> <!-- Added fallback -->
 																			</div>
-																			<div class="flex items-center justify-between mt-2">
+																			<!-- Adjusted margin-top -->
+																			<div class="flex items-center justify-between mt-3">
 																					<div class="dropdown">
 																							<Popper :placement="store.rtlClass === 'rtl' ? 'bottom-start' : 'bottom-end'" offsetDistance="0">
+																									<!-- Tag Indicator Button - Added aria-label and improved styling/contrast -->
 																									<button
 																											type="button"
-																											:class="{
-																													'text-primary': note.tag === 'pending',
-																													'text-warning': note.tag === 'attention',
-																													'text-info': note.tag === 'general',
-																													'text-green-700': note.tag === 'done',
-																													'text-danger': note.tag === 'important',
-																											}"
+																											:class="getTagColor(note.tag)"
+																											class="flex items-center space-x-1 text-xs font-medium p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+																											:aria-label="'Current tag: ' + (note.tag || 'None') + '. Change tag.'"
 																									>
-																											<svg
-																													width="24"
-																													height="24"
-																													viewBox="0 0 24 24"
-																													fill="none"
-																													xmlns="http://www.w3.org/2000/svg"
-																													class="w-3 h-3 rotate-45"
-																													:class="{
-																															'fill-primary': note.tag === 'pending',
-																															'fill-warning': note.tag === 'attention',
-																															'bg-cyan-400': note.tag === 'general',
-																															'bg-green-400': note.tag === 'done',
-																															'fill-danger': note.tag === 'important',
-																													}"
-																											>
-																													<path
-																															d="M2 12C2 7.28595 2 4.92893 3.46447 3.46447C4.92893 2 7.28595 2 12 2C16.714 2 19.0711 2 20.5355 3.46447C22 4.92893 22 7.28595 22 12C22 16.714 22 19.0711 20.5355 20.5355C19.0711 22 16.714 22 12 22C7.28595 22 4.92893 22 3.46447 20.5355C2 19.0711 2 16.714 2 12Z"
-																															stroke="currentColor"
-																															stroke-width="1.5"
-																													></path>
-																											</svg>
+																											<!-- Using background color for the dot for better visibility -->
+																											<span class="w-2.5 h-2.5 rounded-full inline-block" :class="{
+																												'bg-blue-500': note.tag === 'pending',
+																												'bg-amber-500': note.tag === 'attention',
+																												'bg-cyan-500': note.tag === 'general',
+																												'bg-emerald-500': note.tag === 'done',
+																												'bg-rose-500': note.tag === 'important',
+																												'bg-gray-500': !note.tag
+																											}"></span>
+																											<span class="capitalize">{{ note.tag || 'None' }}</span>
 																									</button>
 																									<template #content="{ close }">
 																											<ul @click="close()">
+																													<!-- Dropdown items - simplified, using background dots -->
 																													<li>
-																															<a href="javascript:;" @click="setTag(note, 'pending')">
-																																	<svg
-																																			width="24"
-																																			height="24"
-																																			viewBox="0 0 24 24"
-																																			fill="none"
-																																			xmlns="http://www.w3.org/2000/svg"
-																																			class="w-3 h-3 rotate-45 mr-2 rtl:ml-2 fill-primary"
-																																	>
-																																			<path
-																																					d="M2 12C2 7.28595 2 4.92893 3.46447 3.46447C4.92893 2 7.28595 2 12 2C16.714 2 19.0711 2 20.5355 3.46447C22 4.92893 22 7.28595 22 12C22 16.714 22 19.0711 20.5355 20.5355C19.0711 22 16.714 22 12 22C7.28595 22 4.92893 22 3.46447 20.5355C2 19.0711 2 16.714 2 12Z"
-																																					stroke="none"
-																																					stroke-width="1.5"
-																																			></path>
-																																	</svg>
+																															<a href="javascript:;" @click="setTag(note, 'pending')" class="flex items-center">
+																																	<span class="w-2.5 h-2.5 rounded-full inline-block mr-2 rtl:ml-2 bg-blue-500"></span>
 																																	Pending
 																															</a>
 																													</li>
 																													<li>
-																															<a href="javascript:;" @click="setTag(note, 'attention')">
-																																	<svg
-																																			width="24"
-																																			height="24"
-																																			viewBox="0 0 24 24"
-																																			fill="none"
-																																			xmlns="http://www.w3.org/2000/svg"
-																																			class="w-3 h-3 rotate-45 mr-2 rtl:ml-2 fill-warning"
-																																	>
-																																			<path
-																																					d="M2 12C2 7.28595 2 4.92893 3.46447 3.46447C4.92893 2 7.28595 2 12 2C16.714 2 19.0711 2 20.5355 3.46447C22 4.92893 22 7.28595 22 12C22 16.714 22 19.0711 20.5355 20.5355C19.0711 22 16.714 22 12 22C7.28595 22 4.92893 22 3.46447 20.5355C2 19.0711 2 16.714 2 12Z"
-																																					stroke="none"
-																																					stroke-width="1.5"
-																																			></path>
-																																	</svg>
+																															<a href="javascript:;" @click="setTag(note, 'attention')" class="flex items-center">
+																																	<span class="w-2.5 h-2.5 rounded-full inline-block mr-2 rtl:ml-2 bg-amber-500"></span>
 																																	Attention
 																															</a>
 																													</li>
 																													<li>
-																															<a href="javascript:;" @click="setTag(note, 'general')">
-																																	<svg
-																																			width="24"
-																																			height="24"
-																																			viewBox="0 0 24 24"
-																																			fill="none"
-																																			xmlns="http://www.w3.org/2000/svg"
-																																			class="w-3 h-3 rotate-45 mr-2 rtl:ml-2 bg-cyan-400"
-																																	>
-																																			<path
-																																					d="M2 12C2 7.28595 2 4.92893 3.46447 3.46447C4.92893 2 7.28595 2 12 2C16.714 2 19.0711 2 20.5355 3.46447C22 4.92893 22 7.28595 22 12C22 16.714 22 19.0711 20.5355 20.5355C19.0711 22 16.714 22 12 22C7.28595 22 4.92893 22 3.46447 20.5355C2 19.0711 2 16.714 2 12Z"
-																																					stroke="none"
-																																					stroke-width="1.5"
-																																			></path>
-																																	</svg>
+																															<a href="javascript:;" @click="setTag(note, 'general')" class="flex items-center">
+																																	<span class="w-2.5 h-2.5 rounded-full inline-block mr-2 rtl:ml-2 bg-cyan-500"></span>
 																																	General
 																															</a>
 																													</li>
 																													<li>
-																															<a href="javascript:;" @click="setTag(note, 'done')">
-																																	<svg
-																																			width="24"
-																																			height="24"
-																																			viewBox="0 0 24 24"
-																																			fill="none"
-																																			xmlns="http://www.w3.org/2000/svg"
-																																			class="w-3 h-3 rotate-45 mr-2 rtl:ml-2 bg-green-400"
-																																	>
-																																			<path
-																																					d="M2 12C2 7.28595 2 4.92893 3.46447 3.46447C4.92893 2 7.28595 2 12 2C16.714 2 19.0711 2 20.5355 3.46447C22 4.92893 22 7.28595 22 12C22 16.714 22 19.0711 20.5355 20.5355C19.0711 22 16.714 22 12 22C7.28595 22 4.92893 22 3.46447 20.5355C2 19.0711 2 16.714 2 12Z"
-																																					stroke="none"
-																																					stroke-width="1.5"
-																																			></path>
-																																	</svg>
+																															<a href="javascript:;" @click="setTag(note, 'done')" class="flex items-center">
+																																	<span class="w-2.5 h-2.5 rounded-full inline-block mr-2 rtl:ml-2 bg-emerald-500"></span>
 																																	Done
 																															</a>
 																													</li>
 																													<li>
-																															<a href="javascript:;" @click="setTag(note, 'important')">
-																																	<svg
-																																			width="24"
-																																			height="24"
-																																			viewBox="0 0 24 24"
-																																			fill="none"
-																																			xmlns="http://www.w3.org/2000/svg"
-																																			class="w-3 h-3 rotate-45 mr-2 rtl:ml-2 fill-danger"
-																																	>
-																																			<path
-																																					d="M2 12C2 7.28595 2 4.92893 3.46447 3.46447C4.92893 2 7.28595 2 12 2C16.714 2 19.0711 2 20.5355 3.46447C22 4.92893 22 7.28595 22 12C22 16.714 22 19.0711 20.5355 20.5355C19.0711 22 16.714 22 12 22C7.28595 22 4.92893 22 3.46447 20.5355C2 19.0711 2 16.714 2 12Z"
-																																					stroke="none"
-																																					stroke-width="1.5"
-																																			></path>
-																																	</svg>
+																															<a href="javascript:;" @click="setTag(note, 'important')" class="flex items-center">
+																																	<span class="w-2.5 h-2.5 rounded-full inline-block mr-2 rtl:ml-2 bg-rose-500"></span>
 																																	Important
+																															</a>
+																													</li>
+																													<li>
+																															<a href="javascript:;" @click="setTag(note, '')" class="flex items-center">
+																																	<span class="w-2.5 h-2.5 rounded-full inline-block mr-2 rtl:ml-2 bg-gray-500"></span>
+																																	None
 																															</a>
 																													</li>
 																											</ul>
 																									</template>
 																							</Popper>
 																					</div>
-																					<div class="flex items-center">
-																							<button type="button" class="text-danger" @click="deleteNoteConfirm(note)">
-																									<svg
-																											width="24"
-																											height="24"
-																											viewBox="0 0 24 24"
-																											fill="none"
-																											xmlns="http://www.w3.org/2000/svg"
-																											class="w-5 h-5"
-																									>
-																											<path d="M20.5001 6H3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
-																											<path
-																													d="M18.8334 8.5L18.3735 15.3991C18.1965 18.054 18.108 19.3815 17.243 20.1907C16.378 21 15.0476 21 12.3868 21H11.6134C8.9526 21 7.6222 21 6.75719 20.1907C5.89218 19.3815 5.80368 18.054 5.62669 15.3991L5.16675 8.5"
-																													stroke="currentColor"
-																													stroke-width="1.5"
-																													stroke-linecap="round"
-																											></path>
-																											<path
-																													opacity="0.5"
-																													d="M9.5 11L10 16"
-																													stroke="currentColor"
-																													stroke-width="1.5"
-																													stroke-linecap="round"
-																											></path>
-																											<path
-																													opacity="0.5"
-																													d="M14.5 11L14 16"
-																													stroke="currentColor"
-																													stroke-width="1.5"
-																													stroke-linecap="round"
-																											></path>
-																											<path
-																													opacity="0.5"
-																													d="M6.5 6C6.55588 6 6.58382 6 6.60915 5.99936C7.43259 5.97849 8.15902 5.45491 8.43922 4.68032C8.44784 4.65649 8.45667 4.62999 8.47434 4.57697L8.57143 4.28571C8.65431 4.03708 8.69575 3.91276 8.75071 3.8072C8.97001 3.38607 9.37574 3.09364 9.84461 3.01877C9.96213 3 10.0932 3 10.3553 3H13.6447C13.9068 3 14.0379 3 14.1554 3.01877C14.6243 3.09364 15.03 3.38607 15.2493 3.8072C15.3043 3.91276 15.3457 4.03708 15.4286 4.28571L15.5257 4.57697C15.5433 4.62992 15.5522 4.65651 15.5608 4.68032C15.841 5.45491 16.5674 5.97849 17.3909 5.99936C17.4162 6 17.4441 6 17.5 6"
-																													stroke="currentColor"
-																													stroke-width="1.5"
-																											></path>
-																									</svg>
+																					<!-- Action Buttons - Added spacing, aria-labels, improved focus -->
+																					<div class="flex items-center space-x-1">
+																							<!-- Delete Button -->
+																							<button
+																								type="button"
+																								class="text-gray-500 dark:text-gray-400 hover:text-rose-600 dark:hover:text-rose-500 p-1 rounded-full focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-1 dark:focus:ring-offset-gray-800"
+																								@click="deleteNoteConfirm(note)"
+																								aria-label="Delete note"
+																							>
+																									<font-awesome-icon icon="trash" class="w-4 h-4" />
 																							</button>
-																							<button type="button" class="text-warning group ml-2 rtl:mr-2" @click="setFav(note)">
-																									<svg
-																											width="24"
-																											height="24"
-																											viewBox="0 0 24 24"
-																											fill="none"
-																											xmlns="http://www.w3.org/2000/svg"
-																											class="w-4.5 h-4.5 group-hover:fill-warning"
-																											:class="{ 'fill-warning': note.isFav }"
-																									>
-																											<path
-																													d="M9.15316 5.40838C10.4198 3.13613 11.0531 2 12 2C12.9469 2 13.5802 3.13612 14.8468 5.40837L15.1745 5.99623C15.5345 6.64193 15.7144 6.96479 15.9951 7.17781C16.2757 7.39083 16.6251 7.4699 17.3241 7.62805L17.9605 7.77203C20.4201 8.32856 21.65 8.60682 21.9426 9.54773C22.2352 10.4886 21.3968 11.4691 19.7199 13.4299L19.2861 13.9372C18.8096 14.4944 18.5713 14.773 18.4641 15.1177C18.357 15.4624 18.393 15.8341 18.465 16.5776L18.5306 17.2544C18.7841 19.8706 18.9109 21.1787 18.1449 21.7602C17.3788 22.3417 16.2273 21.8115 13.9243 20.7512L13.3285 20.4768C12.6741 20.1755 12.3469 20.0248 12 20.0248C11.6531 20.0248 11.3259 20.1755 10.6715 20.4768L10.0757 20.7512C7.77268 21.8115 6.62118 22.3417 5.85515 21.7602C5.08912 21.1787 5.21588 19.8706 5.4694 17.2544L5.53498 16.5776C5.60703 15.8341 5.64305 15.4624 5.53586 15.1177C5.42868 14.773 5.19043 14.4944 4.71392 13.9372L4.2801 13.4299C2.60325 11.4691 1.76482 10.4886 2.05742 9.54773C2.35002 8.60682 3.57986 8.32856 6.03954 7.77203L6.67589 7.62805C7.37485 7.4699 7.72433 7.39083 8.00494 7.17781C8.28555 6.96479 8.46553 6.64194 8.82547 5.99623L9.15316 5.40838Z"
-																													stroke="currentColor"
-																													stroke-width="1.5"
-																											></path>
-																									</svg>
+																							<!-- Favorite Button -->
+																							<button
+																								type="button"
+																								class="text-gray-500 dark:text-gray-400 hover:text-amber-500 dark:hover:text-amber-400 p-1 rounded-full focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-1 dark:focus:ring-offset-gray-800 group"
+																								@click="setFav(note)"
+																								:aria-label="note.isFav ? 'Remove from favorites' : 'Add to favorites'"
+																								:aria-pressed="note.isFav"
+																							>
+																									<font-awesome-icon
+																										icon="star"
+																										class="w-4 h-4 transition-colors"
+																										:class="{ 'text-amber-500 dark:text-amber-400': note.isFav }"
+																									/>
 																							</button>
 																					</div>
 																			</div>
 																	</div>
 															</div>
 													</template>
+												</TransitionGroup>
 											</div>
 									</div>
 							</template>
@@ -1153,7 +1185,104 @@
 											</div>
 									</Dialog>
 							</TransitionRoot>
-					</div>
+						</div>
 			</div>
+		</div>
 	</div>
 </template>
+
+<style scoped>
+/* Base transitions */
+.transition-all {
+	 transition-property: all;
+	 transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+	 transition-duration: 300ms;
+}
+
+/* Fade transition */
+.fade-enter-active,
+.fade-leave-active {
+	 transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+	 opacity: 0;
+}
+
+/* Slide transition for sidebar */
+.slide-x-enter-active,
+.slide-x-leave-active {
+	 transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.slide-x-enter-from,
+.slide-x-leave-to {
+	 transform: translateX(-100%);
+}
+
+/* Note list transitions */
+.note-list-move,
+.note-list-enter-active,
+.note-list-leave-active {
+	 transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.note-list-enter-from,
+.note-list-leave-to {
+	 opacity: 0;
+	 transform: translateY(30px);
+}
+
+.note-list-leave-active {
+	 position: absolute;
+}
+
+/* Loading transition */
+.vld-overlay {
+	 transition: opacity 0.3s ease;
+}
+
+/* Modal transitions */
+.modal-enter-active,
+.modal-leave-active {
+	 transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.modal-enter-from,
+.modal-leave-to {
+	 opacity: 0;
+	 transform: scale(0.95);
+}
+
+/* Button hover transitions */
+button {
+	 transition: all 0.2s ease;
+}
+
+/* Form input transitions */
+.form-input,
+.form-select,
+.form-textarea {
+	 transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Tag transitions */
+.badge {
+	 transition: all 0.2s ease;
+}
+
+/* Card hover effect */
+.note-card {
+	 transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.note-card:hover {
+	 transform: translateY(-2px);
+}
+
+/* Dark mode transition */
+.dark {
+	 transition: background-color 0.3s ease, color 0.3s ease;
+}
+</style>
