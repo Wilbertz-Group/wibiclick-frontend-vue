@@ -1,5 +1,5 @@
 <script setup>
-  // import Header from "@/components/Header.vue"; // Removed old header
+  import CustomerTrendChart from "@/components/Customers/CustomerTrendChart.vue";
   import { useUserStore } from "@/stores/UserStore"
   import { onMounted, ref, reactive, watchEffect, computed, watch } from "vue"; // Added watch
   import moment from 'moment'
@@ -31,8 +31,6 @@
   const selectedContact = ref(null)
   const toast = useToast();
   const loading = ref(false);
-  const options = ref(); // Keep chart options
-  const series = ref(); // Keep chart series
   const paginationPageSize = ref(10);
   const editModalOpen = ref(false); // Renamed modal state
   const isDarkMode = ref(localStorage.getItem('darkMode') === 'true'); // Added dark mode state
@@ -40,41 +38,7 @@
   const customers = ref([]); // Added state for customer list
   const router = useRouter()
 
-  options.value = {
-    chart: {
-      height: 350,
-      type: 'bar'
-    },
-    dataLabels: {
-      enabled: false
-    },
-    stroke: {
-      curve: 'smooth'
-    },
-    xaxis: {
-      type: 'datetime',
-      labels: {
-      datetimeUTC: false
-    },
-      categories: []
-    },
-    tooltip: {
-      x: {
-        format: 'dd MMM yyyy'
-      },
-    },
-  },
 
-  series.value = [{
-      name: 'contacts',
-      data: []
-  }]
-
-  // Removed unused groups variable
-
-
-  // Removed AG Grid specific variables and functions
-  // const gridApi = ref(null);
   // const onGridReady = (params) => { ... };
   // const rowData = reactive({});
 
@@ -85,7 +49,6 @@
     return moment().isSame(dt, 'day') ? dt.format('h:mm A') : dt.format('MMM DD, YYYY h:mm A');
   }
 
-  // Removed columnDefs and defaultColDef
 
   // Add filters reactive object
   const filters = reactive({
@@ -140,93 +103,7 @@
 
       customers.value = response.data.customers; // Assign to the new ref
 
-      let customerss = [];
-
-      for (const c of response.data.customers) {
-        customerss.push({
-          x: c.createdAt,
-          y: 1,
-        });
-      }
-
-      const data = _.sortBy(customerss, 'x')
-
-      const currentGroup = 'byDay';
-      const grouped = _.groupBy(data, (item) => moment(item.x).format('MMM DD YYYY')) // Group directly by day format
-      const seriesData = Object.values(grouped).map( a => a.length )
-      const optionsData = Object.keys(grouped)
-          
-      options.value = {
-          chart: {
-            height: 350,
-            type: 'bar',
-            toolbar: {
-              autoSelected: "pan",
-              show: false
-            } 
-          },
-          dataLabels: {
-            enabled: false
-          },
-          stroke: {
-            curve: 'smooth'
-          },
-          xaxis: {
-            type: 'datetime',
-            labels: {
-      datetimeUTC: false
-    },
-            categories: optionsData,
-            labels: {
-              style: {
-                colors: '#FFFFFF'
-              }
-            }
-          },
-          yaxis: {
-            min: 0,
-            tickAmount: 4,
-            labels: {
-              style: {
-                colors: '#FFFFFF'
-              }
-            }
-          },
-          fill: {
-            gradient: {
-              enabled: true,
-              opacityFrom: 0.55,
-              opacityTo: 0
-            }
-          },
-          grid: {
-            borderColor: "#fff",
-            strokeDashArray: 2,
-            clipMarkers: false,
-            yaxis: {
-              lines: {
-                show: true
-              }
-            }
-          },
-          markers: {
-            size: 5,
-            colors: ["#ffffff"],
-            strokeColor: "#00BAEC",
-            strokeWidth: 3
-          },
-          tooltip: {
-            theme: "dark",
-            x: {
-              format: 'dd MMM yyyy'
-            },
-          },
-      }
-      series.value = [{
-        name: 'contacts',
-        data: seriesData
-      }]
-
+      // Chart data processing moved to CustomerTrendChart
       loading.value = false;
     } catch (error) {
       console.log(error);
@@ -260,69 +137,14 @@
     selectedContact.value = null; // Clear selected customer
   };
 
-  // onMounted(() => {
-  //   if(userStore.currentWebsite && userStore.user){
-  //     fetchContacts()  
-  //   }
-  // })
-
   // Add dark mode toggle function
   const toggleDarkMode = () => {
     isDarkMode.value = !isDarkMode.value;
     localStorage.setItem('darkMode', isDarkMode.value);
     document.documentElement.classList.toggle('dark', isDarkMode.value);
     // Update chart theme if needed
-    updateChartTheme();
-  };
-
-  // Function to update chart theme based on dark mode
-  const updateChartTheme = () => {
-    if (options.value) {
-      const textColor = isDarkMode.value ? '#FFFFFF' : '#374151'; // Example colors
-      const gridColor = isDarkMode.value ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)';
-      options.value = {
-        ...options.value,
-        chart: {
-          ...options.value.chart,
-          foreColor: textColor // Update base text color
-        },
-        xaxis: {
-          ...options.value.xaxis,
-          labels: {
-            ...options.value.xaxis.labels,
-            style: { colors: [textColor] } // Update x-axis label color
-          },
-          title: {
-             style: { color: textColor } // Update x-axis title color if present
-          }
-        },
-        yaxis: {
-          ...options.value.yaxis,
-          labels: {
-            ...options.value.yaxis.labels,
-            style: { colors: [textColor] } // Update y-axis label color
-          },
-           title: {
-             style: { color: textColor } // Update y-axis title color if present
-          }
-        },
-        grid: {
-          ...options.value.grid,
-          borderColor: gridColor // Update grid line color
-        },
-        tooltip: {
-          ...options.value.tooltip,
-          theme: isDarkMode.value ? 'dark' : 'light' // Update tooltip theme
-        },
-        // Update legend colors if needed
-        legend: {
-          ...options.value.legend,
-          labels: { colors: textColor }
-        }
-      };
-    }
-  };
-
+    // Chart theme update logic removed; handled by CustomerTrendChart  
+  }
 
   onMounted(() => {
     document.documentElement.classList.toggle('dark', isDarkMode.value); // Apply on initial load
@@ -336,11 +158,6 @@
       currentPage.value = 1; // Reset page on website change
       fetchContacts();
     }
-  });
-
-  // Watch dark mode to update chart theme
-  watch(isDarkMode, () => {
-    updateChartTheme();
   });
 
 </script>
@@ -530,9 +347,11 @@
      <!-- Chart Section -->
       <section class="mt-12 card-modern p-6">
          <h3 class="text-lg font-semibold mb-6 text-gray-900 dark:text-white">New Customer Trend</h3>
-         <div class="relative w-full h-96"> <!-- Added height constraint -->
-           <apexchart type="bar" height="100%" width="100%" :options="options" :series="series"></apexchart>
-         </div>
+         <CustomerTrendChart
+           :rawData="customers"
+           :loading="loading"
+           :isDarkMode="isDarkMode"
+         />
       </section>
 
    </div> <!-- End container -->
