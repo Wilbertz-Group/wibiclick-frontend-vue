@@ -379,590 +379,625 @@
 </script>
 
 <template>
-  <Alert v-if="notificationMessage" :notification-message="notificationMessage" />
-  <scale-loader :loading="loading" color="#ffffff" height="50px" class="vld-overlay is-active is-full-page" width="6px"></scale-loader>
-  <Header title="Your Profile" />  
-  <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-    <div class="px-4 py-6 sm:px-0">
-      <div>
-        <div class="md:grid md:grid-cols-3 md:gap-6">
-          <div class="md:col-span-1">
-            <div class="px-4 sm:px-0">
-              <h3 class="text-lg font-medium leading-6 text-gray-900">Profile</h3>
-              <p class="mt-1 text-sm text-gray-600">This information will be used to login to this dashboard.</p>
-            </div>
-          </div>
-          <div class="mt-5 md:mt-0 md:col-span-2">
-              <div class="shadow sm:rounded-md sm:overflow-hidden">
-                <FormKit
-                    type="form"
-                    id="profile"
-                    :form-class="submitted ? 'hide' : 'show'"
-                    submit-label="Update"
-                    @submit="updateLogin"
-                    :actions="false"
-                    
-                  >
-                  <div class="px-4 py-5 bg-white space-y-6 sm:p-6">                  
-                    <div class="w-full">
-                      <div class="">
-                        <FormKit
-                          type="text"
-                          name="email"
-                          label="Your Email"
-                          label-class="text-left"
-                          placeholder="jane@example.com"
-                          validation="required|email"
-                          v-model="profile.email"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <div class="double">
-                        <FormKit
-                          type="password"
-                          name="password"
-                          label="New Password"
-                          label-class="text-left"
-                          validation="required|length:6|matches:/[^a-zA-Z]/"
-                          :validation-messages="{
-                            matches: 'Please include at least one symbol',
-                          }"
-                          placeholder="Your password"
-                        />
-                        <FormKit
-                          type="password"
-                          name="password_confirm"
-                          label="Confirm password"
-                          label-class="text-left"
-                          placeholder="Confirm password"
-                          validation="required|confirm"
-                        />
-                      </div>
-                    </div>
-
-                  </div>
-                  <div class="px-4 py-3 bg-gray-50 text-right sm:px-6">
-                    <FormKit
-                      type="submit"
-                      label="Update"
-                    />
-                  </div>
-                </FormKit>
-              </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="hidden sm:block" aria-hidden="true">
-        <div class="py-5">
-          <div class="border-t border-gray-200" />
-        </div>
-      </div>
-
-      <div class="mt-10 sm:mt-0">
-        <div class="md:grid md:grid-cols-3 md:gap-6">
-          <div class="md:col-span-1">
-            <div class="px-4 sm:px-0">
-              <h3 class="text-lg font-medium leading-6 text-gray-900">Personal Information</h3>
-              <p class="mt-1 text-sm text-gray-600">Use a permanent address where you can receive mail.</p>
-            </div>
-          </div>
-          <div class="mt-5 md:mt-0 md:col-span-2">
-              <div class="shadow sm:rounded-md sm:overflow-hidden">
-                <FormKit
-                    type="form"
-                    id="profile"
-                    :form-class="submitted ? 'hide' : 'show'"
-                    submit-label="Update"
-                    @submit="profileUpdate"
-                    :actions="false"
-                    
-                  >
-                  <div class="px-4 py-5 bg-white space-y-6 sm:p-6">                  
-                    <div class="w-full">
-                      <div class="grid grid-cols-2 gap-3">
-                        <FormKit
-                          type="text"
-                          name="firstName"
-                          label="First Name"
-                          label-class="text-left"
-                          validation="required"
-                          v-model="profile.firstName"
-                        />
-
-                        <FormKit
-                          type="text"
-                          name="lastName"
-                          label="Last Name"
-                          label-class="text-left"
-                          validation="required"
-                          v-model="profile.lastName"
-                        />
-                      </div>
-                    </div>
-
-                    <div class="w-full">
-                      <div class="grid grid-cols-2 gap-3">
-                        <FormKit
-                          type="text"
-                          name="companyEmail"
-                          label="Your Email"
-                          label-class="text-left"
-                          validation="required|email"
-                          v-model="profile.companyEmail"
-                        />
-  
-                        <FormKit
-                          type="select"
-                          name="country"
-                          label="Country"
-                          label-class="text-left"
-                          :options=countryCampaign
-                          validation="required"
-                          v-model="profile.country"
-                        />
-                      </div>
-                    </div>
-
-                    <div class="w-full">
-                      <div class="">
-                        <FormKit
-                          type="text"
-                          name="address"
-                          label="Street address"
-                          label-class="text-left"
-                          validation="required"
-                          v-model="profile.address"
-                        />
-                      </div>
-                    </div>
-
-                    <div class="w-full">
-                      <div class="grid grid-cols-3 gap-3">
-                        <FormKit
-                          type="text"
-                          name="city"
-                          label="City"
-                          label-class="text-left"
-                          validation="required"
-                          v-model="profile.city"
-                        />
-                        <FormKit
-                          type="text"
-                          name="state"
-                          label="State / Province"
-                          label-class="text-left"
-                          validation="required"
-                          v-model="profile.state"
-                        />
-                        <FormKit
-                          type="text"
-                          name="zip"
-                          label="Zip / Postal code"
-                          label-class="text-left"
-                          validation="required"  
-                          v-model="profile.zip"                        
-                        />
-                      </div>
-                    </div>
-
-                  </div>
-                  <div class="px-4 py-3 bg-gray-50 text-right sm:px-6">
-                    <FormKit
-                      type="submit"
-                      label="Update"
-                    />
-                  </div>
-                </FormKit>
-              </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="hidden sm:block" aria-hidden="true">
-        <div class="py-5">
-          <div class="border-t border-gray-200" />
-        </div>
-      </div>
-
-      <div class="mt-10 sm:mt-0" v-if="userStore.user.permission == 'owner'">
-        <div class="md:grid md:grid-cols-3 md:gap-6">
-          <div class="md:col-span-1">
-            <div class="px-4 sm:px-0">
-              <h3 class="text-lg font-medium leading-6 text-gray-900">Company Information</h3>
-              <p class="mt-1 text-sm text-gray-600">Update your company/organisation information</p>
-            </div>
-          </div>
-          <div class="mt-5 md:mt-0 md:col-span-2">
-              <div class="shadow sm:rounded-md sm:overflow-hidden">
-                <FormKit
-                    type="form"
-                    id="profile"
-                    :form-class="submitted ? 'hide' : 'show'"
-                    submit-label="Update"
-                    @submit="companyUpdate"
-                    :actions="false"
-                    
-                  >
-
-                  <div class="px-4 py-5 bg-white space-y-6 sm:p-6">                 
-                    <div class="w-full">
-                      <div class="grid grid-cols-2 gap-3">
-                        <FormKit
-                          type="text"
-                          name="company_name"
-                          label="Company Name"
-                          label-class="text-left"
-                          validation="required"
-                          v-model="profile.company.company_name"
-                          :value="profile.company.company_name"
-                        />
-
-                        <FormKit
-                          type="text"
-                          name="slogan"
-                          label="Slogan"
-                          label-class="text-left"
-                          validation="required"
-                          v-model="profile.company.slogan"
-                          :value="profile.company.slogan"
-                        />
-                      </div>
-                    </div>
-
-                    <div class="w-full">
-                      <div class="grid grid-cols-2 gap-3">
-                        <FormKit
-                          type="text"
-                          name="email"
-                          label="Company Email"
-                          label-class="text-left"
-                          validation="required|email"
-                          v-model="profile.company.email"
-                          :value="profile.company.email"
-                        />
-  
-                        <FormKit
-                          type="text"
-                          name="currency_symbol"
-                          label="Currency Symbol"
-                          placeholder="$ or R"
-                          outer-class="text-left"
-                          validation="required"
-                          :value="profile.company.currency_symbol"
-                          v-model="profile.company.currency_symbol"
-                        />
-                      </div>
-                    </div>
-
-                    <div class="w-full">
-                      <div class="">
-                        <FormKit
-                          type="text"
-                          name="address1"
-                          label="Street address 1"
-                          label-class="text-left"
-                          validation="required"
-                          v-model="profile.company.address1"
-                          :value="profile.company.address1"
-                        />
-                      </div>
-                    </div>
-
-                    <div class="w-full">
-                      <div class="">
-                        <FormKit
-                          type="text"
-                          name="address2"
-                          label="Street address 2"
-                          label-class="text-left"
-                          validation="required"
-                          v-model="profile.company.address2"
-                          :value="profile.company.address2"
-                        />
-                      </div>
-                    </div>
-
-                    <div class="w-full">
-                      <div class="grid grid-cols-3 gap-3">
-                        <FormKit
-                          type="text"
-                          name="city"
-                          label="City"
-                          label-class="text-left"
-                          validation="required"
-                          v-model="profile.company.city"
-                          :value="profile.company.city"
-                        />
-                        <FormKit
-                          type="text"
-                          name="state"
-                          label="State / Province"
-                          label-class="text-left"
-                          validation="required"
-                          v-model="profile.company.state"
-                          :value="profile.company.state"
-                        />
-                        <FormKit
-                          type="text"
-                          name="postal_code"
-                          label="Zip / Postal code"
-                          label-class="text-left"
-                          validation="required"  
-                          v-model="profile.company.postal_code"   
-                          :value="profile.company.postal_code"                     
-                        />
-                      </div>
-                    </div>
-                    
-                    <div class="w-full">                        
-                        <FormKit
-                          type="select"
-                          name="country"
-                          label="Country"
-                          label-class="text-left"
-                          :options=countryCampaign
-                          validation="required"
-                          v-model="profile.company.country"
-                          :value="profile.company.country"
-                        />
-                    </div>
-
-                    <FormKit type="hidden" v-model="profile.setting" :value="profile.setting" name="setting" label="setting" /> 
-
-                  </div>
-                  <div class="px-4 py-3 bg-gray-50 text-right sm:px-6">
-                    <FormKit
-                      type="submit"
-                      label="Update"
-                    />
-                  </div>
-                </FormKit>
-              </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="hidden sm:block" aria-hidden="true">
-        <div class="py-5">
-          <div class="border-t border-gray-200" />
-        </div>
-      </div>
-
-      <div class="mt-10 sm:mt-0" v-if="userStore.user.permission == 'owner'">
-        <div class="md:grid md:grid-cols-3 md:gap-6">
-          <div class="md:col-span-1">
-            <div class="px-4 sm:px-0">
-              <h3 class="text-lg font-medium leading-6 text-gray-900">Banking Details</h3>
-              <p class="mt-1 text-sm text-gray-600">Update your company/organisation banking details</p>
-            </div>
-          </div>
-          <div class="mt-5 md:mt-0 md:col-span-2">
-              <div class="shadow sm:rounded-md sm:overflow-hidden">
-                <FormKit
-                    type="form"
-                    id="banking"
-                    :form-class="submitted ? 'hide' : 'show'"
-                    submit-label="Update"
-                    @submit="companyUpdate"
-                    :actions="false"
-                    
-                  >
-
-                  <div class="px-4 py-5 bg-white space-y-6 sm:p-6">                 
-                    <div class="w-full">
-                      <div class="grid grid-cols-2 gap-3">
-                        <FormKit
-                          type="text"
-                          name="account_name"
-                          label="Account Name"
-                          label-class="text-left"
-                          validation="required"
-                          v-model="profile.banking.account_name"
-                          :value="profile.banking.account_name"
-                        />
-
-                        <FormKit
-                          type="text"
-                          name="bank"
-                          label="Bank Name"
-                          label-class="text-left"
-                          validation="required"
-                          v-model="profile.banking.bank"
-                          :value="profile.banking.bank"
-                        />
-                      </div>
-                    </div>
-
-                    <div class="w-full">
-                      <div class="grid grid-cols-2 gap-3">
-                        <FormKit
-                          type="text"
-                          name="account_number"
-                          label="Account Number"
-                          label-class="text-left"
-                          validation="required"
-                          :value="profile.banking.account_number"
-                          v-model="profile.banking.account_number"
-                        />
-  
-                        <FormKit
-                          type="text"
-                          name="account_type"
-                          label="Account Type"
-                          placeholder="Cheque or Current"
-                          outer-class="text-left"
-                          validation="required"
-                          :value="profile.banking.account_type"
-                          v-model="profile.banking.account_type"
-                        />
-                      </div>
-                    </div>
-
-                    <div class="w-full">
-                      <div class="">
-                        <FormKit
-                          type="text"
-                          name="branch_code"
-                          label="Branch Code"
-                          label-class="text-left"
-                          validation="required"
-                          v-model="profile.banking.branch_code"
-                          :value="profile.banking.branch_code"
-                        />
-                      </div>
-                    </div>
-
-                    <FormKit type="hidden" v-model="profile.setting" :value="profile.setting" name="setting" label="setting" />
-
-                  </div>
-                  <div class="px-4 py-3 bg-gray-50 text-right sm:px-6">
-                    <FormKit
-                      type="submit"
-                      label="Update"
-                    />
-                  </div>
-                </FormKit>
-              </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="hidden sm:block" aria-hidden="true" v-if="userStore.user.permission == 'owner'">
-        <div class="py-5">
-          <div class="border-t border-gray-200" />
-        </div>
-      </div>
-
-      <div class="mt-10 sm:mt-0">
-        <div class="md:grid md:grid-cols-3 md:gap-6">
-          <div class="md:col-span-1">
-            <div class="px-4 sm:px-0">
-              <h3 class="text-lg font-medium leading-6 text-gray-900">Notifications</h3>
-              <p class="mt-1 text-sm text-gray-600">Decide which communications you'd like to receive and how.</p>
-            </div>
-          </div>
-          <div class="mt-5 md:mt-0 md:col-span-2">
-              <div class="shadow sm:rounded-md sm:overflow-hidden">
-                <FormKit
-                    type="form"
-                    id="profile"
-                    :form-class="submitted ? 'hide' : 'show'"
-                    submit-label="Update"
-                    @submit="profileUpdate"
-                    :actions="false"
-                    
-                  >
-                  <div class="px-4 py-5 bg-white space-y-6 sm:p-6">                  
-                    <div class="w-full">
-                      <div class="">
-                        <FormKit
-                          type="checkbox"
-                          label="Marketing Emails"
-                          name="marketing"
-                          v-model="profile.marketing"
-                          :value="profile.marketing"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <div class="">
-                        <FormKit
-                          type="checkbox"
-                          label="Product Updates and Offers"
-                          name="updates"
-                          v-model="profile.updates"
-                          :value="profile.updates"
-                        />
-                      </div>
-                    </div>
-
-                  </div>
-                  <div class="px-4 py-3 bg-gray-50 text-right sm:px-6">
-                    <FormKit
-                      type="submit"
-                      label="Update"
-                    />
-                  </div>
-                </FormKit>
-              </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="hidden sm:block" aria-hidden="true" v-if="userStore.user.permission == 'owner'">
-        <div class="py-5">
-          <div class="border-t border-gray-200" />
-        </div>
-      </div>
-
-      <div class="mt-10 sm:mt-0">
-        <div class="md:grid md:grid-cols-3 md:gap-6">
-          <div class="md:col-span-1">
-            <div class="px-4 sm:px-0">
-              <h3 class="text-lg font-medium leading-6 text-gray-900">Invoice Logo</h3>
-              <p class="mt-1 text-sm text-gray-600">Set a logo to be used on invoice logo</p>
-            </div>
-          </div>
-          <div class="mt-5 md:mt-0 md:col-span-2">
-              <div class="shadow sm:rounded-md sm:overflow-hidden">
-                <div class="text-center" v-if="logo">
-                  <img :src="logo" class="m-auto w-40" loading="lazy" height="" width="" alt="Invoice Logo">
-                </div> 
-                <FormKit
-                  id="logoForm"
-                  type="form"
-                  @submit="uploadImage"
-                  :actions="false"
-                >
-
-                  <div class="px-4 py-5 bg-white space-y-6 sm:p-6"> 
-                    <FormKit
-                      type="file"
-                      label="Logo"
-                      name="logo"
-                      help="Please upload your logo"
-                      accept=".jpg,.png,.jpeg,.svg"
-                      validation="required"
-                    />
-                  </div>
-
-                  <div class="px-4 py-3 bg-gray-50 text-right sm:px-6">
-                    <FormKit
-                      type="submit"
-                      label="Update"
-                    />
-                  </div>
-                </FormKit>
-              </div>
-          </div>
-        </div> 
-      </div>
+  <!-- Main container -->
+  <div class="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 dark:from-gray-900 dark:via-gray-950 dark:to-blue-950 text-gray-800 dark:text-gray-200 font-sans transition-colors duration-300">
+    <Alert v-if="notificationMessage" :notification-message="notificationMessage" />
+    <!-- Loading Overlay -->
+    <div v-if="loading" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <ScaleLoader color="#4f46e5" /> <!-- Use consistent loader -->
     </div>
-    <div v-if="loading" class="bg-gray-900 bg-opacity-50 dark:bg-opacity-80 fixed inset-0 z-40"></div>
-  </div>
-  <div v-if="loading" class="bg-gray-900 bg-opacity-50 dark:bg-opacity-80 fixed inset-0 z-40"></div>
+
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-12">
+      <!-- Header Section -->
+      <header class="flex flex-col md:flex-row justify-between items-center mb-10 md:mb-14 space-y-4 md:space-y-0">
+        <h1 class="text-3xl sm:text-4xl font-bold tracking-tight text-gray-900 dark:text-white">
+          Profile Settings
+        </h1>
+        <!-- Add buttons or other header elements if needed -->
+      </header>
+
+      <!-- Profile Login Section -->
+      <div class="md:grid md:grid-cols-3 md:gap-6 mb-10 md:mb-14">
+        <div class="md:col-span-1 px-4 sm:px-0">
+          <h3 class="text-xl font-semibold mb-1 text-gray-900 dark:text-white">Login Information</h3>
+          <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Update your email and password used to access the dashboard.</p>
+        </div>
+        <div class="mt-5 md:mt-0 md:col-span-2">
+          <div class="card-modern">
+            <FormKit
+              type="form"
+              id="loginForm"
+              :form-class="submitted ? 'hide' : 'show'"
+              submit-label="Update Login"
+              @submit="updateLogin"
+              :actions="false"
+              #default="{ state: { dirty } }"
+            >
+              <div class="p-5 sm:p-6 space-y-4">
+                <FormKit
+                  type="text"
+                  name="email"
+                  label="Email Address"
+                  placeholder="jane@example.com"
+                  validation="required|email"
+                  v-model="profile.email"
+                  :classes="{
+                    outer: 'mb-4',
+                    label: 'label-modern',
+                    inner: '',
+                    input: 'input-modern',
+                    help: 'text-xs text-gray-500 dark:text-gray-400 mt-1',
+                    message: 'text-red-500 text-xs mt-1'
+                  }"
+                />
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <FormKit
+                    type="password"
+                    name="password"
+                    label="New Password"
+                    validation="length:6|matches:/[^a-zA-Z]/"
+                    :validation-messages="{ matches: 'Please include at least one symbol' }"
+                    placeholder="Enter new password (optional)"
+                    :classes="{
+                      outer: 'mb-0',
+                      label: 'label-modern',
+                      inner: '',
+                      input: 'input-modern',
+                      help: 'text-xs text-gray-500 dark:text-gray-400 mt-1',
+                      message: 'text-red-500 text-xs mt-1'
+                    }"
+                  />
+                  <FormKit
+                    type="password"
+                    name="password_confirm"
+                    label="Confirm New Password"
+                    placeholder="Confirm new password"
+                    validation="confirm"
+                    validation-label="Password confirmation"
+                    :classes="{
+                      outer: 'mb-0',
+                      label: 'label-modern',
+                      inner: '',
+                      input: 'input-modern',
+                      help: 'text-xs text-gray-500 dark:text-gray-400 mt-1',
+                      message: 'text-red-500 text-xs mt-1'
+                    }"
+                  />
+                </div>
+                 <p class="text-xs text-gray-500 dark:text-gray-400">Leave password fields blank if you do not wish to change your password.</p>
+              </div>
+              <div class="px-5 sm:px-6 py-4 bg-gray-50 dark:bg-gray-800/50 border-t border-gray-200 dark:border-gray-700/50 text-right rounded-b-lg">
+                <FormKit
+                  type="submit"
+                  label="Update Login"
+                  :disabled="!dirty"
+                  :classes="{
+                    input: dirty ? 'btn-primary-modern' : 'btn-disabled-modern'
+                  }"
+                />
+              </div>
+            </FormKit>
+          </div>
+        </div>
+      </div>
+
+      <!-- Divider -->
+      <hr class="my-10 md:my-14 border-gray-200 dark:border-gray-700/50">
+
+      <!-- Personal Information Section -->
+      <div class="md:grid md:grid-cols-3 md:gap-6 mb-10 md:mb-14">
+        <div class="md:col-span-1 px-4 sm:px-0">
+          <h3 class="text-xl font-semibold mb-1 text-gray-900 dark:text-white">Personal Information</h3>
+          <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Basic contact information.</p>
+        </div>
+        <div class="mt-5 md:mt-0 md:col-span-2">
+          <div class="card-modern">
+            <FormKit
+              type="form"
+              id="personalInfoForm"
+              :form-class="submitted ? 'hide' : 'show'"
+              submit-label="Update Information"
+              @submit="profileUpdate"
+              :actions="false"
+              #default="{ state: { dirty } }"
+            >
+              <div class="p-5 sm:p-6 space-y-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <FormKit
+                    type="text"
+                    name="firstName"
+                    label="First Name"
+                    validation="required"
+                    v-model="profile.firstName"
+                    :classes="{ outer: 'mb-0', label: 'label-modern', input: 'input-modern', message: 'text-red-500 text-xs mt-1' }"
+                  />
+                  <FormKit
+                    type="text"
+                    name="lastName"
+                    label="Last Name"
+                    validation="required"
+                    v-model="profile.lastName"
+                    :classes="{ outer: 'mb-0', label: 'label-modern', input: 'input-modern', message: 'text-red-500 text-xs mt-1' }"
+                  />
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <FormKit
+                    type="text"
+                    name="companyEmail"
+                    label="Contact Email"
+                    validation="required|email"
+                    v-model="profile.companyEmail"
+                    :classes="{ outer: 'mb-0', label: 'label-modern', input: 'input-modern', message: 'text-red-500 text-xs mt-1' }"
+                  />
+                  <FormKit
+                    type="select"
+                    name="country"
+                    label="Country"
+                    :options="countryCampaign"
+                    validation="required"
+                    v-model="profile.country"
+                    :classes="{ outer: 'mb-0', label: 'label-modern', input: 'input-modern input-modern--select', message: 'text-red-500 text-xs mt-1' }"
+                  />
+                </div>
+                <FormKit
+                  type="text"
+                  name="address"
+                  label="Street Address"
+                  validation="required"
+                  v-model="profile.address"
+                  :classes="{ outer: 'mb-4', label: 'label-modern', input: 'input-modern', message: 'text-red-500 text-xs mt-1' }"
+                />
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <FormKit
+                    type="text"
+                    name="city"
+                    label="City"
+                    validation="required"
+                    v-model="profile.city"
+                    :classes="{ outer: 'mb-0', label: 'label-modern', input: 'input-modern', message: 'text-red-500 text-xs mt-1' }"
+                  />
+                  <FormKit
+                    type="text"
+                    name="state"
+                    label="State / Province"
+                    validation="required"
+                    v-model="profile.state"
+                    :classes="{ outer: 'mb-0', label: 'label-modern', input: 'input-modern', message: 'text-red-500 text-xs mt-1' }"
+                  />
+                  <FormKit
+                    type="text"
+                    name="zip"
+                    label="Zip / Postal Code"
+                    validation="required"
+                    v-model="profile.zip"
+                    :classes="{ outer: 'mb-0', label: 'label-modern', input: 'input-modern', message: 'text-red-500 text-xs mt-1' }"
+                  />
+                </div>
+              </div>
+              <div class="px-5 sm:px-6 py-4 bg-gray-50 dark:bg-gray-800/50 border-t border-gray-200 dark:border-gray-700/50 text-right rounded-b-lg">
+                <FormKit
+                  type="submit"
+                  label="Update Information"
+                  :disabled="!dirty"
+                  :classes="{
+                    input: dirty ? 'btn-primary-modern' : 'btn-disabled-modern'
+                  }"
+                />
+              </div>
+            </FormKit>
+          </div>
+        </div>
+      </div>
+
+      <!-- Divider -->
+      <hr class="my-10 md:my-14 border-gray-200 dark:border-gray-700/50" v-if="userStore.user.permission == 'owner'">
+
+      <!-- Company Information Section -->
+      <div class="md:grid md:grid-cols-3 md:gap-6 mb-10 md:mb-14" v-if="userStore.user.permission == 'owner'">
+        <div class="md:col-span-1 px-4 sm:px-0">
+          <h3 class="text-xl font-semibold mb-1 text-gray-900 dark:text-white">Company Information</h3>
+          <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Details about your company for branding and invoices.</p>
+        </div>
+        <div class="mt-5 md:mt-0 md:col-span-2">
+          <div class="card-modern">
+            <FormKit
+              type="form"
+              id="companyInfoForm"
+              :form-class="submitted ? 'hide' : 'show'"
+              submit-label="Update Company"
+              @submit="companyUpdate"
+              :actions="false"
+              #default="{ state: { dirty } }"
+            >
+              <div class="p-5 sm:p-6 space-y-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <FormKit
+                    type="text"
+                    name="company_name"
+                    label="Company Name"
+                    validation="required"
+                    v-model="profile.company.company_name"
+                    :classes="{ outer: 'mb-0', label: 'label-modern', input: 'input-modern', message: 'text-red-500 text-xs mt-1' }"
+                  />
+                  <FormKit
+                    type="text"
+                    name="slogan"
+                    label="Slogan"
+                    v-model="profile.company.slogan"
+                    :classes="{ outer: 'mb-0', label: 'label-modern', input: 'input-modern', message: 'text-red-500 text-xs mt-1' }"
+                  />
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <FormKit
+                    type="text"
+                    name="email"
+                    label="Company Email"
+                    validation="required|email"
+                    v-model="profile.company.email"
+                    :classes="{ outer: 'mb-0', label: 'label-modern', input: 'input-modern', message: 'text-red-500 text-xs mt-1' }"
+                  />
+                  <FormKit
+                    type="text"
+                    name="currency_symbol"
+                    label="Currency Symbol"
+                    placeholder="$ or R"
+                    validation="required"
+                    v-model="profile.company.currency_symbol"
+                    :classes="{ outer: 'mb-0', label: 'label-modern', input: 'input-modern', message: 'text-red-500 text-xs mt-1' }"
+                  />
+                </div>
+                <FormKit
+                  type="text"
+                  name="address1"
+                  label="Street Address 1"
+                  validation="required"
+                  v-model="profile.company.address1"
+                  :classes="{ outer: 'mb-4', label: 'label-modern', input: 'input-modern', message: 'text-red-500 text-xs mt-1' }"
+                />
+                <FormKit
+                  type="text"
+                  name="address2"
+                  label="Street Address 2"
+                  v-model="profile.company.address2"
+                  :classes="{ outer: 'mb-4', label: 'label-modern', input: 'input-modern', message: 'text-red-500 text-xs mt-1' }"
+                />
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <FormKit
+                    type="text"
+                    name="city"
+                    label="City"
+                    validation="required"
+                    v-model="profile.company.city"
+                    :classes="{ outer: 'mb-0', label: 'label-modern', input: 'input-modern', message: 'text-red-500 text-xs mt-1' }"
+                  />
+                  <FormKit
+                    type="text"
+                    name="state"
+                    label="State / Province"
+                    validation="required"
+                    v-model="profile.company.state"
+                    :classes="{ outer: 'mb-0', label: 'label-modern', input: 'input-modern', message: 'text-red-500 text-xs mt-1' }"
+                  />
+                  <FormKit
+                    type="text"
+                    name="postal_code"
+                    label="Zip / Postal Code"
+                    validation="required"
+                    v-model="profile.company.postal_code"
+                    :classes="{ outer: 'mb-0', label: 'label-modern', input: 'input-modern', message: 'text-red-500 text-xs mt-1' }"
+                  />
+                </div>
+                <FormKit
+                  type="select"
+                  name="country"
+                  label="Country"
+                  :options="countryCampaign"
+                  validation="required"
+                  v-model="profile.company.country"
+                  :classes="{ outer: 'mb-4', label: 'label-modern', input: 'input-modern input-modern--select', message: 'text-red-500 text-xs mt-1' }"
+                />
+                <FormKit type="hidden" v-model="profile.setting" name="setting" />
+              </div>
+              <div class="px-5 sm:px-6 py-4 bg-gray-50 dark:bg-gray-800/50 border-t border-gray-200 dark:border-gray-700/50 text-right rounded-b-lg">
+                <FormKit
+                  type="submit"
+                  label="Update Company"
+                  :disabled="!dirty"
+                  :classes="{
+                    input: dirty ? 'btn-primary-modern' : 'btn-disabled-modern'
+                  }"
+                />
+              </div>
+            </FormKit>
+          </div>
+        </div>
+      </div>
+
+      <!-- Divider -->
+      <hr class="my-10 md:my-14 border-gray-200 dark:border-gray-700/50" v-if="userStore.user.permission == 'owner'">
+
+      <!-- Banking Details Section -->
+      <div class="md:grid md:grid-cols-3 md:gap-6 mb-10 md:mb-14" v-if="userStore.user.permission == 'owner'">
+        <div class="md:col-span-1 px-4 sm:px-0">
+          <h3 class="text-xl font-semibold mb-1 text-gray-900 dark:text-white">Banking Details</h3>
+          <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Company banking information for invoices.</p>
+        </div>
+        <div class="mt-5 md:mt-0 md:col-span-2">
+          <div class="card-modern">
+            <FormKit
+              type="form"
+              id="bankingForm"
+              :form-class="submitted ? 'hide' : 'show'"
+              submit-label="Update Banking"
+              @submit="companyUpdate" 
+              :actions="false"
+              #default="{ state: { dirty } }"
+            >
+              <div class="p-5 sm:p-6 space-y-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <FormKit
+                    type="text"
+                    name="account_name"
+                    label="Account Name"
+                    validation="required"
+                    v-model="profile.banking.account_name"
+                    :classes="{ outer: 'mb-0', label: 'label-modern', input: 'input-modern', message: 'text-red-500 text-xs mt-1' }"
+                  />
+                  <FormKit
+                    type="text"
+                    name="bank"
+                    label="Bank Name"
+                    validation="required"
+                    v-model="profile.banking.bank"
+                    :classes="{ outer: 'mb-0', label: 'label-modern', input: 'input-modern', message: 'text-red-500 text-xs mt-1' }"
+                  />
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <FormKit
+                    type="text"
+                    name="account_number"
+                    label="Account Number"
+                    validation="required"
+                    v-model="profile.banking.account_number"
+                    :classes="{ outer: 'mb-0', label: 'label-modern', input: 'input-modern', message: 'text-red-500 text-xs mt-1' }"
+                  />
+                  <FormKit
+                    type="text"
+                    name="account_type"
+                    label="Account Type"
+                    placeholder="Cheque or Current"
+                    validation="required"
+                    v-model="profile.banking.account_type"
+                    :classes="{ outer: 'mb-0', label: 'label-modern', input: 'input-modern', message: 'text-red-500 text-xs mt-1' }"
+                  />
+                </div>
+                <FormKit
+                  type="text"
+                  name="branch_code"
+                  label="Branch Code"
+                  validation="required"
+                  v-model="profile.banking.branch_code"
+                  :classes="{ outer: 'mb-4', label: 'label-modern', input: 'input-modern', message: 'text-red-500 text-xs mt-1' }"
+                />
+                <FormKit type="hidden" v-model="profile.setting" name="setting" />
+              </div>
+              <div class="px-5 sm:px-6 py-4 bg-gray-50 dark:bg-gray-800/50 border-t border-gray-200 dark:border-gray-700/50 text-right rounded-b-lg">
+                <FormKit
+                  type="submit"
+                  label="Update Banking"
+                  :disabled="!dirty"
+                  :classes="{
+                    input: dirty ? 'btn-primary-modern' : 'btn-disabled-modern'
+                  }"
+                />
+              </div>
+            </FormKit>
+          </div>
+        </div>
+      </div>
+
+      <!-- Divider -->
+      <hr class="my-10 md:my-14 border-gray-200 dark:border-gray-700/50">
+
+      <!-- Notifications Section -->
+      <div class="md:grid md:grid-cols-3 md:gap-6 mb-10 md:mb-14">
+        <div class="md:col-span-1 px-4 sm:px-0">
+          <h3 class="text-xl font-semibold mb-1 text-gray-900 dark:text-white">Notifications</h3>
+          <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Choose which communications you'd like to receive.</p>
+        </div>
+        <div class="mt-5 md:mt-0 md:col-span-2">
+          <div class="card-modern">
+            <FormKit
+              type="form"
+              id="notificationsForm"
+              :form-class="submitted ? 'hide' : 'show'"
+              submit-label="Update Preferences"
+              @submit="profileUpdate" 
+              :actions="false"
+              #default="{ state: { dirty } }"
+            >
+              <div class="p-5 sm:p-6 space-y-4">
+                 <FormKit
+                    type="checkbox"
+                    label="Marketing Emails"
+                    name="marketing"
+                    v-model="profile.marketing"
+                    :classes="{
+                      outer: 'mb-4',
+                      label: '$reset block text-sm font-medium text-gray-700 dark:text-gray-300 mb-0 ml-2',
+                      wrapper: 'flex items-center',
+                      input: 'h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 dark:bg-gray-700 dark:checked:bg-indigo-600'
+                    }"
+                  />
+                 <FormKit
+                    type="checkbox"
+                    label="Product Updates and Offers"
+                    name="updates"
+                    v-model="profile.updates"
+                     :classes="{
+                      outer: 'mb-4',
+                      label: '$reset block text-sm font-medium text-gray-700 dark:text-gray-300 mb-0 ml-2',
+                      wrapper: 'flex items-center',
+                      input: 'h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 dark:bg-gray-700 dark:checked:bg-indigo-600'
+                    }"
+                  />
+              </div>
+              <div class="px-5 sm:px-6 py-4 bg-gray-50 dark:bg-gray-800/50 border-t border-gray-200 dark:border-gray-700/50 text-right rounded-b-lg">
+                <FormKit
+                  type="submit"
+                  label="Update Preferences"
+                  :disabled="!dirty"
+                  :classes="{
+                    input: dirty ? 'btn-primary-modern' : 'btn-disabled-modern'
+                  }"
+                />
+              </div>
+            </FormKit>
+          </div>
+        </div>
+      </div>
+
+      <!-- Divider -->
+      <hr class="my-10 md:my-14 border-gray-200 dark:border-gray-700/50" v-if="userStore.user.permission == 'owner'">
+
+      <!-- Invoice Logo Section -->
+      <div class="md:grid md:grid-cols-3 md:gap-6 mb-10 md:mb-14" v-if="userStore.user.permission == 'owner'">
+        <div class="md:col-span-1 px-4 sm:px-0">
+          <h3 class="text-xl font-semibold mb-1 text-gray-900 dark:text-white">Invoice Logo</h3>
+          <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Upload a logo to appear on your invoices.</p>
+        </div>
+        <div class="mt-5 md:mt-0 md:col-span-2">
+          <div class="card-modern">
+             <FormKit
+                id="logoForm"
+                type="form"
+                @submit="uploadImage"
+                :actions="false"
+                #default="{ state: { dirty } }"
+              >
+              <div class="p-5 sm:p-6 space-y-4">
+                <div class="text-center mb-4" v-if="logo">
+                  <p class="label-modern mb-2">Current Logo:</p>
+                  <img :src="logo" class="m-auto max-h-24 w-auto border border-gray-200 dark:border-gray-700 rounded" loading="lazy" alt="Invoice Logo">
+                </div>
+                <FormKit
+                  type="file"
+                  label="Upload New Logo"
+                  name="logo"
+                  help="Accepts .jpg, .png, .jpeg, .svg"
+                  accept=".jpg,.png,.jpeg,.svg"
+                  validation="required"
+                  :classes="{
+                    outer: 'mb-4',
+                    label: 'label-modern',
+                    inner: 'max-w-md', /* Constrain width */
+                    input: 'block w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 dark:file:bg-indigo-900/50 file:text-indigo-700 dark:file:text-indigo-300 hover:file:bg-indigo-100 dark:hover:file:bg-indigo-900',
+                    help: 'text-xs text-gray-500 dark:text-gray-400 mt-1',
+                    message: 'text-red-500 text-xs mt-1'
+                  }"
+                />
+              </div>
+              <div class="px-5 sm:px-6 py-4 bg-gray-50 dark:bg-gray-800/50 border-t border-gray-200 dark:border-gray-700/50 text-right rounded-b-lg">
+                <FormKit
+                  type="submit"
+                  label="Upload Logo"
+                  :disabled="!dirty"
+                  :classes="{
+                    input: dirty ? 'btn-primary-modern' : 'btn-disabled-modern'
+                  }"
+                />
+              </div>
+            </FormKit>
+          </div>
+        </div>
+      </div>
+
+    </div> <!-- End container -->
+  </div> <!-- End main div -->
 </template>
+
+<style scoped>
+/* Modern Input Styles */
+.input-modern {
+  @apply block w-full px-3 py-2 text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600/50 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500;
+  @apply focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:focus:ring-indigo-400 dark:focus:border-indigo-400;
+  @apply transition duration-150 ease-in-out;
+}
+.input-modern--select {
+  @apply pr-8 appearance-none bg-no-repeat;
+   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+   background-position: right 0.5rem center;
+   background-size: 1.5em 1.5em;
+}
+.dark .input-modern--select {
+   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+}
+.label-modern {
+  @apply block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1;
+}
+
+/* Modern Button Styles */
+.btn-primary-modern {
+    @apply inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm;
+    @apply hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800;
+    @apply transition-colors duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed;
+}
+.btn-secondary-modern {
+  @apply inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600/50 rounded-md shadow-sm;
+  @apply hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:focus:ring-indigo-400;
+  @apply transition-colors duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed;
+}
+.btn-disabled-modern {
+    @apply inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-gray-400 dark:text-gray-500 bg-gray-200 dark:bg-gray-700 border border-transparent rounded-md shadow-sm cursor-not-allowed;
+}
+
+
+/* Card Style */
+.card-modern {
+  @apply bg-white dark:bg-gray-800/60 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700/50 backdrop-blur-sm overflow-hidden; /* Added overflow-hidden */
+}
+
+/* FormKit overrides - adjust selectors as needed based on FormKit's generated HTML */
+:deep(.formkit-outer) {
+  @apply mb-4; /* Default spacing */
+}
+:deep(.formkit-label) {
+  @apply label-modern; /* Apply label style */
+}
+:deep(.formkit-input[type="text"]),
+:deep(.formkit-input[type="email"]),
+:deep(.formkit-input[type="password"]),
+:deep(.formkit-input[type="tel"]),
+:deep(.formkit-input[type="select"]),
+:deep(.formkit-textarea) {
+  @apply input-modern; /* Apply input style */
+}
+:deep(.formkit-input[type="select"]) {
+  @apply input-modern--select; /* Apply select arrow */
+}
+:deep(.formkit-input[type="checkbox"]) {
+   /* Style checkbox using FormKit classes prop instead */
+   @apply hidden; /* Hide default checkbox if using custom styling via label */
+}
+:deep(.formkit-input[type="file"]::file-selector-button) {
+  /* Style file input button if needed, or use classes prop */
+   @apply mr-4 py-2 px-4 rounded-md border-0 text-sm font-semibold bg-indigo-50 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900;
+}
+:deep(.formkit-input[type="submit"]) {
+  /* Style submit button using classes prop */
+  @apply btn-primary-modern;
+}
+:deep(.formkit-message) {
+  @apply text-red-500 dark:text-red-400 text-xs mt-1; /* Style validation messages */
+}
+:deep(.formkit-help) {
+  @apply text-xs text-gray-500 dark:text-gray-400 mt-1; /* Style help text */
+}
+
+/* Ensure transitions apply broadly */
+.transition-colors {
+  transition-property: background-color, border-color, color, fill, stroke, opacity;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 300ms;
+}
+</style>
