@@ -16,6 +16,8 @@
 
   // Import the Invoice Form Modal
   import InvoiceFormModal from '@/components/invoices/InvoiceFormModal.vue';
+  import InvoicesTrendChart from '@/components/invoices/InvoicesTrendChart.vue';
+  import { useThemeStore } from '@/stores/theme';
 
   library.add(
     faSun, faMoon, faSync, faPlus, faEdit, faEye, faFileInvoice, faSearch,
@@ -26,6 +28,7 @@
   const toast = useToast();
   const loading = ref(false);
   // Removed local isDarkMode state - using global theme store now
+  const themeStore = useThemeStore();
   const router = useRouter(); // Keep for potential other uses (e.g., customer link)
   const invoices = ref([]); // Renamed from rowData/invoicesApi
   const currentPage = ref(1); // Added pagination state
@@ -478,9 +481,17 @@
 
      </section>
 
-   </div> <!-- End container -->
+    <section class="my-10">
+      <InvoicesTrendChart
+        :rawData="invoices"
+        :loading="loading"
+        :isDarkMode="themeStore.isDarkMode"
+      />
+    </section>
 
-   <!-- Loading Overlay (Optional, reuse from Estimates if desired) -->
+    </div> <!-- End container -->
+
+    <!-- Loading Overlay (Optional, reuse from Estimates if desired) -->
    <div v-if="loading || isFetchingModalData" class="fixed inset-0 z-[60] bg-gray-900 bg-opacity-50 dark:bg-opacity-80 flex items-center justify-center">
       <scale-loader :loading="true" color="#4f46e5" height="40px" width="5px" />
    </div>
