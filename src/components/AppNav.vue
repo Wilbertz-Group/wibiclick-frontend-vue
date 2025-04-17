@@ -112,12 +112,14 @@ const navigateToResult = (result) => {
       queryParams = { customer_id: result.id };
       break;
     case 'Invoice':
-      routeName = 'view-invoice';
-      queryParams = { invoice_id: result.id };
+      // Navigate to the associated customer page instead of the invoice page
+      routeName = 'contact';
+      queryParams = { customer_id: result.customer_id };
       break;
     case 'Estimate':
-      routeName = 'view-estimate';
-      queryParams = { estimate_id: result.id };
+      // Navigate to the associated customer page instead of the estimate page
+      routeName = 'contact';
+      queryParams = { customer_id: result.customer_id };
       break;
     case 'Job':
       // routeName = 'view-job'; // Remove routing
