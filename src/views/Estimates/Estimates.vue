@@ -1,5 +1,7 @@
 <script setup>
   import axios from "axios";
+  import EstimatesTrendChart from "@/components/estimates/EstimatesTrendChart.vue";
+  import { useThemeStore } from "@/stores/theme";
   // import Header from "@/components/Header.vue"; // Removed old header
   import { useUserStore } from "@/stores/UserStore"
   import { onMounted, ref, reactive, watchEffect, computed } from "vue"; // Added computed
@@ -33,6 +35,7 @@
   )
 
   const userStore = useUserStore()
+  const themeStore = useThemeStore();
   const toast = useToast();
   const loading = ref(false);
   // Removed local isDarkMode state - using global theme store now
@@ -464,6 +467,15 @@
            <p class="mt-1 text-sm text-gray-500">Try adjusting your search or filter criteria, or add a new estimate.</p>
         </div>
 
+     </section>
+
+     <!-- Estimates Trend Chart -->
+     <section class="my-10">
+       <EstimatesTrendChart
+         :rawData="estimates"
+         :loading="loading"
+         :isDarkMode="themeStore.isDarkMode"
+       />
      </section>
 
    </div> <!-- End container -->
