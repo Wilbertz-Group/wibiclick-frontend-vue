@@ -750,7 +750,7 @@ watch(selectedWebsite, (newValue) => {
                     <router-link :to="{name: 'feedback'}" class="block px-4 py-2 text-sm text-gray-700" disabled="false"
                       id="headlessui-menu-item-20" role="menuitem" tabindex="-1">Feedback</router-link>
                     <router-link :to="{name: 'settings'}" v-if="userStore.user.permission == 'owner'" class="block px-4 py-2 text-sm text-gray-700" disabled="false"
-                      id="headlessui-menu-item-20" role="menuitem" tabindex="-1">Settings</router-link>
+                      id="headlessui-menu-item-20" role="menuitem" tabindex="-1">Widget Settings</router-link>
                     <div @click="addModal = true" v-if="userStore.user.permission == 'owner'" class="block px-4 py-2 text-sm text-gray-700 cursor-pointer" disabled="false"
                       id="headlessui-menu-item-20" role="menuitem" tabindex="-1">Add Website</div>                    
                     <a href="#" @click="logout" class="block px-4 py-2 text-sm text-gray-700" disabled="false"

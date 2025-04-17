@@ -65,151 +65,152 @@ function toggleMenu() {
 </script>
 
 <template>
-  <scale-loader :loading="loading" color="#ffffff" height="50px" class="vld-overlay is-active is-full-page" width="6px">
-  </scale-loader>
-  <Header title="Widget Settings" />
-  <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-    <div v-if="userStore.currentWebsite != 'default'" class="px-4 py-6 sm:px-0 grid md:grid-cols-4 sm:grid-cols-2 gap-3">
-
-      <ul class="col-span-1 md:col-span-1">
-        <li class="w-full mb-2 mt-2">
-          <a href="#"
-            @click="toggleMenu(); phone=!phone"
-            :class="!phone ? 'bg-white' : 'bg-sky-100 text-sky-600 rounded-t-lg border-b-2 border-sky-600'"
-            class="btn-air-light text-center font-semibold inline-block p-4 w-full text-gray-900 rounded-lg focus:ring-4 focus:ring-blue-300 active focus:outline-none dark:bg-gray-700 dark:text-white"
-            aria-current="page">
-            <font-awesome-icon icon="fas fa-phone" />
-            Phone
-          </a>
-        </li>             
-        <li class="w-full mb-2 mt-2">
-          <a href="#"
-            @click="toggleMenu(); email=!email"
-            :class="!email ? 'bg-white' : 'bg-sky-100 text-sky-600 rounded-t-lg border-b-2 border-sky-600'"
-            class="btn-air-light text-center font-semibold inline-block p-4 w-full text-gray-900 rounded-lg focus:ring-4 focus:ring-blue-300 active focus:outline-none dark:bg-gray-700 dark:text-white"
-            aria-current="page">
-            <font-awesome-icon icon="fas fa-envelope" />
-            Email
-          </a>
-        </li>
-        <li class="w-full mb-2 mt-2">
-          <a href="#"
-            @click="toggleMenu(); viber=!viber"
-            :class="!viber ? 'bg-white' : 'bg-sky-100 text-sky-600 rounded-t-lg border-b-2 border-sky-600'"
-            class="btn-air-light text-center font-semibold inline-block p-4 w-full text-gray-900 rounded-lg focus:ring-4 focus:ring-blue-300 active focus:outline-none dark:bg-gray-700 dark:text-white"
-            aria-current="page">
-            <font-awesome-icon icon="fab fa-viber" />
-            Viber
-          </a>
-        </li>
-        <li class="w-full mb-2 mt-2">
-          <a href="#"
-            @click="toggleMenu(); skype=!skype"
-            :class="!skype ? 'bg-white' : 'bg-sky-100 text-sky-600 rounded-t-lg border-b-2 border-sky-600'"
-            class="btn-air-light text-center font-semibold inline-block p-4 w-full text-gray-900 rounded-lg focus:ring-4 focus:ring-blue-300 active focus:outline-none dark:bg-gray-700 dark:text-white"
-            aria-current="page">
-            <font-awesome-icon icon="fab fa-skype" />
-            Skype
-          </a>
-        </li>
-        <li class="w-full mb-2 mt-2">
-          <a href="#"
-            @click="toggleMenu(); telegram=!telegram"
-            :class="!telegram ? 'bg-white' : 'bg-sky-100 text-sky-600 rounded-t-lg border-b-2 border-sky-600'"
-            class="btn-air-light text-center font-semibold inline-block p-4 w-full text-gray-900 rounded-lg focus:ring-4 focus:ring-blue-300 active focus:outline-none dark:bg-gray-700 dark:text-white"
-            aria-current="page">
-            <font-awesome-icon icon="fab fa-telegram" />
-            Telegram
-          </a>
-        </li>        
-        <li class="w-full mb-2 mt-2">
-          <a href="#"
-            @click="toggleMenu(); whatsapp=!whatsapp"
-            :class="!whatsapp ? 'bg-white' : 'bg-sky-100 text-sky-600 rounded-t-lg border-b-2 border-sky-600'"
-            class="btn-air-light text-center font-semibold inline-block p-4 w-full text-gray-900 rounded-lg focus:ring-4 focus:ring-blue-300 active focus:outline-none dark:bg-gray-700 dark:text-white"
-            aria-current="page">
-            <font-awesome-icon icon="fab fa-whatsapp" />
-            Whatsapp
-          </a>
-        </li>  
-        <li class="w-full mb-2 mt-2">
-          <a href="#"
-            @click="toggleMenu(); text=!text"
-            :class="!text ? 'bg-white' : 'bg-sky-100 text-sky-600 rounded-t-lg border-b-2 border-sky-600'"
-            class="btn-air-light text-center font-semibold inline-block p-4 w-full text-gray-900 rounded-lg focus:ring-4 focus:ring-blue-300 active focus:outline-none dark:bg-gray-700 dark:text-white"
-            aria-current="page">
-            <font-awesome-icon icon="fas fa-comment" />
-            Text Message
-          </a>
-        </li>
-        <li class="w-full mb-2 mt-2">
-          <a href="#"
-            @click="toggleMenu(); messenger=!messenger"
-            :class="!messenger ? 'bg-white' : 'bg-sky-100 text-sky-600 rounded-t-lg border-b-2 border-sky-600'"
-            class="btn-air-light text-center font-semibold inline-block p-4 w-full text-gray-900 rounded-lg focus:ring-4 focus:ring-blue-300 active focus:outline-none dark:bg-gray-700 dark:text-white"
-            aria-current="page">
-            <font-awesome-icon icon="fab fa-facebook-messenger" />
-            Facebook Messenger
-          </a>
-        </li>
-        <li class="w-full mb-2 mt-2">
-          <a href="#"
-            @click="toggleMenu(); whatsappweb=!whatsappweb"
-            :class="!whatsappweb ? 'bg-white' : 'bg-sky-100 text-sky-600 rounded-t-lg border-b-2 border-sky-600'"
-            class="btn-air-light text-center font-semibold inline-block p-4 w-full text-gray-900 rounded-lg focus:ring-4 focus:ring-blue-300 active focus:outline-none dark:bg-gray-700 dark:text-white"
-            aria-current="page">
-            <font-awesome-icon icon="fab fa-whatsapp" />
-            Connect Whatsapp Web
-          </a>
-        </li> 
-        <li class="w-full mb-2 mt-2">
-          <a href="#"
-            @click="toggleMenu(); book_a_technician=!book_a_technician"
-            :class="!book_a_technician ? 'bg-white' : 'bg-sky-100 text-sky-600 rounded-t-lg border-b-2 border-sky-600'"
-            class="btn-air-light text-center font-semibold inline-block p-4 w-full text-gray-900 rounded-lg focus:ring-4 focus:ring-blue-300 active focus:outline-none dark:bg-gray-700 dark:text-white" 
-            aria-current="page">
-            <font-awesome-icon icon="fas fa-user-cog" />
-            Book a Technician
-          </a>
-        </li>
-        <li class="w-full mb-2 mt-2">
-            <a href="#"
-                @click="toggleMenu(); gads_conversion=!gads_conversion"
-                :class="!gads_conversion ? 'bg-white' : 'bg-sky-100 text-sky-600 rounded-t-lg border-b-2 border-sky-600'"
-                class="btn-air-light text-center font-semibold inline-block p-4 w-full text-gray-900 rounded-lg focus:ring-4 focus:ring-blue-300 active focus:outline-none dark:bg-gray-700 dark:text-white"
-                aria-current="page">
-                <font-awesome-icon icon="fas fa-ad" />
-                Google Ads Conversion
-            </a>
-        </li> 
-      </ul>
-
-      <div class="col-span-1 md:col-span-2 shadow sm:rounded-md sm:overflow-hidden mt-2 btn-air-light">
-
-        <!-- Phone Tab -->
-        <FormKit type="form" v-if="phone" :form-class="phone ? 'w-full' : 'show w-full'"  submit-label="Update"
-          @submit="settingsUpdate" :actions="false" >
-          <div class="px-4 py-5 bg-white space-y-6 sm:p-6">
-            <h3 class="text-2xl font-semibold text-gray-700">Edit Phone Call</h3>
-            <div class="w-full">
-                <FormKit v-model="userStore.settings.phone_show" type="checkbox" label="Phone Call Visibility" name="phone_show" />
-                
-                <FormKit type="text" name="pnumber" label="Phone Number" :validation="userStore.settings.phone_show ? 'required|phone' : ''" label-class="text-left" v-model="userStore.settings.pnumber" />
-
-                <FormKit type="text" name="phoneText" label="Phone Call Button Label" :validation="userStore.settings.phone_show ? 'required' : ''" label-class="text-left"  v-model="userStore.settings.phoneText" />
-            </div>
-
+  <scale-loader :loading="loading" color="#6366f1" height="50px" class="vld-overlay is-active is-full-page" width="6px" />
+  <div class="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 dark:from-gray-900 dark:via-gray-950 dark:to-blue-950 text-gray-800 dark:text-gray-200 font-sans transition-colors duration-300">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-12">
+      <Header title="Widget Settings" />
+      <div v-if="userStore.currentWebsite != 'default'" class="grid grid-cols-1 md:grid-cols-4 gap-8 mt-8">
+        <!-- Sidebar Tabs -->
+        <aside class="col-span-1">
+          <div class="card-modern p-0 overflow-hidden">
+            <ul class="divide-y divide-gray-100 dark:divide-gray-800">
+              <li>
+                <button
+                  @click="toggleMenu(); phone=!phone"
+                  :class="phone ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 font-semibold' : 'hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200'"
+                  class="w-full text-left px-5 py-4 transition-colors duration-150 focus:outline-none"
+                >
+                  <font-awesome-icon icon="fas fa-phone" class="mr-2" />
+                  Phone
+                </button>
+              </li>
+              <li>
+                <button
+                  @click="toggleMenu(); email=!email"
+                  :class="email ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 font-semibold' : 'hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200'"
+                  class="w-full text-left px-5 py-4 transition-colors duration-150 focus:outline-none"
+                >
+                  <font-awesome-icon icon="fas fa-envelope" class="mr-2" />
+                  Email
+                </button>
+              </li>
+              <li>
+                <button
+                  @click="toggleMenu(); viber=!viber"
+                  :class="viber ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 font-semibold' : 'hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200'"
+                  class="w-full text-left px-5 py-4 transition-colors duration-150 focus:outline-none"
+                >
+                  <font-awesome-icon icon="fab fa-viber" class="mr-2" />
+                  Viber
+                </button>
+              </li>
+              <li>
+                <button
+                  @click="toggleMenu(); skype=!skype"
+                  :class="skype ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 font-semibold' : 'hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200'"
+                  class="w-full text-left px-5 py-4 transition-colors duration-150 focus:outline-none"
+                >
+                  <font-awesome-icon icon="fab fa-skype" class="mr-2" />
+                  Skype
+                </button>
+              </li>
+              <li>
+                <button
+                  @click="toggleMenu(); telegram=!telegram"
+                  :class="telegram ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 font-semibold' : 'hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200'"
+                  class="w-full text-left px-5 py-4 transition-colors duration-150 focus:outline-none"
+                >
+                  <font-awesome-icon icon="fab fa-telegram" class="mr-2" />
+                  Telegram
+                </button>
+              </li>
+              <li>
+                <button
+                  @click="toggleMenu(); whatsapp=!whatsapp"
+                  :class="whatsapp ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 font-semibold' : 'hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200'"
+                  class="w-full text-left px-5 py-4 transition-colors duration-150 focus:outline-none"
+                >
+                  <font-awesome-icon icon="fab fa-whatsapp" class="mr-2" />
+                  Whatsapp
+                </button>
+              </li>
+              <li>
+                <button
+                  @click="toggleMenu(); text=!text"
+                  :class="text ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 font-semibold' : 'hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200'"
+                  class="w-full text-left px-5 py-4 transition-colors duration-150 focus:outline-none"
+                >
+                  <font-awesome-icon icon="fas fa-comment" class="mr-2" />
+                  Text Message
+                </button>
+              </li>
+              <li>
+                <button
+                  @click="toggleMenu(); messenger=!messenger"
+                  :class="messenger ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 font-semibold' : 'hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200'"
+                  class="w-full text-left px-5 py-4 transition-colors duration-150 focus:outline-none"
+                >
+                  <font-awesome-icon icon="fab fa-facebook-messenger" class="mr-2" />
+                  Facebook Messenger
+                </button>
+              </li>
+              <li>
+                <button
+                  @click="toggleMenu(); whatsappweb=!whatsappweb"
+                  :class="whatsappweb ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 font-semibold' : 'hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200'"
+                  class="w-full text-left px-5 py-4 transition-colors duration-150 focus:outline-none"
+                >
+                  <font-awesome-icon icon="fab fa-whatsapp" class="mr-2" />
+                  Connect Whatsapp Web
+                </button>
+              </li>
+              <li>
+                <button
+                  @click="toggleMenu(); book_a_technician=!book_a_technician"
+                  :class="book_a_technician ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 font-semibold' : 'hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200'"
+                  class="w-full text-left px-5 py-4 transition-colors duration-150 focus:outline-none"
+                >
+                  <font-awesome-icon icon="fas fa-user-cog" class="mr-2" />
+                  Book a Technician
+                </button>
+              </li>
+              <li>
+                <button
+                  @click="toggleMenu(); gads_conversion=!gads_conversion"
+                  :class="gads_conversion ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 font-semibold' : 'hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200'"
+                  class="w-full text-left px-5 py-4 transition-colors duration-150 focus:outline-none"
+                >
+                  <font-awesome-icon icon="fas fa-ad" class="mr-2" />
+                  Google Ads Conversion
+                </button>
+              </li>
+            </ul>
           </div>
-          <div class="px-4 py-3 text-right sm:px-6">
-            <FormKit type="submit" label="Update" />
-          </div>
-        </FormKit>
+        </aside>
+        <!-- Main Content -->
+        <main class="col-span-1 md:col-span-3">
+          <div class="card-modern p-0 md:p-8">
+            <!-- Phone Tab -->
+            <FormKit type="form" v-if="phone" :form-class="phone ? 'w-full' : 'show w-full'" submit-label="Update"
+              @submit="settingsUpdate" :actions="false">
+              <div class="space-y-6">
+                <h3 class="text-xl font-semibold mb-5 text-gray-900 dark:text-white">Edit Phone Call</h3>
+                <div class="w-full space-y-4">
+                  <FormKit v-model="userStore.settings.phone_show" type="checkbox" label="Phone Call Visibility" name="phone_show" />
+                  <FormKit type="text" name="pnumber" label="Phone Number" :validation="userStore.settings.phone_show ? 'required|phone' : ''" label-class="text-left" v-model="userStore.settings.pnumber" />
+                  <FormKit type="text" name="phoneText" label="Phone Call Button Label" :validation="userStore.settings.phone_show ? 'required' : ''" label-class="text-left" v-model="userStore.settings.phoneText" />
+                </div>
+              </div>
+              <div class="pt-6 text-right">
+                <FormKit type="submit" label="Update" input-class="btn-primary-modern" />
+              </div>
+            </FormKit>
 
         <!-- Whatsapp Tab -->
         <FormKit type="form" v-if="whatsapp" :form-class="whatsapp ? 'w-full' : 'show w-full'"  submit-label="Update"
           @submit="settingsUpdate" :actions="false" >
-          <div class="px-4 py-5 bg-white space-y-6 sm:p-6">
-            <h3 class="text-2xl font-semibold text-gray-700">Edit Whatsapp Settings</h3>
+          <div class="space-y-6">
+            <h3 class="text-xl font-semibold mb-5 text-gray-900 dark:text-white">Edit Whatsapp Settings</h3>
             <div class="w-full">
                 <FormKit v-model="userStore.settings.whatsapp_show" type="checkbox" label="Whatsapp Visibility" name="whatsapp_show" />
 
@@ -227,8 +228,8 @@ function toggleMenu() {
         <!-- Text Message Tab -->
         <FormKit type="form" v-if="text" :form-class="text ? 'w-full' : 'show w-full'"  submit-label="Update"
           @submit="settingsUpdate" :actions="false" >
-          <div class="px-4 py-5 bg-white space-y-6 sm:p-6">
-            <h3 class="text-2xl font-semibold text-gray-700">Edit Text Message Settings</h3>
+          <div class="space-y-6">
+            <h3 class="text-xl font-semibold mb-5 text-gray-900 dark:text-white">Edit Text Message Settings</h3>
             <div class="w-full">
                 <FormKit v-model="userStore.settings.text_show" type="checkbox" label="Send a Text Message" name="text_show" />
 
@@ -246,8 +247,8 @@ function toggleMenu() {
         <!-- Facebook Messenger Tab -->
         <FormKit type="form" v-if="messenger" :form-class="messenger ? 'w-full' : 'show w-full'"  submit-label="Update"
           @submit="settingsUpdate" :actions="false" >
-          <div class="px-4 py-5 bg-white space-y-6 sm:p-6">
-            <h3 class="text-2xl font-semibold text-gray-700">Edit Facebook Messenger Settings</h3>
+          <div class="space-y-6">
+            <h3 class="text-xl font-semibold mb-5 text-gray-900 dark:text-white">Edit Facebook Messenger Settings</h3>
             <div class="w-full">
                 <FormKit v-model="userStore.settings.messenger_show" type="checkbox" label="Facebook Messenger" name="messenger_show" />
 
@@ -263,8 +264,8 @@ function toggleMenu() {
         <!-- Email Tab -->
         <FormKit type="form" v-if="email" :form-class="email ? 'w-full' : 'show w-full'"  submit-label="Update"
           @submit="settingsUpdate" :actions="false" >
-          <div class="px-4 py-5 bg-white space-y-6 sm:p-6">
-            <h3 class="text-2xl font-semibold text-gray-700">Edit Email Settings</h3>
+          <div class="space-y-6">
+            <h3 class="text-xl font-semibold mb-5 text-gray-900 dark:text-white">Edit Email Settings</h3>
             <div class="w-full">
                 <FormKit v-model="userStore.settings.email_show" type="checkbox" label="Email Us" name="email_show" />
 
@@ -284,8 +285,8 @@ function toggleMenu() {
         <!-- Telegram Tab -->
         <FormKit type="form" v-if="telegram" :form-class="telegram ? 'w-full' : 'show w-full'"  submit-label="Update"
           @submit="settingsUpdate" :actions="false" >
-          <div class="px-4 py-5 bg-white space-y-6 sm:p-6">
-            <h3 class="text-2xl font-semibold text-gray-700">Edit Telegram Settings</h3>
+          <div class="space-y-6">
+            <h3 class="text-xl font-semibold mb-5 text-gray-900 dark:text-white">Edit Telegram Settings</h3>
             <div class="w-full">
                 <FormKit v-model="userStore.settings.telegram_show" type="checkbox" label="Telegram" name="telegram_show" />
 
@@ -301,8 +302,8 @@ function toggleMenu() {
         <!-- Viber Tab -->
         <FormKit type="form" v-if="viber" :form-class="viber ? 'w-full' : 'show w-full'"  submit-label="Update"
           @submit="settingsUpdate" :actions="false" >
-          <div class="px-4 py-5 bg-white space-y-6 sm:p-6">
-            <h3 class="text-2xl font-semibold text-gray-700">Edit Viber Settings</h3>
+          <div class="space-y-6">
+            <h3 class="text-xl font-semibold mb-5 text-gray-900 dark:text-white">Edit Viber Settings</h3>
             <div class="w-full">
                 <FormKit v-model="userStore.settings.viber_show" type="checkbox" label="Viber" name="viber_show" />
 
@@ -318,8 +319,8 @@ function toggleMenu() {
         <!-- Skype Tab -->
         <FormKit type="form" v-if="skype" :form-class="skype ? 'w-full' : 'show w-full'"  submit-label="Update"
           @submit="settingsUpdate" :actions="false" >
-          <div class="px-4 py-5 bg-white space-y-6 sm:p-6">
-            <h3 class="text-2xl font-semibold text-gray-700">Edit Skype Settings</h3>
+          <div class="space-y-6">
+            <h3 class="text-xl font-semibold mb-5 text-gray-900 dark:text-white">Edit Skype Settings</h3>
             <div class="w-full">
                 <FormKit v-model="userStore.settings.skype_show" type="checkbox" label="Skype" name="skype_show" />
 
@@ -335,8 +336,8 @@ function toggleMenu() {
         <!-- Whatsapp Tab -->
         <FormKit type="form" v-if="whatsappweb" :form-class="whatsappweb ? 'w-full' : 'show w-full'"  submit-label="Update"
           :actions="false" >
-          <div class="px-4 py-5 bg-white space-y-6 sm:p-6">
-            <h3 class="text-2xl font-semibold text-gray-700">Scan Whatsapp QR Code</h3>
+          <div class="space-y-6">
+            <h3 class="text-xl font-semibold mb-5 text-gray-900 dark:text-white">Scan Whatsapp QR Code</h3>
             <div class="w-full">
               <img v-if="imgsrc" :src="imgsrc" />
               <p v-else class="text-xs font-medium leading-6 m-6 text-center" >We will display the QR Code once received</p>
@@ -348,8 +349,8 @@ function toggleMenu() {
         <!-- Book a Technician Tab-->
         <FormKit type="form" v-if="book_a_technician" :form-class="book_a_technician ? 'w-full' : 'show w-full'"  submit-label="Update"
         @submit="settingsUpdate"  :actions="false" >
-          <div class="px-4 py-5 bg-white space-y-6 sm:p-6">
-            <h3 class="text-2xl font-semibold text-gray-700">Book a Technician</h3>
+          <div class="space-y-6">
+            <h3 class="text-xl font-semibold mb-5 text-gray-900 dark:text-white">Book a Technician</h3>
             <div class="w-full">
               <FormKit v-model="userStore.settings.book_a_technician_show" type="checkbox" label="Book a Technician" name="book_a_technician_show" />
 
@@ -364,8 +365,8 @@ function toggleMenu() {
         <!-- Google Ads Conversion Tab -->
         <FormKit type="form" v-if="gads_conversion" :form-class="gads_conversion ? 'w-full' : 'show w-full'"  submit-label="Update"
           @submit="settingsUpdate" :actions="false" >
-          <div class="px-4 py-5 bg-white space-y-6 sm:p-6">
-            <h3 class="text-2xl font-semibold text-gray-700">Google Ads Conversion Tracking</h3>
+          <div class="space-y-6">
+            <h3 class="text-xl font-semibold mb-5 text-gray-900 dark:text-white">Google Ads Conversion Tracking</h3>
             <div class="w-full">
                 <FormKit v-model="userStore.settings.gads_track" type="checkbox" label="Enable Tracking" name="gads_track" />
 
@@ -380,14 +381,18 @@ function toggleMenu() {
         </FormKit>
 
       </div>
-
-      <div>
-        <Buttonwidget/>
-      </div>
-
+      </main>
+      <!-- Optionally, place Buttonwidget as a sidebar or below the grid for better structure -->
+      <aside class="mt-8 md:mt-0 md:col-span-4 flex justify-end">
+        <div class="w-full md:w-auto">
+          <Buttonwidget />
+        </div>
+      </aside>
     </div>
-    <h3 class="text-lg font-medium leading-6 text-red-600 m-6 text-center" v-else>You need to select or add a website on the top header to change widget settings!!!</h3>
-    
+    <h3 class="text-lg font-medium leading-6 text-red-600 m-6 text-center" v-else>
+      You need to select or add a website on the top header to change widget settings!!!
+    </h3>
   </div>
   <div v-if="loading" class="bg-gray-900 bg-opacity-50 dark:bg-opacity-80 fixed inset-0 z-40"></div>
+</div>
 </template>
