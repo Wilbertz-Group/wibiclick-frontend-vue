@@ -73,7 +73,7 @@
 </template>
 
 <script setup>
-import { ref, watch, computed, defineProps, defineEmits, onMounted } from 'vue';
+import { ref, watch, computed,  onMounted } from 'vue';
 import axios from 'axios';
 import { useToast } from 'vue-toast-notification';
 import { useUserStore } from "@/stores/UserStore";

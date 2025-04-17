@@ -98,7 +98,7 @@
 </template>
 
 <script setup>
-import { ref, watch, computed, defineProps, defineEmits } from 'vue';
+import { ref, watch, computed } from 'vue';
 import axios from 'axios';
 import { useToast } from 'vue-toast-notification';
 import { useUserStore } from '@/stores/UserStore'; // Import user store

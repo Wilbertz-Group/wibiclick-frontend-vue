@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { defineProps, defineEmits } from 'vue';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { faEdit, faTrashAlt, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons'; // Added warning icon
 import { library } from '@fortawesome/fontawesome-svg-core';

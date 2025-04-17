@@ -1,5 +1,4 @@
 <script setup>
-import { defineProps } from 'vue';
 import { TabGroup, TabList, Tab, TabPanels, TabPanel } from '@headlessui/vue';
 
 // Import all necessary accordion components used within the tabs

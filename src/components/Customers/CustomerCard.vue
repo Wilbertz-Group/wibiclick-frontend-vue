@@ -1,5 +1,4 @@
 <script setup>
-import { defineProps, defineEmits } from 'vue';
 import { useRouter } from 'vue-router';
 import TipTapEditor from '@/components/editor/TipTapEditor.vue'; // Changed import
 
