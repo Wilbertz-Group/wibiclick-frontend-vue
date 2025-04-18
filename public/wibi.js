@@ -60,8 +60,14 @@ async function createWidget(n) {
 			// --- GTM ID Fetching Logic Start ---
 			async function fetchGtmId() {
 				try {
-					const currentUrl = window.location.href;
-					const apiUrl = `https://wibi.wilbertzgroup.com/api/public/gtm-id?url=${encodeURIComponent(currentUrl)}`;
+					let currentUrl = window.location.href;
+					const urlObj = new URL(currentUrl);
+					let cleanUrl = urlObj.hostname;
+					// If port exists and is not default, add it
+					// if (urlObj.port && urlObj.port !== "80" && urlObj.port !== "443") {
+					// 	cleanUrl += ":" + urlObj.port;
+					// }
+					const apiUrl = `https://wibi.wilbertzgroup.com/api/public/gtm-id?url=${encodeURIComponent(cleanUrl)}`;
 					
 					const response = await fetch(apiUrl);
 					if (!response.ok) {
