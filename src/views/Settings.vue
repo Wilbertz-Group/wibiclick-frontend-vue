@@ -25,6 +25,7 @@ const viber = ref(false)
 const skype = ref(false)
 const gads_conversion = ref(false)
 const book_a_technician = ref(false)
+const gtm = ref(false)
 
 let options = { key: 'rSP4cA.1NFKaQ:tVDlfYABKtG3vcm3' };
 let client = new Ably.Realtime(options); 
@@ -38,7 +39,12 @@ channel.subscribe('wibiclick', function(message) {
 async function settingsUpdate(credentials) {
   try {
     loading.value = true
-    await axios.post('update-settings?id='+ userStore.currentWebsite, credentials);
+    // Create a new object that includes both settings and gtm_container_id
+    const updatedCredentials = {
+      ...credentials,
+      gtm_container_id: userStore.gtm_container_id
+    };
+    await axios.post('update-settings?id='+ userStore.currentWebsite, updatedCredentials);
     loading.value = false
     toast.success("Successfully updated the website settings")
   } catch (error) {
@@ -59,6 +65,7 @@ function toggleMenu() {
   skype.value = false
   book_a_technician.value = false
   gads_conversion.value = false
+  gtm.value = false
 }
 
 
@@ -182,6 +189,16 @@ function toggleMenu() {
                 >
                   <font-awesome-icon icon="fas fa-ad" class="mr-2" />
                   Google Ads Conversion
+                </button>
+              </li>
+              <li>
+                <button
+                  @click="toggleMenu(); gtm=!gtm"
+                  :class="gtm ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 font-semibold' : 'hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200'"
+                  class="w-full text-left px-5 py-4 transition-colors duration-150 focus:outline-none"
+                >
+                  <font-awesome-icon icon="fas fa-tags" class="mr-2" />
+                  GTM Integration
                 </button>
               </li>
             </ul>
@@ -380,6 +397,31 @@ function toggleMenu() {
           </div>
         </FormKit>
 
+        <!-- GTM Integration Tab -->
+        <FormKit type="form" v-if="gtm" :form-class="gtm ? 'w-full' : 'show w-full'" submit-label="Update"
+          @submit="settingsUpdate" :actions="false">
+          <div class="space-y-6">
+            <h3 class="text-xl font-semibold mb-5 text-gray-900 dark:text-white">Google Tag Manager Integration</h3>
+            <div class="w-full space-y-4 text-gray-900 dark:text-white">
+              <FormKit
+                type="text"
+                name="gtm_container_id"
+                label="Enter your Google Tag Manager (GTM) Container ID. Example: GTM-XXXXXX"
+                placeholder="e.g. GTM-XXXXXX"
+                v-model="userStore.gtm_container_id"
+                label-class="text-left"
+                input-class="w-full"
+              />
+            </div>
+            <div class="pt-6 text-right">
+              <FormKit
+                type="submit"
+                label="Update"
+                input-class="btn-primary-modern"
+              />
+            </div>
+          </div>
+        </FormKit>
       </div>
       </main>
       <!-- Optionally, place Buttonwidget as a sidebar or below the grid for better structure -->

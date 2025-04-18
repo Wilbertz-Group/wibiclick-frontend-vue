@@ -15,9 +15,12 @@ export const useUserStore = defineStore("UserStore", {
       analytics: {},
       notifications: [],
       currentWebsite: "default",
-      settings: {},
+      settings: {
+        gtm_container_id: ''
+      },
+      gtm_container_id: '',
       websites: [],
-      status: [ 
+      status: [
         'AI-Draft',
         'scheduled',
         'quoting', 

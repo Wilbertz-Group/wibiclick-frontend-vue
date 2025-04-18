@@ -6,9 +6,43 @@ async function createWidget(n) {
 			b = "",
 			w = "",
 			v = [];
-	async function run() { 
+	// Utility: Push to dataLayer with new schema
+	function pushToDataLayer(eventName, extraFields = {}) {
+		var utk = localStorage.getItem("wibi_utk") || "";
+		var websiteId = n || "";
+		var pageUrl = window.location.href;
+		var pageTitle = document.title;
+		var widgetVersion = "1.0.0"; // Update if versioning is available
+		var userType = localStorage.getItem("wibi_user_type") || "new";
+		var payload = {
+			event: eventName,
+			page_path: window.location.pathname,
+			page_title: pageTitle,
+			page_url: pageUrl,
+			website_id: websiteId,
+			widget_version: widgetVersion,
+			timestamp: new Date().toISOString(),
+			user_properties: {
+				utk: utk,
+				user_type: userType
+			},
+			...extraFields
+		};
+		// TODO: Check user consent before pushing to dataLayer
+		window.dataLayer = window.dataLayer || [];
+		window.dataLayer.push(payload);
+	}
+	// Idle timer state
+	let idleTimer = null;
+	let idleStart = null;
+	const IDLE_TIMEOUT = 60; // seconds
+	// Hover state
+	let hoverStart = null;
+	let hoverTimer = null;
+	let lastHoveredOption = null;
+	async function run() {
 			var c_utk = localStorage.getItem("wibi_utk");
-			!c_utk ? c_utk = false : ''	
+			!c_utk ? c_utk = false : ''
 			function checkTime() { var d = new Date(); var hours = d.getHours(); var mins = d.getMinutes(); var day = d.getDay(); return day >= 1 && day <= 5 && hours >= 9 && (hours < 13 || hours === 13 && mins <= 30); }
 			function getCookie(name) { var value = "; " + document.cookie; var parts = value.split("; " + name + "="); if (parts.length == 2) return parts.pop().split(";").shift(); }
 			var utk = c_utk || getCookie("hubspotutk") || ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c => (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)),
@@ -16,8 +50,86 @@ async function createWidget(n) {
 					P = await fetch(`https://wibi.wilbertzgroup.com/wibi-options?id=${n}&c=0&pg=${pg}&utk=${utk}`),
 					B = await P.json();
 			localStorage.setItem("wibi_utk", utk);
+			// Mark user as returning if already had utk
+			if (localStorage.getItem("wibi_user_type") !== "returning" && c_utk) {
+				localStorage.setItem("wibi_user_type", "returning");
+			}
 			
 			m = B.name, f = B.designation, e = B.pnumber, pn = B.phoneText, t = B.wnumber, o = B.message, _ = B.messenger_url, y = B.color_code, b = B.profile_imgUrl, w = B.email, a = B.subject, i = B.body, c = B.whatsapp_message, p = B.telegram_num, l = B.viber_num, s = B.skype_nameemail, r = B.pnumber_sms, d = B.sms_body, h = B.label, g = B.position, v = B.custom_buttons, x = B.line, u = B.close_label, bfu = B.booking_form_url, void 0 === h && (h = "Contact Us"), void 0 !== g && "" !== g || (g = "right");
+
+			// --- GTM ID Fetching Logic Start ---
+			async function fetchGtmId() {
+				try {
+					const currentUrl = window.location.href;
+					const apiUrl = `https://wibi.wilbertzgroup.com/api/public/gtm-id?url=${encodeURIComponent(currentUrl)}`;
+					
+					const response = await fetch(apiUrl);
+					if (!response.ok) {
+						console.error('Failed to fetch GTM ID:', response.status);
+						return null;
+					}
+					
+					const data = await response.json();
+					if (!data.gtm_container_id) {
+						console.error('No GTM ID in response');
+						return null;
+					}
+					
+					return data.gtm_container_id;
+				} catch (error) {
+					console.error('Error fetching GTM ID:', error);
+					return null;
+				}
+			}
+
+			// --- GTM Injection Logic Start ---
+			function gtmAlreadyInstalled(gtmId) {
+				// Check <head> for GTM script
+				var headScripts = document.head.querySelectorAll('script[src^="https://www.googletagmanager.com/gtm.js?id="]');
+				for (var i = 0; i < headScripts.length; i++) {
+					if (headScripts[i].src.indexOf(gtmId) !== -1) return true;
+				}
+				// Check <body> for GTM noscript iframe
+				var bodyNoscripts = document.body.querySelectorAll('noscript');
+				for (var j = 0; j < bodyNoscripts.length; j++) {
+					var ns = bodyNoscripts[j];
+					if (ns.innerHTML.indexOf('https://www.googletagmanager.com/ns.html?id=' + gtmId) !== -1) return true;
+				}
+				return false;
+			}
+
+			function injectGTM(gtmId) {
+				// Inject <script> in <head>
+				var gtmScript = document.createElement('script');
+				gtmScript.async = true;
+				gtmScript.src = 'https://www.googletagmanager.com/gtm.js?id=' + encodeURIComponent(gtmId);
+				// Insert as high as possible in <head>
+				if (document.head.firstChild) {
+					document.head.insertBefore(gtmScript, document.head.firstChild);
+				} else {
+					document.head.appendChild(gtmScript);
+				}
+				// Inject <noscript> in <body> (immediately after <body> open)
+				var gtmNoscript = document.createElement('noscript');
+				gtmNoscript.innerHTML = '<iframe src="https://www.googletagmanager.com/ns.html?id=' + encodeURIComponent(gtmId) + '" height="0" width="0" style="display:none;visibility:hidden"></iframe>';
+				if (document.body.firstChild) {
+					document.body.insertBefore(gtmNoscript, document.body.firstChild);
+				} else {
+					document.body.appendChild(gtmNoscript);
+				}
+			}
+
+			// Try to get GTM ID from both sources
+			var gtm_container_id = B.gtm_container_id || B.gtm_container_id || await fetchGtmId();
+			if (
+				gtm_container_id &&
+				/^GTM-[A-Z0-9]+$/.test(gtm_container_id) &&
+				!gtmAlreadyInstalled(gtm_container_id)
+			) {
+				injectGTM(gtm_container_id);
+			}
+			// --- GTM Injection Logic End ---
+
 			var k = document.createElement("div");
 
 			var htmlButtons = {
@@ -59,8 +171,42 @@ async function createWidget(n) {
 					})
 			} catch (n) {}
 
-			async function C() { 
-				"none" == document.getElementById("myForm").style.display ? (document.getElementById("myForm").style.display = "block", document.getElementById("openButton__closeIcon").style.display = "block", document.getElementById("openButton__phoneIcon").style.display = "none", document.getElementById("openButton__label").innerText = `${u}`) : (document.getElementById("myForm").style.display = "none", document.getElementById("openButton__closeIcon").style.display = "none", document.getElementById("openButton__phoneIcon").style.display = "block", document.getElementById("openButton__label").innerText = `${h}`); }
+			// Widget open/close handler with tracking
+			async function C() {
+				const wasClosed = document.getElementById("myForm").style.display === "none";
+				if (wasClosed) {
+					document.getElementById("myForm").style.display = "block";
+					document.getElementById("openButton__closeIcon").style.display = "block";
+					document.getElementById("openButton__phoneIcon").style.display = "none";
+					document.getElementById("openButton__label").innerText = `${u}`;
+					// Track widget opened
+					pushToDataLayer("wibi_widget_opened");
+					// Start idle timer
+					resetIdleTimer();
+				} else {
+					document.getElementById("myForm").style.display = "none";
+					document.getElementById("openButton__closeIcon").style.display = "none";
+					document.getElementById("openButton__phoneIcon").style.display = "block";
+					document.getElementById("openButton__label").innerText = `${h}`;
+					// Track widget closed
+					pushToDataLayer("wibi_widget_closed");
+					clearIdleTimer();
+				}
+			}
+			// Idle timer logic
+			function resetIdleTimer() {
+				clearIdleTimer();
+				idleStart = Date.now();
+				idleTimer = setTimeout(() => {
+					const idleDuration = Math.round((Date.now() - idleStart) / 1000);
+					pushToDataLayer("wibi_widget_idle", { idle_duration: idleDuration });
+				}, IDLE_TIMEOUT * 1000);
+			}
+			function clearIdleTimer() {
+				if (idleTimer) clearTimeout(idleTimer);
+				idleTimer = null;
+				idleStart = null;
+			}
 
 			//Hubspot
 			window.addEventListener('message', async event => { 
@@ -73,33 +219,149 @@ async function createWidget(n) {
 					}
 			});
 
+			// Button click handler with granular tracking
 			async function F(e) {
-					var target = e.target || e.srcElement,
-							text = target.getAttribute("class") || target.innerText;
+				try {
+					var target = e.target || e.srcElement;
+					var text = target.getAttribute("class") || target.innerText;
+					var label = target.innerText || target.getAttribute("aria-label") || text;
+					var contactMethod = "";
 					if (target.tagName != "A") {
-							text = target.closest("a").getAttribute("class")
+						var closestA = target.closest("a");
+						if (closestA) {
+							text = closestA.getAttribute("class");
+							label = closestA.innerText || closestA.getAttribute("aria-label") || text;
+							target = closestA;
+						}
 					}
-
+					// Infer contact method from class or id
+					if (text && text.indexOf("whatsapp") !== -1) contactMethod = "whatsapp";
+					else if (text && text.indexOf("messenger") !== -1) contactMethod = "messenger";
+					else if (text && text.indexOf("telegram") !== -1) contactMethod = "telegram";
+					else if (text && text.indexOf("viber") !== -1) contactMethod = "viber";
+					else if (text && text.indexOf("skype") !== -1) contactMethod = "skype";
+					else if (text && text.indexOf("mail") !== -1) contactMethod = "email";
+					else if (text && text.indexOf("call") !== -1) contactMethod = "phone";
+					else if (text && text.indexOf("book_a_technician") !== -1) contactMethod = "book_a_technician";
+					else if (text && text.indexOf("messageNow") !== -1) contactMethod = "sms";
+					else contactMethod = "custom";
+					// Backend call (preserved)
 					var Q = await fetch(`https://wibi.wilbertzgroup.com/wibi-action?id=${n}&c=3&ic=${text}&pg=${pg}&utk=${utk}`),
-							Y = await Q.json();
-
-					if (B.ga_show ) {
-						//Google Aalytics
-						window.dataLayer = window.dataLayer || [];
-						window.dataLayer.push({ contactUs: text, event: "wibiclick" });						
-					}
-
+						Y = await Q.json();
+					// GTM granular event
+					pushToDataLayer("wibi_contact_click", {
+						button_label: label,
+						contact_method: contactMethod
+					});
+					// Track interaction start/complete for click
+					pushToDataLayer("wibi_interaction_start", {
+						interaction_type: contactMethod
+					});
+					pushToDataLayer("wibi_interaction_complete", {
+						interaction_type: contactMethod
+					});
 					// Google Ads Conversion Tracking
 					B.gads_track ? trackGoogleAdsConversion(B.gads_id, B.gads_label) : "";
-
-					function trackGoogleAdsConversion(id, label) {				
+					function trackGoogleAdsConversion(id, label) {
 						// Google Ads Conversion script
 						var image = new Image(1, 1);
 						image.src = "https://www.googleadservices.com/pagead/conversion/" + id + "/?label=" + label + "&script=0";
 					}
+				} catch (err) {
+					pushToDataLayer("wibi_widget_error", {
+						error_code: "BTN_CLICK_ERROR",
+						error_message: err && err.message ? err.message : "Unknown error"
+					});
+				}
 			}
 
-			v && v.length, window.location.href.search("#OpenClick2Contact") >= 0 && C(), document.getElementById("openButton").onclick = function() { C() }, document.querySelectorAll('.wibiclickcss div#divContainer a').forEach(button => button.onclick = function(e) { F(e) })
+			// Hover tracking for widget and options
+			function setupHoverTracking() {
+				const widget = document.getElementById("myForm");
+				if (widget) {
+					widget.addEventListener("mouseenter", () => {
+						hoverStart = Date.now();
+						lastHoveredOption = "widget";
+					});
+					widget.addEventListener("mouseleave", () => {
+						if (hoverStart) {
+							const duration = Math.round((Date.now() - hoverStart) / 1000);
+							pushToDataLayer("wibi_widget_hover", {
+								option_id: "widget",
+								option_label: "Widget",
+								hover_duration: duration
+							});
+							hoverStart = null;
+							lastHoveredOption = null;
+						}
+					});
+				}
+				// Option/button hover
+				document.querySelectorAll('.wibiclickcss div#divContainer a').forEach(button => {
+					button.addEventListener("mouseenter", function() {
+						hoverStart = Date.now();
+						lastHoveredOption = button.id || button.className || button.innerText;
+					});
+					button.addEventListener("mouseleave", function() {
+						if (hoverStart) {
+							const duration = Math.round((Date.now() - hoverStart) / 1000);
+							pushToDataLayer("wibi_widget_hover", {
+								option_id: button.id || button.className || "option",
+								option_label: button.innerText || button.id || "Option",
+								hover_duration: duration
+							});
+							hoverStart = null;
+							lastHoveredOption = null;
+						}
+					});
+				});
+			}
+			// Interaction start/complete for forms (if any)
+			function setupFormTracking() {
+				const forms = document.querySelectorAll("form");
+				forms.forEach(form => {
+					form.addEventListener("focusin", function(e) {
+						pushToDataLayer("wibi_interaction_start", {
+							interaction_type: "form",
+							form_id: form.id || "unknown_form"
+						});
+					});
+					form.addEventListener("submit", function(e) {
+						pushToDataLayer("wibi_interaction_complete", {
+							interaction_type: "form",
+							form_id: form.id || "unknown_form"
+						});
+					});
+					form.addEventListener("error", function(e) {
+						pushToDataLayer("wibi_widget_error", {
+							error_code: "FORM_ERROR",
+							error_message: e && e.message ? e.message : "Unknown form error",
+							form_id: form.id || "unknown_form"
+						});
+					});
+				});
+			}
+			// Error tracking for widget
+			window.addEventListener("error", function(e) {
+				pushToDataLayer("wibi_widget_error", {
+					error_code: "JS_ERROR",
+					error_message: e && e.message ? e.message : "Unknown JS error"
+				});
+			});
+			// Run all setup after DOM is ready
+			setTimeout(() => {
+				setupHoverTracking();
+				setupFormTracking();
+			}, 500);
+			// Open widget if hash present
+			v && v.length, window.location.href.search("#OpenClick2Contact") >= 0 && C();
+			// Open/close button
+			document.getElementById("openButton").onclick = function() { C(); };
+			// Button click tracking
+			document.querySelectorAll('.wibiclickcss div#divContainer a').forEach(button => button.onclick = function(e) { F(e); });
+			// Idle timer reset on interaction
+			document.getElementById("myForm").addEventListener("mousemove", resetIdleTimer);
+			document.getElementById("myForm").addEventListener("keydown", resetIdleTimer);
 		}
 	run();
 }
