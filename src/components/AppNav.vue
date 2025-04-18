@@ -578,6 +578,14 @@ watch(selectedWebsite, (newValue) => {
               </div>
 
               
+              <!-- Manual Review link -->
+              <router-link
+                :to="{ name: 'manual-review' }"
+                class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium hover:underline"
+              >
+                <box-icon color="white" class="mr-2" type="solid" name="check-shield"></box-icon>
+                Manual Review
+              </router-link>
             </div>
           </div>
         </div>
@@ -800,6 +808,9 @@ watch(selectedWebsite, (newValue) => {
         </router-link>
         <router-link :to="{name: 'employees'}" class="text-white block px-3 py-2 rounded-md text-base font-medium">
           Employees
+        </router-link>
+        <router-link :to="{name: 'manual-review'}" class="text-white block px-3 py-2 rounded-md text-base font-medium">
+          Manual Review
         </router-link>
         <router-link :to="{name: 'users'}" v-if="userStore.user.role === 'admin' && userStore.user.permission === 'owner'" class="text-white block px-3 py-2 rounded-md text-base font-medium">
           Users

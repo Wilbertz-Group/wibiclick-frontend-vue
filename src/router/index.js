@@ -48,6 +48,8 @@ import ViewExpense from '@/views/Expenses/ViewExpense.vue'
 import OverviewDashboard from '@/views/Transactions/OverviewDashboard.vue'
 import TechnicianDashboard from '@/views/Transactions/TechnicianDashboard.vue'
 
+import ManualReview from '@/views/ManualReview.vue'
+
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
@@ -294,8 +296,13 @@ const router = createRouter({
       component: TechnicianDashboard,
       meta: { permission: ['technician', 'employee'] }
     },
+    {
+      path: '/manual-review',
+      name: 'manual-review',
+      component: ManualReview
+    }
   ]
-}) 
+})
 
 router.beforeEach((to, from, next) => {
   // redirect to login page if user is not logged in and trying to access a restricted page

@@ -8,11 +8,14 @@ async function createWidget(n) {
 			v = [];
 	// Utility: Push to dataLayer with new schema
 	function pushToDataLayer(eventName, extraFields = {}) {
-		var utk = localStorage.getItem("wibi_utk") || "";
+		// Get all available identifiers
+		var utk = localStorage.getItem("wibi_utk") || getCookie("wibi_utk") || "";
+		var email = localStorage.getItem("wibi_email") || "";
+		var phone = localStorage.getItem("wibi_phone") || "";
 		var websiteId = n || "";
 		var pageUrl = window.location.href;
 		var pageTitle = document.title;
-		var widgetVersion = "1.0.0"; // Update if versioning is available
+		var widgetVersion = "1.0.0";
 		var userType = localStorage.getItem("wibi_user_type") || "new";
 		var payload = {
 			event: eventName,
@@ -24,6 +27,8 @@ async function createWidget(n) {
 			timestamp: new Date().toISOString(),
 			user_properties: {
 				utk: utk,
+				email: email,
+				phone: phone,
 				user_type: userType
 			},
 			...extraFields
@@ -41,11 +46,21 @@ async function createWidget(n) {
 	let hoverTimer = null;
 	let lastHoveredOption = null;
 	async function run() {
-			var c_utk = localStorage.getItem("wibi_utk");
+			var c_utk = localStorage.getItem("wibi_utk") || getCookie("wibi_utk");
 			!c_utk ? c_utk = false : ''
 			function checkTime() { var d = new Date(); var hours = d.getHours(); var mins = d.getMinutes(); var day = d.getDay(); return day >= 1 && day <= 5 && hours >= 9 && (hours < 13 || hours === 13 && mins <= 30); }
 			function getCookie(name) { var value = "; " + document.cookie; var parts = value.split("; " + name + "="); if (parts.length == 2) return parts.pop().split(";").shift(); }
-			var utk = c_utk || getCookie("hubspotutk") || ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c => (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)),
+			// Generate UUID fallback if no UTK exists
+			function generateUUID() {
+				return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
+					(c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+				);
+			}
+			var utk = c_utk || getCookie("hubspotutk") || generateUUID();
+			// Store UTK in first-party cookie with 1 year expiration
+			var cookieExpiry = new Date();
+			cookieExpiry.setFullYear(cookieExpiry.getFullYear() + 1);
+			document.cookie = `wibi_utk=${utk}; expires=${cookieExpiry.toUTCString()}; path=/; SameSite=Lax`;
 					pg = window.location.href,
 					P = await fetch(`https://wibi.wilbertzgroup.com/wibi-options?id=${n}&c=0&pg=${pg}&utk=${utk}`),
 					B = await P.json();
@@ -214,15 +229,27 @@ async function createWidget(n) {
 				idleStart = null;
 			}
 
-			//Hubspot
-			window.addEventListener('message', async event => { 
-					if(event.data.type === 'hsFormCallback' && event.data.eventName === 'onFormSubmit') { 
-						let msgtxt = "form_submit"
-						let pf = event.data?.data ? event.data.data.filter(a => a.name.includes('phone')) : '';
-						let ph = pf[0].value
-						var Q = await fetch(`https://wibi.wilbertzgroup.com/wibi-action?id=${n}&c=3&ic=${msgtxt}&pg=${pg}&utk=${utk}&ph=${ph}&msg=${c}`),
-						Y = await Q.json();
-					}
+			// Enhanced form tracking
+			window.addEventListener('message', async event => {
+				if(event.data.type === 'hsFormCallback' && event.data.eventName === 'onFormSubmit') {
+					let msgtxt = "form_submit";
+					let formData = event.data?.data || [];
+					let phone = formData.filter(a => a.name.includes('phone'))[0]?.value || '';
+					let email = formData.filter(a => a.name.includes('email'))[0]?.value || '';
+					
+					// Store identifiers if available
+					if (email) localStorage.setItem("wibi_email", email);
+					if (phone) localStorage.setItem("wibi_phone", phone);
+					
+					// Track form submission with all identifiers
+					pushToDataLayer("wibi_form_submit", {
+						form_type: "hubspot",
+						form_fields: formData.map(f => f.name)
+					});
+					
+					var Q = await fetch(`https://wibi.wilbertzgroup.com/wibi-action?id=${n}&c=3&ic=${msgtxt}&pg=${pg}&utk=${utk}&ph=${phone}&msg=${c}`),
+					Y = await Q.json();
+				}
 			});
 
 			// Button click handler with granular tracking
