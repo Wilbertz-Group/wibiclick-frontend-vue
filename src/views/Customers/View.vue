@@ -61,6 +61,12 @@ library.add(
 // --- State ---
 const isDarkMode = ref(localStorage.getItem('darkMode') === 'true') // Add dark mode state
 const isFetchingCustomer = ref(false);
+const trackingSummary = ref(null);
+const isFetchingTracking = ref(false);
+const trackingError = ref(null);
+const visitorActivity = ref(null);
+const isFetchingVisitorActivity = ref(false);
+const visitorActivityError = ref(null);
 const isUpdatingCustomer = ref(false);
 const isBookingJob = ref(false); // Keep AI booking state if needed
 const isEditingInfo = ref(false); // State to toggle edit mode for customer info
@@ -147,7 +153,7 @@ const whatsappModalInstance = ref(null);
 const customerContextForModal = ref(null); // State to hold specific context for add modals
 
 // --- Computed ---
-const isLoading = computed(() => isFetchingCustomer.value || isUpdatingCustomer.value || isBookingJob.value);
+const isLoading = computed(() => isFetchingCustomer.value || isUpdatingCustomer.value || isBookingJob.value || isFetchingTracking.value);
 
 // Computed property to parse sentiment analysis content
 const parsedSentimentContent = computed(() => {
@@ -185,10 +191,17 @@ const activityTabs = computed(() => [
   { name: 'Notes', component: accordionNotes, type: 'note' },
   { name: 'Whatsapp', component: accordion, type: 'whatsapp' },
   { name: 'Email', component: accordionEmail, type: 'email' },
-  // { name: 'Views', component: accordionView, type: 'view' }, // Removed Views tab
-  // { name: 'Clicks', component: accordionClick, type: 'click' }, // Removed Clicks tab
   { name: 'Forms', component: accordionForm, type: 'form' },
   { name: 'Receipts', component: null, type: 'receipts' }, // Added Receipts tab
+  {
+    name: 'Widget Activity',
+    component: accordionView,
+    type: 'widget',
+    props: {
+      activities: trackingSummary?.recentActivity || [],
+      loading: isFetchingTracking
+    }
+  }, // Added Widget Activity tab with props
 ]);
 
 // --- Methods ---
@@ -230,12 +243,41 @@ function formatRelativeTime(dateString) {
   }
 }
 
+async function fetchTrackingSummary() {
+  isFetchingTracking.value = true;
+  trackingError.value = null;
+  try {
+    const response = await axios.get(`/customers/${route.query.customer_id}/tracking-summary?id=${userStore.currentWebsite}`);
+    trackingSummary.value = response.data;
+  } catch (error) {
+    trackingError.value = error.response?.data?.message || error.message || "Failed to load tracking data";
+    toast.error(`Error loading tracking data: ${trackingError.value}`);
+  } finally {
+    isFetchingTracking.value = false;
+  }
+}
+
+async function fetchVisitorActivity() {
+  isFetchingVisitorActivity.value = true;
+  visitorActivityError.value = null;
+  try {
+    const response = await axios.get(`/websites/${userStore.currentWebsite}/visitor-activity?customerId=${route.query.customer_id}`);
+    visitorActivity.value = response.data;
+  } catch (error) {
+    visitorActivityError.value = error.response?.data?.message || error.message || "Failed to load visitor activity";
+    toast.error(`Error loading visitor activity: ${visitorActivityError.value}`);
+  } finally {
+    isFetchingVisitorActivity.value = false;
+  }
+}
+
 async function fetchContacts() {
   isFetchingCustomer.value = true;
   // Reset latest analysis state on fetch
   latestProfitabilityAnalysis.value = null;
   latestTimelineSummary.value = null;
   latestSentimentAnalysis.value = null;
+  trackingSummary.value = null;
   // Clear old state refs (if keeping them for fetch triggers)
   profitabilityAnalysis.value = '';
   timelineSummary.value = '';
@@ -1361,6 +1403,8 @@ onMounted(() => {
      fetchLoggedFollowUps(); // Fetch logged follow-ups
      fetchHolidayGreetings(); // Fetch holiday greetings
      fetchScheduledMessages(); // Fetch scheduled messages
+     fetchTrackingSummary(); // Fetch tracking data
+     fetchVisitorActivity(); // Fetch visitor activity
   });
   fetchTechnicians(); // Fetch technicians on mount
   // tooltips(); // Moved to finally block of fetchContacts
@@ -1423,6 +1467,127 @@ watchEffect(() => {
 
         <!-- Left Column: Customer Info & Related Items -->
         <div class="lg:col-span-4 space-y-6 lg:space-y-8">
+
+          <!-- Tracking Summary Card -->
+          <section class="card-modern p-5 sm:p-6">
+            <div class="flex justify-between items-center mb-4">
+              <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Widget Activity</h2>
+              <button @click="fetchTrackingSummary" class="btn-ghost-modern text-xs" :disabled="isFetchingTracking" aria-label="Refresh tracking data">
+                <font-awesome-icon icon="sync" :class="{ 'fa-spin': isFetchingTracking }" />
+              </button>
+            </div>
+            <div v-if="isFetchingTracking" class="text-center py-4">
+              <ScaleLoader color="#4f46e5" />
+            </div>
+            <div v-else-if="trackingError" class="text-xs text-red-600 dark:text-red-400">
+              Error: {{ trackingError }}
+            </div>
+            <div v-else-if="trackingSummary" class="grid grid-cols-2 gap-4">
+              <div class="text-center">
+                <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Widget Opens</p>
+                <p class="text-2xl font-semibold text-indigo-600 dark:text-indigo-400 mt-1">
+                  {{ trackingSummary.widgetOpensThisWeek || 0 }}
+                </p>
+              </div>
+              <div class="text-center">
+                <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Total Clicks</p>
+                <p class="text-2xl font-semibold text-indigo-600 dark:text-indigo-400 mt-1">
+                  {{ trackingSummary.totalClicks || 0 }}
+                </p>
+              </div>
+              <div class="col-span-2">
+                <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Most Clicked</p>
+                <div class="bg-gray-100 dark:bg-gray-800 rounded-lg p-2 text-center">
+                  <p class="text-sm font-medium">{{ trackingSummary.mostClickedContactOption || 'N/A' }}</p>
+                </div>
+              </div>
+            </div>
+            <div v-else class="text-xs text-gray-500 dark:text-gray-400 italic">
+              No tracking data available
+            </div>
+          </section>
+
+          <!-- Enhanced Visitor Activity Card -->
+          <section class="card-modern p-5 sm:p-6">
+            <div class="flex justify-between items-center mb-4">
+              <h2 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
+                <font-awesome-icon icon="chart-line" class="mr-2 text-indigo-600 dark:text-indigo-400" />
+                Visitor Activity Insights
+              </h2>
+              <button @click="fetchVisitorActivity" class="btn-ghost-modern text-xs" :disabled="isFetchingVisitorActivity" aria-label="Refresh visitor data">
+                <font-awesome-icon icon="sync" :class="{ 'fa-spin': isFetchingVisitorActivity }" />
+              </button>
+            </div>
+            
+            <div v-if="isFetchingVisitorActivity" class="text-center py-4">
+              <ScaleLoader color="#4f46e5" />
+            </div>
+            
+            <div v-else-if="visitorActivityError" class="text-xs text-red-600 dark:text-red-400">
+              Error: {{ visitorActivityError }}
+            </div>
+            
+            <div v-else-if="visitorActivity && visitorActivity.visitors.length > 0" class="space-y-4">
+              <div v-for="visitor in visitorActivity.visitors.slice(0, 3)" :key="visitor.visitorId" class="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4">
+                <div class="flex justify-between items-start">
+                  <div class="flex items-center">
+                    <div class="bg-indigo-100 dark:bg-indigo-900/50 rounded-full p-2 mr-3">
+                      <font-awesome-icon icon="user" class="text-indigo-600 dark:text-indigo-400" />
+                    </div>
+                    <div>
+                      <p class="text-sm font-medium text-gray-900 dark:text-white">
+                        Visitor #{{ visitor.visitorId.slice(0, 6) }}
+                      </p>
+                      <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        Last active {{ formatRelativeTime(visitor.lastSeen) }}
+                      </p>
+                    </div>
+                  </div>
+                  <div class="flex space-x-3">
+                    <div class="text-center">
+                      <p class="text-xs text-gray-500 dark:text-gray-400">Views</p>
+                      <p class="text-sm font-semibold text-indigo-600 dark:text-indigo-400">{{ visitor.totalViews }}</p>
+                    </div>
+                    <div class="text-center">
+                      <p class="text-xs text-gray-500 dark:text-gray-400">Clicks</p>
+                      <p class="text-sm font-semibold text-indigo-600 dark:text-indigo-400">{{ visitor.totalClicks }}</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div v-if="visitor.recentActivity.length > 0" class="mt-3 pl-2 border-l-2 border-indigo-200 dark:border-indigo-800 space-y-2">
+                  <div v-for="(activity, idx) in visitor.recentActivity.slice(0, 3)" :key="idx" class="flex items-start">
+                    <div class="flex-shrink-0 mt-0.5">
+                      <font-awesome-icon
+                        :icon="activity.type === 'click' ? 'mouse-pointer' : 'eye'"
+                        class="text-xs mr-2"
+                        :class="{
+                          'text-green-500': activity.type === 'click',
+                          'text-blue-500': activity.type === 'view'
+                        }"
+                      />
+                    </div>
+                    <div>
+                      <p class="text-xs font-medium text-gray-700 dark:text-gray-300 capitalize">
+                        {{ activity.type }}:
+                        <span class="text-gray-500 dark:text-gray-400">
+                          {{ activity.button || activity.page }}
+                        </span>
+                      </p>
+                      <p class="text-2xs text-gray-400 dark:text-gray-500">
+                        {{ formatRelativeTime(activity.timestamp) }}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div v-else class="text-center py-4">
+              <font-awesome-icon icon="chart-simple" class="text-gray-400 dark:text-gray-600 text-2xl mb-2" />
+              <p class="text-sm text-gray-500 dark:text-gray-400">No recent visitor activity</p>
+            </div>
+          </section>
 
           <!-- Client Value Snapshot Card -->
           <section class="card-modern p-5 sm:p-6">
