@@ -121,109 +121,113 @@
   }
 
   async function fetchPages() {
-    try {
-      loading.value = true;
-      const response = await axios.get(
-        `pages?id=${userStore.currentWebsite}&limit=5000&offset=0`
-      );
-
-      pages.value = response.data.pages; // Assign to the new ref
-
-      let pagess = [];
-
-      for (const c of response.data.pages) {
-        pagess.push({
-          x: c.updatedAt,
-          y: 1,
-        });
-      }
-
-      const data = _.sortBy(pagess, 'x')
-
-      // Define grouping function directly here
-      const byDay = (item) => moment(item.x).format('MMM DD YYYY');
-      const grouped = _.groupBy(data, byDay); // Use the locally defined function
-      const seriesData = Object.values(grouped).map( a => a.length )
-      const optionsData = Object.keys(grouped)
-          
-      options.value = {
-          chart: {
-            height: 350,
-            type: 'bar',
-            toolbar: {
-              autoSelected: "pan",
-              show: false
-            } 
-          },
-          dataLabels: {
-            enabled: false
-          },
-          stroke: {
-            curve: 'smooth'
-          },
-          xaxis: {
-            type: 'datetime',
-            labels: {
-              datetimeUTC: false
+      try {
+        loading.value = true;
+        const websiteId = userStore.currentWebsite;
+        const response = await axios.get(`/api/pages?websiteId=${encodeURIComponent(websiteId)}`);
+  
+        // Support both array and { pages: array } response
+        let pageList = Array.isArray(response.data)
+          ? response.data
+          : response.data.pages || [];
+  
+        pages.value = pageList; // Assign to the new ref
+  
+        let pagess = [];
+  
+        for (const c of pageList) {
+          pagess.push({
+            x: c.updatedAt,
+            y: 1,
+          });
+        }
+  
+        const data = _.sortBy(pagess, 'x')
+  
+        // Define grouping function directly here
+        const byDay = (item) => moment(item.x).format('MMM DD YYYY');
+        const grouped = _.groupBy(data, byDay); // Use the locally defined function
+        const seriesData = Object.values(grouped).map( a => a.length )
+        const optionsData = Object.keys(grouped)
+            
+        options.value = {
+            chart: {
+              height: 350,
+              type: 'bar',
+              toolbar: {
+                autoSelected: "pan",
+                show: false
+              }
             },
-            categories: optionsData,
-            labels: {
-              style: {
-                colors: '#FFFFFF'
+            dataLabels: {
+              enabled: false
+            },
+            stroke: {
+              curve: 'smooth'
+            },
+            xaxis: {
+              type: 'datetime',
+              labels: {
+                datetimeUTC: false
+              },
+              categories: optionsData,
+              labels: {
+                style: {
+                  colors: '#FFFFFF'
+                }
               }
-            }
-          },
-          yaxis: {
-            min: 0,
-            tickAmount: 4,
-            labels: {
-              style: {
-                colors: '#FFFFFF'
-              }
-            }
-          },
-          fill: {
-            gradient: {
-              enabled: true,
-              opacityFrom: 0.55,
-              opacityTo: 0
-            }
-          },
-          grid: {
-            borderColor: "#fff",
-            strokeDashArray: 2,
-            clipMarkers: false,
+            },
             yaxis: {
-              lines: {
-                show: true
+              min: 0,
+              tickAmount: 4,
+              labels: {
+                style: {
+                  colors: '#FFFFFF'
+                }
               }
-            }
-          },
-          markers: {
-            size: 5,
-            colors: ["#ffffff"],
-            strokeColor: "#00BAEC",
-            strokeWidth: 3
-          },
-          tooltip: {
-            theme: "dark",
-            x: {
-              format: 'dd MMM yyyy'
             },
-          },
+            fill: {
+              gradient: {
+                enabled: true,
+                opacityFrom: 0.55,
+                opacityTo: 0
+              }
+            },
+            grid: {
+              borderColor: "#fff",
+              strokeDashArray: 2,
+              clipMarkers: false,
+              yaxis: {
+                lines: {
+                  show: true
+                }
+              }
+            },
+            markers: {
+              size: 5,
+              colors: ["#ffffff"],
+              strokeColor: "#00BAEC",
+              strokeWidth: 3
+            },
+            tooltip: {
+              theme: "dark",
+              x: {
+                format: 'dd MMM yyyy'
+              },
+            },
+        }
+        series.value = [{
+          name: 'pages',
+          data: seriesData
+        }]
+  
+        loading.value = false;
+      } catch (error) {
+        console.log(error);
+        loading.value = false;
+        toast.error("Error getting pages data")
       }
-      series.value = [{
-        name: 'pages',
-        data: seriesData
-      }]
-
-      loading.value = false;
-    } catch (error) {
-      console.log(error);
-      loading.value = false;
-      toast.error("Error getting pages data")
     }
-  }
 
   // Add dark mode toggle function
   const toggleDarkMode = () => {

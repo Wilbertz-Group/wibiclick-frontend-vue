@@ -44,6 +44,7 @@ const analytics = ref({})
 const dropdownContacts = ref(false)
 const dropdownMarketing = ref(false)
 const dropdownSales = ref(false)
+const dropdownPagesMobile = ref(false) // For mobile Pages dropdown
 const unreadNotifications = ref([]);
 //const ably = new Ably.Realtime(userStore.ableyk);
 
@@ -390,7 +391,7 @@ watch(selectedWebsite, (newValue) => {
                     <MenuButton>
                       <div class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium relative">
                         <box-icon color="white" class="mr-2" type="solid" name='dashboard'></box-icon>
-                        Dashboards 
+                        Dashboards
                         <svg :class="dropdownDashboards ? 'rotate-180': ''" class="ml-2 w-4 h-4 float-right right-0 relative" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                       </div>
                     </MenuButton>
@@ -413,6 +414,39 @@ watch(selectedWebsite, (newValue) => {
                         <router-link :to="{name: 'dashboard'}" v-if="userStore.user.permission == 'owner'" class="flex items-center text-slate-900 px-3 py-2 rounded-md text-sm font-medium">
                           <box-icon type='solid' color="black" name='dashboard'></box-icon>
                           <span class="ml-2">Analytics Dashboard</span>
+                        </router-link>
+                      </div>
+                    </MenuItems>
+                  </transition>
+                </Menu>
+              </div>
+
+              <!-- Pages dropdown -->
+              <div class="relative">
+                <!-- Pages dropdown -->
+                <Menu as="div" class="ml-3 relative">
+                  <div>
+                    <MenuButton>
+                      <div class="flex items-center text-white px-3 py-2 rounded-md text-sm font-medium relative">
+                        <box-icon color="white" class="mr-2" type="solid" name='book-content'></box-icon>
+                        Pages
+                        <svg class="ml-2 w-4 h-4 float-right right-0 relative" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                      </div>
+                    </MenuButton>
+                  </div>
+                  <transition enter-active-class="transition ease-out duration-100"
+                    enter-from-class="transform opacity-0 scale-95" enter-to-class="transform opacity-100 scale-100"
+                    leave-active-class="transition ease-in duration-75" leave-from-class="transform opacity-100 scale-100"
+                    leave-to-class="transform opacity-0 scale-95">
+                    <MenuItems>
+                      <div class="origin-top-right absolute right-0 mt-2 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none">
+                        <router-link :to="{ name: 'pages' }" class="flex items-center text-slate-900 px-3 py-2 rounded-md text-sm font-medium hover:underline">
+                          <box-icon color="black" type='solid' name='book-content'></box-icon>
+                          <span class="ml-2">Site Pages</span>
+                        </router-link>
+                        <router-link :to="{ name: 'visitors-pages' }" class="flex items-center text-slate-900 px-3 py-2 rounded-md text-sm font-medium hover:underline">
+                          <box-icon color="black" type='solid' name='bar-chart-alt-2'></box-icon>
+                          <span class="ml-2">Visitor Analytics</span>
                         </router-link>
                       </div>
                     </MenuItems>
@@ -796,12 +830,12 @@ watch(selectedWebsite, (newValue) => {
         <router-link :to="{name: 'technician-dashboard'}" class="text-white block px-3 py-2 rounded-md text-base font-medium">
           My Dashboard
         </router-link>
-
+  
         <!-- Activities -->
         <router-link :to="{name: 'notes'}" class="text-white block px-3 py-2 rounded-md text-base font-medium">
           Client Notes
         </router-link>
-
+  
         <!-- Contacts -->
         <router-link :to="{name: 'contacts'}" class="text-white block px-3 py-2 rounded-md text-base font-medium">
           Contacts
@@ -816,19 +850,40 @@ watch(selectedWebsite, (newValue) => {
           Users
         </router-link>
 
+        <!-- Pages Dropdown (Mobile) -->
+        <div>
+          <button
+            @click="dropdownPagesMobile = !dropdownPagesMobile"
+            class="w-full flex items-center justify-between text-white px-3 py-2 rounded-md text-base font-medium focus:outline-none"
+          >
+            <span class="flex items-center">
+              <box-icon color="white" class="mr-2" type="solid" name="book-content"></box-icon>
+              Pages
+            </span>
+            <svg :class="dropdownPagesMobile ? 'rotate-180' : ''" class="w-4 h-4 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+          </button>
+          <div v-if="dropdownPagesMobile" class="pl-6">
+            <router-link :to="{ name: 'pages' }" class="block text-white px-3 py-2 rounded-md text-base font-medium">
+              Site Pages
+            </router-link>
+            <router-link :to="{ name: 'visitors-pages' }" class="block text-white px-3 py-2 rounded-md text-base font-medium">
+              Visitor Analytics
+            </router-link>
+          </div>
+        </div>
+  
         <!-- Marketing (for owners only) -->
         <template v-if="userStore.user.permission === 'owner'">
           <router-link :to="{name: 'visitors'}" class="text-white block px-3 py-2 rounded-md text-base font-medium">
             Visitors
           </router-link>
-          <router-link :to="{name: 'pages'}" class="text-white block px-3 py-2 rounded-md text-base font-medium">
-            Pages
-          </router-link>
           <router-link :to="{name: 'forms'}" class="text-white block px-3 py-2 rounded-md text-base font-medium">
             Forms
           </router-link>
         </template>
-
+  
         <!-- Sales -->
         <router-link :to="{name: 'jobs'}" class="text-white block px-3 py-2 rounded-md text-base font-medium">
           Jobs
@@ -845,7 +900,7 @@ watch(selectedWebsite, (newValue) => {
         <router-link :to="{name: 'expenses-list'}" class="text-white block px-3 py-2 rounded-md text-base font-medium">
           Expenses
         </router-link>
-
+  
         <!-- Service -->
         <router-link :to="{name: 'suppliers'}" class="text-white block px-3 py-2 rounded-md text-base font-medium">
           Suppliers
