@@ -385,7 +385,7 @@ watch(selectedWebsite, (newValue) => {
 
           <div class="hidden md:block">
             <!-- Adjusted classes -->
-            <div class="ml-10 flex items-center space-x-8">
+            <div class="ml-6 flex items-center space-x-2">
               <!-- Dashboards Group -->
               <div class="relative">
                 <!-- Dashboard dropdown -->
@@ -426,10 +426,7 @@ watch(selectedWebsite, (newValue) => {
                 </Menu>
               </div>
               <!-- Vertical Divider -->
-              <div class="h-8 border-l border-gray-600 mx-2"></div>
-
-              <!-- Pages menu removed: now under Marketing only -->
-              <div class="h-8 border-l border-gray-600 mx-2"></div>
+              <div class="h-8 border-l border-gray-700 mx-1"></div>
 
               <!-- Contacts Group -->
               <div class="relative">
@@ -470,7 +467,7 @@ watch(selectedWebsite, (newValue) => {
                   </transition>
                 </Menu>                
               </div>
-              <div class="h-8 border-l border-gray-600 mx-2"></div>
+              <div class="h-8 border-l border-gray-700 mx-1"></div>
 
               <!-- Marketing Group (owner only) -->
               <div class="relative" v-if="userStore.user.permission == 'owner'">
@@ -515,7 +512,7 @@ watch(selectedWebsite, (newValue) => {
                   </transition>
                 </Menu>
               </div>
-              <div class="h-8 border-l border-gray-600 mx-2"></div>
+              <div class="h-8 border-l border-gray-700 mx-1"></div>
 
               <!-- Sales Group -->
               <div class="relative">
@@ -565,7 +562,7 @@ watch(selectedWebsite, (newValue) => {
                   </transition>
                 </Menu>  
               </div>
-              <div class="h-8 border-l border-gray-600 mx-2"></div>
+              <div class="h-8 border-l border-gray-700 mx-1"></div>
 
               <!-- Service Group -->
               <div class="relative" >
