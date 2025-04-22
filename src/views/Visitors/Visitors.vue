@@ -83,10 +83,17 @@
   // const rowData = reactive({});
  
   // Keep dateFormatter, but adapt if needed for new display format
+  // Always show full date and time in a human-readable format
   const dateFormatter = (dateString) => {
     if (!dateString) return '-';
-    const dt = moment(dateString); // Assuming dateString is ISO or parsable by moment
-    return moment().isSame(dt, 'day') ? dt.format('h:mm A') : dt.format('MMM DD, YYYY h:mm A');
+    const dt = moment(dateString);
+    if (moment().isSame(dt, 'day')) {
+      return `Today, ${dt.format('h:mm A')}`;
+    }
+    if (moment().subtract(1, 'day').isSame(dt, 'day')) {
+      return `Yesterday, ${dt.format('h:mm A')}`;
+    }
+    return dt.format('MMM DD, YYYY, h:mm A');
   }
 
   // Removed columnDefs and defaultColDef
@@ -160,13 +167,68 @@
          totalEvents = data.sessions.reduce((sum, session) => sum + (session.events ? session.events.length : 0), 0);
        }
 
+       // Prepare customer details if present
+       let customerDetails = null;
+       if (data.customer) {
+         customerDetails = {
+           id: data.customer.id,
+           name: data.customer.name,
+           email: data.customer.email,
+           phone: data.customer.phone,
+           address: data.customer.address,
+           createdAt: data.customer.createdAt
+         };
+       }
+
+       // Prepare clicks
+       let clicks = [];
+       if (data.clicks && Array.isArray(data.clicks)) {
+         clicks = data.clicks;
+       }
+
+       // Prepare communications: sort by date descending, take 5 most recent, and format for display
+       let communications = [];
+       if (data.communications && Array.isArray(data.communications)) {
+         communications = [...data.communications]
+           .sort((a, b) => {
+             // Prefer createdAt, fallback to messageTimestamp
+             const aTime = new Date(a.createdAt || a.messageTimestamp).getTime();
+             const bTime = new Date(b.createdAt || b.messageTimestamp).getTime();
+             return bTime - aTime;
+           })
+           .slice(0, 5)
+           .map(comm => {
+             // Human readable summary for each type
+             let summary = '';
+             if (comm.commType === 'Whatsapp') {
+               summary = `WhatsApp${comm.fromMe ? ' (from us)' : ''}: ${comm.text || ''}`;
+             } else if (comm.commType === 'Email') {
+               summary = `Email: ${comm.subject ? comm.subject + ' - ' : ''}${comm.bodyText || ''}`;
+             } else if (comm.commType === 'Note') {
+               summary = `Note: ${comm.title ? comm.title + ' - ' : ''}${comm.body || ''}`;
+             } else {
+               summary = comm.text || comm.bodyText || comm.body || '';
+             }
+             // Always show full date and time
+             const date = comm.createdAt || comm.messageTimestamp || comm.sentAt;
+             return {
+               ...comm,
+               summary,
+               displayDate: dateFormatter(date)
+             };
+           });
+       }
+
        selectedVisitorProfile.value = {
-         visitorId: visitorId,
+         visitorId: data.visitor?.id || visitorId,
          firstSeen: firstSeen ? dateFormatter(firstSeen) : '-',
          lastSeen: lastSeen ? dateFormatter(lastSeen) : '-',
          totalSessions: data.sessions ? data.sessions.length : 0,
          totalEvents: totalEvents,
-         sessions: data.sessions || [] // Store sessions for detailed display
+         sessions: data.sessions || [],
+         customer: customerDetails,
+         clicks: clicks,
+         communications: communications
        };
 
        // Extract and combine all events from all sessions
@@ -550,6 +612,45 @@
              :isDarkMode="isDarkMode"
            />
          </div>
+
+         <!-- Possible Contacts to Merge Section -->
+         <div v-if="selectedVisitorProfile && selectedVisitorProfile.possibleContactSuggestions && selectedVisitorProfile.possibleContactSuggestions.length > 0" class="mt-6">
+           <h4 class="text-lg font-semibold mb-3 text-gray-900 dark:text-white">Possible Contacts to Merge</h4>
+           <div class="space-y-4">
+             <div v-for="(suggestion, idx) in selectedVisitorProfile.possibleContactSuggestions" :key="suggestion.candidate.id + '-' + idx" class="border-l-4 border-yellow-400 dark:border-yellow-600 pl-4 pb-2">
+               <div class="mb-2">
+                 <span class="font-medium text-gray-700 dark:text-gray-200">Contact:</span>
+                 <span class="ml-1">{{ suggestion.candidate.name || 'No Name' }}</span>
+                 <span v-if="suggestion.candidate.phone" class="ml-2 text-xs text-gray-500">({{ suggestion.candidate.phone }})</span>
+                 <span v-if="suggestion.candidate.email" class="ml-2 text-xs text-gray-500">({{ suggestion.candidate.email }})</span>
+                 <span class="ml-2 text-xs text-gray-400">Created: {{ dateFormatter(suggestion.candidate.createdAt) }}</span>
+               </div>
+               <div class="mb-2">
+                 <span class="font-medium text-gray-700 dark:text-gray-200">Matched WhatsApp Click:</span>
+                 <span class="ml-1">{{ suggestion.click.button || 'WhatsApp' }}</span>
+                 <span v-if="suggestion.click.pageUrl" class="ml-2 text-xs text-gray-500">on <a :href="suggestion.click.pageUrl" target="_blank" rel="noopener noreferrer" class="text-indigo-600 dark:text-indigo-400 hover:underline">{{ suggestion.click.pageUrl }}</a></span>
+                 <span class="ml-2 text-xs text-gray-400">at {{ dateFormatter(suggestion.click.clicksDate) }}</span>
+               </div>
+               <div>
+                 <span class="font-medium text-gray-700 dark:text-gray-200">First 3 WhatsApp Messages:</span>
+                 <ul class="list-disc ml-6 mt-1">
+                   <li v-for="msg in suggestion.messages" :key="msg.id" class="text-xs text-gray-600 dark:text-gray-400">
+                     <span v-if="msg.fromMe" class="font-semibold text-green-600 dark:text-green-400">From Us:</span>
+                     <span v-else class="font-semibold text-blue-600 dark:text-blue-400">From Customer:</span>
+                     <span class="ml-1">{{ msg.text }}</span>
+                     <span class="ml-2 text-gray-400">({{ dateFormatter(msg.createdAt) }})</span>
+                   </li>
+                   <li v-if="!suggestion.messages || suggestion.messages.length === 0" class="text-xs text-gray-400">No WhatsApp messages found.</li>
+                 </ul>
+               </div>
+               <!-- Placeholder for associate action -->
+               <div class="mt-2">
+                 <button class="btn-primary-modern text-xs" disabled title="Association action not implemented yet">Associate this Contact</button>
+               </div>
+             </div>
+           </div>
+           <div v-if="selectedVisitorProfile.possibleContactSuggestions.length === 0" class="text-xs text-gray-500 mt-2">No possible contacts found to merge.</div>
+         </div>
       </section>
 
    </div> <!-- End container -->
@@ -584,6 +685,20 @@
                </svg>
              </button>
            </div>
+
+           <!-- Communications Section -->
+           <div v-if="selectedVisitorProfile.communications && selectedVisitorProfile.communications.length > 0" class="mt-6">
+             <h4 class="text-lg font-semibold mb-3 text-gray-900 dark:text-white">Recent Communications</h4>
+             <div class="space-y-2">
+               <div v-for="comm in selectedVisitorProfile.communications" :key="comm.id" class="border-l-2 border-purple-300 dark:border-purple-700 pl-4">
+                 <p class="text-xs text-gray-600 dark:text-gray-400">
+                   <span class="font-medium">{{ comm.displayDate }}:</span>
+                   <span> {{ comm.summary }}</span>
+                 </p>
+               </div>
+             </div>
+             <div v-if="selectedVisitorProfile.communications.length === 0" class="text-xs text-gray-500 mt-2">No communications found.</div>
+           </div>
            <div class="mt-2 space-y-6">
              <!-- Visitor Details Content -->
              <div v-if="selectedVisitorProfile" class="space-y-6">
@@ -610,6 +725,71 @@
                    <div>
                      <p class="font-medium text-gray-600 dark:text-gray-400">Total Events:</p>
                      <p>{{ selectedVisitorProfile.totalEvents }}</p>
+                   </div>
+                 </div>
+ 
+                 <!-- Customer Details -->
+                 <div v-if="selectedVisitorProfile.customer" class="mt-6">
+                   <h4 class="text-lg font-semibold mb-3 text-gray-900 dark:text-white">Customer Details</h4>
+                   <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-gray-700 dark:text-gray-300">
+                     <div>
+                       <p class="font-medium text-gray-600 dark:text-gray-400">Customer Name:</p>
+                       <p>{{ selectedVisitorProfile.customer.name || '-' }}</p>
+                     </div>
+                     <div>
+                       <p class="font-medium text-gray-600 dark:text-gray-400">Email:</p>
+                       <p>{{ selectedVisitorProfile.customer.email || '-' }}</p>
+                     </div>
+                     <div>
+                       <p class="font-medium text-gray-600 dark:text-gray-400">Phone:</p>
+                       <p>{{ selectedVisitorProfile.customer.phone || '-' }}</p>
+                     </div>
+                     <div>
+                       <p class="font-medium text-gray-600 dark:text-gray-400">Address:</p>
+                       <p>{{ selectedVisitorProfile.customer.address || '-' }}</p>
+                     </div>
+                     <div>
+                       <p class="font-medium text-gray-600 dark:text-gray-400">Customer Since:</p>
+                       <p>{{ dateFormatter(selectedVisitorProfile.customer.createdAt) }}</p>
+                     </div>
+                   </div>
+                 </div>
+ 
+                 <!-- Clicks Section -->
+                 <div v-if="selectedVisitorProfile.clicks && selectedVisitorProfile.clicks.length > 0" class="mt-6">
+                   <h4 class="text-lg font-semibold mb-3 text-gray-900 dark:text-white">Clicks</h4>
+                   <div class="space-y-2">
+                     <div v-for="click in selectedVisitorProfile.clicks" :key="click.id" class="border-l-2 border-blue-300 dark:border-blue-700 pl-4">
+                       <p class="text-xs text-gray-600 dark:text-gray-400">
+                         <span class="font-medium">Date:</span> {{ dateFormatter(click.clicksDate) }}
+                         <span v-if="click.button"> | <span class="font-medium">Button:</span> {{ click.button }}</span>
+                         <span v-if="click.page?.url"> | <span class="font-medium">Page:</span>
+                           <a :href="click.page.url" target="_blank" rel="noopener noreferrer" class="text-indigo-600 dark:text-indigo-400 hover:underline">{{ click.page.url }}</a>
+                         </span>
+                       </p>
+                     </div>
+                   </div>
+                 </div>
+ 
+                 <!-- Communications Section -->
+                 <div v-if="selectedVisitorProfile.communications && selectedVisitorProfile.communications.length > 0" class="mt-6">
+                   <h4 class="text-lg font-semibold mb-3 text-gray-900 dark:text-white">Communications</h4>
+                   <div class="space-y-2">
+                     <div v-for="comm in selectedVisitorProfile.communications" :key="comm.id" class="border-l-2 border-purple-300 dark:border-purple-700 pl-4">
+                       <p class="text-xs text-gray-600 dark:text-gray-400">
+                         <span class="font-medium">{{ comm.commType }}:</span>
+                         <span v-if="comm.createdAt">{{ dateFormatter(comm.createdAt) }}</span>
+                         <span v-else-if="comm.messageTimestamp">{{ dateFormatter(comm.messageTimestamp) }}</span>
+                         <span v-if="comm.text"> | <span class="font-medium">Message:</span> {{ comm.text }}</span>
+                         <span v-if="comm.bodyText"> | <span class="font-medium">Email:</span> {{ comm.bodyText }}</span>
+                         <span v-if="comm.subject"> | <span class="font-medium">Subject:</span> {{ comm.subject }}</span>
+                         <span v-if="comm.title"> | <span class="font-medium">Note:</span> {{ comm.title }}</span>
+                         <span v-if="comm.body"> | <span class="font-medium">Note Body:</span> {{ comm.body }}</span>
+                         <span v-if="comm.from"> | <span class="font-medium">From:</span> {{ comm.from }}</span>
+                         <span v-if="comm.to"> | <span class="font-medium">To:</span> {{ comm.to }}</span>
+                         <span v-if="comm.tag"> | <span class="font-medium">Tag:</span> {{ comm.tag }}</span>
+                       </p>
+                     </div>
                    </div>
                  </div>
                </div>
