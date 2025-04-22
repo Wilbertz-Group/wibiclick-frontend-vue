@@ -1,5 +1,7 @@
 <script setup>
   import VisitorTrendChart from "@/components/Visitors/VisitorTrendChart.vue";
+  import VisitorProfile from "@/components/Visitors/VisitorProfile.vue"; // Import VisitorProfile component
+  import UserJourneyGraph from "@/components/Visitors/UserJourneyGraph.vue"; // Import UserJourneyGraph component
   // import Header from "@/components/Header.vue"; // Removed old header
   import { useUserStore } from "@/stores/UserStore"
   import { onMounted, ref, reactive, watchEffect, computed, watch } from "vue"; // Added computed, watch
@@ -32,6 +34,10 @@
   const isDarkMode = ref(localStorage.getItem('darkMode') === 'true'); // Added dark mode state
   const currentPage = ref(1); // Added pagination state
   const visitors = ref([]); // Added state for visitor list
+  const selectedVisitorId = ref(null); // Added state for selected visitor ID
+  const selectedVisitorProfile = ref(null); // Added state for selected visitor profile
+  const selectedVisitorJourney = ref(null); // Added state for selected visitor journey
+  const showVisitorDetailsModal = ref(false); // Added state for modal visibility
 
   library.add( // Added FontAwesome library setup
     faSun, faMoon, faSync, faUsers, faSearch,
@@ -123,13 +129,57 @@
      filters.search = '';
      // Reset other filters
    }
-
-  async function fetchVisitors() {
-    try {
-      loading.value = true;
-      const response = await axios.get(
-        `visitors?id=${userStore.currentWebsite}&limit=1500&offset=0`
-      );
+ 
+   // Function to fetch detailed visitor data
+   async function fetchVisitorDetails(visitorId) {
+     try {
+       loading.value = true;
+       // Fetch visitor profile and history
+       const profileResponse = await axios.get(`/api/analytics/visitors/${visitorId}/history`);
+       selectedVisitorProfile.value = profileResponse.data;
+ 
+       // Assuming the history endpoint provides session details,
+       // we can reconstruct a simple journey from session events.
+       // If a dedicated journey endpoint is needed, call it here:
+       // const journeyResponse = await axios.get(`/api/analytics/journeys?visitorId=${visitorId}`);
+       // selectedVisitorJourney.value = journeyResponse.data;
+ 
+       // For now, let's create a mock journey from the history data if available
+       if (selectedVisitorProfile.value && selectedVisitorProfile.value.sessions) {
+         selectedVisitorJourney.value = selectedVisitorProfile.value.sessions.flatMap(session =>
+           session.events.map(event => ({
+             eventType: event.eventType,
+             pageUrl: event.page?.url || 'N/A', // Assuming event has a page with url
+             timestamp: event.timestamp
+           }))
+         ).sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+       } else {
+         selectedVisitorJourney.value = [];
+       }
+ 
+       showVisitorDetailsModal.value = true; // Open the modal
+       loading.value = false;
+     } catch (error) {
+       console.error("Error fetching visitor details:", error);
+       loading.value = false;
+       toast.error("Error fetching visitor details");
+     }
+   }
+ 
+   // Function to close the visitor details modal
+   const closeVisitorDetailsModal = () => {
+     showVisitorDetailsModal.value = false;
+     selectedVisitorId.value = null;
+     selectedVisitorProfile.value = null;
+     selectedVisitorJourney.value = null;
+   };
+ 
+   async function fetchVisitors() {
+     try {
+       loading.value = true;
+       const response = await axios.get(
+         `visitors?id=${userStore.currentWebsite}&limit=1500&offset=0` // Keep existing visitor list fetch
+       );
 
       visitors.value = response.data.visitors; // Assign to the new ref
 
@@ -311,13 +361,17 @@
   watch(isDarkMode, () => {
     updateChartTheme();
   });
-
 </script>
 
 <template>
  <!-- Main container with background and padding -->
  <div :class="{ 'dark': isDarkMode }" class="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 dark:from-gray-900 dark:via-gray-950 dark:to-blue-950 text-gray-800 dark:text-gray-200 font-sans transition-colors duration-300">
    <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-12">
+
+     <!-- Import new components -->
+     <VisitorProfile v-if="showVisitorDetailsModal" :visitorProfile="selectedVisitorProfile" />
+     <UserJourneyGraph v-if="showVisitorDetailsModal" :journeyData="selectedVisitorJourney" />
+
 
      <!-- Header Section -->
      <header class="flex flex-col md:flex-row justify-between items-center mb-10 md:mb-14 space-y-4 md:space-y-0">
@@ -403,13 +457,17 @@
                      <th scope="col" class="th-modern">Clicks</th>
                      <th scope="col" class="th-modern">Last Visit</th>
                   </tr>
+
                </thead>
                <tbody class="divide-y divide-gray-100 dark:divide-gray-700/50">
-                  <tr v-for="visitor in paginatedVisitors" :key="visitor.id" class="hover:bg-gray-50/50 dark:hover:bg-white/5 transition-colors duration-150">
+                  <tr v-for="visitor in paginatedVisitors" :key="visitor.id"
+                      class="hover:bg-gray-50/50 dark:hover:bg-white/5 transition-colors duration-150 cursor-pointer"
+                      @click="fetchVisitorDetails(visitor.id)"> <!-- Use visitor.id as ID -->
                      <td class="td-modern text-gray-600 dark:text-gray-400 max-w-xl truncate" :title="visitor.page?.url">
-                       <a :href="visitor.page?.url" target="_blank" rel="noopener noreferrer" class="hover:underline hover:text-indigo-600 dark:hover:text-indigo-400">
-                         {{ visitor.page?.url }}
-                       </a>
+                       <!-- Keep the link for page URL if needed, or remove if clicking row shows profile -->
+                        <a :href="visitor.page?.url" target="_blank" rel="noopener noreferrer" class="hover:underline hover:text-indigo-600 dark:hover:text-indigo-400" @click.stop>
+                          {{ visitor.page?.url }}
+                        </a>
                      </td>
                      <td class="td-modern text-gray-500 dark:text-gray-400 text-center">{{ visitor.views }}</td>
                      <td class="td-modern text-gray-500 dark:text-gray-400 text-center">{{ visitor.clicks }}</td>
@@ -419,10 +477,13 @@
             </table>
         </div>
 
+
         <!-- Visitor Cards (Mobile) -->
         <div class="md:hidden space-y-4">
-           <div v-if="!loading && paginatedVisitors.length > 0" v-for="visitor in paginatedVisitors" :key="visitor.id" class="card-modern p-4">
-              <a :href="visitor.page?.url" target="_blank" rel="noopener noreferrer" class="block text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:underline truncate mb-2" :title="visitor.page?.url">
+           <div v-if="!loading && paginatedVisitors.length > 0" v-for="visitor in paginatedVisitors" :key="visitor.id"
+                class="card-modern p-4 cursor-pointer"
+                @click="fetchVisitorDetails(visitor.id)"> <!-- Use visitor.id as ID -->
+              <a :href="visitor.page?.url" target="_blank" rel="noopener noreferrer" class="block text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:underline truncate mb-2" :title="visitor.page?.url" @click.stop>
                 {{ visitor.page?.url }}
               </a>
               <div class="text-xs text-gray-500 dark:text-gray-400 space-y-1">
@@ -476,7 +537,42 @@
       <scale-loader :loading="true" color="#4f46e5" height="40px" width="5px" />
    </div>
 
-   <!-- No Modals needed for Visitors view -->
+
+   <!-- Loading Overlay -->
+   <div v-if="loading" class="fixed inset-0 z-[60] bg-gray-900 bg-opacity-50 dark:bg-opacity-80 flex items-center justify-center">
+      <scale-loader :loading="true" color="#4f46e5" height="40px" width="5px" />
+   </div>
+
+   <!-- Visitor Details Modal -->
+   <transition name="modal-fade">
+     <div v-if="showVisitorDetailsModal" class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+       <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+         <!-- Background overlay -->
+         <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" @click="closeVisitorDetailsModal"></div>
+
+         <!-- Modal content -->
+         <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+         <div class="modal-content-modern">
+           <div class="flex justify-between items-center mb-4">
+             <h3 class="text-xl font-bold text-gray-900 dark:text-white" id="modal-title">Visitor Details</h3>
+             <button @click="closeVisitorDetailsModal" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+               <span class="sr-only">Close</span>
+               <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+               </svg>
+             </button>
+           </div>
+           <div class="mt-2 space-y-6">
+             <!-- Visitor Profile Component -->
+             <VisitorProfile :visitorProfile="selectedVisitorProfile" />
+
+             <!-- User Journey Graph Component -->
+             <UserJourneyGraph :journeyData="selectedVisitorJourney" />
+           </div>
+         </div>
+       </div>
+     </div>
+   </transition>
 
  </div> <!-- End main div -->
 </template>
