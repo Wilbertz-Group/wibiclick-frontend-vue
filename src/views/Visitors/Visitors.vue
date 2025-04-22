@@ -38,6 +38,7 @@
   const selectedVisitorProfile = ref(null); // Added state for selected visitor profile
   const selectedVisitorJourney = ref(null); // Added state for selected visitor journey
   const showVisitorDetailsModal = ref(false); // Added state for modal visibility
+  const combinedUserJourney = ref([]); // Added state for combined user journey
 
   library.add( // Added FontAwesome library setup
     faSun, faMoon, faSync, faUsers, faSearch,
@@ -134,29 +135,55 @@
    async function fetchVisitorDetails(visitorId) {
      try {
        loading.value = true;
-       // Fetch visitor profile and history
-       const profileResponse = await axios.get(`/api/analytics/visitors/${visitorId}/history`);
-       selectedVisitorProfile.value = profileResponse.data;
- 
-       // Assuming the history endpoint provides session details,
-       // we can reconstruct a simple journey from session events.
-       // If a dedicated journey endpoint is needed, call it here:
-       // const journeyResponse = await axios.get(`/api/analytics/journeys?visitorId=${visitorId}`);
-       // selectedVisitorJourney.value = journeyResponse.data;
- 
-       // For now, let's create a mock journey from the history data if available
-       if (selectedVisitorProfile.value && selectedVisitorProfile.value.sessions) {
-         selectedVisitorJourney.value = selectedVisitorProfile.value.sessions.flatMap(session =>
-           session.events.map(event => ({
-             eventType: event.eventType,
-             pageUrl: event.page?.url || 'N/A', // Assuming event has a page with url
-             timestamp: event.timestamp
-           }))
-         ).sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-       } else {
-         selectedVisitorJourney.value = [];
+       const response = await axios.get(`/api/analytics/visitors/${visitorId}/history`);
+       const data = response.data;
+
+       // Calculate derived fields
+       let firstSeen = null;
+       let lastSeen = null;
+       let totalEvents = 0;
+
+       if (data.sessions && data.sessions.length > 0) {
+         // Find the earliest startedAt for First Seen
+         firstSeen = data.sessions.reduce((earliest, session) => {
+           const sessionStartedAt = new Date(session.startedAt);
+           return earliest === null || sessionStartedAt < earliest ? sessionStartedAt : earliest;
+         }, null);
+
+         // Find the latest lastActivityAt for Last Seen
+         lastSeen = data.sessions.reduce((latest, session) => {
+           const sessionLastActivityAt = new Date(session.lastActivityAt);
+           return latest === null || sessionLastActivityAt > latest ? sessionLastActivityAt : latest;
+         }, null);
+
+         // Calculate total events
+         totalEvents = data.sessions.reduce((sum, session) => sum + (session.events ? session.events.length : 0), 0);
        }
- 
+
+       selectedVisitorProfile.value = {
+         visitorId: visitorId,
+         firstSeen: firstSeen ? dateFormatter(firstSeen) : '-',
+         lastSeen: lastSeen ? dateFormatter(lastSeen) : '-',
+         totalSessions: data.sessions ? data.sessions.length : 0,
+         totalEvents: totalEvents,
+         sessions: data.sessions || [] // Store sessions for detailed display
+       };
+
+       // Extract and combine all events from all sessions
+       let allEvents = [];
+       if (data.sessions) {
+         data.sessions.forEach(session => {
+           if (session.events) {
+             allEvents = allEvents.concat(session.events);
+           }
+         });
+       }
+
+       // Sort all events chronologically by timestamp
+       combinedUserJourney.value = _.sortBy(allEvents, 'timestamp');
+
+       selectedVisitorJourney.value = null; // No longer need a separate journey object here
+
        showVisitorDetailsModal.value = true; // Open the modal
        loading.value = false;
      } catch (error) {
@@ -165,15 +192,16 @@
        toast.error("Error fetching visitor details");
      }
    }
- 
+
    // Function to close the visitor details modal
    const closeVisitorDetailsModal = () => {
      showVisitorDetailsModal.value = false;
      selectedVisitorId.value = null;
      selectedVisitorProfile.value = null;
-     selectedVisitorJourney.value = null;
+     combinedUserJourney.value = []; // Clear combined journey on modal close
+     // selectedVisitorJourney.value = null; // No longer needed
    };
- 
+
    async function fetchVisitors() {
      try {
        loading.value = true;
@@ -367,12 +395,6 @@
  <!-- Main container with background and padding -->
  <div :class="{ 'dark': isDarkMode }" class="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 dark:from-gray-900 dark:via-gray-950 dark:to-blue-950 text-gray-800 dark:text-gray-200 font-sans transition-colors duration-300">
    <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-12">
-
-     <!-- Import new components -->
-     <VisitorProfile v-if="showVisitorDetailsModal" :visitorProfile="selectedVisitorProfile" />
-     <UserJourneyGraph v-if="showVisitorDetailsModal" :journeyData="selectedVisitorJourney" />
-
-
      <!-- Header Section -->
      <header class="flex flex-col md:flex-row justify-between items-center mb-10 md:mb-14 space-y-4 md:space-y-0">
        <h1 class="text-3xl sm:text-4xl font-bold tracking-tight text-gray-900 dark:text-white flex items-center">
@@ -563,11 +585,82 @@
              </button>
            </div>
            <div class="mt-2 space-y-6">
-             <!-- Visitor Profile Component -->
-             <VisitorProfile :visitorProfile="selectedVisitorProfile" />
+             <!-- Visitor Details Content -->
+             <div v-if="selectedVisitorProfile" class="space-y-6">
+               <!-- Visitor Profile -->
+               <div>
+                 <h4 class="text-lg font-semibold mb-3 text-gray-900 dark:text-white">Visitor Profile</h4>
+                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-gray-700 dark:text-gray-300">
+                   <div>
+                     <p class="font-medium text-gray-600 dark:text-gray-400">Visitor ID:</p>
+                     <p class="break-all">{{ selectedVisitorProfile.visitorId }}</p>
+                   </div>
+                   <div>
+                     <p class="font-medium text-gray-600 dark:text-gray-400">First Seen:</p>
+                     <p>{{ selectedVisitorProfile.firstSeen }}</p>
+                   </div>
+                   <div>
+                     <p class="font-medium text-gray-600 dark:text-gray-400">Last Seen:</p>
+                     <p>{{ selectedVisitorProfile.lastSeen }}</p>
+                   </div>
+                   <div>
+                     <p class="font-medium text-gray-600 dark:text-gray-400">Total Sessions:</p>
+                     <p>{{ selectedVisitorProfile.totalSessions }}</p>
+                   </div>
+                   <div>
+                     <p class="font-medium text-gray-600 dark:text-gray-400">Total Events:</p>
+                     <p>{{ selectedVisitorProfile.totalEvents }}</p>
+                   </div>
+                 </div>
+               </div>
 
-             <!-- User Journey Graph Component -->
-             <UserJourneyGraph :journeyData="selectedVisitorJourney" />
+               <!-- Recent Sessions -->
+               <div v-if="selectedVisitorProfile.sessions && selectedVisitorProfile.sessions.length > 0">
+                 <h4 class="text-lg font-semibold mb-3 text-gray-900 dark:text-white">Recent Sessions</h4>
+                 <div class="space-y-4">
+                   <div v-for="session in selectedVisitorProfile.sessions" :key="session.id" class="card-modern p-4">
+                     <p class="text-sm font-medium text-gray-800 dark:text-gray-200 mb-2">Session ID: <span class="break-all font-normal">{{ session.id }}</span></p>
+                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-gray-600 dark:text-gray-400 mb-4">
+                       <p>Started At: <span class="font-medium">{{ dateFormatter(session.startedAt) }}</span></p>
+                       <p>Last Activity At: <span class="font-medium">{{ dateFormatter(session.lastActivityAt) }}</span></p>
+                       <p class="sm:col-span-2">Website: <a :href="session.website?.url" target="_blank" rel="noopener noreferrer" class="text-indigo-600 dark:text-indigo-400 hover:underline">{{ session.website?.url || 'N/A' }}</a></p>
+                     </div>
+                     <!-- Per-Session User Journey -->
+                     <div v-if="session.events && session.events.length > 0">
+                        <h5 class="text-md font-semibold mb-2 text-gray-800 dark:text-gray-200">Session Journey</h5>
+                        <div class="space-y-3 border-l-2 border-gray-200 dark:border-gray-700 pl-4">
+                          <div v-for="event in session.events" :key="event.id" class="relative">
+                            <div class="absolute -left-3.5 top-1.5 w-3 h-3 bg-indigo-500 rounded-full ring-4 ring-white dark:ring-gray-800"></div>
+                            <p class="text-sm font-medium text-gray-800 dark:text-gray-200">{{ event.eventType }}</p>
+                            <p class="text-xs text-gray-600 dark:text-gray-400">{{ dateFormatter(event.timestamp) }}</p>
+                            <p v-if="event.eventDetails?.pageUrl" class="text-xs text-gray-600 dark:text-gray-400 break-all">Page: <a :href="event.eventDetails.pageUrl" target="_blank" rel="noopener noreferrer" class="text-indigo-600 dark:text-indigo-400 hover:underline">{{ event.eventDetails.pageUrl }}</a></p>
+                          </div>
+                        </div>
+                     </div>
+                      <div v-else class="text-sm text-gray-500 dark:text-gray-400 italic">No events recorded for this session.</div>
+                   </div>
+                 </div>
+               </div>
+
+               <!-- Combined User Journey -->
+               <div v-if="combinedUserJourney && combinedUserJourney.length > 0">
+                 <h4 class="text-lg font-semibold mb-3 text-gray-900 dark:text-white">Combined User Journey</h4>
+                  <div class="space-y-3 border-l-2 border-gray-200 dark:border-gray-700 pl-4">
+                    <div v-for="event in combinedUserJourney" :key="event.id" class="relative">
+                      <div class="absolute -left-3.5 top-1.5 w-3 h-3 bg-green-500 rounded-full ring-4 ring-white dark:ring-gray-800"></div> <!-- Using a different color for combined journey -->
+                      <p class="text-sm font-medium text-gray-800 dark:text-gray-200">{{ event.eventType }}</p>
+                      <p class="text-xs text-gray-600 dark:text-gray-400">{{ dateFormatter(event.timestamp) }}</p>
+                      <p v-if="event.eventDetails?.pageUrl" class="text-xs text-gray-600 dark:text-gray-400 break-all">Page: <a :href="event.eventDetails.pageUrl" target="_blank" rel="noopener noreferrer" class="text-indigo-600 dark:text-indigo-400 hover:underline">{{ event.eventDetails.pageUrl }}</a></p>
+                    </div>
+                  </div>
+               </div>
+                <div v-else class="text-center py-8 text-gray-500">
+                   <p>No combined journey data available for this visitor.</p>
+                </div>
+             </div>
+             <div v-else class="text-center py-8 text-gray-500">
+                <p>No detailed information available for this visitor.</p>
+             </div>
            </div>
          </div>
        </div>
