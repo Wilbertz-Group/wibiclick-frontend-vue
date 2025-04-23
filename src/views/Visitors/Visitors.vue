@@ -660,6 +660,7 @@
                       <a :href="visitor.page?.url" target="_blank" rel="noopener noreferrer" class="hover:underline hover:text-indigo-600 dark:hover:text-indigo-400" @click.stop>
                         {{ visitor.page?.url }}
                       </a>
+                      <span v-if="visitor.hasMergeSuggestions" class="ml-2 text-yellow-500" title="Possible merge suggestions">⚠️</span>
                     </td>
                     <td class="td-modern text-center">
                       <span v-if="visitor.isConverted" class="inline-block px-2 py-1 rounded bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 text-xs font-semibold">Yes</span>

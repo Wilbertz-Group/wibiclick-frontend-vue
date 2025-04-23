@@ -124,7 +124,8 @@ function dateFormatter(date) {
     d.getMonth() === yesterday.getMonth() &&
     d.getDate() === yesterday.getDate()
   ) {
-    return "Yesterday";
+    const formattedTime = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    return `Yesterday at ${formattedTime}`;
   }
   // Otherwise, show full date and time
   return d.toLocaleString(undefined, {
