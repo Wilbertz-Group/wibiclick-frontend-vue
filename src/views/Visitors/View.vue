@@ -1,0 +1,454 @@
+<script setup>
+import { ref, onMounted, computed } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import axios from "axios";
+import { useToast } from "vue-toast-notification";
+import { useUserStore } from "@/stores/UserStore";
+import ScaleLoader from "vue-spinner/src/ScaleLoader.vue";
+
+const route = useRoute();
+const router = useRouter();
+const toast = useToast();
+const userStore = useUserStore();
+
+const visitorId = computed(() => route.params.visitorId || route.query.visitor_id);
+const isLoading = ref(false);
+const visitor = ref(null);
+const allVisitors = ref([]);
+const currentIndex = ref(-1);
+
+async function fetchVisitor() {
+  if (!visitorId.value) return;
+  isLoading.value = true;
+  try {
+    const res = await axios.get(`/api/analytics/visitors/${visitorId.value}/history`);
+    // Flatten the visitor object so the template works as expected
+    if (res.data && res.data.visitor) {
+      visitor.value = {
+        ...res.data.visitor,
+        sessions: res.data.sessions || [],
+        clicks: res.data.clicks || [],
+        customer: res.data.customer || null,
+        communications: res.data.communications || [],
+        possibleContactSuggestions: res.data.possibleContactSuggestions || []
+      };
+    } else {
+      visitor.value = null;
+    }
+  } catch (err) {
+    toast.error("Failed to load visitor details.");
+  } finally {
+    isLoading.value = false;
+  }
+}
+
+async function fetchAllVisitors() {
+  try {
+    const res = await axios.get(`/visitors?id=${userStore.currentWebsite}&limit=1500&offset=0`);
+    allVisitors.value = res.data.visitors || [];
+    currentIndex.value = allVisitors.value.findIndex(v => v.id === visitorId.value);
+  } catch (err) {
+    allVisitors.value = [];
+    currentIndex.value = -1;
+  }
+}
+
+function goToPrevVisitor() {
+  if (currentIndex.value > 0) {
+    const prevId = allVisitors.value[currentIndex.value - 1].id;
+    router.push({ name: "VisitorView", params: { visitorId: prevId } });
+  }
+}
+function goToNextVisitor() {
+  if (currentIndex.value < allVisitors.value.length - 1) {
+    const nextId = allVisitors.value[currentIndex.value + 1].id;
+    router.push({ name: "VisitorView", params: { visitorId: nextId } });
+  }
+}
+
+// Reload all visitor information
+async function reloadVisitorData() {
+  isLoading.value = true;
+  try {
+    await fetchAllVisitors();
+    await fetchVisitor();
+  } finally {
+    isLoading.value = false;
+  }
+}
+// navigate in a new tab to the customer page with url like /contact?customer_id={customerId}
+function goToCustomer() {
+  if (visitor.value.customer && visitor.value.customer.id) {
+    const customerId = visitor.value.customer.id;
+    window.open(`/contact?customer_id=${customerId}`, "_blank");
+  }
+}
+
+onMounted(async () => {
+  await fetchAllVisitors();
+  await fetchVisitor();
+});
+function dateFormatter(date) {
+  if (!date) return "-";
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return "-";
+  const now = new Date();
+  // Check if today
+  if (
+    d.getFullYear() === now.getFullYear() &&
+    d.getMonth() === now.getMonth() &&
+    d.getDate() === now.getDate()
+  ) {
+    // Show only time
+    return d.toLocaleTimeString(undefined, {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true
+    });
+  }
+  // Check if yesterday
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+  if (
+    d.getFullYear() === yesterday.getFullYear() &&
+    d.getMonth() === yesterday.getMonth() &&
+    d.getDate() === yesterday.getDate()
+  ) {
+    return "Yesterday";
+  }
+  // Otherwise, show full date and time
+  return d.toLocaleString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true
+  });
+}
+
+// Returns e.g. "2 hours ago", "just now", "3 days ago"
+function timeAgo(date) {
+  if (!date) return "";
+  const now = new Date();
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return "";
+  const seconds = Math.floor((now - d) / 1000);
+  if (seconds < 60) return "just now";
+  const intervals = [
+    { label: "year", seconds: 31536000 },
+    { label: "month", seconds: 2592000 },
+    { label: "day", seconds: 86400 },
+    { label: "hour", seconds: 3600 },
+    { label: "minute", seconds: 60 }
+  ];
+  for (const interval of intervals) {
+    const count = Math.floor(seconds / interval.seconds);
+    if (count >= 1) {
+      return count + " " + interval.label + (count > 1 ? "s" : "") + " ago";
+    }
+  }
+  return "";
+}
+</script>
+
+<template>
+  <div class="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 dark:from-gray-900 dark:via-gray-950 dark:to-blue-950 text-gray-800 dark:text-gray-200 font-sans transition-colors duration-300">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-12">
+      <header class="flex items-center justify-between mb-8">
+        <div class="flex items-center space-x-3">
+          <button @click="router.back()" class="btn-icon-modern" title="Go Back">
+            ←
+          </button>
+          <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
+            Visitor Details
+          </h1>
+        </div>
+        <div class="flex items-center space-x-2">
+          <button @click="goToPrevVisitor" :disabled="currentIndex <= 0" class="btn-secondary-modern">Prev</button>
+          <button @click="goToNextVisitor" :disabled="currentIndex >= allVisitors.length - 1" class="btn-secondary-modern">Next</button>
+          <button
+            @click="reloadVisitorData"
+            :disabled="isLoading"
+            class="btn-icon-modern"
+            title="Refresh Data"
+            aria-label="Refresh visitor data"
+          >
+            <font-awesome-icon icon="sync" :class="{ 'fa-spin': isLoading }" />
+          </button>
+        </div>
+      </header>
+      <div v-if="isLoading" class="flex justify-center items-center py-20">
+        <ScaleLoader :loading="true" color="#4f46e5" height="40px" width="5px" />
+      </div>
+      <div v-else-if="visitor" class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
+        <!-- Left Column -->
+        <div class="lg:col-span-4 space-y-6">
+          <!-- Visitor Profile -->
+          <section class="card-modern p-6">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Visitor Profile</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-gray-700 dark:text-gray-300">
+              <!-- Visitor ID removed as per user request -->
+              <div>
+                <p class="font-medium text-gray-600 dark:text-gray-400">First Seen:</p>
+                <p>
+                  {{ dateFormatter(visitor.createdAt) }}
+                  <span v-if="visitor.createdAt" class="text-xs text-gray-400 ml-2">
+                    ({{ timeAgo(visitor.createdAt) }})
+                  </span>
+                </p>
+              </div>
+              <div>
+                <p class="font-medium text-gray-600 dark:text-gray-400">Last Seen:</p>
+                <p>
+                  <template v-if="visitor.sessions && visitor.sessions.length > 0">
+                    {{
+                      dateFormatter(
+                        visitor.sessions
+                          .map(s => s.lastActivityAt)
+                          .filter(Boolean)
+                          .sort()
+                          .slice(-1)[0]
+                      )
+                    }}
+                    <span class="text-xs text-gray-400 ml-2">
+                      ({{ timeAgo(
+                        visitor.sessions
+                          .map(s => s.lastActivityAt)
+                          .filter(Boolean)
+                          .sort()
+                          .slice(-1)[0]
+                      ) }})
+                    </span>
+                  </template>
+                  <template v-else>-</template>
+                </p>
+              </div>
+              <div>
+                <p class="font-medium text-gray-600 dark:text-gray-400">Total Sessions:</p>
+                <p>{{ visitor.sessions ? visitor.sessions.length : 0 }}</p>
+              </div>
+              <div>
+                <p class="font-medium text-gray-600 dark:text-gray-400">Total Events:</p>
+                <p>
+                  {{
+                    visitor.sessions
+                      ? visitor.sessions.reduce(
+                          (sum, s) => sum + (s.events ? s.events.length : 0),
+                          0
+                        )
+                      : 0
+                  }}
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <!-- Customer Association Section -->
+          <section class="card-modern p-6">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+              {{ visitor.customer ? 'Update Associated Customer' : 'Associate with Customer' }}
+            </h2>
+            <div class="mb-3">
+              <label class="label-modern" for="customer-search">Search Customer</label>
+              <input
+                id="customer-search"
+                v-model="customerSearchTerm"
+                class="input-modern"
+                placeholder="Type name, email, or phone..."
+                autocomplete="off"
+                :disabled="isAssociatingCustomer"
+              />
+              <div v-if="isSearchingCustomers" class="text-xs text-gray-500 mt-1">Searching...</div>
+              <ul v-if="Array.isArray(customerSearchResults) && customerSearchResults.length > 0" class="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded mt-1 max-h-48 overflow-y-auto shadow z-10">
+                <li
+                  v-for="customer in customerSearchResults"
+                  :key="customer.id"
+                  @click="handleCustomerSelected(customer)"
+                  class="px-3 py-2 cursor-pointer hover:bg-indigo-50 dark:hover:bg-indigo-800"
+                >
+                  <span class="font-medium">{{ customer.name }}</span>
+                  <span v-if="customer.email" class="ml-2 text-xs text-gray-500">{{ customer.email }}</span>
+                  <span v-if="customer.phone" class="ml-2 text-xs text-gray-400">{{ customer.phone }}</span>
+                  <span v-if="customer.address" class="ml-2 text-xs text-gray-400 italic">{{ customer.address }}</span>
+                </li>
+              </ul>
+              <div v-if="customerSearchTerm && !isSearchingCustomers && customerSearchResults.length === 0" class="text-xs text-gray-400 mt-1">
+                No customers found.
+              </div>
+            </div>
+            <div v-if="selectedCustomer" class="mb-3 p-2 rounded bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-700 flex items-center justify-between">
+              <div>
+                <span class="font-semibold">{{ selectedCustomer.name }}</span>
+                <span v-if="selectedCustomer.email" class="ml-2 text-xs text-gray-500">{{ selectedCustomer.email }}</span>
+                <span v-if="selectedCustomer.phone" class="ml-2 text-xs text-gray-400">{{ selectedCustomer.phone }}</span>
+              </div>
+              <button class="btn-ghost-modern ml-2" @click="selectedCustomer = null" :disabled="isAssociatingCustomer">Clear</button>
+            </div>
+            <button
+              class="btn-primary-modern"
+              :disabled="!selectedCustomer || isAssociatingCustomer"
+              @click="associateVisitorWithCustomer"
+            >
+              {{ visitor.customer ? 'Update Association' : 'Associate Customer' }}
+            </button>
+          </section>
+
+          <!-- Customer Details -->
+          <section v-if="visitor.customer" class="card-modern p-6">
+            <div class="flex justify-between items-center mb-4">
+              <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Associated Customer</h2>
+              <button @click="goToCustomer" class="btn-primary-modern text-xs">View Customer <font-awesome-icon icon="external-link-alt" class="ml-1 text-xs" /></button>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-gray-700 dark:text-gray-300">
+              <div>
+                <p class="font-medium text-gray-600 dark:text-gray-400">Customer Name:</p>
+                <p>{{ visitor.customer.name || '-' }}</p>
+              </div>
+              <div>
+                <p class="font-medium text-gray-600 dark:text-gray-400">Email:</p>
+                <p>{{ visitor.customer.email || '-' }}</p>
+              </div>
+              <div>
+                <p class="font-medium text-gray-600 dark:text-gray-400">Phone:</p>
+                <p>{{ visitor.customer.phone || '-' }}</p>
+              </div>
+              <div>
+                <p class="font-medium text-gray-600 dark:text-gray-400">Address:</p>
+                <p>{{ visitor.customer.address || '-' }}</p>
+              </div>
+              <div>
+                <p class="font-medium text-gray-600 dark:text-gray-400">Customer Since:</p>
+                <p>{{ dateFormatter(visitor.customer.createdAt) }}</p>
+              </div>
+            </div>
+          </section>
+
+          <!-- Possible Contacts to Merge Section -->
+          <section v-if="visitor.possibleContactSuggestions && visitor.possibleContactSuggestions.length > 0" class="card-modern p-6">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Possible Contacts to Merge</h2>
+            <div class="space-y-4">
+              <div v-for="(suggestion, idx) in visitor.possibleContactSuggestions" :key="suggestion.candidate.id + '-' + idx" class="border-l-4 border-yellow-400 dark:border-yellow-600 pl-4 pb-2">
+                <div class="mb-2">
+                  <span class="font-medium text-gray-700 dark:text-gray-200">Contact:</span>
+                  <span class="ml-1">{{ suggestion.candidate.name || 'No Name' }}</span>
+                  <span v-if="suggestion.candidate.phone" class="ml-2 text-xs text-gray-500">({{ suggestion.candidate.phone }})</span>
+                  <span v-if="suggestion.candidate.email" class="ml-2 text-xs text-gray-500">({{ suggestion.candidate.email }})</span>
+                  <span class="ml-2 text-xs text-gray-400">Created: {{ dateFormatter(suggestion.candidate.createdAt) }}</span>
+                </div>
+                <div class="mb-2">
+                  <span class="font-medium text-gray-700 dark:text-gray-200">Matched WhatsApp Click:</span>
+                  <span class="ml-1">{{ suggestion.click.button || 'WhatsApp' }}</span>
+                  <span v-if="suggestion.click.pageUrl" class="ml-2 text-xs text-gray-500">on <a :href="suggestion.click.pageUrl" target="_blank" rel="noopener noreferrer" class="text-indigo-600 dark:text-indigo-400 hover:underline">{{ suggestion.click.pageUrl }}</a></span>
+                  <span class="ml-2 text-xs text-gray-400">at {{ dateFormatter(suggestion.click.clicksDate) }}</span>
+                </div>
+                <div>
+                  <span class="font-medium text-gray-700 dark:text-gray-200">First 3 WhatsApp Messages:</span>
+                  <ul class="list-disc ml-6 mt-1">
+                    <li v-for="msg in suggestion.messages" :key="msg.id" class="text-xs text-gray-600 dark:text-gray-400">
+                      <span v-if="msg.fromMe" class="font-semibold text-green-600 dark:text-green-400">From Us:</span>
+                      <span v-else class="font-semibold text-blue-600 dark:text-blue-400">From Customer:</span>
+                      <span class="ml-1">{{ msg.text }}</span>
+                      <span class="ml-2 text-gray-400">({{ dateFormatter(msg.createdAt) }})</span>
+                    </li>
+                    <li v-if="!suggestion.messages || suggestion.messages.length === 0" class="text-xs text-gray-400">No WhatsApp messages found.</li>
+                  </ul>
+                </div>
+                <!-- Placeholder for associate action -->
+                <div class="mt-2">
+                  <button class="btn-primary-modern text-xs" disabled title="Association action not implemented yet">Associate this Contact</button>
+                </div>
+              </div>
+            </div>
+            <div v-if="visitor.possibleContactSuggestions.length === 0" class="text-xs text-gray-500 mt-2">No possible contacts found to merge.</div>
+          </section>
+        </div>
+
+        <!-- Right Column -->
+        <div class="lg:col-span-8 space-y-6">
+          <!-- Combined User Journey -->
+          <section v-if="visitor.combinedUserJourney && visitor.combinedUserJourney.length > 0" class="card-modern p-6">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Combined User Journey</h2>
+            <div class="space-y-3 border-l-2 border-gray-200 dark:border-gray-700 pl-4">
+              <div v-for="event in visitor.combinedUserJourney" :key="event.id" class="relative">
+                <div class="absolute -left-3.5 top-1.5 w-3 h-3 bg-green-500 rounded-full ring-4 ring-white dark:ring-gray-800"></div>
+                <p class="text-sm font-medium text-gray-800 dark:text-gray-200">{{ event.eventType }}</p>
+                <p class="text-xs text-gray-600 dark:text-gray-400">{{ dateFormatter(event.timestamp) }}</p>
+                <p v-if="event.eventDetails?.pageUrl" class="text-xs text-gray-600 dark:text-gray-400 break-all">Page: <a :href="event.eventDetails.pageUrl" target="_blank" rel="noopener noreferrer" class="text-indigo-600 dark:text-indigo-400 hover:underline">{{ event.eventDetails.pageUrl }}</a></p>
+              </div>
+            </div>
+            <div v-if="visitor.combinedUserJourney.length === 0" class="text-center py-8 text-gray-500">
+              <p>No combined journey data available for this visitor.</p>
+            </div>
+          </section>
+
+          <!-- Recent Sessions -->
+          <section v-if="Array.isArray(visitor.sessions) && visitor.sessions.length > 0" class="card-modern p-6">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Recent Sessions</h2>
+            <div class="space-y-4">
+              <div v-for="session in visitor.sessions" :key="session.id" class="card-modern p-4">
+                <p class="text-sm font-medium text-gray-800 dark:text-gray-200 mb-2">Session ID: <span class="break-all font-normal">{{ session.id }}</span></p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-gray-600 dark:text-gray-400 mb-4">
+                  <p>Started At: <span class="font-medium">{{ dateFormatter(session.startedAt) }}</span></p>
+                  <p>Last Activity At: <span class="font-medium">{{ dateFormatter(session.lastActivityAt) }}</span></p>
+                  <p class="sm:col-span-2">Website: <a :href="session.website?.url" target="_blank" rel="noopener noreferrer" class="text-indigo-600 dark:text-indigo-400 hover:underline">{{ session.website?.url || 'N/A' }}</a></p>
+                </div>
+                <!-- Per-Session User Journey -->
+                <div v-if="session.events && session.events.length > 0">
+                   <h5 class="text-md font-semibold mb-2 text-gray-800 dark:text-gray-200">Session Journey</h5>
+                   <div class="space-y-3 border-l-2 border-gray-200 dark:border-gray-700 pl-4">
+                     <div v-for="event in session.events" :key="event.id" class="relative">
+                       <div class="absolute -left-3.5 top-1.5 w-3 h-3 bg-indigo-500 rounded-full ring-4 ring-white dark:ring-gray-800"></div>
+                       <p class="text-sm font-medium text-gray-800 dark:text-gray-200">{{ event.eventType }}</p>
+                       <p class="text-xs text-gray-600 dark:text-gray-400">{{ dateFormatter(event.timestamp) }}</p>
+                       <p v-if="event.eventDetails?.pageUrl" class="text-xs text-gray-600 dark:text-gray-400 break-all">Page: <a :href="event.eventDetails.pageUrl" target="_blank" rel="noopener noreferrer" class="text-indigo-600 dark:text-indigo-400 hover:underline">{{ event.eventDetails.pageUrl }}</a></p>
+                     </div>
+                   </div>
+                </div>
+                 <div v-else class="text-sm text-gray-500 dark:text-gray-400 italic">No events recorded for this session.</div>
+               </div>
+             </div>
+             <div v-if="visitor.sessions.length === 0" class="text-center py-8 text-gray-500">
+               <p>No recent sessions available for this visitor.</p>
+             </div>
+          </section>
+
+          <!-- Clicks Section -->
+          <section v-if="Array.isArray(visitor.clicks) && visitor.clicks.length > 0" class="card-modern p-6">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Clicks</h2>
+            <div class="space-y-2">
+              <div v-for="click in visitor.clicks" :key="click.id" class="border-l-2 border-blue-300 dark:border-blue-700 pl-4">
+                <p class="text-xs text-gray-600 dark:text-gray-400">
+                  <span class="font-medium">Date:</span> {{ dateFormatter(click.clicksDate) }}
+                  <span v-if="click.button"> | <span class="font-medium">Button:</span> {{ click.button }}</span>
+                  <span v-if="click.page?.url"> | <span class="font-medium">Page:</span>
+                    <a :href="click.page.url" target="_blank" rel="noopener noreferrer" class="text-indigo-600 dark:text-indigo-400 hover:underline">{{ click.page.url }}</a>
+                  </span>
+                </p>
+              </div>
+            </div>
+            <div v-if="visitor.clicks.length === 0" class="text-xs text-gray-500 mt-2">No clicks found.</div>
+          </section>
+
+          <!-- Communications Section -->
+          <section v-if="Array.isArray(visitor.communications) && visitor.communications.length > 0" class="card-modern p-6">
+            <h2 class="text-lg font-semibold mb-3 text-gray-900 dark:text-white">Recent Communications</h2>
+            <div class="space-y-2">
+              <div v-for="comm in visitor.communications" :key="comm.id" class="border-l-2 border-purple-300 dark:border-purple-700 pl-4">
+                <p class="text-xs text-gray-600 dark:text-gray-400">
+                  <span class="font-medium">{{ comm.displayDate }}:</span>
+                  <span> {{ comm.summary }}</span>
+                </p>
+              </div>
+            </div>
+            <div v-if="visitor.communications.length === 0" class="text-xs text-gray-500 mt-2">No communications found.</div>
+          </section>
+        </div>
+      </div>
+
+      <div v-else class="text-center py-20 text-gray-500">
+        Visitor not found.
+      </div>
+    </div>
+  </div>
+</template>

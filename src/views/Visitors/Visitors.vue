@@ -17,6 +17,58 @@
     faChevronLeft, faChevronRight // Added pagination icons
   } from '@fortawesome/free-solid-svg-icons'
 
+  // --- Customer Association State ---
+  const customerSearchTerm = ref("");
+  const customerSearchResults = ref([]);
+  const selectedCustomer = ref(null);
+  const isSearchingCustomers = ref(false);
+  const isAssociatingCustomer = ref(false);
+
+  // Debounced customer search
+  const debouncedSearchCustomers = _.debounce(async (term) => {
+    if (!term || term.length < 2) {
+      customerSearchResults.value = [];
+      return;
+    }
+    isSearchingCustomers.value = true;
+    try {
+      const res = await axios.get(`/api/customers/search?q=${encodeURIComponent(term)}`);
+      customerSearchResults.value = res.data;
+    } catch (err) {
+      customerSearchResults.value = [];
+    } finally {
+      isSearchingCustomers.value = false;
+    }
+  }, 350);
+
+  watch(customerSearchTerm, (val) => {
+    debouncedSearchCustomers(val);
+  });
+
+  function handleCustomerSelected(customer) {
+    selectedCustomer.value = customer;
+  }
+
+  async function associateVisitorWithCustomer() {
+    if (!selectedVisitorProfile.value?.visitorId || !selectedCustomer.value?.id) return;
+    isAssociatingCustomer.value = true;
+    try {
+      await axios.post(`/api/analytics/visitors/${selectedVisitorProfile.value.visitorId}/associate`, {
+        customerId: selectedCustomer.value.id
+      });
+      toast.success("Visitor associated with customer!");
+      // Refresh visitor details to show new association
+      await fetchVisitorDetails(selectedVisitorProfile.value.visitorId);
+      // Reset search state
+      customerSearchTerm.value = "";
+      customerSearchResults.value = [];
+      selectedCustomer.value = null;
+    } catch (err) {
+      toast.error("Failed to associate visitor with customer.");
+    } finally {
+      isAssociatingCustomer.value = false;
+    }
+  }
 
   // Removed AG Grid imports
   // import { AgGridVue } from "ag-grid-vue3";
@@ -119,6 +171,38 @@
    const totalPages = computed(() => Math.ceil(totalVisitors.value / paginationPageSize.value));
    const startIndex = computed(() => (currentPage.value - 1) * paginationPageSize.value);
    const endIndex = computed(() => Math.min(startIndex.value + paginationPageSize.value, totalVisitors.value));
+
+   // Professional/insightful stats
+   const convertedVisitors = computed(() =>
+     filteredVisitors.value.filter(v => v.customer && v.customer.name).length
+   );
+   const conversionRate = computed(() =>
+     totalVisitors.value > 0 ? ((convertedVisitors.value / totalVisitors.value) * 100).toFixed(1) : "0.0"
+   );
+   const returningVisitors = computed(() =>
+     filteredVisitors.value.filter(v => v.sessions && v.sessions.length > 1).length
+   );
+
+   // Enhance each visitor with computed fields for table display
+   const enhancedVisitors = computed(() =>
+     paginatedVisitors.value.map(v => {
+       const isConverted = !!(v.customer && v.customer.name);
+       const associatedCustomer = isConverted ? v.customer.name : null;
+       const firstSeen = v.createdAt ? dateFormatter(v.createdAt) : "-";
+       const lastCommunication = v.lastCommunication
+         ? dateFormatter(v.lastCommunication)
+         : "-";
+       const isReturning = v.sessions && v.sessions.length > 1;
+       return {
+         ...v,
+         isConverted,
+         associatedCustomer,
+         firstSeen,
+         lastCommunication,
+         isReturning
+       };
+     })
+   );
 
    const paginatedVisitors = computed(() => {
      return filteredVisitors.value.slice(startIndex.value, endIndex.value);
@@ -474,6 +558,26 @@
        </div>
      </header>
 
+     <!-- Summary Bar -->
+     <section class="mb-8 flex flex-wrap gap-4 items-center">
+       <div class="card-modern px-6 py-3 flex flex-col items-center">
+         <span class="text-xs text-gray-500 dark:text-gray-400">Total Visitors</span>
+         <span class="text-xl font-bold text-indigo-600 dark:text-indigo-400">{{ totalVisitors }}</span>
+       </div>
+       <div class="card-modern px-6 py-3 flex flex-col items-center">
+         <span class="text-xs text-gray-500 dark:text-gray-400">Converted</span>
+         <span class="text-xl font-bold text-green-600 dark:text-green-400">{{ convertedVisitors }}</span>
+       </div>
+       <div class="card-modern px-6 py-3 flex flex-col items-center">
+         <span class="text-xs text-gray-500 dark:text-gray-400">Conversion Rate</span>
+         <span class="text-xl font-bold text-blue-600 dark:text-blue-400">{{ conversionRate }}%</span>
+       </div>
+       <div class="card-modern px-6 py-3 flex flex-col items-center">
+         <span class="text-xs text-gray-500 dark:text-gray-400">Returning Visitors</span>
+         <span class="text-xl font-bold text-purple-600 dark:text-purple-400">{{ returningVisitors }}</span>
+       </div>
+     </section>
+
      <!-- Filter Section -->
      <section class="mb-10 p-5 sm:p-6 card-modern">
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-5 gap-y-4 items-end">
@@ -537,25 +641,42 @@
                <thead class="bg-gray-50 dark:bg-gray-900/30">
                   <tr>
                      <th scope="col" class="th-modern">Page URL</th>
+                     <th scope="col" class="th-modern">Converted</th>
+                     <th scope="col" class="th-modern">Customer</th>
                      <th scope="col" class="th-modern">Views</th>
                      <th scope="col" class="th-modern">Clicks</th>
+                     <th scope="col" class="th-modern">First Seen</th>
+                     <th scope="col" class="th-modern">Returning</th>
                      <th scope="col" class="th-modern">Last Visit</th>
                   </tr>
 
                </thead>
                <tbody class="divide-y divide-gray-100 dark:divide-gray-700/50">
-                  <tr v-for="visitor in paginatedVisitors" :key="visitor.id"
+                  <tr v-for="visitor in enhancedVisitors" :key="visitor.id"
                       class="hover:bg-gray-50/50 dark:hover:bg-white/5 transition-colors duration-150 cursor-pointer"
-                      @click="fetchVisitorDetails(visitor.id)"> <!-- Use visitor.id as ID -->
-                     <td class="td-modern text-gray-600 dark:text-gray-400 max-w-xl truncate" :title="visitor.page?.url">
-                       <!-- Keep the link for page URL if needed, or remove if clicking row shows profile -->
-                        <a :href="visitor.page?.url" target="_blank" rel="noopener noreferrer" class="hover:underline hover:text-indigo-600 dark:hover:text-indigo-400" @click.stop>
-                          {{ visitor.page?.url }}
-                        </a>
-                     </td>
-                     <td class="td-modern text-gray-500 dark:text-gray-400 text-center">{{ visitor.views }}</td>
-                     <td class="td-modern text-gray-500 dark:text-gray-400 text-center">{{ visitor.clicks }}</td>
-                     <td class="td-modern text-gray-500 dark:text-gray-400 whitespace-nowrap">{{ dateFormatter(visitor.updatedAt) }}</td>
+                      @click="$router.push({ name: 'VisitorView', params: { visitorId: visitor.id } })"
+                  >
+                    <td class="td-modern text-gray-600 dark:text-gray-400 max-w-xl truncate" :title="visitor.page?.url">
+                      <a :href="visitor.page?.url" target="_blank" rel="noopener noreferrer" class="hover:underline hover:text-indigo-600 dark:hover:text-indigo-400" @click.stop>
+                        {{ visitor.page?.url }}
+                      </a>
+                    </td>
+                    <td class="td-modern text-center">
+                      <span v-if="visitor.isConverted" class="inline-block px-2 py-1 rounded bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 text-xs font-semibold">Yes</span>
+                      <span v-else class="inline-block px-2 py-1 rounded bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400 text-xs">No</span>
+                    </td>
+                    <td class="td-modern text-gray-700 dark:text-gray-200 text-center">
+                      <span v-if="visitor.associatedCustomer">{{ visitor.associatedCustomer }}</span>
+                      <span v-else class="text-xs text-gray-400">-</span>
+                    </td>
+                    <td class="td-modern text-gray-500 dark:text-gray-400 text-center">{{ visitor.views }}</td>
+                    <td class="td-modern text-gray-500 dark:text-gray-400 text-center">{{ visitor.clicks }}</td>
+                    <td class="td-modern text-gray-500 dark:text-gray-400 text-center">{{ visitor.firstSeen }}</td>
+                    <td class="td-modern text-center">
+                      <span v-if="visitor.isReturning" class="inline-block px-2 py-1 rounded bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300 text-xs font-semibold">Yes</span>
+                      <span v-else class="inline-block px-2 py-1 rounded bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400 text-xs">No</span>
+                    </td>
+                    <td class="td-modern text-gray-500 dark:text-gray-400 whitespace-nowrap">{{ dateFormatter(visitor.updatedAt) }}</td>
                   </tr>
                </tbody>
             </table>
@@ -566,16 +687,22 @@
         <div class="md:hidden space-y-4">
            <div v-if="!loading && paginatedVisitors.length > 0" v-for="visitor in paginatedVisitors" :key="visitor.id"
                 class="card-modern p-4 cursor-pointer"
-                @click="fetchVisitorDetails(visitor.id)"> <!-- Use visitor.id as ID -->
-              <a :href="visitor.page?.url" target="_blank" rel="noopener noreferrer" class="block text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:underline truncate mb-2" :title="visitor.page?.url" @click.stop>
-                {{ visitor.page?.url }}
-              </a>
-              <div class="text-xs text-gray-500 dark:text-gray-400 space-y-1">
-                <p>Views: <span class="font-medium text-gray-700 dark:text-gray-300">{{ visitor.views }}</span></p>
-                <p>Clicks: <span class="font-medium text-gray-700 dark:text-gray-300">{{ visitor.clicks }}</span></p>
-                <p>Last Visit: {{ dateFormatter(visitor.updatedAt) }}</p>
-              </div>
-           </div>
+              >
+                <router-link
+                  :to="{ name: 'VisitorView', params: { visitorId: visitor.id } }"
+                  class="block w-full"
+                  style="text-decoration: none; color: inherit;"
+                >
+                  <a :href="visitor.page?.url" target="_blank" rel="noopener noreferrer" class="block text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:underline truncate mb-2" :title="visitor.page?.url" @click.stop>
+                    {{ visitor.page?.url }}
+                  </a>
+                  <div class="text-xs text-gray-500 dark:text-gray-400 space-y-1">
+                    <p>Views: <span class="font-medium text-gray-700 dark:text-gray-300">{{ visitor.views }}</span></p>
+                    <p>Clicks: <span class="font-medium text-gray-700 dark:text-gray-300">{{ visitor.clicks }}</span></p>
+                    <p>Last Visit: {{ dateFormatter(visitor.updatedAt) }}</p>
+                  </div>
+                </router-link>
+            </div>
         </div>
 
         <!-- Pagination -->
@@ -728,6 +855,56 @@
                    </div>
                  </div>
  
+                 <!-- Customer Association Section -->
+                 <div class="mt-6">
+                   <h4 class="text-lg font-semibold mb-3 text-gray-900 dark:text-white">
+                     {{ selectedVisitorProfile.customer ? 'Update Associated Customer' : 'Associate with Customer' }}
+                   </h4>
+                   <div class="mb-3">
+                     <label class="label-modern" for="customer-search">Search Customer</label>
+                     <input
+                       id="customer-search"
+                       v-model="customerSearchTerm"
+                       class="input-modern"
+                       placeholder="Type name, email, or phone..."
+                       autocomplete="off"
+                       :disabled="isAssociatingCustomer"
+                     />
+                     <div v-if="isSearchingCustomers" class="text-xs text-gray-500 mt-1">Searching...</div>
+                     <ul v-if="customerSearchResults.length > 0" class="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded mt-1 max-h-48 overflow-y-auto shadow z-10">
+                       <li
+                         v-for="customer in customerSearchResults"
+                         :key="customer.id"
+                         @click="handleCustomerSelected(customer)"
+                         class="px-3 py-2 cursor-pointer hover:bg-indigo-50 dark:hover:bg-indigo-800"
+                       >
+                         <span class="font-medium">{{ customer.name }}</span>
+                         <span v-if="customer.email" class="ml-2 text-xs text-gray-500">{{ customer.email }}</span>
+                         <span v-if="customer.phone" class="ml-2 text-xs text-gray-400">{{ customer.phone }}</span>
+                         <span v-if="customer.address" class="ml-2 text-xs text-gray-400 italic">{{ customer.address }}</span>
+                       </li>
+                     </ul>
+                     <div v-if="customerSearchTerm && !isSearchingCustomers && customerSearchResults.length === 0" class="text-xs text-gray-400 mt-1">
+                       No customers found.
+                     </div>
+                   </div>
+                   <div v-if="selectedCustomer" class="mb-3 p-2 rounded bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-700 flex items-center justify-between">
+                     <div>
+                       <span class="font-semibold">{{ selectedCustomer.name }}</span>
+                       <span v-if="selectedCustomer.email" class="ml-2 text-xs text-gray-500">{{ selectedCustomer.email }}</span>
+                       <span v-if="selectedCustomer.phone" class="ml-2 text-xs text-gray-400">{{ selectedCustomer.phone }}</span>
+                     </div>
+                     <button class="btn-ghost-modern ml-2" @click="selectedCustomer = null" :disabled="isAssociatingCustomer">Clear</button>
+                   </div>
+                   <button
+                     class="btn-primary-modern"
+                     :disabled="!selectedCustomer || isAssociatingCustomer"
+                     @click="associateVisitorWithCustomer"
+                   >
+                     {{ selectedVisitorProfile.customer ? 'Update Association' : 'Associate Customer' }}
+                   </button>
+                 </div>
+
                  <!-- Customer Details -->
                  <div v-if="selectedVisitorProfile.customer" class="mt-6">
                    <h4 class="text-lg font-semibold mb-3 text-gray-900 dark:text-white">Customer Details</h4>

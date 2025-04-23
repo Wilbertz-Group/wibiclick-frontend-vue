@@ -23,6 +23,7 @@ import AddEstimates from '@/views/Estimates/Add.vue'
 import ViewEstimates from '@/views/Estimates/View.vue'
 import EditEstimates from '@/views/Estimates/Edit.vue'
 import Visitors from '@/views/Visitors/Visitors.vue'
+import VisitorsView from '@/views/Visitors/View.vue'
 import PagesView from '@/views/Visitors/Pages/PagesView.vue'
 import Forms from '@/views/Forms/Forms.vue'
 import Pages from '@/views/Pages/Pages.vue'
@@ -197,6 +198,11 @@ const router = createRouter({
       name: 'visitors',
       component: Visitors,
       meta: {permission: ['owner', 'admin']}
+    },
+    {
+      path: '/visitors/:visitorId',
+      name: 'VisitorView',
+      component: VisitorsView
     },
     {
       path: '/visitors/pages',
