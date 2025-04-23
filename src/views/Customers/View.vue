@@ -246,6 +246,26 @@ function formatFullDate(dateString) {
   }
 }
 
+/**
+ * Formats a date string as "MMM d, yyyy, h:mm a".
+ * @param {string|Date} dateString
+ * @returns {string}
+ */
+function formatAbsoluteDateTime(dateString) {
+  if (!dateString) return '';
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) {
+      return 'Invalid Date';
+    }
+    // Using date-fns format
+    return format(date, 'MMM d, yyyy, h:mm a');
+  } catch (error) {
+    // Removed console.error
+    return 'Invalid Date'; // Return 'Invalid Date' on error
+  }
+}
+
 async function fetchVisitorActivity() {
   isFetchingVisitorActivity.value = true;
   visitorActivityError.value = null;
@@ -1772,14 +1792,10 @@ watchEffect(() => {
           <div class="space-y-8">
             <div v-for="visitor in visitorActivity.visitors" :key="visitor.visitorId" class="border-b border-gray-200 dark:border-gray-700/50 pb-6 last:border-b-0 last:pb-0">
               <!-- Visitor Profile -->
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-gray-700 dark:text-gray-300 mb-2">
-                <div>
-                  <p class="font-medium text-gray-600 dark:text-gray-400">Visitor ID:</p>
-                  <p class="break-all">{{ visitor.visitorId }}</p>
-                </div>
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm text-gray-700 dark:text-gray-300 mb-2">
                 <div>
                   <p class="font-medium text-gray-600 dark:text-gray-400">Last Seen:</p>
-                  <p>{{ formatRelativeTime(visitor.lastSeen) }}</p>
+                  <p>{{ formatAbsoluteDateTime(visitor.lastSeen) }}</p>
                 </div>
                 <div>
                   <p class="font-medium text-gray-600 dark:text-gray-400">Total Views:</p>
@@ -1809,12 +1825,12 @@ watchEffect(() => {
                     <div>
                       <p class="text-xs font-medium text-gray-700 dark:text-gray-300 capitalize">
                         {{ activity.type }}:
-                        <span class="text-gray-500 dark:text-gray-400">
+                        <span class="text-gray-500 dark:text-gray-400 normal-case">
                           {{ activity.button || activity.page }}
                         </span>
                       </p>
                       <p class="text-2xs text-gray-400 dark:text-gray-500">
-                        {{ formatRelativeTime(activity.timestamp) }}
+                        {{ formatAbsoluteDateTime(activity.timestamp) }}
                       </p>
                     </div>
                   </div>
