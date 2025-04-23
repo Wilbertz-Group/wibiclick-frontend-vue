@@ -495,14 +495,6 @@ watch(selectedWebsite, (newValue) => {
                           <box-icon color="white" type='solid' name='user-check'></box-icon>
                           <span class="ml-2">Visitors</span>
                         </router-link>
-                        <router-link :to="{ name: 'pages' }" class="flex items-center text-gray-200 px-3 py-2 rounded-md text-sm font-medium hover:underline">
-                          <box-icon color="white" type='solid' name='book-content'></box-icon>
-                          <span class="ml-2">Site Pages</span>
-                        </router-link>
-                        <router-link :to="{ name: 'visitors-pages' }" class="flex items-center text-gray-200 px-3 py-2 rounded-md text-sm font-medium hover:underline">
-                          <box-icon color="white" type='solid' name='bar-chart-alt-2'></box-icon>
-                          <span class="ml-2">Visitor Analytics</span>
-                        </router-link>
                         <router-link :to="{name: 'forms'}" class="flex items-center text-gray-200 px-3 py-2 rounded-md text-sm font-medium hover:underline">
                           <box-icon color="white" type='solid' name='book'></box-icon>
                           <span class="ml-2">Forms</span>

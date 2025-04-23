@@ -24,9 +24,7 @@ import ViewEstimates from '@/views/Estimates/View.vue'
 import EditEstimates from '@/views/Estimates/Edit.vue'
 import Visitors from '@/views/Visitors/Visitors.vue'
 import VisitorsView from '@/views/Visitors/View.vue'
-import PagesView from '@/views/Visitors/Pages/PagesView.vue'
 import Forms from '@/views/Forms/Forms.vue'
-import Pages from '@/views/Pages/Pages.vue'
 import Feedback from '@/views/Feedback.vue'
 import Billing from '@/views/Billing.vue'
 import Settings from '@/views/Settings.vue'
@@ -203,18 +201,6 @@ const router = createRouter({
       path: '/visitors/:visitorId',
       name: 'VisitorView',
       component: VisitorsView
-    },
-    {
-      path: '/visitors/pages',
-      name: 'visitors-pages',
-      component: PagesView,
-      meta: {permission: ['owner', 'admin']}
-    },
-    {
-      path: '/pages',
-      name: 'pages',
-      component: Pages,
-      meta: {permission: ['owner', 'admin']}
     },
     {
       path: '/forms',
