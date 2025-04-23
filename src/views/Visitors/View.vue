@@ -446,7 +446,9 @@ async function disassociateCustomer() {
               <div v-for="(suggestion, idx) in visitor.possibleContactSuggestions" :key="suggestion.candidate.id + '-' + idx" class="border-l-4 border-yellow-400 dark:border-yellow-600 pl-4 pb-2">
                 <div class="mb-2">
                   <span class="font-medium text-gray-700 dark:text-gray-200">Contact:</span>
-                  <span class="ml-1">{{ suggestion.candidate.name || 'No Name' }}</span>
+                  <a :href="'/contact?customer_id=' + suggestion.candidate.id" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 hover:underline">
+                    <span class="ml-1">{{ suggestion.candidate.name || 'No Name' }}</span>
+                  </a>
                   <span v-if="suggestion.candidate.phone" class="ml-2 text-xs text-gray-500">({{ suggestion.candidate.phone }})</span>
                   <span v-if="suggestion.candidate.email" class="ml-2 text-xs text-gray-500">({{ suggestion.candidate.email }})</span>
                   <span class="ml-2 text-xs text-gray-400">Created: {{ dateFormatter(suggestion.candidate.createdAt) }}</span>
