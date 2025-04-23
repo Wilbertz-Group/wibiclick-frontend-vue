@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted, computed, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import axios from "axios";
 import { useToast } from "vue-toast-notification";
@@ -13,9 +13,15 @@ const userStore = useUserStore();
 
 const visitorId = computed(() => route.params.visitorId || route.query.visitor_id);
 const isLoading = ref(false);
+const isAssociatingCustomer = ref(false);
 const visitor = ref(null);
 const allVisitors = ref([]);
 const currentIndex = ref(-1);
+const selectedCustomer = ref(null);
+
+const customerSearchTerm = ref('');
+const customerSearchResults = ref([]);
+const isSearchingCustomers = ref(false);
 
 async function fetchVisitor() {
   if (!visitorId.value) return;
@@ -153,6 +159,101 @@ function timeAgo(date) {
     }
   }
   return "";
+}
+async function associateContact(contactToAssociate) {
+  if (!contactToAssociate || !contactToAssociate.id) {
+    console.error("Invalid contact provided for association");
+    return;
+  }
+
+  isAssociatingCustomer.value = true;
+
+  try {
+    const url = `/api/analytics/visitors/${visitorId.value}/associate`;
+    const body = { customerId: contactToAssociate.id };
+    const response = await axios.post(url, body);
+    console.log('Association successful:', response.data); // Or show a success toast
+    // toast.success('Association successful!');
+    await fetchVisitor();
+  } catch (error) {
+    console.error('Association failed:', error); // Or show an error toast
+    // toast.error('Association failed.');
+  } finally {
+    isAssociatingCustomer.value = false;
+  }
+}
+
+async function searchCustomers() {
+  if (customerSearchTerm.value.trim() === '') {
+    customerSearchResults.value = [];
+    return;
+  }
+  isSearchingCustomers.value = true;
+  try {
+    const response = await axios.get(`/api/customers/search?q=${customerSearchTerm.value}`);
+    customerSearchResults.value = response.data;
+  } catch (error) {
+    console.error('Customer search failed:', error);
+    customerSearchResults.value = [];
+  } finally {
+    isSearchingCustomers.value = false;
+  }
+}
+
+let searchTimeout = null;
+watch(customerSearchTerm, (newValue) => {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    searchCustomers();
+  }, 300);
+});
+
+function handleCustomerSelected(customer) {
+  selectedCustomer.value = customer;
+  customerSearchTerm.value = '';
+  customerSearchResults.value = [];
+}
+
+async function associateVisitorWithCustomer() {
+  if (!selectedCustomer.value || !selectedCustomer.value.id) {
+    console.error("No customer selected for association");
+    return;
+  }
+
+  isAssociatingCustomer.value = true;
+
+  try {
+    await axios.post(`/api/analytics/visitors/${visitorId.value}/associate`, { customerId: selectedCustomer.value.id });
+    fetchVisitor();
+    toast.success('Customer associated successfully!');
+    selectedCustomer.value = null;
+  } catch (error) {
+    console.error('Association failed:', error);
+    toast.error('Association failed.');
+  } finally {
+    isAssociatingCustomer.value = false;
+  }
+}
+
+async function disassociateCustomer() {
+  if (!confirm('Are you sure you want to disassociate this customer?')) {
+    return;
+  }
+
+  isAssociatingCustomer.value = true;
+
+  try {
+    const url = `/api/analytics/visitors/${visitorId.value}/associate`;
+    await axios.delete(url);
+    console.log('Disassociation successful'); // Or show a success toast
+    // toast.success('Disassociation successful!');
+    await fetchVisitor();
+  } catch (error) {
+    console.error('Disassociation failed:', error); // Or show an error toast
+    // toast.error('Disassociation failed.');
+  } finally {
+    isAssociatingCustomer.value = false;
+  }
 }
 </script>
 
@@ -307,7 +408,16 @@ function timeAgo(date) {
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-gray-700 dark:text-gray-300">
               <div>
                 <p class="font-medium text-gray-600 dark:text-gray-400">Customer Name:</p>
-                <p>{{ visitor.customer.name || '-' }}</p>
+                <p class="flex items-center">
+                  <span>{{ visitor.customer.name || '-' }}</span>
+                  <button
+                    @click="disassociateCustomer"
+                    :disabled="isAssociatingCustomer"
+                    class="bg-red-600 hover:bg-red-700 text-white text-xs font-bold py-1 px-2 rounded ml-3"
+                  >
+                    Disassociate
+                  </button>
+                </p>
               </div>
               <div>
                 <p class="font-medium text-gray-600 dark:text-gray-400">Email:</p>
@@ -360,7 +470,7 @@ function timeAgo(date) {
                 </div>
                 <!-- Placeholder for associate action -->
                 <div class="mt-2">
-                  <button class="btn-primary-modern text-xs" disabled title="Association action not implemented yet">Associate this Contact</button>
+                  <button class="btn-primary-modern text-xs" title="Association action not implemented yet" @click="associateContact(suggestion.candidate)" :disabled="isAssociatingCustomer">Associate this Contact</button>
                 </div>
               </div>
             </div>
@@ -439,7 +549,7 @@ function timeAgo(date) {
             <h2 class="text-lg font-semibold mb-3 text-gray-900 dark:text-white">Recent Communications</h2>
             <div class="space-y-2">
               <div v-for="comm in visitor.communications" :key="comm.id" class="border-l-2 border-purple-300 dark:border-purple-700 pl-4">
-                <p class="text-xs text-gray-600 dark:text-gray-400">
+                <p v-if="comm.summary" class="text-xs text-gray-600 dark:text-gray-400">
                   <span class="font-medium">{{ comm.displayDate }}:</span>
                   <span> {{ comm.summary }}</span>
                 </p>
@@ -456,3 +566,11 @@ function timeAgo(date) {
     </div>
   </div>
 </template>
+
+<style scoped>
+.btn-primary-modern {
+  @apply inline-flex items-center justify-center px-3.5 py-2 text-sm font-semibold text-white bg-indigo-600 dark:bg-indigo-500 rounded-md shadow-sm;
+  @apply hover:bg-indigo-700 dark:hover:bg-indigo-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600;
+  @apply transition-colors duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed;
+}
+</style>
