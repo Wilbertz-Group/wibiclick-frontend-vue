@@ -19,7 +19,6 @@ const currentIndex = ref(-1);
 
 async function fetchVisitor() {
   if (!visitorId.value) return;
-  isLoading.value = true;
   try {
     const res = await axios.get(`/api/analytics/visitors/${visitorId.value}/history`);
     // Flatten the visitor object so the template works as expected
@@ -85,8 +84,13 @@ function goToCustomer() {
 }
 
 onMounted(async () => {
-  await fetchAllVisitors();
-  await fetchVisitor();
+  isLoading.value = true;
+  try {
+    await fetchAllVisitors();
+    await fetchVisitor();
+  } finally {
+    isLoading.value = false;
+  }
 });
 function dateFormatter(date) {
   if (!date) return "-";
