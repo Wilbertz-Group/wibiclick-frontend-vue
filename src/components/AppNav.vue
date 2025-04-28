@@ -454,6 +454,11 @@ watch(selectedWebsite, (newValue) => {
                           <box-icon color="white" type='solid' name='user-detail'></box-icon>
                           <span class="ml-2">Contacts</span>
                         </router-link>
+                        <!-- Adjusted classes -->
+                        <router-link :to="{ name: 'merge-overview' }" class="flex items-center text-gray-200 px-3 py-2 rounded-md text-sm font-medium hover:underline">
+                          <box-icon color="white" type="solid" name="user-check"></box-icon>
+                          <span class="ml-2">Customer Merges</span>
+                        </router-link>
                         <router-link :to="{name: 'employees'}" class="flex items-center text-gray-200 px-3 py-2 rounded-md text-sm font-medium hover:underline">
                           <box-icon color="white" type='solid' name='user'></box-icon>
                           <span class="ml-2">Employees</span>
@@ -932,6 +937,10 @@ watch(selectedWebsite, (newValue) => {
                 <div v-if="dropdownContacts" class="pl-6">
                   <router-link :to="{ name: 'contacts' }" class="block text-white px-3 py-2 rounded-md text-base font-medium">
                     Contacts
+                  </router-link>
+                  <!-- Adjusted classes -->
+                  <router-link :to="{ name: 'merge-overview' }" class="block text-white px-3 py-2 rounded-md text-base font-medium">
+                    Customer Merges
                   </router-link>
                   <router-link :to="{ name: 'employees' }" class="block text-white px-3 py-2 rounded-md text-base font-medium">
                     Employees

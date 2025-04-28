@@ -14,6 +14,7 @@ import AddJobs from '@/views/Jobs/Add.vue'
 import Customers from '@/views/Customers/Customers.vue'
 import CustomerView from '@/views/Customers/View.vue'
 import CustomersAdd from '@/views/Customers/Add.vue'
+import MergeOverview from '@/views/Customers/MergeOverview.vue'
 import Invoices from '@/views/Invoices/Invoices.vue'
 import AddInvoices from '@/views/Invoices/Add.vue'
 import EditInvoices from '@/views/Invoices/Edit.vue'
@@ -57,6 +58,12 @@ const router = createRouter({
       path: '/',
       name: 'home',
       component: Home
+    },
+    {
+      path: '/customers/merge-overview',
+      name: 'merge-overview',
+      component: MergeOverview,
+      meta: { permission: ['owner', 'admin', 'user'] }
     },
     {
       path: '/dashboard',
