@@ -42,6 +42,39 @@
   // const onGridReady = (params) => { ... };
   // const rowData = reactive({});
 
+  // --- Merge Customers State ---
+  const mergeDialogOpen = ref(false);
+  const selectedCustomerIds = ref([]);
+  const targetCustomerId = ref('');
+  const isMerging = ref(false);
+
+  function openMergeDialog() {
+    mergeDialogOpen.value = true;
+    selectedCustomerIds.value = [];
+    targetCustomerId.value = '';
+  }
+
+  async function handleMergeCustomers() {
+    if (!targetCustomerId.value || selectedCustomerIds.value.length < 2) {
+      toast.error('Select a target and at least one customer to merge.');
+      return;
+    }
+    isMerging.value = true;
+    try {
+      await axios.post('/customers/merge', {
+        targetCustomerId: targetCustomerId.value,
+        mergeCustomerIds: selectedCustomerIds.value.filter(id => id !== targetCustomerId.value)
+      });
+      toast.success('Customers merged successfully.');
+      mergeDialogOpen.value = false;
+      fetchContacts();
+    } catch (error) {
+      toast.error('Failed to merge customers: ' + (error.response?.data?.message || error.message));
+    } finally {
+      isMerging.value = false;
+    }
+  }
+
   // Keep dateFormatter, but adapt if needed for new display format
   const dateFormatter = (dateString) => {
     if (!dateString) return '-';
@@ -183,6 +216,9 @@
          <router-link :to="{name: 'add-customer'}" class="btn-primary-modern">
             <font-awesome-icon icon="plus" class="mr-1.5 h-4 w-4" /> Add Customer
          </router-link>
+         <button @click="openMergeDialog" class="btn-secondary-modern text-sm" title="Merge Customers">
+           <font-awesome-icon icon="users" class="mr-1.5 h-4 w-4" /> Merge Customers
+         </button>
        </div>
      </header>
 
@@ -265,6 +301,13 @@
             <table class="min-w-full divide-y divide-gray-100 dark:divide-gray-700/50">
                <thead class="bg-gray-50 dark:bg-gray-900/30">
                   <tr>
+                     <th class="th-modern w-8">
+                       <input type="checkbox"
+                         :checked="paginatedCustomers.every(c => selectedCustomerIds.includes(c.id))"
+                         @change="selectedCustomerIds = $event.target.checked ? paginatedCustomers.map(c => c.id) : []"
+                         title="Select all on page"
+                       />
+                     </th>
                      <th scope="col" class="th-modern">Name</th>
                      <th scope="col" class="th-modern">Phone</th>
                      <th scope="col" class="th-modern">Lead Source / Details</th>
@@ -276,6 +319,13 @@
                </thead>
                <tbody class="divide-y divide-gray-100 dark:divide-gray-700/50">
                   <tr v-for="customer in paginatedCustomers" :key="customer.id" class="hover:bg-gray-50/50 dark:hover:bg-white/5 transition-colors duration-150">
+                     <td class="td-modern">
+                       <input type="checkbox"
+                         :value="customer.id"
+                         v-model="selectedCustomerIds"
+                         title="Select customer"
+                       />
+                     </td>
                      <td class="td-modern">
                         <router-link :to="{ path: '/contact', query: { customer_id: customer.id } }" class="font-medium text-indigo-600 dark:text-indigo-400 hover:underline">
                            {{ customer.name }}
@@ -431,6 +481,39 @@
       </div>
    </transition>
 
+ <!-- Merge Customers Dialog -->
+ <div v-if="mergeDialogOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+   <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 w-full max-w-lg">
+     <h2 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Merge Customers</h2>
+     <p class="text-sm mb-2 text-gray-700 dark:text-gray-300">Select customers to merge and choose the target customer to keep. All data will be merged into the target.</p>
+     <div class="mb-4 max-h-60 overflow-y-auto border rounded p-2 bg-gray-50 dark:bg-gray-900">
+       <label v-for="cust in customers" :key="cust.id" class="flex items-center mb-1">
+         <input
+           type="checkbox"
+           :value="cust.id"
+           v-model="selectedCustomerIds"
+           class="mr-2"
+         />
+         <span :class="{'font-bold': cust.id === targetCustomerId}">{{ cust.name || cust.email || cust.phone || cust.id }}</span>
+       </label>
+     </div>
+     <div class="mb-4">
+       <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Target Customer (the one to keep):</label>
+       <select v-model="targetCustomerId" class="input-modern--select input-modern w-full">
+         <option v-for="id in selectedCustomerIds" :key="id" :value="id">
+           {{ (customers.find(c => c.id === id)?.name || customers.find(c => c.id === id)?.email || customers.find(c => c.id === id)?.phone || id) }}
+         </option>
+       </select>
+     </div>
+     <div class="flex justify-end space-x-2">
+       <button @click="mergeDialogOpen = false" class="btn-secondary-modern">Cancel</button>
+       <button @click="handleMergeCustomers" :disabled="isMerging || !targetCustomerId || selectedCustomerIds.length < 2" class="btn-primary-modern">
+         <span v-if="isMerging">Merging...</span>
+         <span v-else>Merge</span>
+       </button>
+     </div>
+   </div>
+ </div>
  </div> <!-- End main div -->
 </template>
 

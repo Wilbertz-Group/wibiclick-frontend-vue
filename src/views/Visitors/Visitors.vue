@@ -179,8 +179,10 @@
    const conversionRate = computed(() =>
      totalVisitors.value > 0 ? ((convertedVisitors.value / totalVisitors.value) * 100).toFixed(1) : "0.0"
    );
+   // A returning visitor has more than one session recorded.
+   // Assuming the visitor object from the main list fetch has a 'sessionCount' property.
    const returningVisitors = computed(() =>
-     filteredVisitors.value.filter(v => v.sessions && v.sessions.length > 1).length
+     filteredVisitors.value.filter(v => v.sessionCount && v.sessionCount > 1).length
    );
 
    // Enhance each visitor with computed fields for table display
@@ -192,7 +194,8 @@
        const lastCommunication = v.lastCommunication
          ? dateFormatter(v.lastCommunication)
          : "-";
-       const isReturning = v.sessions && v.sessions.length > 1;
+       // Check based on sessionCount property from the main list data
+       const isReturning = v.sessionCount && v.sessionCount > 1;
        return {
          ...v,
          isConverted,
