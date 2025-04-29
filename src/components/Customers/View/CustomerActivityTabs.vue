@@ -66,6 +66,91 @@ const emit = defineEmits([
   'send-greeting-now',
   'fetch-holiday-greetings'
 ]);
+
+// Helper function to format activity status for display
+function formatActivityStatus(status) {
+  if (!status) return '';
+  
+  // Replace camelCase with spaces (e.g., "customerCreated" -> "customer Created")
+  return status
+    .replace(/([A-Z])/g, ' $1') // Add space before capital letters
+    .replace(/^./, str => str.toUpperCase()); // Capitalize first letter
+}
+
+// Helper function to get a readable date from a timestamp
+function getFormattedDate(timestamp) {
+  if (!timestamp) return '';
+  
+  try {
+    const date = new Date(timestamp);
+    return date.toLocaleString();
+  } catch (e) {
+    return timestamp;
+  }
+}
+
+// Helper to extract most relevant data from an activity
+function getActivitySummary(activity) {
+  if (!activity) return null;
+  
+  const summary = {
+    title: '',
+    description: '',
+    timestamp: activity.createdAt || activity.updatedAt,
+    icon: 'info-circle',
+    iconClass: 'text-gray-500'
+  };
+  
+  // Set title and description based on activity type
+  switch (activity.type) {
+    case 'customer':
+      summary.title = 'Customer';
+      summary.description = activity.status || 'Customer activity';
+      summary.icon = 'user';
+      summary.iconClass = 'text-blue-500';
+      break;
+    case 'job':
+      summary.title = 'Job';
+      summary.description = activity.status || 'Job activity';
+      summary.icon = 'briefcase';
+      summary.iconClass = 'text-green-500';
+      break;
+    case 'estimate':
+      summary.title = 'Estimate';
+      summary.description = activity.status || 'Estimate activity';
+      summary.icon = 'file-invoice-dollar';
+      summary.iconClass = 'text-purple-500';
+      break;
+    case 'invoice':
+      summary.title = 'Invoice';
+      summary.description = activity.status || 'Invoice activity';
+      summary.icon = 'receipt';
+      summary.iconClass = 'text-orange-500';
+      break;
+    case 'payment':
+      summary.title = 'Payment';
+      summary.description = activity.status || 'Payment activity';
+      summary.icon = 'money-bill-wave';
+      summary.iconClass = 'text-green-600';
+      break;
+    case 'expense':
+      summary.title = 'Expense';
+      summary.description = activity.status || 'Expense recorded';
+      summary.icon = 'money-bill-wave';
+      summary.iconClass = 'text-red-500';
+      break;
+    default:
+      summary.title = activity.type || 'Activity';
+      summary.description = activity.status || 'System activity';
+  }
+  
+  // Clean up the description text
+  if (summary.description) {
+    summary.description = formatActivityStatus(summary.description);
+  }
+  
+  return summary;
+}
 </script>
 
 <template>
@@ -197,51 +282,125 @@ const emit = defineEmits([
               <!-- Activities list -->
               <p v-if="!customer.activities || customer.activities.length === 0" class="text-center text-gray-500 py-8">No activities recorded yet.</p>
               <template v-else>
-                <!-- Loop through all activities and try to determine type -->
+                <!-- Loop through all activities and render them with appropriate component -->
                 <div v-for="activity in customer.activities" :key="activity.uid" class="activity-item">
-                  <!-- Basic display - ideally, use specific accordion components -->
+                  <!-- Use specific components for messaging activity types -->
                   <component
-                    :is="tab.component"
-                    v-if="activity.type === 'note'"
+                    v-if="activity.type === 'note' && activityTabs.find(t => t.type === 'note')?.component"
+                    :is="activityTabs.find(t => t.type === 'note')?.component"
                     :note="activity"
                     class="mb-3"
                   />
-                  <template v-else-if="activity.type === 'whatsapp'">                              
-                    <component
-                      :is="accordion"
-                      :whatsapp="activity"
-                      class="mb-3"
-                    />
-                  </template>
                   <component
-                    :is="accordionEmail"
-                    v-else-if="activity.type === 'email'"
+                    v-else-if="activity.type === 'whatsapp' && activityTabs.find(t => t.type === 'whatsapp')?.component"
+                    :is="activityTabs.find(t => t.type === 'whatsapp')?.component"
+                    :whatsapp="activity"
+                    class="mb-3"
+                  />
+                  <component
+                    v-else-if="activity.type === 'email' && activityTabs.find(t => t.type === 'email')?.component"
+                    :is="activityTabs.find(t => t.type === 'email')?.component"
                     :email="activity"
                     class="mb-3"
                   />
                   <component
-                    :is="accordionView"
-                    v-else-if="activity.type === 'view'"
+                    v-else-if="activity.type === 'view' && activityTabs.find(t => t.type === 'view')?.component"
+                    :is="activityTabs.find(t => t.type === 'view')?.component"
                     :view="activity"
                     class="mb-3"
                   />
                   <component
-                    :is="accordionClick"
-                    v-else-if="activity.type === 'click'"
+                    v-else-if="activity.type === 'click' && activityTabs.find(t => t.type === 'click')?.component"
+                    :is="activityTabs.find(t => t.type === 'click')?.component"
                     :click="activity"
                     class="mb-3"
                   />
                   <component
-                    :is="accordionForm"
-                    v-else-if="activity.type === 'form'"
+                    v-else-if="activity.type === 'form' && activityTabs.find(t => t.type === 'form')?.component"
+                    :is="activityTabs.find(t => t.type === 'form')?.component"
                     :form="activity"
                     class="mb-3"
                   />
+                  <!-- Generic card for other activity types (job, customer, invoice, etc.) -->
+                  <div 
+                    v-else 
+                    class="mb-3 p-3 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors"
+                  >
+                    <div class="flex items-start">
+                      <!-- Activity Icon -->
+                      <div class="mr-3 mt-0.5 flex-shrink-0">
+                        <font-awesome-icon 
+                          :icon="getActivitySummary(activity)?.icon || 'info-circle'" 
+                          :class="getActivitySummary(activity)?.iconClass || 'text-gray-500'"
+                          size="lg"
+                        />
+                      </div>
+                      
+                      <!-- Activity Content -->
+                      <div class="flex-grow">
+                        <div class="flex justify-between items-start">
+                          <!-- Title and Status -->
+                          <div>
+                            <p class="font-medium text-gray-800 dark:text-gray-200">
+                              {{ getActivitySummary(activity)?.title || 'Activity' }}
+                            </p>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">
+                              {{ getActivitySummary(activity)?.description || 'System activity' }}
+                            </p>
+                          </div>
+                          
+                          <!-- Timestamp -->
+                          <span class="text-xs text-gray-500 dark:text-gray-500 ml-2">
+                            {{ formatRelativeTime(getActivitySummary(activity)?.timestamp) }}
+                          </span>
+                        </div>
+                        
+                        <!-- Entity details - only show if there are relevant entity details -->
+                        <div 
+                          v-if="activity.job || activity.invoice || activity.estimate || activity.payment" 
+                          class="mt-2 text-xs text-gray-600 dark:text-gray-400 border-t border-gray-200 dark:border-gray-700/50 pt-1"
+                        >
+                          <!-- Job details -->
+                          <div v-if="activity.job" class="mt-1">
+                            <p><strong>Job:</strong> {{ activity.job.name || 'Unnamed job' }}</p>
+                            <p v-if="activity.job.issue" class="text-xs text-gray-500 dark:text-gray-500">Issue: {{ activity.job.issue }}</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-500">Status: {{ activity.job.jobStatus }}</p>
+                          </div>
+                          
+                          <!-- Invoice details -->
+                          <div v-if="activity.invoice" class="mt-1">
+                            <p><strong>Invoice #{{ activity.invoice.number }}:</strong> {{ formatCurrency ? formatCurrency(activity.invoice.sales) : 'R' + activity.invoice.sales }}</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-500">
+                              Due: {{ new Date(activity.invoice.dueAt).toLocaleDateString() }}
+                              <span v-if="activity.invoice.paid" class="ml-2 text-green-600 dark:text-green-400">• Paid</span>
+                            </p>
+                          </div>
+                          
+                          <!-- Estimate details -->
+                          <div v-if="activity.estimate" class="mt-1">
+                            <p><strong>Estimate #{{ activity.estimate.number }}:</strong> {{ formatCurrency ? formatCurrency(activity.estimate.sales) : 'R' + activity.estimate.sales }}</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-500">Status: {{ activity.estimate.reason || 'Pending' }}</p>
+                          </div>
+                          
+                          <!-- Payment details -->
+                          <div v-if="activity.payment" class="mt-1">
+                            <p><strong>Payment:</strong> {{ formatCurrency ? formatCurrency(activity.payment.total) : 'R' + activity.payment.total }}</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-500">Method: {{ activity.payment.paymentMethod }}</p>
+                          </div>
+                        </div>
+                        
+                        <!-- User attribution -->
+                        <div v-if="activity.User?.firstName" class="mt-1.5 text-xs text-gray-500 dark:text-gray-500">
+                          Updated by {{ activity.User.firstName }}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </template>
             </div>
 
-            <!-- Render type-specific Activities (Receipts, Notes, Whatsapp, etc.) -->
+            <!-- Render Receipts Tab -->
             <div v-else-if="tab.name === 'Receipts'" class="space-y-4 h-full">
               <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Expense Receipts</h3>
               <div v-if="!customer.expenses || customer.expenses.filter(e => e.imageUrl).length === 0" class="text-center text-gray-500 py-8">
@@ -258,7 +417,7 @@ const emit = defineEmits([
               </div>
             </div>
 
-            <!-- Render Engagement Hub (Skipping detailed implementation for brevity) -->
+            <!-- Render Engagement Hub -->
             <div v-else-if="tab.name === 'Engagement'" class="space-y-6 h-full">
               <CustomerEngagementHub
                 :followupSuggestions="followupSuggestions"

@@ -1,6 +1,6 @@
 <script setup>
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { formatFullDate, formatRelativeTime } from '@/helpers'; // Import from your existing helpers
+import { formatFullDate, formatRelativeTime } from '@/utils/formatters';
 
 const props = defineProps({
   customer: {
