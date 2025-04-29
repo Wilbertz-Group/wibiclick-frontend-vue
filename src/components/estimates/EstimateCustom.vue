@@ -109,12 +109,12 @@ async function deleteEstimate() {
 </script>
 
 <template>
-  <div class="shadow rounded-xl px-3 pt-3 pb-1 border border-white mt-3 cursor-move w-full dark:bg-white">
+  <div class="shadow rounded-xl px-3 pt-3 pb-1 border border-white mt-3 cursor-move w-full">
     <div class="mb-2 p-0">
       <modal :heading="heading" :body="body" :isOpen="isOpen" @close-modal="closeModal"></modal>
       <div class="flex justify-between mb-2">
         <div class="flex flex-col justify-center">
-          <p class="text-lg text-black" ></p>
+          <p class="text-lg text-black dark:text-gray-300" ></p>
         </div>
         <div class="relative">
           <Listbox v-model="selectedStatus">
@@ -178,24 +178,24 @@ async function deleteEstimate() {
         </div>
       </div>
       <div class="flex justify-between">
-        <p class="text-sm font-bold text-black">Estimate Number</p>
-        <p class="text-sm text-black">#{{ estimate.number }}</p>
+        <p class="text-sm font-bold text-black dark:text-gray-300">Estimate Number</p>
+        <p class="text-sm text-black dark:text-gray-300">#{{ estimate.number }}</p>
       </div>
       <div class="flex justify-between">
-        <p class="text-sm font-bold text-black">Technician</p>
-        <p v-if="estimate.employee?.firstName || estimate.employee?.lastName" class="text-sm text-black">{{ (estimate.employee?.firstName || '') + ' ' + (estimate.employee?.lastName || '') }}</p>
+        <p class="text-sm font-bold text-black dark:text-gray-300">Technician</p>
+        <p v-if="estimate.employee?.firstName || estimate.employee?.lastName" class="text-sm text-black dark:text-gray-300">{{ (estimate.employee?.firstName || '') + ' ' + (estimate.employee?.lastName || '') }}</p>
       </div>
       <div class="flex justify-between">
-        <p class="text-sm font-bold text-black">Total:</p> <!-- Added label -->
-        <p class="text-sm text-black">R{{ Number(estimate.sales).toFixed(2) }}</p> <!-- Show sales amount, formatted -->
+        <p class="text-sm font-bold text-black dark:text-gray-300">Total:</p> <!-- Added label -->
+        <p class="text-sm text-black dark:text-gray-300">R{{ Number(estimate.sales).toFixed(2) }}</p> <!-- Show sales amount, formatted -->
       </div>
       <div class="flex justify-between">
-        <p class="text-sm font-bold text-black">Issued:</p> <!-- Changed label -->
-        <p class="text-sm text-black">{{ universalDateFormatter(estimate.issuedAt) }}</p> <!-- Use issuedAt -->
+        <p class="text-sm font-bold text-black dark:text-gray-300">Issued:</p> <!-- Changed label -->
+        <p class="text-sm text-black dark:text-gray-300">{{ universalDateFormatter(estimate.issuedAt) }}</p> <!-- Use issuedAt -->
       </div>
       <div class="flex justify-between"> <!-- Added Due Date -->
-        <p class="text-sm font-bold text-black">Expires:</p>
-        <p class="text-sm text-black">{{ universalDateFormatter(estimate.dueAt) }}</p>
+        <p class="text-sm font-bold text-black dark:text-gray-300">Expires:</p>
+        <p class="text-sm text-black dark:text-gray-300">{{ universalDateFormatter(estimate.dueAt) }}</p>
       </div>
     </div>
     <div class="flex mt-2 mb-1 justify-between items-center">

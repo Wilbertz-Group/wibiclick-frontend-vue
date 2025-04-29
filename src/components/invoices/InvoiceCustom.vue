@@ -108,12 +108,12 @@ async function deleteInvoice() {
 </script>
 
 <template>
-  <div class="shadow rounded-xl px-3 pt-3 pb-1 border border-white mt-3 cursor-move w-full dark:bg-white">
+  <div class="shadow rounded-xl px-3 pt-3 pb-1 border border-white mt-3 cursor-move w-full">
     <div class="mb-2 p-0">
       <modal :heading="heading" :body="body" :isOpen="isOpen" @close-modal="closeModal"></modal>
       <div class="flex justify-between mb-2">
         <div class="flex flex-col justify-center">
-          <p class="text-lg text-black" ></p>
+          <p class="text-lg text-black dark:text-gray-300" ></p>
         </div>
         <div class="relative">
           <Listbox v-model="selectedStatus">
@@ -177,28 +177,28 @@ async function deleteInvoice() {
         </div>
       </div>
       <div class="flex justify-between">
-        <p class="text-sm font-bold text-black">Invoice Number</p>
-        <p class="text-sm text-black">#{{ invoice.number }}</p>
+        <p class="text-sm font-bold text-black dark:text-gray-300">Invoice Number</p>
+        <p class="text-sm text-black dark:text-gray-300">#{{ invoice.number }}</p>
       </div>
       <div class="flex justify-between">
-        <p class="text-sm font-bold text-black">Technician</p>
-        <p v-if="invoice.employee?.firstName || invoice.employee?.lastName" class="text-sm text-black">{{ (invoice.employee?.firstName || '') + ' ' + (invoice.employee?.lastName || '') }}</p>
+        <p class="text-sm font-bold text-black dark:text-gray-300">Technician</p>
+        <p v-if="invoice.employee?.firstName || invoice.employee?.lastName" class="text-sm text-black dark:text-gray-300">{{ (invoice.employee?.firstName || '') + ' ' + (invoice.employee?.lastName || '') }}</p>
       </div>
       <div class="flex justify-between">
-        <p class="text-sm font-bold text-black">Total:</p> <!-- Added label -->
-        <p class="text-sm text-black">R{{ Number(invoice.sales).toFixed(2) }}</p> <!-- Show sales amount, formatted -->
+        <p class="text-sm font-bold text-black dark:text-gray-300">Total:</p> <!-- Added label -->
+        <p class="text-sm text-black dark:text-gray-300">R{{ Number(invoice.sales).toFixed(2) }}</p> <!-- Show sales amount, formatted -->
       </div>
       <div class="flex justify-between"> <!-- Added Balance Due -->
-        <p class="text-sm font-bold text-black">Balance Due:</p>
-        <p class="text-sm text-black">R{{ (Number(invoice.sales) - Number(invoice.deposit || 0)).toFixed(2) }}</p>
+        <p class="text-sm font-bold text-black dark:text-gray-300">Balance Due:</p>
+        <p class="text-sm text-black dark:text-gray-300">R{{ (Number(invoice.sales) - Number(invoice.deposit || 0)).toFixed(2) }}</p>
       </div>
       <div class="flex justify-between">
-        <p class="text-sm font-bold text-black">Issued:</p> <!-- Changed label -->
-        <p class="text-sm text-black">{{ universalDateFormatter(invoice.issuedAt) }}</p> <!-- Use issuedAt -->
+        <p class="text-sm font-bold text-black dark:text-gray-300">Issued:</p> <!-- Changed label -->
+        <p class="text-sm text-black dark:text-gray-300">{{ universalDateFormatter(invoice.issuedAt) }}</p> <!-- Use issuedAt -->
       </div>
       <div class="flex justify-between"> <!-- Added Due Date -->
-        <p class="text-sm font-bold text-black">Due:</p>
-        <p class="text-sm text-black">{{ universalDateFormatter(invoice.dueAt) }}</p>
+        <p class="text-sm font-bold text-black dark:text-gray-300">Due:</p>
+        <p class="text-sm text-black dark:text-gray-300">{{ universalDateFormatter(invoice.dueAt) }}</p>
       </div>
     </div>
     <div class="flex mt-2 mb-1 justify-between items-center">

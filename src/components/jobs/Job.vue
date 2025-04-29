@@ -145,7 +145,7 @@
 			<modal :heading="heading" :body="body" :isOpen="isOpen" @close-modal="closeModal"></modal>
 			<div class="flex justify-between mb-2">
 				<div class="flex flex-col justify-center">
-					<p class="text-lg text-black" ></p>
+					<p class="text-lg text-black dark:text-gray-300" ></p>
 				</div>
 				<div class="relative"> <!-- Status Dropdown -->
 					<Listbox v-model="selectedStatus">
@@ -209,26 +209,26 @@
 				</div>
 			</div>
 			<div class="flex justify-between">
-				<p class="text-sm font-bold text-black">Technician:</p>
-				<p v-if="job.employee?.firstName != undefined || job.employee?.lastName != undefined" class="text-sm text-black">{{ (job.employee?.firstName || '') + ' ' + (job.employee?.lastName || '') }}</p>
+				<p class="text-sm font-bold text-black dark:text-gray-300">Technician:</p>
+				<p v-if="job.employee?.firstName != undefined || job.employee?.lastName != undefined" class="text-sm text-black dark:text-gray-300">{{ (job.employee?.firstName || '') + ' ' + (job.employee?.lastName || '') }}</p>
 			</div>
 			<div class="flex justify-between">
-				<p class="text-sm font-bold text-black">Scheduled Date:</p>
-				<p class="text-sm text-black">{{ universalDateFormatter(job.slotStart).includes(':') ? 'Today' : universalDateFormatter(job.slotStart) }}</p>
+				<p class="text-sm font-bold text-black dark:text-gray-300">Scheduled Date:</p>
+				<p class="text-sm text-black dark:text-gray-300">{{ universalDateFormatter(job.slotStart).includes(':') ? 'Today' : universalDateFormatter(job.slotStart) }}</p>
 			</div>
 			<div class="flex justify-between">
-				<p class="text-sm font-bold text-black">Scheduled Time:</p>
-				<p class="text-sm text-black">{{ universalTimeFormatter(job.slotStart) }}</p>
+				<p class="text-sm font-bold text-black dark:text-gray-300">Scheduled Time:</p>
+				<p class="text-sm text-black dark:text-gray-300">{{ universalTimeFormatter(job.slotStart) }}</p>
 			</div>
 			<div class="">
-				<p class="text-sm font-bold text-black">Issue: </p>
-				<p class="text-xs text-black">{{ job.issue }}</p>
+				<p class="text-sm font-bold text-black dark:text-gray-300">Issue: </p>
+				<p class="text-xs text-black dark:text-gray-300">{{ job.issue }}</p>
 			</div>
 
 				  <!-- Reviews Section -->
 				  <div v-if="job.reviews && job.reviews.length > 0" class="mt-3 pt-2 border-t border-gray-200 dark:border-gray-700">
-				    <p class="text-sm font-bold text-black mb-1">Feedback:</p>
-				    <div v-for="review in job.reviews" :key="review.id" class="text-xs text-black mb-2 last:mb-0">
+				    <p class="text-sm font-bold text-black dark:text-gray-300 mb-1">Feedback:</p>
+				    <div v-for="review in job.reviews" :key="review.id" class="text-xs text-black dark:text-gray-300 mb-2 last:mb-0">
 				      <div class="flex items-center mb-0.5">
 				        <span class="font-medium mr-2">Rating:</span>
 				        <!-- Simple Star Rating Display -->
@@ -245,8 +245,8 @@
 
 				  <!-- Financials Section -->
 				  <div class="mt-3 pt-2 border-t border-gray-200 dark:border-gray-700">
-				    <p class="text-sm font-bold text-black mb-1">Financials:</p>
-				    <div class="grid grid-cols-3 gap-x-2 text-xs text-black">
+				    <p class="text-sm font-bold text-black dark:text-gray-300 mb-1">Financials:</p>
+				    <div class="grid grid-cols-3 gap-x-2 text-xs text-black dark:text-gray-300">
 				      <div class="text-center">
 				        <span class="font-medium block">Payments</span>
 				        <span class="text-green-600 dark:text-green-400">{{ formatCurrency(job.totalPayments) }}</span>
