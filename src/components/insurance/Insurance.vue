@@ -61,7 +61,7 @@
 </script>
 
 <template>
-	<div class="shadow rounded-xl px-3 pt-3 pb-1 mt-3 cursor-move w-full">
+	<div class="shadow rounded-xl px-3 pt-3 pb-1 mt-3 cursor-move w-full dark:bg-[#ffffff]">
 		<div class="mb-2 p-0">
 			<modal :heading="heading" :body="body" :isOpen="isOpen" @close-modal="closeModal"></modal>
 			<div class="flex justify-between mb-2">		

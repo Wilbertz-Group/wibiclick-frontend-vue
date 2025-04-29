@@ -258,6 +258,71 @@ const whatsappModal = (modelValue, id, phone) => {
 	return modal;
 }
 
+const formatFullDate = (dateString) => {
+  if (!dateString) return '';
+  try {
+    return format(new Date(dateString), 'MMMM d, yyyy');
+  } catch (error) {
+    return '';
+  }
+}
+
+// Helper function for relative time formatting
+const formatRelativeTime = (dateString) => {
+	if (!dateString) return '';
+	try {
+		return formatDistanceToNow(new Date(dateString), { addSuffix: true });
+	} catch (error) {
+		return '';
+	}
+}
+
+// Helper to safely parse JSON
+const tryParseJson = (jsonString) => {
+  try {
+    const obj = JSON.parse(jsonString);
+    // Ensure it's an object (and not null) after parsing
+    if (obj && typeof obj === 'object') {
+      return obj;
+    }
+  } catch (e) {
+    // Ignore parsing error, return null
+  }
+  return null; // Return null if not valid JSON or not an object
+};
+
+// Copy to Clipboard Helper
+const copyToClipboard = async (textToCopy, label = 'Text') => {
+  if (!textToCopy) return;
+  try {
+    await navigator.clipboard.writeText(textToCopy);
+    toast.success(`${label} copied to clipboard!`);
+  } catch (err) {
+    // Removed console.error
+    toast.error('Failed to copy to clipboard.');
+  }
+};
+
+/**
+ * Formats a date string as "MMM d, yyyy, h:mm a".
+ * @param {string|Date} dateString
+ * @returns {string}
+ */
+const formatAbsoluteDateTime = (dateString) => {
+  if (!dateString) return '';
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) {
+      return 'Invalid Date';
+    }
+    // Using date-fns format
+    return format(date, 'MMM d, yyyy, h:mm a');
+  } catch (error) {
+    // Removed console.error
+    return 'Invalid Date'; // Return 'Invalid Date' on error
+  }
+}
+
 export { 
 	generateBorder, 
 	generateTableRow, 
@@ -268,5 +333,10 @@ export {
 	tooltips,
 	noteModal,
 	whatsappModal,
-	dateTimestamp
+	dateTimestamp,
+	formatFullDate,
+	formatRelativeTime,
+	tryParseJson,
+	copyToClipboard,
+	formatAbsoluteDateTime
 }

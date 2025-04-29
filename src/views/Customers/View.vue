@@ -4,9 +4,8 @@ import { uuid } from 'vue-uuid';
 import { onMounted, ref, computed, watchEffect, nextTick } from "vue"; // Added nextTick
 import { useToast } from 'vue-toast-notification';
 import { useRouter, useRoute } from "vue-router";
-// import { formatDistanceToNow } from 'date-fns'; // Removed duplicate import - used within formatRelativeTime helper
 import { useUserStore } from "@/stores/UserStore"
-import { tooltips, noteModal, whatsappModal } from '../../helpers';
+import { tooltips, noteModal, whatsappModal, formatRelativeTime, tryParseJson, copyToClipboard, formatAbsoluteDateTime } from '../../helpers';
 import JobVue from '@/components/jobs/Job.vue' // Keep for related items
 import TipTapEditor from '@/components/editor/TipTapEditor.vue';
 import ItemVue from '@/components/line-items/item.vue' // Keep for related items
@@ -15,8 +14,6 @@ import InsuranceCustomVue from '@/components/insurance/InsuranceCustom.vue' // C
 import InvoiceCustomVue from '@/components/invoices/InvoiceCustom.vue' // Custom component for modal-based interaction
 import PaymentCustomVue from '@/components/payments/PaymentCustom.vue' // Custom component for modal-based interaction
 import ExpenseCustomVue from '@/components/expenses/ExpenseCustom.vue' // Custom component for modal-based interaction
-// Accordions might be used for related items in the new design
-// import accordionPayment from '@/components/payments/PaymentAccordion.vue' // No longer needed directly here
 import accordionJob from '@/components/jobs/accordion.vue'
 import accordionCustomer from '@/components/Customers/accordion.vue'
 import accordionView from '@/components/analytics/accordionView.vue'
@@ -31,7 +28,6 @@ import accordionEstimate from '@/components/estimates/accordion.vue'
 import accordionInsurance from '@/components/insurance/accordion.vue'
 import ScaleLoader from "vue-spinner/src/ScaleLoader.vue";
 import { TabGroup, TabList, Tab, TabPanels, TabPanel, Disclosure, DisclosureButton, DisclosurePanel } from '@headlessui/vue' // Added Disclosure
-// Removed CustomerCard, CustomerInfoForm, CustomerActivityTabs imports as they will be integrated directly or refactored
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { library } from '@fortawesome/fontawesome-svg-core'
 import {
@@ -53,6 +49,13 @@ import ScheduleModal from '@/components/misc/ScheduleModal.vue'; // Import Sched
 import ManualLogModal from '@/components/misc/ManualLogModal.vue'; // Import Manual Log Modal
 import TaskFormModal from '@/components/misc/TaskFormModal.vue'; // Import Task Form Modal
 import { formatDistanceToNow, format } from 'date-fns'; // Import date-fns functions
+import CustomerHeader from '@/components/Customers/View/CustomerHeader.vue'
+import CustomerValueSnapshot from '@/components/Customers/View/CustomerValueSnapshot.vue';
+import CustomerDetailsCard from '@/components/Customers/View/CustomerDetailsCard.vue';
+import CustomerCommunicationPrefs from '@/components/Customers/View/CustomerCommunicationPrefs.vue';
+import CustomerAppliances from '@/components/Customers/View/CustomerAppliances.vue'; 
+import CustomerRelatedRecords from '@/components/Customers/View/CustomerRelatedRecords.vue';
+import CustomerActivityTabs from '@/components/Customers/View/CustomerActivityTabs.vue';
 
 library.add(
   faArrowLeft, faEdit, faStickyNote, faPaperPlane, faPlus, faChevronDown, faChevronUp, faExternalLinkAlt, faPhone, faEnvelope, faMapMarkerAlt, faUser, faUsers, faUserCog, faBuilding, faLink, faInfoCircle, faBriefcase, faFileInvoiceDollar, faReceipt, faMoneyBillWave, faShieldAlt, faListOl, faWhatsapp, faSync, faStar, farStar, faComments, faClock, farClock, faSignal, faLanguage, faExclamationTriangle, faMagic, faCopy // Added faCopy
@@ -191,80 +194,6 @@ const activityTabs = computed(() => [
   { name: 'Forms', component: accordionForm, type: 'form' },
   { name: 'Receipts', component: null, type: 'receipts' }, // Added Receipts tab
 ]);
-
-// --- Methods ---
-
-// Helper to safely parse JSON
-const tryParseJson = (jsonString) => {
-  try {
-    const obj = JSON.parse(jsonString);
-    // Ensure it's an object (and not null) after parsing
-    if (obj && typeof obj === 'object') {
-      return obj;
-    }
-  } catch (e) {
-    // Ignore parsing error, return null
-  }
-  return null; // Return null if not valid JSON or not an object
-};
-
-// Copy to Clipboard Helper
-const copyToClipboard = async (textToCopy, label = 'Text') => {
-  if (!textToCopy) return;
-  try {
-    await navigator.clipboard.writeText(textToCopy);
-    toast.success(`${label} copied to clipboard!`);
-  } catch (err) {
-    // Removed console.error
-    toast.error('Failed to copy to clipboard.');
-  }
-};
-
-// Helper function for relative time formatting
-function formatRelativeTime(dateString) {
-  if (!dateString) return '';
-  try {
-    return formatDistanceToNow(new Date(dateString), { addSuffix: true });
-  } catch (error) {
-    // Removed console.error
-    return ''; // Return empty string on error
-  }
-}
-
-
-/**
- * Formats a date string as "January 1, 2023".
- * @param {string|Date} dateString
- * @returns {string}
- */
-function formatFullDate(dateString) {
-  if (!dateString) return '';
-  try {
-    return format(new Date(dateString), 'MMMM d, yyyy');
-  } catch (error) {
-    return '';
-  }
-}
-
-/**
- * Formats a date string as "MMM d, yyyy, h:mm a".
- * @param {string|Date} dateString
- * @returns {string}
- */
-function formatAbsoluteDateTime(dateString) {
-  if (!dateString) return '';
-  try {
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) {
-      return 'Invalid Date';
-    }
-    // Using date-fns format
-    return format(date, 'MMM d, yyyy, h:mm a');
-  } catch (error) {
-    // Removed console.error
-    return 'Invalid Date'; // Return 'Invalid Date' on error
-  }
-}
 
 async function fetchVisitorActivity() {
   isFetchingVisitorActivity.value = true;
@@ -1431,46 +1360,15 @@ watchEffect(() => {
     <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-12">
 
       <!-- Header Section -->
-      <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 md:mb-12 space-y-4 sm:space-y-0">
-        <div class="flex items-center space-x-3">
-          <button @click="handleNavigateBack" class="btn-icon-modern" title="Go Back">
-            <font-awesome-icon icon="arrow-left" />
-          </button>
-          <div>
-            <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900 dark:text-white flex items-center">
-              {{ customer.name || 'Loading Customer...' }}              
-                <a v-if="customer.portal && customer.foreignID" :href="'https://app.hubspot.com/contacts/'+customer.portal+'/contact/'+customer.foreignID" target="_blank" class="ml-2 text-gray-400 hover:text-indigo-500 dark:hover:text-indigo-400" title="View on HubSpot">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10 cursor-pointer rounded-full shadow bg-[#ff7a59] hover:bg-[#ff7a59] p-2 text-white" x="0px" y="0px"
-                            width="64" height="64"
-                            viewBox="0,0,256,256">
-                            <g fill="none" fill-rule="nonzero" stroke="none" stroke-width="1" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="10" stroke-dasharray="" stroke-dashoffset="0" font-family="none" font-weight="none" font-size="none" text-anchor="none" style="mix-blend-mode: normal"><path d="M0,256v-256h256v256z" id="bgRectangle"></path></g><g fill="#fffefe" fill-rule="nonzero" stroke="none" stroke-width="1" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="10" stroke-dasharray="" stroke-dashoffset="0" font-family="none" font-weight="none" font-size="none" text-anchor="none" style="mix-blend-mode: normal"><g transform="scale(8,8)"><path d="M7.5,4c-1.38071,0 -2.5,1.11929 -2.5,2.5c0,1.38071 1.11929,2.5 2.5,2.5c0.47179,-0.00127 0.93359,-0.13602 1.33203,-0.38867l7.48633,5.64062c-0.82356,1.02723 -1.31836,2.32885 -1.31836,3.74805c0,1.55169 0.59408,2.96031 1.56055,4.02539l-3.04492,3.04492c-0.16808,-0.04579 -0.34142,-0.06943 -0.51562,-0.07031c-1.10457,0 -2,0.89543 -2,2c0,1.10457 0.89543,2 2,2c0.62094,-0.00084 1.20627,-0.29004 1.58419,-0.78272c0.37793,-0.49268 0.50558,-1.13296 0.34549,-1.7329l3.20898,-3.20898c0.00049,0.00027 0.00146,-0.00027 0.00195,0c0.85016,0.4618 1.82375,0.72461 2.85938,0.72461c3.314,0 6,-2.686 6,-6c0,-2.9724 -2.16333,-5.43311 -5,-5.91016v-3.35938c0.78227,-0.45329 1.16316,-1.37503 0.92906,-2.24831c-0.2341,-0.87329 -1.02495,-1.48092 -1.92906,-1.48216c-0.90412,0.00123 -1.69497,0.60887 -1.92906,1.48216c-0.2341,0.87329 0.14679,1.79502 0.92906,2.24831v3.35938c-0.77851,0.13092 -1.50439,0.41247 -2.15039,0.8125l-7.89258,-5.94727c0.13516,-0.73009 -0.06121,-1.48249 -0.53591,-2.05341c-0.4747,-0.57093 -1.17862,-0.90131 -1.92112,-0.90166zM21,15c1.654,0 3,1.346 3,3c0,1.654 -1.346,3 -3,3c-1.654,0 -3,-1.346 -3,-3c0,-1.654 1.346,-3 3,-3z"></path></g></g>
-                          </svg>
-                </a>
-            </h1>
-            <p v-if="customer.createdAt" class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              Customer since {{ formatFullDate(customer.createdAt) }}
-              <span v-if="customer.createdAt" class="ml-1 text-gray-400 dark:text-gray-500">
-                ({{ formatRelativeTime(customer.createdAt) }})
-              </span>
-            </p>
-          </div>
-        </div>
-        <div class="flex items-center space-x-2 sm:space-x-3 flex-shrink-0">
-           <button @click="reloadTimeline" class="btn-icon-modern" title="Refresh Data" aria-label="Refresh customer data">
-             <font-awesome-icon icon="sync" :class="{ 'fa-spin': isFetchingCustomer }" />
-           </button>
-          <button @click="handleOpenNoteModal" data-modal-toggle="noteModal" type="button" class="btn-secondary-modern" title="Add Note"> <!-- Added data-modal-toggle -->
-            <font-awesome-icon icon="sticky-note" class="mr-1.5 h-4 w-4" /> Note
-          </button>
-          <button @click="handleOpenWhatsappModal" data-modal-toggle="whatsappModal" type="button" class="btn-secondary-modern" title="Send WhatsApp"> <!-- Added data-modal-toggle -->
-            <font-awesome-icon :icon="['fab', 'whatsapp']" class="mr-1.5 h-4 w-4" /> WhatsApp
-          </button>
-          <!-- Add Job Button (Example using primary style) -->
-          <button @click="openAddJobModal" class="btn-primary-modern" title="Add New Job"> 
-            <font-awesome-icon icon="plus" class="mr-1.5 h-4 w-4" /> Add Job
-          </button>
-        </div>
-      </header>
+      <CustomerHeader
+        :customer="customer"
+        :isLoading="isFetchingCustomer"
+        @navigate-back="handleNavigateBack"
+        @open-note-modal="handleOpenNoteModal"
+        @open-whatsapp-modal="handleOpenWhatsappModal"
+        @open-add-job-modal="openAddJobModal"
+        @reload-data="reloadTimeline"
+      />
 
       <!-- Main Content Grid -->
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
@@ -1478,310 +1376,60 @@ watchEffect(() => {
         <!-- Left Column: Customer Info & Related Items -->
         <div class="lg:col-span-4 space-y-6 lg:space-y-8">
 
-
-          <!-- Customer Visitor Details (moved from Enhanced Visitor Activity Card) -->
-
           <!-- Client Value Snapshot Card -->
-          <section class="card-modern p-5 sm:p-6">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Client Value Snapshot</h2>
-            <div class="grid grid-cols-3 gap-4 text-center">
-              <div>
-                <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Total Revenue</p>
-                <p class="text-xl font-semibold text-green-600 dark:text-green-400 mt-1">{{ formatCurrency(customerFinancials.totalRevenue) }}</p>
-              </div>
-              <div>
-                <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Total Costs</p>
-                <p class="text-xl font-semibold text-red-600 dark:text-red-400 mt-1">{{ formatCurrency(customerFinancials.totalCosts) }}</p>
-              </div>
-              <div>
-                <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Net Profit</p>
-                <p class="text-xl font-semibold mt-1" :class="getProfitClass(customerFinancials.netProfit)">{{ formatCurrency(customerFinancials.netProfit) }}</p>
-              </div>
-            </div>
-            <!-- LLM Profitability Analysis -->
-            <div class="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700/50">
-               <div class="flex justify-between items-center mb-2">
-                 <h4 class="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">AI Analysis</h4>
-                 <div class="flex items-center space-x-2">
-                    <span v-if="latestProfitabilityAnalysis?.generatedAt" class="text-xs text-gray-400 dark:text-gray-500 italic">
-                        {{ formatRelativeTime(latestProfitabilityAnalysis.generatedAt) }}
-                    </span>
-                    <button @click="fetchProfitabilityAnalysis" class="btn-ghost-modern text-xs p-1" :disabled="isFetchingProfitabilityAnalysis" aria-label="Refresh AI profitability analysis">
-                        <font-awesome-icon icon="sync" :class="{ 'fa-spin': isFetchingProfitabilityAnalysis }" />
-                    </button>
-                 </div>
-               </div>
-               <div v-if="isFetchingProfitabilityAnalysis" class="text-center py-2">
-                 <p class="text-xs text-gray-500 dark:text-gray-400">Generating analysis...</p>
-               </div>
-               <div v-else-if="profitabilityAnalysisError" class="text-xs text-red-600 dark:text-red-400">
-                 Error: {{ profitabilityAnalysisError }}
-               </div>
-               <!-- Display latest analysis using v-html -->
-               <div v-else-if="latestProfitabilityAnalysis?.content" v-html="latestProfitabilityAnalysis.content" class="text-sm text-gray-700 dark:text-gray-300 space-y-2"></div>
-               <!-- Empty state -->
-               <div v-else class="text-xs text-gray-500 dark:text-gray-400 italic">
-                 No analysis available. Click refresh to generate.
-               </div>
-            </div>
-          </section>
+          <CustomerValueSnapshot 
+            :customerFinancials="customerFinancials"
+            :latestProfitabilityAnalysis="latestProfitabilityAnalysis"
+            :isFetchingProfitabilityAnalysis="isFetchingProfitabilityAnalysis"
+            :profitabilityAnalysisError="profitabilityAnalysisError"
+            @fetch-profitability-analysis="fetchProfitabilityAnalysis"
+          />
 
           <!-- Customer Information Card -->
-          <section class="card-modern p-5 sm:p-6">
-            <div class="flex justify-between items-center mb-4">
-              <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Customer Details</h2>
-              <button v-if="!isEditingInfo" @click="handleEditInfo" class="btn-ghost-modern text-xs" aria-label="Edit customer details">
-                <font-awesome-icon icon="edit" class="mr-1" /> Edit
-              </button>
-            </div>
-
-            <!-- Display Mode -->
-            <div v-if="!isEditingInfo" class="space-y-3 text-sm">
-              <div v-if="customer.phone" class="flex items-center group"> <!-- Added group for hover effect -->
-                <font-awesome-icon icon="phone" class="w-4 h-4 mr-2.5 text-gray-400" />
-                <a :href="'tel:'+customer.phone" class="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400">{{ customer.phone }}</a>
-                <button @click="copyToClipboard(customer.phone, 'Phone number')" class="ml-2 text-gray-400 hover:text-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity duration-150" title="Copy phone number">
-                  <font-awesome-icon icon="copy" class="w-3 h-3" />
-                </button>
-              </div>
-              <div v-if="customer.email" class="flex items-center group"> <!-- Added group for hover effect -->
-                <font-awesome-icon icon="envelope" class="w-4 h-4 mr-2.5 text-gray-400" />
-                <a :href="'mailto:'+customer.email" class="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400">{{ customer.email }}</a>
-                <button @click="copyToClipboard(customer.email, 'Email address')" class="ml-2 text-gray-400 hover:text-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity duration-150" title="Copy email address">
-                  <font-awesome-icon icon="copy" class="w-3 h-3" />
-                </button>
-              </div>
-              <div v-if="customer.address" class="flex items-start">
-                <font-awesome-icon icon="map-marker-alt" class="w-4 h-4 mr-2.5 text-gray-400 mt-0.5 flex-shrink-0" />
-                <span class="text-gray-700 dark:text-gray-300">{{ customer.address }}</span>
-              </div>
-              <div v-if="customer.channel" class="flex items-center">
-                 <font-awesome-icon icon="info-circle" class="w-4 h-4 mr-2.5 text-gray-400" />
-                 <span class="text-gray-700 dark:text-gray-300">Channel: {{ customer.channel }}</span>
-              </div>
-               <div v-if="customer.message" class="flex items-start">
-                 <font-awesome-icon icon="info-circle" class="w-4 h-4 mr-2.5 text-gray-400 mt-0.5 flex-shrink-0" />
-                 <span class="text-gray-700 dark:text-gray-300">Details: {{ customer.message }}</span>
-               </div>
-              <div v-if="customer.portal" class="flex items-center">
-                 <font-awesome-icon icon="building" class="w-4 h-4 mr-2.5 text-gray-400" />
-                 <span class="text-gray-700 dark:text-gray-300">Portal: {{ customer.portal }}</span>
-              </div>
-              <div v-if="customer.foreignID" class="flex items-center">
-                 <font-awesome-icon icon="link" class="w-4 h-4 mr-2.5 text-gray-400" />
-                 <span class="text-gray-700 dark:text-gray-300">Foreign ID: {{ customer.foreignID }}</span>
-              </div>
-              <!-- Referral Info -->
-              <div v-if="customer.referredBy" class="flex items-center">
-                <font-awesome-icon icon="user" class="w-4 h-4 mr-2.5 text-gray-400" /> <!-- Placeholder icon -->
-                <span class="text-gray-700 dark:text-gray-300">
-                  Referred By:
-                  <!-- TODO: Add link to referrer customer view if possible -->
-                  <span class="font-medium ml-1">{{ customer.referredBy.name || 'N/A' }}</span>
-                </span>
-              </div>
-              <div v-if="customer.referrals && customer.referrals.length > 0" class="flex items-start">
-                <font-awesome-icon icon="users" class="w-4 h-4 mr-2.5 text-gray-400 mt-0.5 flex-shrink-0" /> <!-- Placeholder icon -->
-                <span class="text-gray-700 dark:text-gray-300">
-                  Referred Clients:
-                  <ul class="list-disc list-inside ml-1 mt-1">
-                    <li v-for="referral in customer.referrals" :key="referral.id">
-                      <!-- TODO: Add link to referred customer view if possible -->
-                      {{ referral.name || 'N/A' }}
-                    </li>
-                  </ul>
-                </span>
-              </div>
-              <!-- Preferred Technician -->
-              <div class="flex items-center">
-                <font-awesome-icon icon="user-cog" class="w-4 h-4 mr-2.5 text-gray-400" /> <!-- Placeholder icon -->
-                <span class="text-gray-700 dark:text-gray-300">
-                  Preferred Technician:
-                  <span class="font-medium ml-1">{{ customer.preferredTechnician?.name || 'None' }}</span>
-                  <!-- TODO: Add Edit button/modal trigger here -->
-                  <button @click="openEditPreferredTechnicianModal" class="btn-ghost-modern text-xs ml-2 p-0.5" aria-label="Edit preferred technician">
-                    <font-awesome-icon icon="edit" />
-                  </button>
-                </span>
-              </div>
-            </div>
-
-            <!-- Edit Mode Form -->
-            <form v-else @submit.prevent="updateCustomer" class="space-y-4">
-              <div>
-                <label for="edit-name" class="label-modern">Name</label>
-                <input type="text" id="edit-name" v-model="editableCustomer.name" required class="input-modern" />
-              </div>
-              <div>
-                <label for="edit-phone" class="label-modern">Phone</label>
-                <input type="tel" id="edit-phone" v-model="editableCustomer.phone" class="input-modern" />
-              </div>
-              <div>
-                <label for="edit-email" class="label-modern">Email</label>
-                <input type="email" id="edit-email" v-model="editableCustomer.email" class="input-modern" />
-              </div>
-              <div>
-                <label for="edit-address" class="label-modern">Address</label>
-                <textarea id="edit-address" v-model="editableCustomer.address" rows="2" class="input-modern"></textarea>
-              </div>
-               <div>
-                 <label for="edit-channel" class="label-modern">Channel</label>
-                 <input type="text" id="edit-channel" v-model="editableCustomer.channel" class="input-modern" />
-               </div>
-               <div>
-                 <label for="edit-message" class="label-modern">Lead Source / Details</label>
-                 <textarea id="edit-message" v-model="editableCustomer.message" rows="2" class="input-modern"></textarea>
-               </div>
-               <div>
-                 <label for="edit-portal" class="label-modern">Portal</label>
-                 <input type="text" id="edit-portal" v-model="editableCustomer.portal" class="input-modern" />
-               </div>
-               <div>
-                 <label for="edit-foreignID" class="label-modern">Foreign ID</label>
-                 <input type="text" id="edit-foreignID" v-model="editableCustomer.foreignID" class="input-modern" />
-               </div>
-              <div class="flex justify-end space-x-3 pt-2">
-                <button type="button" @click="handleCancelEdit" class="btn-secondary-modern">Cancel</button>
-                <button type="submit" class="btn-primary-modern" :disabled="isUpdatingCustomer">
-                  {{ isUpdatingCustomer ? 'Saving...' : 'Save Changes' }}
-                </button>
-              </div>
-            </form>
-          </section>
+          <CustomerDetailsCard
+            :customer="customer"
+            :editableCustomer="editableCustomer"
+            :isEditing="isEditingInfo"
+            :isUpdating="isUpdatingCustomer"
+            @edit-info="handleEditInfo"
+            @cancel-edit="handleCancelEdit"
+            @update-customer="updateCustomer"
+            @copy-to-clipboard="copyToClipboard"
+            @edit-preferred-technician="openEditPreferredTechnicianModal"
+          />         
 
           <!-- Communication Preferences Card -->
-          <section class="card-modern p-5 sm:p-6">
-            <div class="flex justify-between items-center mb-4">
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Communication Preferences</h3>
-              <!-- TODO: Add Edit button/modal trigger here -->
-              <button @click="openEditCommPrefsModal" class="btn-ghost-modern text-xs" aria-label="Edit communication preferences">
-                <font-awesome-icon icon="edit" class="mr-1" /> Edit
-              </button>
-            </div>
-            <div class="space-y-3 text-sm">
-              <div class="flex items-center">
-                <font-awesome-icon icon="comments" class="w-4 h-4 mr-2.5 text-gray-400" /> <!-- Placeholder icon -->
-                <span class="text-gray-700 dark:text-gray-300">
-                  Method: <span class="font-medium ml-1">{{ customer.preferredContactMethod || 'Any' }}</span>
-                </span>
-              </div>
-              <div class="flex items-center">
-                <font-awesome-icon :icon="['far', 'clock']" class="w-4 h-4 mr-2.5 text-gray-400" /> <!-- Use regular clock icon -->
-                <span class="text-gray-700 dark:text-gray-300">
-                  Times: <span class="font-medium ml-1">{{ customer.preferredContactTimes || 'Any' }}</span>
-                </span>
-              </div>
-              <div class="flex items-center">
-                <font-awesome-icon icon="signal" class="w-4 h-4 mr-2.5 text-gray-400" /> <!-- Placeholder icon -->
-                <span class="text-gray-700 dark:text-gray-300">
-                  Frequency: <span class="font-medium ml-1">{{ customer.communicationFrequencyPreference || 'Moderate' }}</span>
-                </span>
-              </div>
-              <div class="flex items-center">
-                <font-awesome-icon icon="language" class="w-4 h-4 mr-2.5 text-gray-400" /> <!-- Placeholder icon -->
-                <span class="text-gray-700 dark:text-gray-300">
-                  Language: <span class="font-medium ml-1">{{ customer.languagePreference || 'en' }}</span>
-                </span>
-              </div>
-            </div>
-          </section>
+          <CustomerCommunicationPrefs 
+            :customer="customer"
+            @edit-comm-prefs="openEditCommPrefsModal"
+          />
 
-          <!-- Client Appliances Section -->
-          <section class="card-modern p-5 sm:p-6">
-            <div class="flex justify-between items-center mb-4 gap-2"> <!-- Added gap -->
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Client Appliances</h3>
-              <div class="flex items-center gap-2"> <!-- Wrapper for buttons -->
-                <button @click="detectAppliancesAI" class="btn-secondary-modern text-sm" :disabled="isDetectingAppliances" aria-label="Detect appliances using AI">
-                  <font-awesome-icon icon="magic" :class="{'fa-spin': isDetectingAppliances}" class="mr-1.5 h-3 w-3" /> Detect (AI)
-                </button>
-                <button @click="openAddApplianceModal()" class="btn-primary-modern text-sm" aria-label="Add new appliance for this client">
-                  <font-awesome-icon icon="plus" class="mr-1.5 h-3 w-3" /> Add Appliance
-                </button>
-              </div>
-            </div>
-            <!-- Loading State for Predictive Maintenance -->
-            <div v-if="isFetchingPredMaint" class="text-center py-4">
-              <Spinner />
-              <p class="text-sm text-gray-500 mt-2">Checking predictive maintenance...</p>
-            </div>
-            <!-- Error State for Predictive Maintenance -->
-            <div v-else-if="predMaintError" class="text-center py-4 text-red-600 dark:text-red-400">
-              <p>Error checking maintenance: {{ predMaintError }}</p>
-              <button @click="fetchPredictiveMaintenance" class="btn-secondary-modern mt-2">Retry</button>
-            </div>
-            <!-- Appliance List (only show if not loading/erroring on maint check) -->
-            <div v-else-if="customer.appliances && customer.appliances.length > 0" class="space-y-3 max-h-60 overflow-y-auto pr-1">
-              <ApplianceCard
-                v-for="appliance in customer.appliances"
-                :key="appliance.id"
-                :appliance="appliance"
-                :alert="predictiveMaintenanceAlerts.find(a => a.applianceId === appliance.id)?.alert"
-                @edit="openEditApplianceModal(appliance)"
-                @delete="handleDeleteAppliance(appliance.id)"
-                @schedule-service="handleScheduleServiceFromAlert"
-                @dismiss-alert="handleDismissAlert"
-              />
-            </div>
-            <div v-else class="text-center text-gray-500 dark:text-gray-400 py-4">
-              No appliances recorded for this client yet.
-            </div>
-          </section>
+          <CustomerAppliances 
+            :customer="customer"
+            :predictiveMaintenanceAlerts="predictiveMaintenanceAlerts"
+            :isFetchingPredMaint="isFetchingPredMaint"
+            :predMaintError="predMaintError"
+            :isDetectingAppliances="isDetectingAppliances"
+            @detect-appliances="detectAppliancesAI"
+            @open-add-appliance-modal="openAddApplianceModal"
+            @edit-appliance="openEditApplianceModal"
+            @delete-appliance="handleDeleteAppliance"
+            @schedule-service="handleScheduleServiceFromAlert"
+            @dismiss-alert="handleDismissAlert"
+            @fetch-predictive-maintenance="fetchPredictiveMaintenance"
+          />
 
-          <!-- Related Items Accordion -->
-          <section class="space-y-3">
-             <h2 class="text-lg font-semibold text-gray-900 dark:text-white px-1">Related Records</h2>
-             <Disclosure v-for="itemGroup in relatedItems" :key="itemGroup.name" v-slot="{ open }">
-               <div class="card-modern p-0 overflow-hidden">
-                 <DisclosureButton class="flex w-full justify-between items-center px-4 py-3 text-left text-sm font-medium text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700/50 focus:outline-none focus-visible:ring focus-visible:ring-indigo-500 focus-visible:ring-opacity-75 transition-colors">
-                   <div class="flex items-center">
-                     <font-awesome-icon :icon="itemGroup.icon" class="w-4 h-4 mr-2 text-indigo-500 dark:text-indigo-400" />
-                     <span>{{ itemGroup.name }}</span>
-                     <span class="ml-2 text-xs text-gray-500 dark:text-gray-400">({{ itemGroup.data?.length || 0 }})</span>
-                   </div>
-                   <div class="flex items-center space-x-2">
-                      <button v-if="itemGroup.addRoute" @click.stop="handleAddRelatedItem(itemGroup.addRoute, itemGroup.queryKey)" class="btn-ghost-modern p-1 h-6 w-6" :title="'Add ' + itemGroup.name">
-                         <font-awesome-icon icon="plus" class="h-3 w-3" />
-                      </button>
-                      <font-awesome-icon :icon="open ? 'chevron-up' : 'chevron-down'" class="h-4 w-4 text-gray-500 dark:text-gray-400" />
-                   </div>
-                 </DisclosureButton>
-                 <transition
-                    enter-active-class="transition duration-100 ease-out"
-                    enter-from-class="transform scale-95 opacity-0"
-                    enter-to-class="transform scale-100 opacity-100"
-                    leave-active-class="transition duration-75 ease-out"
-                    leave-from-class="transform scale-100 opacity-100"
-                    leave-to-class="transform scale-95 opacity-0"
-                  >
-                     <DisclosurePanel class="px-4 pt-2 pb-4 text-sm text-gray-600 dark:text-gray-400 border-t border-gray-200 dark:border-gray-700/50 max-h-96 overflow-y-auto bg-gray-900 dark:bg-gray-200">
-                     <div v-if="itemGroup.data && itemGroup.data.length > 0" class="space-y-3 mt-3">
-                       <!-- Render the specific component for each item -->
-                       <component
-                         v-for="item in itemGroup.data"
-                         :is="itemGroup.component"
-                         :[itemGroup.itemKey]="item"
-                         :key="item.id || item.uid || JSON.stringify(item)"
-                         @reload-timeline="reloadTimeline"
-                         @edit-estimate="openAddEstimateModal"
-                         @view-estimate="handleViewEstimate"
-                         @edit-invoice="openAddInvoiceModal"
-                         @view-invoice="handleViewInvoice"
-                         @edit-payment="openAddPaymentModal"
-                         @view-payment="handleViewPayment"
-                         @edit-expense="openAddExpenseModal"
-                         @view-expense="handleViewExpense"
-                         @edit-insurance="openAddInsuranceModal"
-                         @view-insurance="handleViewInsurance"
-                         @edit-job="handleViewJob"
-                         class="border-b border-gray-100 dark:border-gray-700/50 last:border-b-0 bg-[#ffffff]"
-                       />
-                     </div>
-                     <p v-else class="mt-3 text-center text-gray-500">No {{ itemGroup.name.toLowerCase() }} found.</p>
-                   </DisclosurePanel>
-                 </transition>
-               </div>
-             </Disclosure>
-          </section>
+          <CustomerRelatedRecords 
+            :relatedItems="relatedItems"
+            @add-related-item="handleAddRelatedItem"
+            @reload-timeline="reloadTimeline"
+            @view-estimate="openAddEstimateModal"
+            @view-invoice="openAddInvoiceModal"
+            @view-payment="openAddPaymentModal"
+            @view-expense="openAddExpenseModal"
+            @view-insurance="openAddInsuranceModal"
+            @view-job="handleViewJob"
+          />
 
           <!-- Visitor Details (from Visitors.vue modal, adapted for customer context) -->
         <section v-if="visitorActivity && visitorActivity.visitors && visitorActivity.visitors.length > 0" class="card-modern p-5 sm:p-6 mt-6">
@@ -1845,370 +1493,46 @@ watchEffect(() => {
 
         </div>
 
-        <!-- Right Column: Activity Timeline / Tabs -->
         <div class="lg:col-span-8">
-          <section class="card-modern p-0 overflow-hidden min-h-[60vh] lg:min-h-[75vh] flex flex-col"> 
-             <TabGroup>
-               <TabList class="flex-shrink-0 flex space-x-1 rounded-t-lg bg-gray-100 dark:bg-gray-900/50 p-1 border-b border-gray-200 dark:border-gray-700/50"> 
-                 <Tab
-                   v-for="tab in activityTabs"
-                   :key="tab.name"
-                   v-slot="{ selected }"
-                   as="template"
-                 >
-                   <button
-                     :class="[
-                       'w-full rounded-md py-2 px-3 text-sm font-medium leading-5',
-                       'focus:outline-none focus:ring-2 ring-offset-2 ring-offset-blue-400 dark:ring-offset-gray-800 ring-white ring-opacity-60',
-                       selected
-                         ? 'bg-white dark:bg-gray-700 shadow text-indigo-700 dark:text-indigo-300'
-                         : 'text-gray-600 dark:text-gray-400 hover:bg-white/[0.30] dark:hover:bg-black/[0.15] hover:text-gray-800 dark:hover:text-gray-200',
-                       'transition-colors duration-150'
-                     ]"
-                   >
-                     {{ tab.name }}
-                   </button>
-                 </Tab>
-               </TabList>
-
-              <TabPanels class="flex-grow p-6 sm:p-6 overflow-y-auto ml-5 relative min-h-[200px]">
-                <!-- Loading Indicator -->
-                <div v-if="isFetchingCustomer" class="absolute inset-0 flex items-center justify-center bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm z-10">
-                  <p class="text-gray-500 dark:text-gray-400 mr-2">Loading activities...</p>
-                  <scale-loader :loading="true" color="#4f46e5" height="25px" width="4px" />
-                </div>
-
-                <!-- Actual Tab Content (rendered only when not fetching) -->
-                <template v-else>
-                  <TabPanel
-                    v-for="(tab, idx) in activityTabs"
-                    :key="idx"
-                   :class="['focus:outline-none h-full']" 
-                 >
-                   <!-- Render 'All' Activities (simplified) -->
-                   <div v-if="tab.name === 'All'" class="space-y-4 h-full">
-
-                     <!-- AI Timeline Summary Section -->
-                     <div class="mb-6 p-4 border border-blue-200 dark:border-blue-800/50 bg-blue-50 dark:bg-blue-900/20 rounded-lg shadow-sm">
-                       <div class="flex justify-between items-center mb-2">
-                         <h4 class="text-sm font-semibold text-blue-800 dark:text-blue-300 uppercase tracking-wider">AI Relationship Summary</h4>
-                         <div class="flex items-center space-x-2">
-                            <span v-if="latestTimelineSummary?.generatedAt" class="text-xs text-gray-400 dark:text-gray-500 italic">
-                                {{ formatRelativeTime(latestTimelineSummary.generatedAt) }}
-                            </span>
-                            <button @click="fetchTimelineSummary" class="btn-ghost-modern text-xs p-1" :disabled="isFetchingTimelineSummary" aria-label="Refresh AI summary">
-                                <font-awesome-icon icon="sync" :class="{ 'fa-spin': isFetchingTimelineSummary }" />
-                            </button>
-                         </div>
-                       </div>
-                       <div v-if="isFetchingTimelineSummary" class="text-center py-4">
-                         <p class="text-sm text-gray-500 dark:text-gray-400">Generating summary...</p>
-                         <!-- Optional: Add a small spinner here -->
-                       </div>
-                       <div v-else-if="timelineSummaryError" class="text-sm text-red-600 dark:text-red-400">
-                         Error generating summary: {{ timelineSummaryError }}
-                       </div>
-                       <!-- Use v-html to render HTML from backend -->
-                       <div v-else-if="latestTimelineSummary?.content" v-html="latestTimelineSummary.content" class="text-sm text-gray-700 dark:text-gray-300 space-y-2"></div>
-                       <div v-else class="text-sm text-gray-500 dark:text-gray-400 italic">
-                         Click the refresh button to generate an AI summary of the customer's interaction history.
-                       </div>
-                     </div>
-                     <!-- End AI Timeline Summary Section -->
-
-                     <!-- AI Sentiment Analysis Section -->
-                     <div class="mb-6 p-4 border border-purple-200 dark:border-purple-800/50 bg-purple-50 dark:bg-purple-900/20 rounded-lg shadow-sm">
-                       <div class="flex justify-between items-center mb-2">
-                         <h4 class="text-sm font-semibold text-purple-800 dark:text-purple-300 uppercase tracking-wider">AI Sentiment Analysis</h4>
-                         <div class="flex items-center space-x-2">
-                            <span v-if="latestSentimentAnalysis?.generatedAt" class="text-xs text-gray-400 dark:text-gray-500 italic">
-                                {{ formatRelativeTime(latestSentimentAnalysis.generatedAt) }}
-                            </span>
-                            <button @click="fetchSentimentAnalysis" class="btn-ghost-modern text-xs p-1" :disabled="isFetchingSentiment" aria-label="Refresh AI sentiment analysis">
-                                <font-awesome-icon icon="sync" :class="{ 'fa-spin': isFetchingSentiment }" />
-                            </button>
-                         </div>
-                       </div>
-                       <div v-if="isFetchingSentiment" class="text-center py-4">
-                         <p class="text-sm text-gray-500 dark:text-gray-400">Analyzing sentiment...</p>
-                       </div>
-                       <div v-else-if="sentimentError" class="text-sm text-red-600 dark:text-red-400">
-                         Error analyzing sentiment: {{ sentimentError }}
-                       </div>
-                       <!-- Display Sentiment Analysis -->
-                       <div v-else-if="latestSentimentAnalysis?.content" class="text-sm text-gray-700 dark:text-gray-300 space-y-2">
-                          <!-- Use computed property for parsed content -->
-                          <template v-if="parsedSentimentContent && typeof parsedSentimentContent === 'object'">
-                            <p><strong>Overall Summary:</strong> {{ parsedSentimentContent.overallSummary || 'N/A' }}</p>
-                            <div v-if="parsedSentimentContent.individualMessages && parsedSentimentContent.individualMessages.length > 0">
-                              <strong>Individual Messages Summary ({{ parsedSentimentContent.individualMessages.length }}):</strong>
-                              <ul class="list-disc list-inside ml-1 text-xs max-h-20 overflow-y-auto border dark:border-gray-600 p-1 rounded">
-                                <li v-for="(msg, mIndex) in parsedSentimentContent.individualMessages" :key="mIndex">
-                                  {{ msg.date }} - {{ msg.sentiment }}: {{ msg.keyPoints?.join(', ') || 'No key points' }}
-                                </li>
-                              </ul>
-                            </div>
-                            <div v-if="parsedSentimentContent.urgentIssues && parsedSentimentContent.urgentIssues.length > 0">
-                              <strong>Urgent Issues:</strong>
-                              <ul class="list-disc list-inside ml-1 text-xs text-red-500 dark:text-red-400">
-                                <li v-for="(issue, iIndex) in parsedSentimentContent.urgentIssues" :key="iIndex">{{ issue }}</li>
-                              </ul>
-                            </div>
-                            <div v-if="parsedSentimentContent.opportunities && parsedSentimentContent.opportunities.length > 0">
-                              <strong>Opportunities:</strong>
-                              <ul class="list-disc list-inside ml-1 text-xs text-green-600 dark:text-green-400">
-                                <li v-for="(opp, oIndex) in parsedSentimentContent.opportunities" :key="oIndex">{{ opp }}</li>
-                              </ul>
-                            </div>
-                          </template>
-                          <!-- Fallback: Display original string content if parsing failed or content wasn't an object -->
-                          <template v-else>
-                            <p class="whitespace-pre-wrap">{{ latestSentimentAnalysis.content }}</p>
-                          </template>
-                       </div>
-                       <!-- Empty state -->
-                       <div v-else class="text-sm text-gray-500 dark:text-gray-400 italic">
-                         No sentiment analysis available. Click refresh to generate.
-                       </div>
-                     </div>
-                     <!-- End AI Sentiment Analysis Section -->
-
-                     <!-- AI Profitability Analysis Section Removed -->
-
-                     <p v-if="!customer.activities || customer.activities.length === 0" class="text-center text-gray-500 py-8">No activities recorded yet.</p>
-                      <template v-else>
-                         <!-- Loop through all activities and try to determine type -->
-                         <div v-for="activity in customer.activities" :key="activity.uid" class="activity-item">
-                            <!-- Basic display - ideally, use specific accordion components -->
-                            <component
-                              :is="accordionNotes"
-                              v-if="activity.type === 'note'"
-                              :note="activity"
-                              class="mb-3"
-                            />
-                            <template v-else-if="activity.type === 'whatsapp'">                              
-                              <component
-                                :is="accordion"
-                                :whatsapp="activity"
-                                class="mb-3"
-                              />
-                            </template>
-                             <component
-                               :is="accordionEmail"
-                               v-else-if="activity.type === 'email'"
-                               :email="activity"
-                               class="mb-3"
-                             />
-                             <component
-                               :is="accordionView"
-                               v-else-if="activity.type === 'view'"
-                               :view="activity"
-                               class="mb-3"
-                             />
-                             <component
-                               :is="accordionClick"
-                               v-else-if="activity.type === 'click'"
-                               :click="activity"
-                               class="mb-3"
-                             />
-                             <component
-                               :is="accordionForm"
-                               v-else-if="activity.type === 'form'"
-                               :form="activity"
-                               class="mb-3"
-                             />
-                             <!-- Fallback for unknown types -->
-                             <!-- <div v-else class="text-xs p-2 border dark:border-gray-700 rounded mb-3">
-                                <span class="font-semibold">{{ activity.type || 'Activity' }}</span> - {{ new Date(activity.createdAt).toLocaleString() }}
-                                <pre class="text-xs mt-1 whitespace-pre-wrap">{{ activity.content || JSON.stringify(activity) }}</pre>
-                             </div> -->
-                         </div>
-                      </template>
-                   </div>
-                   <!-- Render Receipts Gallery -->
-                   <div v-else-if="tab.name === 'Receipts'" class="space-y-4 h-full">
-                      <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Expense Receipts</h3>
-                      <div v-if="!customer.expenses || customer.expenses.filter(e => e.imageUrl).length === 0" class="text-center text-gray-500 py-8">
-                        No expense receipts found for this customer.
-                      </div>
-                      <div v-else class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                        <div v-for="expense in customer.expenses.filter(e => e.imageUrl)" :key="expense.id" class="group relative">
-                          <a :href="expense.imageUrl" target="_blank" rel="noopener noreferrer" class="block aspect-square w-full overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-800">
-                            <img :src="expense.imageUrl" :alt="'Receipt for ' + expense.description" class="pointer-events-none object-cover group-hover:opacity-75 transition-opacity w-full h-full">
-                          </a>
-                          <p class="pointer-events-none mt-1 block truncate text-xs font-medium text-gray-700 dark:text-gray-300">{{ expense.description }}</p>
-                          <p class="pointer-events-none block text-xs font-medium text-gray-500 dark:text-gray-400">{{ new Date(expense.date).toLocaleDateString() }} - {{ formatCurrency(expense.amount) }}</p>
-                        </div>
-                      </div>
-                   </div>
-                   <!-- Render Engagement Hub -->
-                   <div v-else-if="tab.name === 'Engagement'" class="space-y-6 h-full">
-                     <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Proactive Engagement Hub</h3>
-
-                     <!-- LLM Suggestions Section -->
-                     <section class="card-modern p-4">
-                       <div class="flex justify-between items-center mb-3">
-                          <h4 class="text-md font-semibold text-gray-800 dark:text-gray-200">AI Suggestions</h4>
-                          <button @click="fetchFollowupSuggestions" class="btn-ghost-modern text-xs p-1" :disabled="isFetchingSuggestions" aria-label="Refresh AI suggestions">
-                             <font-awesome-icon icon="sync" :class="{ 'fa-spin': isFetchingSuggestions }" />
-                          </button>
-                       </div>
-                       <div v-if="isFetchingSuggestions" class="text-center py-3 text-sm text-gray-500 dark:text-gray-400">Loading suggestions...</div>
-                       <div v-else-if="suggestionsError" class="text-sm text-red-600 dark:text-red-400">Error: {{ suggestionsError }}</div>
-                       <div v-else-if="followupSuggestions && followupSuggestions.length > 0" class="space-y-3">
-                          <!-- Placeholder for suggestion display -->
-                          <div v-for="(suggestion, index) in followupSuggestions" :key="index" class="border rounded p-3 text-sm bg-gray-50 dark:bg-gray-700/30">
-                             <p class="font-medium mb-1">{{ suggestion.title }} (Reason: {{ suggestion.reason }})</p>
-                             <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">Timing: {{ suggestion.timing }}</p>
-                             <!-- Use v-html for draft message -->
-                             <div v-html="suggestion.draftMessage" class="bg-gray-100 dark:bg-gray-800/50 p-2 rounded text-xs space-y-1"></div>
-                             <div class="flex justify-end space-x-2 mt-2">
-                                <button class="btn-secondary-modern text-xs py-0.5 px-1.5" @click="scheduleSuggestion(suggestion)">Schedule</button>
-                                <button class="btn-secondary-modern text-xs py-0.5 px-1.5" @click="sendSuggestionNow(suggestion)">Send Now</button>
-                                <button class="btn-ghost-modern text-xs py-0.5 px-1.5" @click="logSuggestionManually(suggestion)">Log Manual</button>
-                                <button class="btn-ghost-modern text-xs py-0.5 px-1.5 text-red-500" @click="dismissSuggestion(index)">Dismiss</button>
-                             </div>
-                          </div>
-                       </div>
-                       <div v-else class="text-sm text-gray-500 dark:text-gray-400 italic">No AI suggestions available. Click refresh to check.</div>
-                     </section>
-
-                     <!-- Scheduled Messages Section -->
-                     <section class="card-modern p-4">
-                        <h4 class="text-md font-semibold text-gray-800 dark:text-gray-200 mb-3">Scheduled Messages</h4>
-                        <div class="flex justify-between items-center mb-2">
-                           <!-- Refresh button -->
-                           <button @click="fetchScheduledMessages" class="btn-ghost-modern text-xs p-1" :disabled="isFetchingScheduled" aria-label="Refresh scheduled messages">
-                              <font-awesome-icon icon="sync" :class="{ 'fa-spin': isFetchingScheduled }" />
-                           </button>
-                        </div>
-                        <!-- Loading State -->
-                        <div v-if="isFetchingScheduled" class="text-center py-3 text-sm text-gray-500 dark:text-gray-400">Loading scheduled messages...</div>
-                        <!-- Error State -->
-                        <div v-else-if="scheduledError" class="text-sm text-red-600 dark:text-red-400">Error: {{ scheduledError }}</div>
-                        <!-- Message List -->
-                        <div v-else-if="scheduledMessages && scheduledMessages.length > 0" class="space-y-3 max-h-60 overflow-y-auto pr-1">
-                           <div v-for="message in scheduledMessages" :key="message.id" class="border rounded p-3 text-sm bg-gray-50 dark:bg-gray-700/30 flex justify-between items-start">
-                              <div>
-                                 <p class="font-medium mb-1">
-                                    Scheduled for: {{ message.scheduledAt ? new Date(message.scheduledAt).toLocaleString() : 'N/A' }}
-                                    <span class="text-xs text-gray-500 dark:text-gray-400 ml-1">({{ message.type || 'Follow-up' }})</span>
-                                 </p>
-                                 <p class="italic bg-gray-100 dark:bg-gray-800/50 p-2 rounded text-xs">"{{ message.messageContent || 'No content' }}"</p>
-                              </div>
-                              <button
-                                 @click="cancelScheduledMessage(message.id)"
-                                 class="btn-ghost-modern text-xs py-0.5 px-1.5 text-red-500 ml-2 flex-shrink-0"
-                                 title="Cancel this scheduled message"
-                              >
-                                 Cancel
-                              </button>
-                           </div>
-                        </div>
-                        <!-- Empty State -->
-                        <div v-else class="text-sm text-gray-500 dark:text-gray-400 italic">No messages currently scheduled.</div>
-                     </section>
-
-                     <!-- Logged Follow-ups & Satisfaction Section -->
-                     <section class="card-modern p-4">
-                        <h4 class="text-md font-semibold text-gray-800 dark:text-gray-200 mb-3">Follow-up History & Satisfaction</h4>
-
-                        <!-- Follow-up History Display -->
-                        <div class="mb-4 pb-3 border-b border-gray-200 dark:border-gray-700/50">
-                           <h5 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">History</h5>
-                           <div v-if="loggedFollowUps && loggedFollowUps.length > 0" class="space-y-2 max-h-40 overflow-y-auto pr-1">
-                              <div v-for="followUp in loggedFollowUps" :key="followUp.id" class="text-xs">
-                                 <p>
-                                    <span class="font-medium">{{ new Date(followUp.createdAt).toLocaleDateString() }}:</span>
-                                    Status: {{ followUp.status }}
-                                    <span v-if="followUp.jobId"> (Job #{{ followUp.jobId }})</span>
-                                 </p>
-                                 <p v-if="followUp.feedback" class="italic text-gray-600 dark:text-gray-400 pl-2">"{{ followUp.feedback }}"</p>
-                              </div>
-                           </div>
-                            <p v-else class="text-xs text-gray-500 dark:text-gray-400 italic">No logged follow-up history found.</p>
-                        </div>
-
-
-                        <!-- Post-Service Satisfaction Display -->
-                        <div class=""> <!-- Removed margin/padding top as it's now below history -->
-                           <h5 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Recent Satisfaction</h5>
-                            <!-- TODO: Fetch and loop through recent ServiceFollowUp records -->
-                            <div v-if="serviceFollowUps && serviceFollowUps.length > 0">
-                              <div v-for="followUp in serviceFollowUps.slice(0, 3)" :key="followUp.id" class="text-xs border-b dark:border-gray-700/50 pb-2 mb-2 last:border-b-0 last:pb-0 last:mb-0">
-                                 <p>Job #{{ followUp.jobId }} ({{ followUp.status }})</p>
-                                 <p v-if="followUp.satisfactionRating">
-                                    Rating:
-                                    <span class="text-yellow-500 ml-1">
-                                       <template v-for="i in 5" :key="i">
-                                         <font-awesome-icon :icon="i <= followUp.satisfactionRating ? 'star' : ['far', 'star']" />
-                                       </template>
-                                    </span>
-                                 </p>
-                                 <p v-if="followUp.feedback" class="italic text-gray-600 dark:text-gray-400">"{{ followUp.feedback }}"</p>
-                              </div>
-                            </div>
-                            <p v-else class="text-xs text-gray-500 dark:text-gray-400 italic">No recent satisfaction feedback recorded.</p>
-                            <!-- Optional Button to trigger survey -->
-                            <!-- <button class="btn-ghost-modern text-xs mt-2">Trigger Survey for Last Job</button> -->
-                        </div>
-
-                        <button class="btn-secondary-modern text-sm mt-4">Log Manual Follow-up</button>
-                     </section>
-
-                      <!-- Holiday/Occasion Messages Section -->
-                     <section class="card-modern p-4">
-                        <h4 class="text-md font-semibold text-gray-800 dark:text-gray-200 mb-3">Suggested Greetings</h4>
-                        <!-- Loading State -->
-                        <div v-if="isFetchingGreetings" class="text-center py-4">
-                          <Spinner />
-                          <p class="text-sm text-gray-500 mt-2">Loading greetings...</p>
-                        </div>
-                        <!-- Error State -->
-                        <div v-else-if="greetingsError" class="text-center py-4 text-red-600 dark:text-red-400">
-                          <p>Error loading greetings: {{ greetingsError }}</p>
-                          <button @click="fetchHolidayGreetings" class="btn-secondary-modern mt-2">Retry</button>
-                        </div>
-                        <!-- Display fetched greetings -->
-                        <div v-else-if="holidayGreetings && holidayGreetings.length > 0" class="space-y-3">
-                           <div v-for="(greeting, index) in holidayGreetings" :key="index" class="border rounded p-3 text-sm bg-gray-50 dark:bg-gray-700/30">
-                              <p class="font-medium mb-1">{{ greeting.specificOccasion }} ({{ greeting.occasionType }}) - {{ new Date(greeting.occasionDate).toLocaleDateString() }}</p>
-                              <!-- Use v-html for draft message -->
-                              <div v-html="greeting.draftMessage" class="bg-gray-100 dark:bg-gray-800/50 p-2 rounded text-xs space-y-1"></div>
-                              <div class="flex justify-end space-x-2 mt-2">
-                                 <!-- Actions are now implemented -->
-                                 <!-- Show Schedule button only if not already scheduled -->
-                                 <button v-if="!greeting.followUpId" class="btn-secondary-modern text-xs py-0.5 px-1.5" @click="scheduleGreeting(greeting)">Schedule</button>
-                                 <button class="btn-secondary-modern text-xs py-0.5 px-1.5" @click="sendGreetingNow(greeting)">Send Now</button>
-                                 <!-- Show Cancel button only if scheduled -->
-                                 <button v-if="greeting.followUpId" class="btn-ghost-modern text-xs py-0.5 px-1.5 text-red-500" @click="cancelScheduledMessage(greeting.followUpId)">Cancel Scheduled</button>
-                              </div>
-                           </div>
-                        </div>
-                        <!-- Empty State -->
-                        <p v-else class="text-sm text-gray-500 dark:text-gray-400 italic">No suggested greetings available at this time.</p>
-                     </section>
-
-                   </div>
-                   <!-- Render Specific Activity Type using Accordions -->
-                   <div v-else class="space-y-3 h-full">
-                      <p v-if="!customer.activities || customer.activities.filter(a => a.type === tab.type).length === 0" class="text-center text-gray-500 py-8">No {{ tab.name.toLowerCase() }} recorded yet.</p>
-                      <template v-else>
-                        <template v-for="activity in customer.activities.filter(a => a.type === tab.type)" :key="(tab.name === 'Whatsapp' ? wkey : nkey) + activity.uid">
-                           <component
-                             :is="tab.component"
-                             :[tab.type]="activity"
-                           />
-                        </template>
-                      </template>
-                   </div>
-                 </TabPanel>
-                </template>
-               </TabPanels>
-             </TabGroup>
-          </section>
+          <!-- Right Column: Activity Timeline / Tabs -->
+          <CustomerActivityTabs
+            :activityTabs="activityTabs"
+            :customer="customer"
+            :latestTimelineSummary="latestTimelineSummary"
+            :latestSentimentAnalysis="latestSentimentAnalysis"
+            :isFetchingTimelineSummary="isFetchingTimelineSummary"
+            :isFetchingSentiment="isFetchingSentiment"
+            :timelineSummaryError="timelineSummaryError"
+            :sentimentError="sentimentError"
+            :parsedSentimentContent="parsedSentimentContent"
+            :followupSuggestions="followupSuggestions"
+            :scheduledMessages="scheduledMessages"
+            :loggedFollowUps="loggedFollowUps"
+            :serviceFollowUps="serviceFollowUps"
+            :holidayGreetings="holidayGreetings"
+            :isFetchingSuggestions="isFetchingSuggestions"
+            :suggestionsError="suggestionsError"
+            :isFetchingScheduled="isFetchingScheduled"
+            :scheduledError="scheduledError"
+            :isFetchingGreetings="isFetchingGreetings"
+            :greetingsError="greetingsError"
+            :wkey="wkey"
+            :nkey="nkey"
+            :isFetchingCustomer="isFetchingCustomer"
+            @fetch-timeline-summary="fetchTimelineSummary"
+            @fetch-sentiment-analysis="fetchSentimentAnalysis"
+            @fetch-suggestions="fetchFollowupSuggestions"
+            @schedule-suggestion="scheduleSuggestion"
+            @send-suggestion-now="sendSuggestionNow"
+            @log-suggestion-manually="logSuggestionManually"
+            @dismiss-suggestion="dismissSuggestion"
+            @fetch-scheduled-messages="fetchScheduledMessages"
+            @cancel-scheduled-message="cancelScheduledMessage"
+            @schedule-greeting="scheduleGreeting"
+            @send-greeting-now="sendGreetingNow"
+            @fetch-holiday-greetings="fetchHolidayGreetings"
+          />
         </div>
-
       </div>
 
       <!-- Modals (Keep Flowbite structure, ensure triggers use new styles) -->
@@ -2255,211 +1579,116 @@ watchEffect(() => {
            </div>
          </div>
        </div>
+    
+      <!-- Add Job Modal -->
+      <JobFormModal
+        v-model="showAddJobModal"
+        :customer-data="customer"
+        :job-data="selectedJob"
+        @job-saved="handleJobSaved"
+      />
 
-     </div> <!-- End container -->
-<!-- Add Job Modal -->
-<JobFormModal
-  v-model="showAddJobModal"
-  :customer-data="customer"
-  :job-data="selectedJob"
-  @job-saved="handleJobSaved"
-/>
+      <!-- Add/Edit Estimate Modal -->
+      <EstimateFormModal
+        v-model="showAddEstimateModal"
+        :customer-data="customerContextForModal || customer"
+        :estimate-data="selectedEstimate"
+        @estimate-saved="handleEstimateSaved"
+        @invoice-created="handleInvoiceCreated"
+        :technicians="technicians"
+        :customer-jobs="customer.jobs" 
+      />
 
-<!-- Add/Edit Estimate Modal -->
-<EstimateFormModal
-  v-model="showAddEstimateModal"
-  :customer-data="customerContextForModal || customer"
-  :estimate-data="selectedEstimate"
-  @estimate-saved="handleEstimateSaved"
-  @invoice-created="handleInvoiceCreated"
-  :technicians="technicians"
-  :customer-jobs="customer.jobs" 
-/>
+      <!-- Add/Edit Invoice Modal -->
+      <InvoiceFormModal
+        v-model="showAddInvoiceModal"
+        :customer-data="customerContextForModal || customer"
+        :invoice-data="selectedInvoice"
+        @invoice-saved="handleInvoiceSaved"
+        :technicians="technicians"
+        :customer-jobs="customer.jobs" 
+      />
 
-<!-- Add/Edit Invoice Modal -->
-<InvoiceFormModal
-  v-model="showAddInvoiceModal"
-  :customer-data="customerContextForModal || customer"
-  :invoice-data="selectedInvoice"
-  @invoice-saved="handleInvoiceSaved"
-  :technicians="technicians"
-  :customer-jobs="customer.jobs" 
-/>
+      <!-- Add/Edit Payment Modal -->
+      <PaymentFormModal
+        v-model="showAddPaymentModal"
+        :customer-data="customer"
+        :payment-data="selectedPayment"
+        @payment-saved="handlePaymentSaved"
+      />
 
-<!-- Add/Edit Payment Modal -->
-<PaymentFormModal
-  v-model="showAddPaymentModal"
-  :customer-data="customer"
-  :payment-data="selectedPayment"
-  @payment-saved="handlePaymentSaved"
-/>
+      <!-- Add/Edit Expense Modal -->
+      <ExpenseFormModal
+        v-model="showAddExpenseModal"
+        :customer-data="customer"
+        :expense-data="selectedExpense"
+        @expense-saved="handleExpenseSaved"
+      />
 
-<!-- Add/Edit Expense Modal -->
-<ExpenseFormModal
-  v-model="showAddExpenseModal"
-  :customer-data="customer"
-  :expense-data="selectedExpense"
-  @expense-saved="handleExpenseSaved"
-/>
+      <!-- Add/Edit Insurance Report Modal -->
+      <InsuranceFormModal
+        v-model="showAddInsuranceModal"
+        :customer-data="customer"
+        :insurance-data="selectedInsurance"
+        @insurance-saved="handleInsuranceSaved"
+      />
 
-<!-- Add/Edit Insurance Report Modal -->
-<InsuranceFormModal
-  v-model="showAddInsuranceModal"
-  :customer-data="customer"
-  :insurance-data="selectedInsurance"
-  @insurance-saved="handleInsuranceSaved"
-/>
+      <!-- Add/Edit Appliance Modal -->
+      <ApplianceFormModal
+        v-model="showAddApplianceModal"
+        :appliance="selectedAppliance"
+        :customer-id="customer.id"
+        @saved="handleApplianceSaved"
+      />
 
-<!-- Add/Edit Appliance Modal -->
-<ApplianceFormModal
-  v-model="showAddApplianceModal"
-  :appliance="selectedAppliance"
-  :customer-id="customer.id"
-  @saved="handleApplianceSaved"
-/>
+      <!-- Preferred Technician Modal -->
+      <PreferredTechnicianModal
+        v-model="showPreferredTechnicianModal"
+        :customer-id="customer.id"
+        :current-technician-id="customer.preferredTechnicianId"
+        @saved="handlePreferredTechnicianSaved"
+      />
 
-<!-- Preferred Technician Modal -->
-<PreferredTechnicianModal
-  v-model="showPreferredTechnicianModal"
-  :customer-id="customer.id"
-  :current-technician-id="customer.preferredTechnicianId"
-  @saved="handlePreferredTechnicianSaved"
-/>
+      <!-- Communication Preferences Modal -->
+      <CommunicationPreferencesModal
+        v-model="showCommPrefsModal"
+        :customer-id="customer.id"
+        :current-preferences="{
+          preferredContactMethod: customer.preferredContactMethod,
+          preferredContactTimes: customer.preferredContactTimes,
+          communicationFrequencyPreference: customer.communicationFrequencyPreference,
+          languagePreference: customer.languagePreference
+        }"
+        @saved="handleCommPrefsSaved"
+      />
 
-<!-- Communication Preferences Modal -->
-<CommunicationPreferencesModal
-  v-model="showCommPrefsModal"
-  :customer-id="customer.id"
-  :current-preferences="{
-    preferredContactMethod: customer.preferredContactMethod,
-    preferredContactTimes: customer.preferredContactTimes,
-    communicationFrequencyPreference: customer.communicationFrequencyPreference,
-    languagePreference: customer.languagePreference
-  }"
-  @saved="handleCommPrefsSaved"
-/>
+      <!-- Schedule Modal for Suggestions/Greetings -->
+      <ScheduleModal
+        v-model:isOpen="showScheduleModal"
+        :title="suggestionToSchedule ? 'Schedule Suggestion' : (greetingToSchedule ? 'Schedule Greeting' : 'Schedule Message')"
+        :message-preview="suggestionToSchedule?.draftMessage || greetingToSchedule?.draftMessage || ''"
+        :initial-date="suggestionToSchedule?.occasionDate || greetingToSchedule?.occasionDate"
+        @confirm-schedule="suggestionToSchedule ? handleConfirmScheduleSuggestion($event) : handleConfirmScheduleGreeting($event)"
+      />
 
-<!-- Schedule Modal for Suggestions/Greetings -->
-<ScheduleModal
-  v-model:isOpen="showScheduleModal"
-  :title="suggestionToSchedule ? 'Schedule Suggestion' : (greetingToSchedule ? 'Schedule Greeting' : 'Schedule Message')"
-  :message-preview="suggestionToSchedule?.draftMessage || greetingToSchedule?.draftMessage || ''"
-  :initial-date="suggestionToSchedule?.occasionDate || greetingToSchedule?.occasionDate"
-  @confirm-schedule="suggestionToSchedule ? handleConfirmScheduleSuggestion($event) : handleConfirmScheduleGreeting($event)"
-/>
+      <!-- Manual Log Modal for Suggestions -->
+      <ManualLogModal
+        v-model:isOpen="showManualLogModal"
+        :suggestion-context="suggestionToLog?.draftMessage || suggestionToLog?.title || ''"
+        @confirm-log="handleConfirmManualLog"
+      />
 
-<!-- Manual Log Modal for Suggestions -->
-<ManualLogModal
-  v-model:isOpen="showManualLogModal"
-  :suggestion-context="suggestionToLog?.draftMessage || suggestionToLog?.title || ''"
-  @confirm-log="handleConfirmManualLog"
-/>
+      <!-- Task Form Modal -->
+      <TaskFormModal
+        v-model:isOpen="showTaskModal"
+        :initial-task-data="initialTaskDataForModal"
+        @save-task="handleSaveTask"
+      />
+    </div> <!-- End container -->
 
-<!-- Task Form Modal -->
-<TaskFormModal
-   v-model:isOpen="showTaskModal"
-   :initial-task-data="initialTaskDataForModal"
-   @save-task="handleSaveTask"
-/>
-     
-
-<!-- Loading Overlay -->
+      <!-- Loading Overlay -->
      <div v-if="isLoading" class="fixed inset-0 z-[60] bg-gray-900 bg-opacity-50 dark:bg-opacity-80 flex items-center justify-center">
         <scale-loader :loading="true" color="#4f46e5" height="40px" width="5px" />
      </div>
    </div> <!-- End main div -->
  </template>
-
-<style>
-/* Import modern styles used in Jobs.vue - Assuming these are globally available or defined in a main CSS file */
-/* If not global, copy the necessary .input-modern, .btn-*, .card-modern, .label-modern etc. styles here or import them */
-
-/* Minimalist Input Styles (Copied from Jobs.vue for completeness) */
-.input-modern {
-  @apply block w-full px-3 py-2 text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600/50 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500;
-  @apply focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:focus:ring-indigo-400 dark:focus:border-indigo-400;
-  @apply transition duration-150 ease-in-out;
-}
-.input-modern--select {
-  @apply pr-8 appearance-none bg-no-repeat bg-right;
-   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
-   background-position: right 0.5rem center;
-   background-size: 1.5em 1.5em;
-}
-.dark .input-modern--select {
-   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
-}
-
-.label-modern {
-  @apply block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1;
-}
-
-/* Modern Button Styles */
-.btn-primary-modern {
-  @apply inline-flex items-center justify-center px-3.5 py-2 text-sm font-semibold text-white bg-indigo-600 dark:bg-indigo-500 rounded-md shadow-sm;
-  @apply hover:bg-indigo-700 dark:hover:bg-indigo-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600;
-  @apply transition-colors duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed; /* Added disabled styles */
-}
-.btn-secondary-modern {
-  @apply inline-flex items-center justify-center px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600/50 rounded-md shadow-sm;
-  @apply hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:focus:ring-indigo-400;
-  @apply transition-colors duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed; /* Added disabled styles */
-}
-.btn-ghost-modern {
-  @apply inline-flex items-center justify-center px-2 py-1 text-xs font-medium text-indigo-600 dark:text-indigo-400 rounded;
-  @apply hover:bg-indigo-100 dark:hover:bg-indigo-900/50 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:focus:ring-indigo-400;
-  @apply transition-colors duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed; /* Added disabled styles */
-}
-.btn-icon-modern {
-  @apply inline-flex items-center justify-center w-8 h-8 text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600/50 rounded-md shadow-sm;
-  @apply hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:focus:ring-indigo-400;
-  @apply transition-colors duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed; /* Added disabled styles */
-}
-
-/* Card Style */
-.card-modern {
-  @apply bg-white dark:bg-gray-800/60 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700/50 backdrop-blur-sm; /* Added backdrop-blur */
-}
-
-/* Modal Styles */
-.modal-content-modern {
-  @apply bg-white dark:bg-gray-800 rounded-lg shadow-xl; /* Simplified base */
-}
-
-/* Custom scrollbar styles (optional) */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { @apply bg-gray-100 dark:bg-gray-800/50; } /* Adjusted track */
-::-webkit-scrollbar-thumb { @apply bg-gray-300 dark:bg-gray-600 rounded; }
-::-webkit-scrollbar-thumb:hover { @apply bg-gray-400 dark:bg-gray-500; }
-
-/* Ensure date/time inputs are stylable */
-input[type="date"],
-input[type="datetime-local"] {
-  @apply appearance-none;
-}
-input[type="date"]::-webkit-calendar-picker-indicator,
-input[type="datetime-local"]::-webkit-calendar-picker-indicator {
-  @apply filter dark:invert opacity-50 cursor-pointer;
-}
-
-/* TipTap Editor basic styling */
-.ProseMirror {
-  @apply min-h-[100px] p-2 focus:outline-none;
-}
-.ProseMirror p.is-editor-empty:first-child::before {
-  content: attr(data-placeholder);
-  float: left;
-  @apply text-gray-400 dark:text-gray-500 pointer-events-none h-0;
-}
-
-/* Activity Item basic styling */
-.activity-item {
-  /* Add specific styling for different activity types if needed */
-}
-
-/* Ensure DisclosurePanel content doesn't overflow card */
-.card-modern .overflow-y-auto {
-  scrollbar-gutter: stable; /* Prevent layout shift when scrollbar appears */
-}
-
-</style>
