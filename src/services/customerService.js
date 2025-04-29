@@ -58,6 +58,20 @@ export default {
     const response = await axios.post(`customers/${customerId}/profitability-analysis?id=${websiteId}`);
     return response.data;
   },
+  
+  /**
+   * Generate AI suggestions for missing customer fields
+   * @param {string} websiteId - Current website ID
+   * @param {string} customerId - Customer ID
+   * @param {Array} missingFields - Array of field names that need suggestions
+   * @returns {Promise<Object>} Response with suggestions
+   */
+  async generateMissingFieldSuggestions(websiteId, customerId, missingFields) {
+    const response = await axios.post(`customers/${customerId}/suggest-missing-fields?id=${websiteId}`, {
+      missingFields
+    });
+    return response.data;
+  },
 
   /**
    * Generate sentiment analysis

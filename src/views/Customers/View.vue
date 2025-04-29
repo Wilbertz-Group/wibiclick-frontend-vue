@@ -16,6 +16,7 @@ import {
   getSentimentClass,
   tryParseJson
 } from '@/utils/formatters';
+import customerService from '@/services/customerService.js';
 
 // Component imports
 import JobVue from '@/components/jobs/Job.vue'
@@ -52,6 +53,7 @@ import CustomerCommunicationPrefs from '@/components/Customers/View/CustomerComm
 import CustomerAppliances from '@/components/Customers/View/CustomerAppliances.vue'; 
 import CustomerRelatedRecords from '@/components/Customers/View/CustomerRelatedRecords.vue';
 import CustomerActivityTabs from '@/components/Customers/View/CustomerActivityTabs.vue';
+import CustomerVisitorActivity from '@/components/Customers/View/CustomerVisitorActivity.vue';
 
 // Font Awesome imports
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
@@ -110,6 +112,7 @@ const greetingToSchedule = ref(null);
 const showTaskModal = ref(false);
 const initialTaskDataForModal = ref({});
 const technicians = ref([]);
+const editableCustomer = ref({});
 
 // Form and modal state
 const notes = ref('');
@@ -119,6 +122,12 @@ const nkey = ref(0);
 const noteModalInstance = ref(null);
 const whatsappModalInstance = ref(null);
 const customerContextForModal = ref(null);
+
+
+// AI Field Suggestion States
+const isGeneratingAISuggestions = ref(false);
+const aiSuggestedFields = ref({});
+const showAISuggestions = ref(false);
 
 // --- Computed Properties ---
 const isLoading = computed(() => 
@@ -189,6 +198,80 @@ async function fetchCustomerData() {
   }
 }
 
+// --- Customer Information Management ---
+function resetEditableCustomer() {
+  // Use the store's resetEditableCustomer method
+  customerStore.resetEditableCustomer();
+}
+
+// New function: Generate AI field suggestions
+async function generateAIFieldSuggestions() {
+  if (!customerStore.customer?.id) return;
+  
+  isGeneratingAISuggestions.value = true;
+  showAISuggestions.value = true;
+  aiSuggestedFields.value = {};
+  
+  try {
+    // Create a payload of what fields are missing or empty
+    const missingFields = [];
+    const fieldsToCheck = ['address', 'phone', 'email', 'channel', 'message'];
+    
+    fieldsToCheck.forEach(field => {
+      if (!customerStore.editableCustomer[field] || customerStore.editableCustomer[field].trim() === '') {
+        missingFields.push(field);
+      }
+    });
+    
+    // Only proceed if we actually have missing fields
+    if (missingFields.length > 0) {
+      const response = await customerService.generateMissingFieldSuggestions(
+        userStore.currentWebsite,
+        customerStore.customer.id,
+        missingFields
+      );
+      
+      if (response && response.suggestions) {
+        aiSuggestedFields.value = response.suggestions;
+      }
+    } else {
+      showAISuggestions.value = false;
+      toast.info("All fields are already filled. No AI suggestions needed.");
+    }
+  } catch (error) {
+    console.error('Error generating AI field suggestions:', error);
+    toast.error("Could not generate AI suggestions: " + (error.response?.data?.message || error.message));
+  } finally {
+    isGeneratingAISuggestions.value = false;
+  }
+}
+
+// Helper to apply a specific AI suggestion to the form
+function applyAISuggestion(field) {
+  if (aiSuggestedFields.value[field]) {
+    customerStore.editableCustomer[field] = aiSuggestedFields.value[field];
+    // Remove the applied suggestion
+    delete aiSuggestedFields.value[field];
+    
+    // If no more suggestions, hide the suggestion panel
+    if (Object.keys(aiSuggestedFields.value).length === 0) {
+      showAISuggestions.value = false;
+    }
+    
+    toast.success(`Applied AI suggestion for ${field}`);
+  }
+}
+
+// Apply all AI suggestions at once
+function applyAllAISuggestions() {
+  for (const field in aiSuggestedFields.value) {
+    customerStore.editableCustomer[field] = aiSuggestedFields.value[field];
+  }
+  showAISuggestions.value = false;
+  aiSuggestedFields.value = {};
+  toast.success("Applied all AI suggestions");
+}
+
 // Helper to reset UI state on data reload
 function resetUIState() {
   // Reset any component UI state that should be cleared when customer data changes
@@ -235,45 +318,20 @@ function reloadTimeline() {
   });
 }
 
-// --- Customer Information Management ---
-function resetEditableCustomer() {
-  // Use customerStore.resetEditableCustomer when customer data is loaded
-  customerStore.resetEditableCustomer();
-  
-  // Instead of customerStore.editableCustomer, you can use a local ref:
-  // This allows the component to have its own editable state
-  // that only updates the store when explicitly saved
-  editableCustomer.value = {
-    name: customerStore.customer.name || '',
-    phone: customerStore.customer.phone || '',
-    email: customerStore.customer.email || '',
-    channel: customerStore.customer.channel || '',
-    address: customerStore.customer.address || '',
-    message: customerStore.customer.message || '',
-    portal: customerStore.customer.portal || '',
-    foreignID: customerStore.customer.foreignID || '',
-    preferredTechnicianId: customerStore.customer.preferredTechnicianId || null,
-    preferredContactMethod: customerStore.customer.preferredContactMethod || null,
-    preferredContactTimes: customerStore.customer.preferredContactTimes || '',
-    communicationFrequencyPreference: customerStore.customer.communicationFrequencyPreference || null,
-    languagePreference: customerStore.customer.languagePreference || 'en'
-  };
-}
-
 async function updateCustomer() {
   try {
-    // Use the store action to update customer data
+    // Use the store action to update customer data with the store's editableCustomer
     await customerStore.updateCustomer(userStore.currentWebsite, {
       id: customerStore.customer.id,
-      name: editableCustomer.value.name,
-      Phone: editableCustomer.value.phone,
-      Email: editableCustomer.value.email,
-      Reply: editableCustomer.value.channel,
-      address: editableCustomer.value.address,
-      Message: editableCustomer.value.message,
-      portal: editableCustomer.value.portal,
-      foreignID: editableCustomer.value.foreignID,
-      vid: editableCustomer.value.foreignID,
+      name: customerStore.editableCustomer.name,
+      Phone: customerStore.editableCustomer.phone,
+      Email: customerStore.editableCustomer.email,
+      Reply: customerStore.editableCustomer.channel,
+      address: customerStore.editableCustomer.address,
+      Message: customerStore.editableCustomer.message,
+      portal: customerStore.editableCustomer.portal,
+      foreignID: customerStore.editableCustomer.foreignID,
+      vid: customerStore.editableCustomer.foreignID,
     });
     
     toast.success("Customer updated successfully");
@@ -352,7 +410,6 @@ async function fetchSentimentAnalysis() {
 // --- Visitor Activity ---
 async function fetchVisitorActivity() {
   try {
-    // Assuming this is added to customerService and CustomerStore
     await customerStore.fetchVisitorActivity(
       userStore.currentWebsite, 
       route.query.customer_id
@@ -980,6 +1037,7 @@ watchEffect(() => {
         @open-whatsapp-modal="handleOpenWhatsappModal"
         @open-add-job-modal="openAddJobModal"
         @reload-data="reloadTimeline"
+        @ai-book-job="aiBookJob(customerStore.customer.id)"
       />
 
       <!-- Main Content Grid -->
@@ -1002,15 +1060,21 @@ watchEffect(() => {
           <!-- Customer Information Card -->
           <CustomerDetailsCard
             :customer="customerStore.customer"
-            :editableCustomer="editableCustomer"
+            :editableCustomer="customerStore.editableCustomer"
             :isEditing="isEditingInfo"
             :isUpdating="customerStore.isUpdatingCustomer"
+            :isGeneratingAISuggestions="isGeneratingAISuggestions"
+            :aiSuggestedFields="aiSuggestedFields"
+            :showAISuggestions="showAISuggestions"
             @edit-info="handleEditInfo"
             @cancel-edit="handleCancelEdit"
             @update-customer="updateCustomer"
             @copy-to-clipboard="copyToClipboard"
             @edit-preferred-technician="openEditPreferredTechnicianModal"
-          />         
+            @generate-ai-suggestions="generateAIFieldSuggestions"
+            @apply-ai-suggestion="applyAISuggestion"
+            @apply-all-ai-suggestions="applyAllAISuggestions"
+          />        
 
           <!-- Communication Preferences Card -->
           <CustomerCommunicationPrefs 
@@ -1046,64 +1110,14 @@ watchEffect(() => {
           />
 
           <!-- Visitor Details (from Visitors.vue modal, adapted for customer context) -->
-        <section v-if="customerStore.visitorActivity && customerStore.visitorActivity.visitors && customerStore.visitorActivity.visitors.length > 0" class="card-modern p-5 sm:p-6 mt-6">
-          <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-            <font-awesome-icon icon="user" class="mr-2 text-indigo-600 dark:text-indigo-400" />
-            Visitor Details
-          </h2>
-          <div class="space-y-8">
-            <div v-for="visitor in customerStore.visitorActivity.visitors" :key="visitor.visitorId" class="border-b border-gray-200 dark:border-gray-700/50 pb-6 last:border-b-0 last:pb-0">
-              <!-- Visitor Profile -->
-              <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm text-gray-700 dark:text-gray-300 mb-2">
-                <div>
-                  <p class="font-medium text-gray-600 dark:text-gray-400">Last Seen:</p>
-                  <p>{{ formatAbsoluteDateTime(visitor.lastSeen) }}</p>
-                </div>
-                <div>
-                  <p class="font-medium text-gray-600 dark:text-gray-400">Total Views:</p>
-                  <p>{{ visitor.totalViews }}</p>
-                </div>
-                <div>
-                  <p class="font-medium text-gray-600 dark:text-gray-400">Total Clicks:</p>
-                  <p>{{ visitor.totalClicks }}</p>
-                </div>
-              </div>
-
-              <!-- Recent Activity -->
-              <div v-if="visitor.recentActivity && visitor.recentActivity.length > 0" class="mt-2">
-                <h4 class="text-md font-semibold mb-2 text-gray-900 dark:text-white">Recent Activity</h4>
-                <div class="space-y-2 border-l-2 border-indigo-200 dark:border-indigo-800 pl-4">
-                  <div v-for="(activity, idx) in visitor.recentActivity" :key="idx" class="flex items-start">
-                    <div class="flex-shrink-0 mt-0.5">
-                      <font-awesome-icon
-                        :icon="activity.type === 'click' ? 'mouse-pointer' : 'eye'"
-                        class="text-xs mr-2"
-                        :class="{
-                          'text-green-500': activity.type === 'click',
-                          'text-blue-500': activity.type === 'view'
-                        }"
-                      />
-                    </div>
-                    <div>
-                      <p class="text-xs font-medium text-gray-700 dark:text-gray-300 capitalize">
-                        {{ activity.type }}:
-                        <span class="text-gray-500 dark:text-gray-400 normal-case">
-                          {{ activity.button || activity.page }}
-                        </span>
-                      </p>
-                      <p class="text-2xs text-gray-400 dark:text-gray-500">
-                        {{ formatAbsoluteDateTime(activity.timestamp) }}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div v-else class="text-xs text-gray-500 dark:text-gray-400 italic mt-2">
-                No recent activity for this visitor.
-              </div>
-            </div>
-          </div>
-        </section>
+          <CustomerVisitorActivity
+            :visitorActivity="customerStore.visitorActivity"
+            :isFetchingVisitorActivity="customerStore.isFetchingVisitorActivity"
+            :visitorActivityError="customerStore.visitorActivityError"
+            :websiteId="userStore.currentWebsite"
+            :customerId="route.query.customer_id"
+            @fetch-visitor-activity="fetchVisitorActivity"
+          />
 
         </div>
 

@@ -591,6 +591,25 @@ export const useCustomerStore = defineStore('customer', () => {
       return [];
     }
   }
+
+  /**
+   * Generate AI suggestions for missing customer fields
+   */
+  async function generateFieldSuggestions(websiteId, customerId, missingFields) {
+    if (!websiteId || !customerId) return null;
+    
+    try {
+      const response = await customerService.generateMissingFieldSuggestions(
+        websiteId, 
+        customerId, 
+        missingFields
+      );
+      return response;
+    } catch (error) {
+      console.error('Error generating field suggestions:', error);
+      throw error;
+    }
+  }
   
   return {
     // State
@@ -676,5 +695,8 @@ export const useCustomerStore = defineStore('customer', () => {
     
     // Technician Management
     fetchTechnicians,
+
+    // Generate AI suggestions for missing customer fields
+    generateFieldSuggestions,
   };
 });

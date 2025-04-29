@@ -15,7 +15,8 @@ const emit = defineEmits([
   'open-note-modal', 
   'open-whatsapp-modal', 
   'open-add-job-modal',
-  'reload-data'
+  'reload-data',
+  'ai-book-job'  // Add new emit for AI Job Booking
 ]);
 </script>
 
@@ -54,6 +55,10 @@ const emit = defineEmits([
       </button>
       <button @click="emit('open-whatsapp-modal')" type="button" class="btn-secondary-modern" title="Send WhatsApp">
         <font-awesome-icon :icon="['fab', 'whatsapp']" class="mr-1.5 h-4 w-4" /> WhatsApp
+      </button>
+      <!-- Added AI Job Booking Button -->
+      <button @click="emit('ai-book-job')" type="button" class="btn-secondary-modern bg-purple-600 hover:bg-purple-700 border-purple-700 text-white" title="AI Job Booking">
+        <font-awesome-icon icon="magic" class="mr-1.5 h-4 w-4" /> AI Book Job
       </button>
       <button @click="emit('open-add-job-modal')" class="btn-primary-modern" title="Add New Job"> 
         <font-awesome-icon icon="plus" class="mr-1.5 h-4 w-4" /> Add Job

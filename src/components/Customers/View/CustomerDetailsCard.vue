@@ -11,7 +11,13 @@ const props = defineProps({
     required: true
   },
   isEditing: Boolean,
-  isUpdating: Boolean
+  isUpdating: Boolean,
+  isGeneratingAISuggestions: Boolean,
+  aiSuggestedFields: {
+    type: Object,
+    default: () => ({})
+  },
+  showAISuggestions: Boolean
 });
 
 const emit = defineEmits([
@@ -19,7 +25,10 @@ const emit = defineEmits([
   'cancel-edit', 
   'update-customer', 
   'copy-to-clipboard',
-  'edit-preferred-technician'
+  'edit-preferred-technician',
+  'generate-ai-suggestions',
+  'apply-ai-suggestion',
+  'apply-all-ai-suggestions'
 ]);
 </script>
 
@@ -106,6 +115,37 @@ const emit = defineEmits([
         <label for="edit-name" class="label-modern">Name</label>
         <input type="text" id="edit-name" v-model="editableCustomer.name" required class="input-modern" />
       </div>
+      
+      <!-- AI Suggestions section -->
+      <div v-if="showAISuggestions && Object.keys(aiSuggestedFields).length > 0" class="mt-4 p-3 border border-purple-300 dark:border-purple-700 rounded-lg bg-purple-50 dark:bg-purple-900/20">
+        <div class="flex justify-between items-center mb-2">
+          <h4 class="text-sm font-semibold text-purple-800 dark:text-purple-300">AI Suggested Fields</h4>
+          <button 
+            type="button" 
+            @click="emit('apply-all-ai-suggestions')" 
+            class="text-xs bg-purple-600 hover:bg-purple-700 text-white px-2 py-1 rounded transition-colors"
+          >
+            Apply All
+          </button>
+        </div>
+        
+        <div class="space-y-2 text-sm text-gray-700 dark:text-gray-300">
+          <div v-for="(value, field) in aiSuggestedFields" :key="field" class="flex justify-between items-center p-2 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
+            <div>
+              <span class="font-medium capitalize">{{ field }}: </span>
+              <span>{{ value }}</span>
+            </div>
+            <button 
+              type="button"
+              @click="emit('apply-ai-suggestion', field)"
+              class="text-xs bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-200 dark:hover:bg-indigo-800 px-2 py-1 rounded transition-colors"
+            >
+              Apply
+            </button>
+          </div>
+        </div>
+      </div>
+      
       <div>
         <label for="edit-phone" class="label-modern">Phone</label>
         <input type="tel" id="edit-phone" v-model="editableCustomer.phone" class="input-modern" />
@@ -134,11 +174,22 @@ const emit = defineEmits([
          <label for="edit-foreignID" class="label-modern">Foreign ID</label>
          <input type="text" id="edit-foreignID" v-model="editableCustomer.foreignID" class="input-modern" />
        </div>
-      <div class="flex justify-end space-x-3 pt-2">
-        <button type="button" @click="emit('cancel-edit')" class="btn-secondary-modern">Cancel</button>
-        <button type="submit" class="btn-primary-modern" :disabled="isUpdating">
-          {{ isUpdating ? 'Saving...' : 'Save Changes' }}
+      <div class="flex justify-between items-center pt-2">
+        <button 
+          type="button" 
+          @click="emit('generate-ai-suggestions')" 
+          class="btn-secondary-modern flex items-center"
+          :disabled="isGeneratingAISuggestions"
+        >
+          <font-awesome-icon icon="magic" class="mr-2" :class="{ 'fa-spin': isGeneratingAISuggestions }" />
+          {{ isGeneratingAISuggestions ? 'Generating...' : 'AI Suggestions' }}
         </button>
+        <div class="flex space-x-3 rtl:space-x-reverse">
+          <button type="button" @click="emit('cancel-edit')" class="btn-secondary-modern">Cancel</button>
+          <button type="submit" class="btn-primary-modern" :disabled="isUpdating">
+            {{ isUpdating ? 'Saving...' : 'Save Changes' }}
+          </button>
+        </div>
       </div>
     </form>
   </section>
