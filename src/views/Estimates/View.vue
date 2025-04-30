@@ -1,3 +1,4 @@
+// wibiclick-frontend-vue/src/views/Estimates/View.vue
 <script setup>
   import { Buffer } from 'buffer'
   import FormData from 'form-data';

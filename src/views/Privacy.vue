@@ -1,3 +1,4 @@
+// wibiclick-frontend-vue/src/views/Privacy.vue
 <script setup>
   import Header from "@/components/Header.vue";  
   import { ref } from "vue";

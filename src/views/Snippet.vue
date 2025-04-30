@@ -1,3 +1,4 @@
+// wibiclick-frontend-vue/src/views/Snippet.vue
 <script setup>
   import Header from "@/components/Header.vue";  
   import { useClipboard } from '@vueuse/core'

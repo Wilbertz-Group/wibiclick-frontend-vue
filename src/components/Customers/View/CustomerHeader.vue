@@ -1,3 +1,4 @@
+<!-- wibiclick-frontend-vue/src/components/Customers/View/CustomerHeader.vue -->
 <script setup>
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { formatFullDate, formatRelativeTime } from '@/utils/formatters';

@@ -1,3 +1,4 @@
+// wibiclick-frontend-vue/src/views/Forms/Forms.vue
 <script setup>
 import axios from "axios";
 // import Header from "@/components/Header.vue"; // Removed old header

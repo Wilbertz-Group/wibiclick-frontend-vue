@@ -1,3 +1,4 @@
+// wibiclick-frontend-vue/src/stores/CustomerStore.js
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import customerService from '@/services/customerService';

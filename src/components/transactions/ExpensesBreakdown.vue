@@ -1,3 +1,4 @@
+// wibiclick-frontend-vue/src/components/transactions/ExpensesBreakdown.vue
 <!-- ExpensesBreakdown.vue -->
 <script setup>
 import { computed } from 'vue';

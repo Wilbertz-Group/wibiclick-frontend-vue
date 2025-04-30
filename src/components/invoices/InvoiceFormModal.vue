@@ -1,3 +1,4 @@
+<!-- wibiclick-frontend-vue/src/components/invoices/InvoiceFormModal.vue -->
 <script setup>
 import { Disclosure, DisclosureButton, DisclosurePanel } from '@headlessui/vue' // Added Disclosure
 import { ref, reactive, watch, computed, onMounted, nextTick } from 'vue'; // Added nextTick

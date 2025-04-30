@@ -1,3 +1,4 @@
+// wibiclick-frontend-vue/src/components/transactions/EarningsChart.vue
 <!-- EarningsChart.vue -->
 <script setup>
 import { computed } from 'vue';

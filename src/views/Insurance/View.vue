@@ -1,3 +1,4 @@
+// wibiclick-frontend-vue/src/views/Insurance/View.vue
 <script setup>
   import { Buffer } from 'buffer'
   import imageHolder from '../../helpers/logo.js'

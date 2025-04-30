@@ -1,3 +1,4 @@
+// wibiclick-frontend-vue/src/components/misc/modal.vue
 <script setup>
 	import { ref, watch, onUnmounted } from 'vue' // Added watch and onUnmounted
 	import {

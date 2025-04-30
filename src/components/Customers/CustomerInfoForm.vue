@@ -1,3 +1,4 @@
+<!-- wibiclick-frontend-vue/src/components/Customers/CustomerInfoForm.vue -->
 <script setup>
 import {  ref, watch } from 'vue';
 

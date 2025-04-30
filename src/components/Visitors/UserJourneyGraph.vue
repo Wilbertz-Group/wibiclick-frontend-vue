@@ -1,3 +1,4 @@
+// wibiclick-frontend-vue/src/components/Visitors/UserJourneyGraph.vue
 <template>
   <div class="card-modern p-4">
     <h4 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">User Journey</h4>

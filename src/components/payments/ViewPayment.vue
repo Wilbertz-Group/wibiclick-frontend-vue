@@ -1,3 +1,4 @@
+// wibiclick-frontend-vue/src/components/payments/ViewPayment.vue
 <script setup>
 const props = defineProps(['params'])
 </script>

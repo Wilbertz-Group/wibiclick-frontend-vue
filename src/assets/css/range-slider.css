@@ -1,3 +1,4 @@
+/* wibiclick-frontend-vue/src/assets/css/range-slider.css */
 .range-slider .simple-range-slider .simple-range-slider-bg-bar {
     @apply !h-2 border !rounded border-[#D3D3D3] dark:border-[#253b5c];
 }

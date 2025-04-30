@@ -1,3 +1,4 @@
+// wibiclick-frontend-vue/src/views/Expenses/AddExpense.vue
 <template>
   <Header title="Add a new expense" />
   <scale-loader :loading="loading" color="#23293b" height="50px" class="vld-overlay is-active is-full-page" width="6px">

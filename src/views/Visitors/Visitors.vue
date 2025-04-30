@@ -1,3 +1,4 @@
+// wibiclick-frontend-vue/src/views/Visitors/Visitors.vue
 <script setup>
   import VisitorTrendChart from "@/components/Visitors/VisitorTrendChart.vue";
   import VisitorProfile from "@/components/Visitors/VisitorProfile.vue"; // Import VisitorProfile component

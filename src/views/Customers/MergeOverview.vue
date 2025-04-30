@@ -1,3 +1,4 @@
+// wibiclick-frontend-vue/src/views/Customers/MergeOverview.vue
 <script setup>
 import { ref, onMounted } from 'vue'
 import axios from 'axios'

@@ -1,3 +1,4 @@
+// wibiclick-frontend-vue/src/views/Dashboard.vue
 <script setup>
 import { ref, onMounted, watch, computed, watchEffect, nextTick } from "vue";
 import axios from "axios";

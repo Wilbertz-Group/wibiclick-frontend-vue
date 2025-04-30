@@ -1,3 +1,4 @@
+<!-- wibiclick-frontend-vue/src/components/Customers/RecipientProfileFormModal.vue -->
 <script setup>
 import { ref, reactive, watch, computed } from 'vue';
 import axios from 'axios';

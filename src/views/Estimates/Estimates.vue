@@ -1,3 +1,4 @@
+// wibiclick-frontend-vue/src/views/Estimates/Estimates.vue
 <script setup>
   import axios from "axios";
   import EstimatesTrendChart from "@/components/estimates/EstimatesTrendChart.vue";

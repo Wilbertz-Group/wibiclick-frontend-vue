@@ -1,3 +1,4 @@
+<!-- wibiclick-frontend-vue/src/components/Customers/CustomerCard.vue -->
 <script setup>
 import { useRouter } from 'vue-router';
 import TipTapEditor from '@/components/editor/TipTapEditor.vue'; // Changed import

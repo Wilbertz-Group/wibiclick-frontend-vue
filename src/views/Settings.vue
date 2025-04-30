@@ -1,3 +1,4 @@
+// wibiclick-frontend-vue/src/views/Settings.vue
 <script setup>
 import axios from "axios";
 import { ref } from "vue";

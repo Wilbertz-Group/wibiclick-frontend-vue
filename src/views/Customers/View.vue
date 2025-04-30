@@ -1,3 +1,4 @@
+// wibiclick-frontend-vue/src/views/Customers/View.vue
 <script setup>
 import axios from "axios";
 import { uuid } from 'vue-uuid';

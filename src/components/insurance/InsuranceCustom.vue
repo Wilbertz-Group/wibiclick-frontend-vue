@@ -1,3 +1,4 @@
+<!-- wibiclick-frontend-vue/src/components/insurance/InsuranceCustom.vue -->
 <script setup>
 import axios from "axios";
 import { useToast } from 'vue-toast-notification';

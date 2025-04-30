@@ -1,3 +1,4 @@
+// wibiclick-frontend-vue/src/views/Pages/Pages.vue
 <script setup>
   // import Header from "@/components/Header.vue"; // Removed old header
   import PageInteractionsTrendChart from "@/components/Pages/PageInteractionsTrendChart.vue";

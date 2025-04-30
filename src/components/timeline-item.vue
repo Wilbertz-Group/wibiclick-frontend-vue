@@ -1,3 +1,4 @@
+<!-- wibiclick-frontend-vue/src/components/timeline-item.vue -->
 <script setup>
 import moment from 'moment'
 const props = defineProps(['item', 'buttons'])

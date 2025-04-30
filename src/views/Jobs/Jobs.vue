@@ -1,3 +1,4 @@
+// wibiclick-frontend-vue/src/views/Jobs/Jobs.vue
 <template>
   <!-- Main container with background placeholder and padding -->
   <div class="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-800 dark:text-gray-200 font-sans transition-colors duration-300">

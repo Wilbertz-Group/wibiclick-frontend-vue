@@ -1,3 +1,4 @@
+// wibiclick-frontend-vue/src/components/public/footer.vue
 <script setup>
 	import { useUserStore } from "@/stores/UserStore";
 

@@ -1,3 +1,4 @@
+<!-- wibiclick-frontend-vue/src/components/Customers/ApplianceFormModal.vue -->
 <template>
   <TransitionRoot appear :show="isOpen" as="template">
     <Dialog as="div" @close="closeModal" class="relative z-50">

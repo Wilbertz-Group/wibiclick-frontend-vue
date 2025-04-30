@@ -1,3 +1,4 @@
+<!-- wibiclick-frontend-vue/src/components/insurance/Status.vue -->
 <script setup>
 	const props = defineProps(['params'])
 </script>

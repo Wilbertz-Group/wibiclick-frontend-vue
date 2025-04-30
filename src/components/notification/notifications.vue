@@ -1,3 +1,4 @@
+// wibiclick-frontend-vue/src/components/notification/notifications.vue
 <script setup>
 import axios from "axios";
 import _ from "lodash";

@@ -1,3 +1,4 @@
+<!-- wibiclick-frontend-vue/src/components/Customers/ApplianceCard.vue -->
 <script setup lang="ts">
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { faEdit, faTrashAlt, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons'; // Added warning icon

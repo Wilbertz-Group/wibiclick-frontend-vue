@@ -1,3 +1,4 @@
+<!-- wibiclick-frontend-vue/src/components/employees/View.vue -->
 <script setup>
 	import { useRouter } from "vue-router";
 

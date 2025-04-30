@@ -1,3 +1,4 @@
+// wibiclick-frontend-vue/src/components/line-items/item.vue
 <script setup>
 	const props = defineProps(['item'])
 </script>

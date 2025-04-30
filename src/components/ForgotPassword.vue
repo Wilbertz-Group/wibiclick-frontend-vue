@@ -1,3 +1,4 @@
+<!-- wibiclick-frontend-vue/src/components/ForgotPassword.vue -->
 <script setup>
 import { onMounted, ref } from "vue";
 import { useRoute } from "vue-router";

@@ -1,3 +1,4 @@
+// wibiclick-frontend-vue/src/views/Insurance/Add.vue
 <script setup>
 import axios from "axios";
 import moment from 'moment'

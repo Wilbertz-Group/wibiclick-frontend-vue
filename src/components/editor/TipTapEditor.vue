@@ -1,3 +1,4 @@
+<!-- wibiclick-frontend-vue/src/components/editor/TipTapEditor.vue -->
 <template>
   <div class="tiptap-editor border rounded bg-gray-100 dark:bg-gray-900">
     <div v-if="editor" class="toolbar p-2 border-b bg-gray-100 dark:bg-gray-900 flex space-x-2">

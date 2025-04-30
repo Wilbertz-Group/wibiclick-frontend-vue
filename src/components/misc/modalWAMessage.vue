@@ -1,3 +1,4 @@
+// wibiclick-frontend-vue/src/components/misc/modalWAMessage.vue
 <script setup>
 	import { onMounted, ref, watchEffect } from "vue";
   import {

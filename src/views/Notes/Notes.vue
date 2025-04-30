@@ -1,3 +1,4 @@
+// wibiclick-frontend-vue/src/views/Notes/Notes.vue
 <script setup>
 	import axios from "axios";
 	import moment from 'moment'

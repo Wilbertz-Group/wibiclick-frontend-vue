@@ -1,3 +1,4 @@
+// wibiclick-frontend-vue/src/views/Transactions/TechnicianDashboard.vue
 <script setup>
 import { ref, onMounted, watch, computed, nextTick, watchEffect } from "vue"; // Keep watchEffect if already present
 import axios from "axios";

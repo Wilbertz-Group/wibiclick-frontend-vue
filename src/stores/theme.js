@@ -1,3 +1,4 @@
+// wibiclick-frontend-vue/src/stores/theme.js
 import { defineStore } from 'pinia';
 import { ref, watch, onMounted } from 'vue';
 

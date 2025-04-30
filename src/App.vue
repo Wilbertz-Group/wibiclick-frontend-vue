@@ -1,3 +1,4 @@
+// wibiclick-frontend-vue/src/App.vue
 <script setup>
   import { RouterLink, RouterView } from 'vue-router'
   import { onMounted } from 'vue'; // Import onMounted

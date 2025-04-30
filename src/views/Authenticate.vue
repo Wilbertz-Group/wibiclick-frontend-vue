@@ -1,3 +1,4 @@
+// wibiclick-frontend-vue/src/views/Authenticate.vue
 <template>
 
   <div class="relative py-16 before:absolute before:inset-0 before:w-full before:h-[50%] before:bg-[#101d2d]">

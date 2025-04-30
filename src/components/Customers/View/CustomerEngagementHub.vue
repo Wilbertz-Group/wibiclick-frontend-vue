@@ -1,3 +1,4 @@
+<!-- wibiclick-frontend-vue/src/components/Customers/View/CustomerEngagementHub.vue -->
 <script setup>
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import ScaleLoader from 'vue-spinner/src/ScaleLoader.vue';

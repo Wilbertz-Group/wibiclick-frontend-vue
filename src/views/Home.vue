@@ -1,3 +1,4 @@
+// wibiclick-frontend-vue/src/views/Home.vue
 <script setup>
 import { useRouter } from "vue-router";
 import { useUserStore } from "@/stores/UserStore";

@@ -1,3 +1,4 @@
+<!-- wibiclick-frontend-vue/src/components/Customers/View/CustomerValueSnapshot.vue -->
 <script setup>
 import { computed, onMounted, watch } from 'vue';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';

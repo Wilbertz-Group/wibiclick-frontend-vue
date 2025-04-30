@@ -1,3 +1,4 @@
+// wibiclick-frontend-vue/src/views/payments/EditPayment.vue
 <script setup>
 import axios from "axios";
 import moment from 'moment'

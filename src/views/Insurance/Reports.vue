@@ -1,3 +1,4 @@
+// wibiclick-frontend-vue/src/views/Insurance/Reports.vue
 <script setup>
   import axios from "axios";
   // Removed Header import

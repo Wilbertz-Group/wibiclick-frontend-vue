@@ -1,3 +1,4 @@
+<!-- wibiclick-frontend-vue/src/components/estimates/View.vue -->
 <script setup>
 	const props = defineProps(['params'])
 </script>

@@ -1,3 +1,4 @@
+<!-- wibiclick-frontend-vue/src/components/Customers/View/CustomerCommunicationPrefs.vue -->
 <script setup>
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 

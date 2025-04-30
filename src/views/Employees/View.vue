@@ -1,3 +1,4 @@
+// wibiclick-frontend-vue/src/views/Employees/View.vue
 <script setup>
 import { ref, reactive, computed, onMounted, watch, watchEffect } from 'vue'; // Added watchEffect
 import axios from "axios";

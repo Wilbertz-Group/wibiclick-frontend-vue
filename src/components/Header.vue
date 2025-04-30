@@ -1,3 +1,4 @@
+<!-- wibiclick-frontend-vue/src/components/Header.vue -->
 <template>
 	<header class="bg-white shadow dark:bg-gray-800"> <!-- Added dark mode class -->
       <div class="mx-auto py-6 px-4 sm:px-6 lg:px-10">

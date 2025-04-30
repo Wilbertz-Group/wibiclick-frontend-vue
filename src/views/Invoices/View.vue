@@ -1,3 +1,4 @@
+// wibiclick-frontend-vue/src/views/Invoices/View.vue
 <script setup>
 import imageHolder from '../../helpers/logo.js'
 import { getBase64FromUrl, generateTableRow } from '../../helpers/index.js'

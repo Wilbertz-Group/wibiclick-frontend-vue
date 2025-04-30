@@ -1,3 +1,4 @@
+// wibiclick-frontend-vue/src/composables/usePageDetails.js
 import { ref, watch, onMounted } from "vue";
 import axios from "axios";
 

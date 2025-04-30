@@ -1,3 +1,4 @@
+// wibiclick-frontend-vue/src/views/Invoices/Invoices.vue
 <script setup>
   import axios from "axios";
   import { useUserStore } from "@/stores/UserStore"

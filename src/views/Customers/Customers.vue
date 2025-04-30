@@ -1,3 +1,4 @@
+// wibiclick-frontend-vue/src/views/Customers/Customers.vue
 <script setup>
   import CustomerTrendChart from "@/components/Customers/CustomerTrendChart.vue";
   import { useUserStore } from "@/stores/UserStore"

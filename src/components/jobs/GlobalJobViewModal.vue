@@ -1,3 +1,4 @@
+// wibiclick-frontend-vue/src/components/jobs/GlobalJobViewModal.vue
 <script setup>
 import { useUIStore } from '@/stores/UIStore'; // Adjust path if needed
 import { storeToRefs } from 'pinia';

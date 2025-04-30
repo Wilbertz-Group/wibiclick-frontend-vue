@@ -1,3 +1,4 @@
+<!-- wibiclick-frontend-vue/src/components/Actions.vue -->
 <template>	
 	<div class="flex items-center -space-x-4 hover:space-x-1">
 

@@ -1,3 +1,4 @@
+// wibiclick-frontend-vue/src/views/Transactions/OverviewDashboard.vue
 <template>
   <!-- Main container with background and padding -->
   <div :class="{ 'dark': isDarkMode }" class="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 dark:from-gray-900 dark:via-gray-950 dark:to-blue-950 text-gray-800 dark:text-gray-200 font-sans transition-colors duration-300">

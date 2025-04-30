@@ -1,3 +1,4 @@
+// wibiclick-frontend-vue/src/views/Terms.vue
 <script setup>
   import Header from "@/components/Header.vue";  
   import { ref } from "vue";

@@ -1,3 +1,4 @@
+<!-- wibiclick-frontend-vue/src/components/Customers/View/CustomerRelatedRecords.vue -->
 <script setup>
 import { Disclosure, DisclosureButton, DisclosurePanel } from '@headlessui/vue';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';

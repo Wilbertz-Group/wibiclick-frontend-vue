@@ -1,3 +1,4 @@
+// wibiclick-frontend-vue/src/views/Employees/Employees.vue
 <script setup>
 import axios from "axios";
 import Header from "@/components/Header.vue"; // Keep if still used, or replace with inline header

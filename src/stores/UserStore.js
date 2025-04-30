@@ -1,3 +1,4 @@
+// wibiclick-frontend-vue/src/stores/UserStore.js
 import { defineStore } from "pinia";
 import axios from "axios";
 import { useToast } from "vue-toast-notification";

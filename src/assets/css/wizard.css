@@ -1,3 +1,4 @@
+/* wibiclick-frontend-vue/src/assets/css/wizard.css */
 .vue-form-wizard.text-only .wizard-nav li .stepTitle {
   @apply absolute top-1/2 -translate-y-1/2 !mt-0;
 }

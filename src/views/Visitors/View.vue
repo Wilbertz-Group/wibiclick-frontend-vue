@@ -1,3 +1,4 @@
+// wibiclick-frontend-vue/src/views/Visitors/View.vue
 <script setup>
 import { ref, onMounted, computed, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";

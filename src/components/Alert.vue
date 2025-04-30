@@ -1,3 +1,4 @@
+<!-- wibiclick-frontend-vue/src/components/Alert.vue -->
 <template>
 	<div class="fixed flex h-screen w-full z-50">
 		<div class="mx-auto mt-32">

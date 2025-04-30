@@ -1,3 +1,4 @@
+<!-- wibiclick-frontend-vue/src/components/timeline.vue -->
 <script setup>
 import timelineItem from "@/components/timeline-item.vue";
 const props = defineProps(['items', 'buttons'])

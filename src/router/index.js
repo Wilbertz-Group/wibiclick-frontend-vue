@@ -1,3 +1,4 @@
+// wibiclick-frontend-vue/src/router/index.js
 import { createRouter, createWebHistory } from 'vue-router'
 import Home from '@/views/Home.vue'
 import Dashboard from '@/views/Dashboard.vue'

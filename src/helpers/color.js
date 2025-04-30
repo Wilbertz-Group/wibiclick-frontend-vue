@@ -1,3 +1,4 @@
+// wibiclick-frontend-vue/src/helpers/color.js
 const jobStatusColors = {
 	scheduled: "bg-emerald-400",
 	done: "bg-green-500",

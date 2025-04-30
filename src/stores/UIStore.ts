@@ -1,3 +1,4 @@
+// wibiclick-frontend-vue/src/stores/UIStore.ts
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import axios from 'axios';

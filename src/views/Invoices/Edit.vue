@@ -1,3 +1,4 @@
+// wibiclick-frontend-vue/src/views/Invoices/Edit.vue
 <script setup>
 import imageHolder from '../../helpers/logo.js'
 import axios from "axios";

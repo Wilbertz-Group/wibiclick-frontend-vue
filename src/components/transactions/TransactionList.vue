@@ -1,3 +1,4 @@
+// wibiclick-frontend-vue/src/components/transactions/TransactionList.vue
 <!-- TransactionList.vue -->
 <script setup>
 import { computed } from 'vue';

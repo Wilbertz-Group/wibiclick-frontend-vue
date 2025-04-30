@@ -1,3 +1,4 @@
+<!-- wibiclick-frontend-vue/src/components/AppNav.vue -->
 <script setup>
 import axios from "axios";
 import notifications from "./notification/notifications.vue";

@@ -1,3 +1,4 @@
+<!-- wibiclick-frontend-vue/src/components/estimates/EstimatesTrendChart.vue -->
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue';
 import moment from 'moment';

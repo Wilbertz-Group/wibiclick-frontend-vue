@@ -1,3 +1,4 @@
+<!-- wibiclick-frontend-vue/src/components/Customers/View/CustomerAppliances.vue -->
 <script setup>
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import ApplianceCard from '@/components/Customers/ApplianceCard.vue';

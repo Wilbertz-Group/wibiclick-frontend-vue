@@ -1,3 +1,4 @@
+<!-- wibiclick-frontend-vue/src/components/AISuggestions.vue -->
 <script setup>
 import { ref } from 'vue'
 import axios from 'axios'

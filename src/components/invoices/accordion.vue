@@ -1,3 +1,4 @@
+<!-- wibiclick-frontend-vue/src/components/invoices/accordion.vue -->
 <script setup>
 	import { uuid } from 'vue-uuid';
 	import { onMounted, ref } from 'vue'

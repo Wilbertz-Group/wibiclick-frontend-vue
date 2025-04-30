@@ -1,3 +1,4 @@
+// wibiclick-frontend-vue/src/components/AISuggestions.spec.ts
 import { describe, it, expect, vi, Mocked } from 'vitest'
 import { mount } from '@vue/test-utils'
 import AISuggestions from './AISuggestions.vue'

@@ -1,3 +1,4 @@
+// wibiclick-frontend-vue/src/components/whatsapp/accordion.vue
 <script setup>
 	import { uuid } from 'vue-uuid';
 	import { onMounted } from 'vue'

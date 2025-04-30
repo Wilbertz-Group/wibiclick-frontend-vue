@@ -1,3 +1,4 @@
+<!-- wibiclick-frontend-vue/src/components/KpiCard.vue -->
 <template>
   <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
     <div class="p-5">

@@ -1,3 +1,4 @@
+<!-- wibiclick-frontend-vue/src/components/expenses/ExpenseFormModal.vue -->
 <script setup>
 import { ref, reactive, watch, computed, onMounted } from 'vue';
 import axios from 'axios';

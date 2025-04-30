@@ -1,3 +1,4 @@
+<!-- wibiclick-frontend-vue/src/components/Customers/CustomerActivityTabs.vue -->
 <script setup>
 import { TabGroup, TabList, Tab, TabPanels, TabPanel } from '@headlessui/vue';
 
