@@ -403,7 +403,7 @@ async function createWidget(n) {
 createWidget(document.currentScript.dataset.id)
 
 // Source Attribution Tracking
-async function trackPageVisit(websiteId, visitorId) {
+async function trackPageVisit(websiteId, utk) {
   // Extract UTM parameters, referrer, etc.
   const urlParams = new URLSearchParams(window.location.search);
   const utmSource = urlParams.get('utm_source');
@@ -450,7 +450,7 @@ async function trackPageVisit(websiteId, visitorId) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        visitorId,
+        utk,
         websiteId,
         source,
         sourceDetail,
