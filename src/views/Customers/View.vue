@@ -33,6 +33,7 @@ import accordion from '@/components/whatsapp/accordion.vue'
 import accordionEmail from '@/components/email/accordion.vue'
 import accordionNotes from '@/components/notes/accordion.vue'
 import ScaleLoader from "vue-spinner/src/ScaleLoader.vue";
+import PropertyHistory from '@/components/PropertyHistory.vue';
 
 // Modal component imports
 import JobFormModal from '@/components/jobs/JobFormModal.vue';
@@ -114,6 +115,8 @@ const showTaskModal = ref(false);
 const initialTaskDataForModal = ref({});
 const technicians = ref([]);
 const editableCustomer = ref({});
+// --- PropertyHistory reload key ---
+const propertyHistoryKey = ref('');
 
 // Form and modal state
 const notes = ref('');
@@ -190,6 +193,13 @@ async function fetchCustomerData() {
 
     // Fetch additional data
     await fetchAdditionalData();
+
+    // Update PropertyHistory key after data is fetched
+    if (customerStore.customer?.id) {
+      propertyHistoryKey.value = `${customerStore.customer.id}-${Date.now()}`;
+    } else {
+      propertyHistoryKey.value = `${Date.now()}`;
+    }
   } catch (error) {
     toast.error("Error fetching customer data. Please try again.");
   } finally {
@@ -316,6 +326,7 @@ function reloadTimeline() {
     // Increment keys for accordion components to force re-render
     wkey.value += 1;
     nkey.value += 1;
+    // PropertyHistory key is updated in fetchCustomerData
   });
 }
 
@@ -1018,6 +1029,13 @@ onMounted(() => {
   fetchTechnicians();
 });
 
+// Initialize PropertyHistory key on mount
+watchEffect(() => {
+  if (customerStore.customer?.id) {
+    propertyHistoryKey.value = `${customerStore.customer.id}`;
+  }
+});
+
 // Watch dark mode changes
 watchEffect(() => {
   document.documentElement.classList.toggle('dark', isDarkMode.value);
@@ -1120,9 +1138,18 @@ watchEffect(() => {
             @fetch-visitor-activity="fetchVisitorActivity"
           />
 
+          <!-- Property History -->
+          <PropertyHistory
+            v-if="customerStore.customer"
+            :key="propertyHistoryKey"
+            entityType="Customer"
+            :entityId="customerStore.customer.id"
+          />
+
         </div>
 
-        <div class="lg:col-span-8">
+        <div class="lg:col-span-8">          
+
           <!-- Right Column: Activity Timeline / Tabs -->
           <CustomerActivityTabs
             :activityTabs="activityTabs"

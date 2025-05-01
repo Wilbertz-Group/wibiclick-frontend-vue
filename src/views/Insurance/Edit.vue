@@ -4,7 +4,7 @@ import imageHolder from '../../helpers/logo.js'
 import axios from "axios";
 import moment from 'moment'
 import Header from "@/components/Header.vue";
-import { useUserStore } from "@/stores/UserStore";
+import { useUserStore } from "@/stores/UserStore.js";
 import { onMounted, ref, watchEffect } from "vue";
 import TipTapEditor from "@/components/editor/TipTapEditor.vue"; // Import TipTapEditor
 import { useToast } from "vue-toast-notification";

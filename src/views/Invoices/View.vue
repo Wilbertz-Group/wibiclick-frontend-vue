@@ -5,7 +5,7 @@ import { getBase64FromUrl, generateTableRow } from '../../helpers/index.js'
 import axios from "axios";
 import moment from 'moment'
 import Header from "@/components/Header.vue";
-import { useUserStore } from "@/stores/UserStore";
+import { useUserStore } from "@/stores/UserStore.js";
 import { onMounted, ref, watchEffect } from "vue";
 import { useToast } from "vue-toast-notification";
 import { useRoute, useRouter } from "vue-router";
