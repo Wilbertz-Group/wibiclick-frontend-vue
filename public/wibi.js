@@ -444,7 +444,7 @@ async function trackPageVisit(websiteId, visitorId) {
   
   // Send to backend
   try {
-    await fetch('https://wibi.wilbertzgroup.com/api/track-source', {
+    await fetch('https://wibi.wilbertzgroup.com/api/track/track-source', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
