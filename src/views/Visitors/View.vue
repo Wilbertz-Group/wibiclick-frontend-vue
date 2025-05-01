@@ -6,6 +6,7 @@ import axios from "axios";
 import { useToast } from "vue-toast-notification";
 import { useUserStore } from "@/stores/UserStore";
 import ScaleLoader from "vue-spinner/src/ScaleLoader.vue";
+import VisitorSourceAttribution from "@/components/Visitors/View/VisitorSourceAttribution.vue";
 
 const route = useRoute();
 const router = useRouter();
@@ -350,6 +351,9 @@ async function disassociateCustomer() {
               </div>
             </div>
           </section>
+  
+          <!-- Source Attribution for Visitor -->
+          <VisitorSourceAttribution :visitor-id="visitorId" />
 
           <!-- Customer Association Section -->
           <section class="card-modern p-6">
