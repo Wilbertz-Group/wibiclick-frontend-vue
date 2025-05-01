@@ -65,6 +65,8 @@ async function createWidget(n) {
 					P = await fetch(`https://wibi.wilbertzgroup.com/wibi-options?id=${n}&c=0&pg=${pg}&utk=${utk}`),
 					B = await P.json();
 			localStorage.setItem("wibi_utk", utk);
+// Source attribution tracking
+      trackPageVisit(n, utk);
 			// Mark user as returning if already had utk
 			if (localStorage.getItem("wibi_user_type") !== "returning" && c_utk) {
 				localStorage.setItem("wibi_user_type", "returning");
@@ -400,3 +402,66 @@ async function createWidget(n) {
 }
 createWidget(document.currentScript.dataset.id)
 
+// Source Attribution Tracking
+async function trackPageVisit(websiteId, visitorId) {
+  // Extract UTM parameters, referrer, etc.
+  const urlParams = new URLSearchParams(window.location.search);
+  const utmSource = urlParams.get('utm_source');
+  const utmMedium = urlParams.get('utm_medium');
+  const utmCampaign = urlParams.get('utm_campaign');
+  const utmContent = urlParams.get('utm_content');
+  const utmTerm = urlParams.get('utm_term');
+  
+  // Determine source
+  let source = 'DIRECT_TRAFFIC';
+  let sourceDetail = window.location.hostname;
+  
+  if (document.referrer) {
+    source = 'REFERRAL';
+    try {
+      const referrerUrl = new URL(document.referrer);
+      sourceDetail = referrerUrl.hostname;
+      
+      // Detect if search engine
+      if (['google.com', 'bing.com', 'yahoo.com'].some(se => referrerUrl.hostname.includes(se))) {
+        source = 'ORGANIC_SEARCH';
+      }
+      
+      // Detect if social media
+      if (['facebook.com', 'twitter.com', 'linkedin.com', 'instagram.com'].some(sm => referrerUrl.hostname.includes(sm))) {
+        source = 'SOCIAL_MEDIA';
+      }
+    } catch (e) {
+      // Invalid referrer URL format
+    }
+  }
+  
+  // Override source if UTM parameters exist
+  if (utmSource) {
+    source = utmSource.toUpperCase();
+    sourceDetail = utmSource;
+  }
+  
+  // Send to backend
+  try {
+    await fetch('https://wibi.wilbertzgroup.com/api/track-source', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        visitorId,
+        websiteId,
+        source,
+        sourceDetail,
+        referrer: document.referrer,
+        campaign: utmCampaign,
+        content: utmContent,
+        medium: utmMedium,
+        term: utmTerm
+      }),
+    });
+  } catch (error) {
+    console.error('Error tracking source:', error);
+  }
+}
