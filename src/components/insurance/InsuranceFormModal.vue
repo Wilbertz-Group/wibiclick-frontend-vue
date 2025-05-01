@@ -4,7 +4,7 @@ import { ref, reactive, watch, computed, onMounted } from 'vue';
 import axios from 'axios';
 import moment from 'moment';
 import { useToast } from 'vue-toast-notification';
-import  useUserStore  from "@/stores/UserStore";
+import { useUserStore } from '@/stores/UserStore';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import TipTapEditor from '@/components/editor/TipTapEditor.vue'; // Import TipTapEditor
 import modal from "@/components/misc/modalWAMessage.vue";

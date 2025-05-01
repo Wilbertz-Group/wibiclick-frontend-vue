@@ -2,7 +2,7 @@
 <script setup>
   import axios from "axios";
   import { onMounted, ref } from "vue";
-  import  useUserStore  from "@/stores/UserStore"
+  import { useUserStore } from "@/stores/UserStore"
   import Header from "@/components/Header.vue";
   import Alert from "@/components/Alert.vue";
   import ScaleLoader from 'vue-spinner/src/ScaleLoader.vue'

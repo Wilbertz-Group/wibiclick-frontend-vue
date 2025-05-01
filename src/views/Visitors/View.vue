@@ -4,7 +4,7 @@ import { ref, onMounted, computed, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import axios from "axios";
 import { useToast } from "vue-toast-notification";
-import  useUserStore  from "@/stores/UserStore";
+import { useUserStore } from "@/stores/UserStore";
 import ScaleLoader from "vue-spinner/src/ScaleLoader.vue";
 
 const route = useRoute();

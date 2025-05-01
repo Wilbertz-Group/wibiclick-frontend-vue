@@ -4,7 +4,7 @@ import { ref, onMounted, watch, computed, watchEffect, nextTick } from "vue";
 import axios from "axios";
 import _ from 'lodash';
 import moment from 'moment';
-import  useUserStore  from "@/stores/UserStore";
+import { useUserStore } from "@/stores/UserStore";
 import { storeToRefs } from 'pinia';
 import { useToast } from 'vue-toast-notification';
 import ScaleLoader from "vue-spinner/src/ScaleLoader.vue";

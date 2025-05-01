@@ -3,7 +3,7 @@
 import { ref, reactive, watch, computed } from 'vue';
 import axios from 'axios';
 import { useToast } from 'vue-toast-notification';
-import  useUserStore  from "@/stores/UserStore";
+import { useUserStore } from '@/stores/UserStore';
 
 const props = defineProps({
   modelValue: { // Controls modal visibility (v-model)

@@ -4,7 +4,7 @@ import axios from "axios";
 import { useToast } from 'vue-toast-notification';
 import { watch, ref } from "vue";
 import modal from "../misc/modal.vue"; // Keep if status update modal is needed
-import  useUserStore  from "@/stores/UserStore"
+import { useUserStore } from "@/stores/UserStore"
 import { universalDateFormatter } from '../../helpers';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome' // Added for delete icon
 import { library } from '@fortawesome/fontawesome-svg-core' // Added for delete icon

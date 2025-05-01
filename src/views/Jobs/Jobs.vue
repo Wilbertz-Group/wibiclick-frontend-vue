@@ -374,7 +374,7 @@ import moment from 'moment'
 import Chart from 'chart.js/auto'
 import annotationPlugin from 'chartjs-plugin-annotation'
 import 'chartjs-adapter-moment';
-import  useUserStore  from "@/stores/UserStore"
+import { useUserStore } from '@/stores/UserStore'
 import { useThemeStore } from '@/stores/theme'; // Import the theme store
 import { useToast } from 'vue-toast-notification'
 import ScaleLoader from 'vue-spinner/src/ScaleLoader.vue' // Keep for potential future use?

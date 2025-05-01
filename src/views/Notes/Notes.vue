@@ -5,7 +5,7 @@
 	import { ref, onMounted, computed, watch, nextTick, onUnmounted } from 'vue';
 	import { TransitionRoot, TransitionChild, Dialog, DialogPanel, DialogOverlay } from '@headlessui/vue';
 	import Swal from 'sweetalert2';
-	import  useUserStore  from "@/stores/UserStore";
+	import { useUserStore } from "@/stores/UserStore";
 	import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 	import { library } from '@fortawesome/fontawesome-svg-core';
 	import { faStickyNote, faPlus, faStar, faTag, faEdit, faTrash, faEye, faFilter, faChartLine } from '@fortawesome/free-solid-svg-icons';

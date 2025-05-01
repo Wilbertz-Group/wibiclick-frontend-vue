@@ -31,7 +31,7 @@ import Feedback from '@/views/Feedback.vue'
 import Billing from '@/views/Billing.vue'
 import Settings from '@/views/Settings.vue'
 import Authenticate from '@/views/Authenticate.vue'
-import  useUserStore  from "@/stores/UserStore" 
+import { useUserStore } from "@/stores/UserStore" 
 import Reports from '@/views/Insurance/Reports.vue'
 import AddReport from '@/views/Insurance/Add.vue'
 import ViewReport from '@/views/Insurance/View.vue'

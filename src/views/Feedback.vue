@@ -1,7 +1,7 @@
 // wibiclick-frontend-vue/src/views/Feedback.vue
 <script setup>
   import Header from "@/components/Header.vue";
-  import  useUserStore  from "@/stores/UserStore"
+  import { useUserStore } from "@/stores/UserStore"
   import { onMounted } from "vue";
 
   const userStore = useUserStore();

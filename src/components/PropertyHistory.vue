@@ -144,7 +144,7 @@
 import { ref, onMounted, defineProps, computed } from 'vue';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import axios from 'axios';
-import  useUserStore  from "@/stores/UserStore"
+import { useUserStore } from "@/stores/UserStore"
 
 interface PropertyHistoryItem {
   id: string;

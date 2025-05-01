@@ -5,7 +5,7 @@ import { uuid } from 'vue-uuid';
 import { onMounted, ref, computed, watchEffect, nextTick } from "vue";
 import { useToast } from 'vue-toast-notification';
 import { useRouter, useRoute } from "vue-router";
-import  useUserStore  from "@/stores/UserStore";
+import { useUserStore } from "@/stores/UserStore";
 import { useCustomerStore } from "@/stores/CustomerStore";
 import { tooltips, noteModal, whatsappModal, copyToClipboard } from '../../helpers';
 import {

@@ -4,7 +4,7 @@ import { ref, reactive, computed, onMounted, watch, watchEffect } from 'vue'; //
 import axios from "axios";
 import moment from 'moment-timezone';
 import { useRoute, useRouter } from "vue-router";
-import  useUserStore  from "@/stores/UserStore";
+import { useUserStore } from "@/stores/UserStore";
 import { useUIStore } from '@/stores/UIStore'; // For opening job modal
 import { useToast } from 'vue-toast-notification';
 import ScaleLoader from "vue-spinner/src/ScaleLoader.vue";

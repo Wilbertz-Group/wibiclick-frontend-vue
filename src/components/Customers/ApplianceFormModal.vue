@@ -86,7 +86,7 @@
 import { ref, watch, computed } from 'vue';
 import axios from 'axios';
 import { useToast } from 'vue-toast-notification';
-import  useUserStore  from "@/stores/UserStore"; // Import user store
+import { useUserStore } from '@/stores/UserStore'; // Import user store
 import {
   TransitionRoot,
   TransitionChild,

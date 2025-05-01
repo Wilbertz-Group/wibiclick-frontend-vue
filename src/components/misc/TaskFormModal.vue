@@ -116,7 +116,7 @@ import DatePicker from 'vue-datepicker-next';
 import 'vue-datepicker-next/index.css';
 import 'vue-datepicker-next/locale/en';
 import axios from 'axios'; // Import axios
-import  useUserStore  from "@/stores/UserStore"; // Import user store for websiteId
+import { useUserStore } from "@/stores/UserStore"; // Import user store for websiteId
 
 const userStore = useUserStore();
 

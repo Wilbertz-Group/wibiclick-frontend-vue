@@ -1,7 +1,7 @@
 // wibiclick-frontend-vue/src/views/Invoices/Invoices.vue
 <script setup>
   import axios from "axios";
-  import  useUserStore  from "@/stores/UserStore"
+  import { useUserStore } from "@/stores/UserStore"
   import { onMounted, ref, reactive, watchEffect, computed } from "vue"; // Added computed
   import moment from 'moment'
   // import _ from 'lodash'; // Removed lodash, not needed for basic filtering

@@ -2,7 +2,7 @@
 <script setup>
   import axios from "axios";
   // Removed Header import
-  import  useUserStore  from "@/stores/UserStore"
+  import { useUserStore } from "@/stores/UserStore"
   import { onMounted, ref, reactive, watchEffect, computed, nextTick, watch, h, render } from "vue"; // Added h and render for component rendering
   import moment from 'moment'
   import _ from 'lodash';

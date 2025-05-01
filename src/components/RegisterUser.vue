@@ -2,7 +2,7 @@
 <script setup>
 import { onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
-import  useUserStore  from "@/stores/UserStore"
+import { useUserStore } from "@/stores/UserStore"
 import ScaleLoader from 'vue-spinner/src/ScaleLoader.vue'
 
 const loading = ref(false)

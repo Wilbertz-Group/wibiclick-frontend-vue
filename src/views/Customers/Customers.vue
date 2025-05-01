@@ -1,7 +1,7 @@
 // wibiclick-frontend-vue/src/views/Customers/Customers.vue
 <script setup>
   import CustomerTrendChart from "@/components/Customers/CustomerTrendChart.vue";
-  import  useUserStore  from "@/stores/UserStore"
+  import { useUserStore } from "@/stores/UserStore"
   import { onMounted, ref, reactive, watchEffect, computed, watch } from "vue"; // Added watch
   import moment from 'moment'
   import ScaleLoader from 'vue-spinner/src/ScaleLoader.vue' // Keep for loading state

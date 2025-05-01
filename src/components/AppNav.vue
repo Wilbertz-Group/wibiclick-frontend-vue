@@ -2,7 +2,7 @@
 <script setup>
 import axios from "axios";
 import notifications from "./notification/notifications.vue";
-import  useUserStore  from "@/stores/UserStore"
+import { useUserStore } from "@/stores/UserStore"
 import { useUIStore } from '@/stores/UIStore';
 import { useThemeStore } from '@/stores/theme'; // Import the theme store
 import { useRouter } from 'vue-router'; // Added for search navigation
