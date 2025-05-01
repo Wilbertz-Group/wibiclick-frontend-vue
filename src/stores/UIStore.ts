@@ -2,7 +2,7 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import axios from 'axios';
-import { useUserStore } from './UserStore'; // Adjust path if needed
+import useUserStore from './UserStore'; // Adjust path if needed
 
 export const useUIStore = defineStore('ui', () => {
   const isGlobalJobModalOpen = ref(false);
@@ -10,7 +10,7 @@ export const useUIStore = defineStore('ui', () => {
   const isFetchingJobData = ref(false);
   const userStore = useUserStore(); // Get user store for website ID
 
-  async function openGlobalJobModal(jobId) {
+  async function openGlobalJobModal(jobId: string | number) {
     if (!jobId) return;
     globalJobModalData.value = null; // Clear previous data
     isFetchingJobData.value = true;

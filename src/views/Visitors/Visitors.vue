@@ -4,7 +4,7 @@
   import VisitorProfile from "@/components/Visitors/VisitorProfile.vue"; // Import VisitorProfile component
   import UserJourneyGraph from "@/components/Visitors/UserJourneyGraph.vue"; // Import UserJourneyGraph component
   // import Header from "@/components/Header.vue"; // Removed old header
-  import { useUserStore } from "@/stores/UserStore"
+  import  useUserStore  from "@/stores/UserStore"
   import { onMounted, ref, reactive, watchEffect, computed, watch } from "vue"; // Added computed, watch
   import moment from 'moment'
   import axios from "axios";

@@ -3,7 +3,7 @@
 import axios from "axios";
 import { ref } from "vue";
 import Header from "@/components/Header.vue";
-import { useUserStore } from "@/stores/UserStore"
+import  useUserStore  from "@/stores/UserStore"
 import ScaleLoader from 'vue-spinner/src/ScaleLoader.vue'
 import { useToast } from 'vue-toast-notification';
 import Buttonwidget from "@/components/button_widget.vue";

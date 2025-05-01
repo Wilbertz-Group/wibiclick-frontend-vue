@@ -1,6 +1,6 @@
 <!-- wibiclick-frontend-vue/src/components/button_widget.vue -->
 <script setup>
-import { useUserStore } from "@/stores/UserStore"
+import  useUserStore  from "@/stores/UserStore"
 import { ref } from "vue";
 
 const userStore = useUserStore()

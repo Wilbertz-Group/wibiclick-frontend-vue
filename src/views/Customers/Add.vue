@@ -5,7 +5,7 @@
   import { onMounted, ref } from "vue";
   import { useToast } from 'vue-toast-notification';
   import { useRouter, useRoute } from "vue-router";
-  import { useUserStore } from "@/stores/UserStore"
+  import  useUserStore  from "@/stores/UserStore"
 
   const loading = ref(false)
   const modalOpen = ref(false)

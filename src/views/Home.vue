@@ -1,7 +1,7 @@
 // wibiclick-frontend-vue/src/views/Home.vue
 <script setup>
 import { useRouter } from "vue-router";
-import { useUserStore } from "@/stores/UserStore";
+import  useUserStore  from "@/stores/UserStore";
 import { onMounted } from "vue";
 import Header from "@/components/public/header.vue";
 import Footer from "@/components/public/footer.vue";

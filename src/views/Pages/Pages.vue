@@ -2,7 +2,7 @@
 <script setup>
   // import Header from "@/components/Header.vue"; // Removed old header
   import PageInteractionsTrendChart from "@/components/Pages/PageInteractionsTrendChart.vue";
-  import { useUserStore } from "@/stores/UserStore"
+  import  useUserStore  from "@/stores/UserStore"
   import { onMounted, ref, reactive, watchEffect, computed } from "vue"; // Added computed
   import moment from 'moment'
   import axios from "axios";

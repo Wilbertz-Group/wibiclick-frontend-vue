@@ -2,7 +2,7 @@
 <script setup>
   import Header from "@/components/Header.vue";  
   import { useClipboard } from '@vueuse/core'
-  import { useUserStore } from "@/stores/UserStore"
+  import  useUserStore  from "@/stores/UserStore"
   import { ref } from "vue";
 
   const source = ref()

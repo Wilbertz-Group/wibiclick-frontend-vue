@@ -2,7 +2,7 @@
 <script setup>
 import { ref } from "vue";
 import { useRouter } from "vue-router";
-import { useUserStore } from "@/stores/UserStore";
+import  useUserStore  from "@/stores/UserStore";
 import ScaleLoader from "vue-spinner/src/ScaleLoader.vue";
 import { useToast } from "vue-toast-notification";
 

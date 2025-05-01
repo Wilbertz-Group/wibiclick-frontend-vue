@@ -1,6 +1,6 @@
 // wibiclick-frontend-vue/src/views/Suppliers/Suppliers.vue
 <script setup>
-  import { useUserStore } from "@/stores/UserStore"
+  import  useUserStore  from "@/stores/UserStore"
   import { onMounted, ref, reactive, watchEffect } from "vue";
   import moment from 'moment'
   import ScaleLoader from 'vue-spinner/src/ScaleLoader.vue'

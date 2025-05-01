@@ -4,7 +4,7 @@
   import { onMounted } from 'vue'; // Import onMounted
   import AppNav from '@/components/AppNav.vue'
   import GlobalJobViewModal from '@/components/jobs/GlobalJobViewModal.vue'; // Import the global modal
-  import { useUserStore } from "@/stores/UserStore"
+  import  useUserStore  from "@/stores/UserStore"
   import { useThemeStore } from '@/stores/theme'; // Import the theme store
 
   const userStore = useUserStore()

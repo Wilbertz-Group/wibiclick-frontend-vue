@@ -51,7 +51,7 @@
 <script setup>
 import { onMounted, computed, ref } from "vue";
 import { useRoute } from "vue-router";
-import { useUserStore } from "@/stores/UserStore"
+import  useUserStore  from "@/stores/UserStore"
 import LoginUser from '@/components/LoginUser.vue'
 import RegisterUser from '@/components/RegisterUser.vue'
 import VerifyEmail from "../components/verifyEmail.vue";

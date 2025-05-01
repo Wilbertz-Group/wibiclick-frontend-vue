@@ -2,7 +2,7 @@
 <script setup>
 import axios from "axios";
 // import Header from "@/components/Header.vue"; // Removed old header
-import { useUserStore } from "@/stores/UserStore"
+import  useUserStore  from "@/stores/UserStore"
 import { onMounted, ref, computed, watch, reactive, watchEffect } from "vue"; // Added reactive, watchEffect
 import ScaleLoader from 'vue-spinner/src/ScaleLoader.vue' // Added loader
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome' // Added FontAwesome

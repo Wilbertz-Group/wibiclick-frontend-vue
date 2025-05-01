@@ -6,7 +6,7 @@ import axios from 'axios';
 // PDFDocument and blobStream will be loaded via script tags
 import moment from 'moment';
 import { useToast } from 'vue-toast-notification';
-import { useUserStore } from '@/stores/UserStore';
+import  useUserStore  from "@/stores/UserStore";
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import modal from "@/components/misc/modalWAMessage.vue";
 import imageHolder from '@/helpers/logo.js';

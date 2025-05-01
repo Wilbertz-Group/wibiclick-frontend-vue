@@ -1,6 +1,6 @@
 // wibiclick-frontend-vue/src/components/public/header.vue
 <script setup>
-	import { useUserStore } from "@/stores/UserStore";
+	import  useUserStore  from "@/stores/UserStore";
 
 	const userStore = useUserStore();
 	

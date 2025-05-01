@@ -2,7 +2,7 @@
 <script setup>
   import axios from "axios";
   import Header from "@/components/Header.vue";  
-  import { useUserStore } from "@/stores/UserStore"
+  import  useUserStore  from "@/stores/UserStore"
   import { onMounted, ref, watchEffect } from "vue";
   import { useToast } from 'vue-toast-notification';
   import { useRouter, useRoute } from "vue-router";
