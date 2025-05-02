@@ -6,6 +6,111 @@ async function createWidget(n) {
 			b = "",
 			w = "",
 			v = [];
+	
+	// Tracking queue system
+	const trackingQueue = {
+		queue: [],
+		processing: false,
+		
+		add(request) {
+			this.queue.push(request);
+			this.process();
+		},
+		
+		async process() {
+			if (this.processing || this.queue.length === 0) return;
+			
+			this.processing = true;
+			
+			while (this.queue.length > 0) {
+				const request = this.queue.shift();
+				try {
+					await request();
+				} catch (error) {
+					console.error('Queue processing error:', error);
+				}
+			}
+			
+			this.processing = false;
+		}
+	};
+	
+	// Offline queue system
+	const offlineQueue = {
+		key: 'wibi_offline_queue',
+		
+		add(data) {
+			const queue = JSON.parse(localStorage.getItem(this.key) || '[]');
+			queue.push({
+				...data,
+				timestamp: Date.now()
+			});
+			localStorage.setItem(this.key, JSON.stringify(queue));
+		},
+		
+		async process() {
+			const queue = JSON.parse(localStorage.getItem(this.key) || '[]');
+			if (queue.length === 0) return;
+			
+			const processedItems = [];
+			
+			for (const item of queue) {
+				try {
+					await fetch(item.url, {
+						method: item.method,
+						headers: item.headers,
+						body: JSON.stringify(item.body)
+					});
+					processedItems.push(item);
+				} catch (error) {
+					console.error('Failed to process offline item:', error);
+				}
+			}
+			
+			// Remove processed items
+			const remainingQueue = queue.filter(item => !processedItems.includes(item));
+			localStorage.setItem(this.key, JSON.stringify(remainingQueue));
+		}
+	};
+	
+	// Check online status
+	window.addEventListener('online', () => {
+		offlineQueue.process();
+	});
+	
+	// Enhanced fetch wrapper
+	async function trackingFetch(url, options, retries = 3) {
+		for (let attempt = 1; attempt <= retries; attempt++) {
+			try {
+				if (!navigator.onLine) {
+					throw new Error('Offline');
+				}
+				
+				const response = await fetch(url, options);
+				
+				if (!response.ok && attempt < retries) {
+					await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+					continue;
+				}
+				
+				return response;
+			} catch (error) {
+				if (error.message === 'Offline' || attempt === retries) {
+					// Save to offline queue
+					offlineQueue.add({
+						url,
+						method: options.method,
+						headers: options.headers,
+						body: options.body
+					});
+					throw error;
+				}
+				
+				await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+			}
+		}
+	}
+	
 	// Utility: Push to dataLayer with new schema
 	function pushToDataLayer(eventName, extraFields = {}) {
 		// Get all available identifiers
@@ -37,6 +142,50 @@ async function createWidget(n) {
 		window.dataLayer = window.dataLayer || [];
 		window.dataLayer.push(payload);
 	}
+	
+	// Session Management
+	function initSessionTracking() {
+		const sessionKey = 'wibi_session';
+		const sessionTimeout = 30 * 60 * 1000; // 30 minutes
+		
+		let session = JSON.parse(sessionStorage.getItem(sessionKey) || '{}');
+		const now = Date.now();
+		
+		if (!session.id || now - session.lastActivity > sessionTimeout) {
+			// New session
+			session = {
+				id: generateUUID(),
+				startTime: now,
+				lastActivity: now,
+				pageViews: 1,
+				actions: []
+			};
+		} else {
+			// Existing session
+			session.lastActivity = now;
+			session.pageViews++;
+		}
+		
+		sessionStorage.setItem(sessionKey, JSON.stringify(session));
+		return session;
+	}
+	
+	// Track session actions
+	function trackSessionAction(actionType, actionDetail) {
+		const sessionKey = 'wibi_session';
+		let session = JSON.parse(sessionStorage.getItem(sessionKey) || '{}');
+		
+		if (session.id) {
+			session.actions.push({
+				type: actionType,
+				detail: actionDetail,
+				timestamp: Date.now()
+			});
+			session.lastActivity = Date.now();
+			sessionStorage.setItem(sessionKey, JSON.stringify(session));
+		}
+	}
+	
 	// Idle timer state
 	let idleTimer = null;
 	let idleStart = null;
@@ -45,6 +194,167 @@ async function createWidget(n) {
 	let hoverStart = null;
 	let hoverTimer = null;
 	let lastHoveredOption = null;
+	
+	// Enhanced UTK Management
+	function getConsistentUTK() {
+		// Try localStorage first
+		let utk = localStorage.getItem("wibi_utk");
+		if (utk && utk !== 'undefined' && utk !== 'null') return utk;
+		
+		// Try cookies
+		utk = getCookie("wibi_utk");
+		if (utk && utk !== 'undefined' && utk !== 'null') return utk;
+		
+		// Check if cookies are enabled
+		if (!navigator.cookieEnabled) {
+			console.warn('Cookies are disabled, using sessionStorage as fallback');
+			utk = sessionStorage.getItem("wibi_utk");
+			if (utk) return utk;
+		}
+		
+		// Try HubSpot cookie
+		utk = getCookie("hubspotutk");
+		if (utk && utk !== 'undefined' && utk !== 'null') {
+			localStorage.setItem("wibi_utk", utk);
+			sessionStorage.setItem("wibi_utk", utk);
+			return utk;
+		}
+		
+		// Generate new UUID
+		utk = generateUUID();
+		
+		// Store in all available storage methods
+		try {
+			localStorage.setItem("wibi_utk", utk);
+		} catch (e) {
+			console.warn('localStorage not available');
+		}
+		
+		try {
+			sessionStorage.setItem("wibi_utk", utk);
+		} catch (e) {
+			console.warn('sessionStorage not available');
+		}
+		
+		try {
+			var cookieExpiry = new Date();
+			cookieExpiry.setFullYear(cookieExpiry.getFullYear() + 1);
+			document.cookie = `wibi_utk=${utk}; expires=${cookieExpiry.toUTCString()}; path=/; SameSite=Lax`;
+		} catch (e) {
+			console.warn('cookies not available');
+		}
+		
+		return utk;
+	}
+	
+	// Enhanced Source Detection
+	function detectSource() {
+		const urlParams = new URLSearchParams(window.location.search);
+		const referrer = document.referrer;
+		
+		// Default values
+		let source = 'DIRECT_TRAFFIC';
+		let sourceDetail = window.location.hostname;
+		let medium = 'none';
+		
+		// UTM Parameters take precedence
+		if (urlParams.has('utm_source')) {
+			source = urlParams.get('utm_source').toUpperCase();
+			sourceDetail = urlParams.get('utm_source');
+			medium = urlParams.get('utm_medium') || 'campaign';
+			return { source, sourceDetail, medium };
+		}
+		
+		// Check paid search
+		if (urlParams.has('gclid') || urlParams.has('fbclid') || urlParams.has('msclkid')) {
+			source = 'PAID_SEARCH';
+			sourceDetail = urlParams.has('gclid') ? 'google' : 
+						   urlParams.has('fbclid') ? 'facebook' : 'bing';
+			medium = 'cpc';
+			return { source, sourceDetail, medium };
+		}
+		
+		// Parse referrer
+		if (referrer) {
+			try {
+				const referrerUrl = new URL(referrer);
+				const referrerHost = referrerUrl.hostname.toLowerCase();
+				
+				// Enhanced search engine detection
+				const searchEngines = {
+					'google.': 'ORGANIC_SEARCH',
+					'bing.': 'ORGANIC_SEARCH',
+					'yahoo.': 'ORGANIC_SEARCH',
+					'duckduckgo.': 'ORGANIC_SEARCH',
+					'baidu.': 'ORGANIC_SEARCH',
+					'yandex.': 'ORGANIC_SEARCH',
+					'ecosia.': 'ORGANIC_SEARCH'
+				};
+				
+				// Enhanced social media detection
+				const socialNetworks = {
+					'facebook.': 'SOCIAL_MEDIA',
+					'twitter.': 'SOCIAL_MEDIA',
+					'linkedin.': 'SOCIAL_MEDIA',
+					'instagram.': 'SOCIAL_MEDIA',
+					'pinterest.': 'SOCIAL_MEDIA',
+					'youtube.': 'SOCIAL_MEDIA',
+					'tiktok.': 'SOCIAL_MEDIA',
+					'reddit.': 'SOCIAL_MEDIA',
+					'whatsapp.': 'SOCIAL_MEDIA',
+					't.co': 'SOCIAL_MEDIA', // Twitter shortlinks
+					'fb.me': 'SOCIAL_MEDIA' // Facebook shortlinks
+				};
+				
+				// Email clients
+				const emailClients = {
+					'mail.google.': 'EMAIL',
+					'mail.yahoo.': 'EMAIL',
+					'outlook.': 'EMAIL',
+					'mail.': 'EMAIL' // Generic mail domains
+				};
+				
+				// Check each category
+				for (const [domain, src] of Object.entries(searchEngines)) {
+					if (referrerHost.includes(domain)) {
+						source = src;
+						sourceDetail = referrerHost;
+						medium = 'organic';
+						return { source, sourceDetail, medium };
+					}
+				}
+				
+				for (const [domain, src] of Object.entries(socialNetworks)) {
+					if (referrerHost.includes(domain)) {
+						source = src;
+						sourceDetail = referrerHost;
+						medium = 'social';
+						return { source, sourceDetail, medium };
+					}
+				}
+				
+				for (const [domain, src] of Object.entries(emailClients)) {
+					if (referrerHost.includes(domain)) {
+						source = src;
+						sourceDetail = referrerHost;
+						medium = 'email';
+						return { source, sourceDetail, medium };
+					}
+				}
+				
+				// Default referral
+				source = 'REFERRAL';
+				sourceDetail = referrerHost;
+				medium = 'referral';
+				
+			} catch (e) {
+				console.warn('Invalid referrer URL:', referrer);
+			}
+		}
+		
+		return { source, sourceDetail, medium };
+	}
+	
 	async function run() {
 			var c_utk = localStorage.getItem("wibi_utk") || getCookie("wibi_utk");
 			!c_utk ? c_utk = false : ''
@@ -56,7 +366,11 @@ async function createWidget(n) {
 					(c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
 				);
 			}
-			var utk = c_utk || getCookie("hubspotutk") || generateUUID();
+			
+			// Initialize session tracking
+			const session = initSessionTracking();
+			
+			var utk = getConsistentUTK();
 			// Store UTK in first-party cookie with 1 year expiration
 			var cookieExpiry = new Date();
 			cookieExpiry.setFullYear(cookieExpiry.getFullYear() + 1);
@@ -65,8 +379,11 @@ async function createWidget(n) {
 					P = await fetch(`https://wibi.wilbertzgroup.com/wibi-options?id=${n}&c=0&pg=${pg}&utk=${utk}`),
 					B = await P.json();
 			localStorage.setItem("wibi_utk", utk);
-// Source attribution tracking
-      trackPageVisit(n, utk);
+			
+			// Wait a bit to ensure visitor is created, then track source with queue
+			await new Promise(resolve => setTimeout(resolve, 500));
+			trackingQueue.add(() => trackPageVisit(n, utk));
+			
 			// Mark user as returning if already had utk
 			if (localStorage.getItem("wibi_user_type") !== "returning" && c_utk) {
 				localStorage.setItem("wibi_user_type", "returning");
@@ -80,10 +397,6 @@ async function createWidget(n) {
 					let currentUrl = window.location.href;
 					const urlObj = new URL(currentUrl);
 					let cleanUrl = urlObj.hostname;
-					// If port exists and is not default, add it
-					// if (urlObj.port && urlObj.port !== "80" && urlObj.port !== "443") {
-					// 	cleanUrl += ":" + urlObj.port;
-					// }
 					const apiUrl = `https://wibi.wilbertzgroup.com/api/public/gtm-id?url=${encodeURIComponent(cleanUrl)}`;
 					
 					const response = await fetch(apiUrl);
@@ -204,6 +517,7 @@ async function createWidget(n) {
 					document.getElementById("openButton__label").innerText = `${u}`;
 					// Track widget opened
 					pushToDataLayer("wibi_widget_opened");
+					trackSessionAction("widget_opened", {});
 					// Start idle timer
 					resetIdleTimer();
 				} else {
@@ -213,6 +527,7 @@ async function createWidget(n) {
 					document.getElementById("openButton__label").innerText = `${h}`;
 					// Track widget closed
 					pushToDataLayer("wibi_widget_closed");
+					trackSessionAction("widget_closed", {});
 					clearIdleTimer();
 				}
 			}
@@ -223,6 +538,7 @@ async function createWidget(n) {
 				idleTimer = setTimeout(() => {
 					const idleDuration = Math.round((Date.now() - idleStart) / 1000);
 					pushToDataLayer("wibi_widget_idle", { idle_duration: idleDuration });
+					trackSessionAction("widget_idle", { duration: idleDuration });
 				}, IDLE_TIMEOUT * 1000);
 			}
 			function clearIdleTimer() {
@@ -248,9 +564,14 @@ async function createWidget(n) {
 						form_type: "hubspot",
 						form_fields: formData.map(f => f.name)
 					});
+					trackSessionAction("form_submit", { form_type: "hubspot" });
 					
-					var Q = await fetch(`https://wibi.wilbertzgroup.com/wibi-action?id=${n}&c=3&ic=${msgtxt}&pg=${pg}&utk=${utk}&ph=${phone}&msg=${c}`),
-					Y = await Q.json();
+					trackingQueue.add(async () => {
+						var Q = await trackingFetch(`https://wibi.wilbertzgroup.com/wibi-action?id=${n}&c=3&ic=${msgtxt}&pg=${pg}&utk=${utk}&ph=${phone}&msg=${c}`, {
+							method: 'GET'
+						});
+						var Y = await Q.json();
+					});
 				}
 			});
 
@@ -280,9 +601,7 @@ async function createWidget(n) {
 					else if (text && text.indexOf("book_a_technician") !== -1) contactMethod = "book_a_technician";
 					else if (text && text.indexOf("messageNow") !== -1) contactMethod = "sms";
 					else contactMethod = "custom";
-					// Backend call (preserved)
-					var Q = await fetch(`https://wibi.wilbertzgroup.com/wibi-action?id=${n}&c=3&ic=${text}&pg=${pg}&utk=${utk}`),
-						Y = await Q.json();
+					
 					// GTM granular event
 					pushToDataLayer("wibi_contact_click", {
 						button_label: label,
@@ -292,9 +611,21 @@ async function createWidget(n) {
 					pushToDataLayer("wibi_interaction_start", {
 						interaction_type: contactMethod
 					});
+					trackSessionAction("interaction_start", { type: contactMethod });
+					
+					// Backend call with queue
+					trackingQueue.add(async () => {
+						var Q = await trackingFetch(`https://wibi.wilbertzgroup.com/wibi-action?id=${n}&c=3&ic=${text}&pg=${pg}&utk=${utk}`, {
+							method: 'GET'
+						});
+						var Y = await Q.json();
+					});
+					
 					pushToDataLayer("wibi_interaction_complete", {
 						interaction_type: contactMethod
 					});
+					trackSessionAction("interaction_complete", { type: contactMethod });
+					
 					// Google Ads Conversion Tracking
 					B.gads_track ? trackGoogleAdsConversion(B.gads_id, B.gads_label) : "";
 					function trackGoogleAdsConversion(id, label) {
@@ -402,66 +733,72 @@ async function createWidget(n) {
 }
 createWidget(document.currentScript.dataset.id)
 
-// Source Attribution Tracking
-async function trackPageVisit(websiteId, utk) {
-  // Extract UTM parameters, referrer, etc.
+// Source Attribution Tracking with Enhanced Error Recovery
+async function trackPageVisit(websiteId, utk, retries = 3, delay = 1000) {
+  // Use detectSource function for better source detection
+  const { source, sourceDetail, medium } = detectSource();
+  
+  // Extract UTM parameters for additional tracking
   const urlParams = new URLSearchParams(window.location.search);
-  const utmSource = urlParams.get('utm_source');
-  const utmMedium = urlParams.get('utm_medium');
   const utmCampaign = urlParams.get('utm_campaign');
   const utmContent = urlParams.get('utm_content');
   const utmTerm = urlParams.get('utm_term');
   
-  // Determine source
-  let source = 'DIRECT_TRAFFIC';
-  let sourceDetail = window.location.hostname;
-  
-  if (document.referrer) {
-    source = 'REFERRAL';
+  // Send to backend with retry logic
+  for (let attempt = 1; attempt <= retries; attempt++) {
     try {
-      const referrerUrl = new URL(document.referrer);
-      sourceDetail = referrerUrl.hostname;
+      const response = await trackingFetch('https://wibi.wilbertzgroup.com/api/track/track-source', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          utk,
+          websiteId,
+          source,
+          sourceDetail,
+          referrer: document.referrer,
+          campaign: utmCampaign,
+          content: utmContent,
+          medium: medium,
+          term: utmTerm
+        })
+      });
       
-      // Detect if search engine
-      if (['google.com', 'bing.com', 'yahoo.com'].some(se => referrerUrl.hostname.includes(se))) {
-        source = 'ORGANIC_SEARCH';
+      if (response.ok) {
+        // Track success
+        window.dataLayer = window.dataLayer || [];
+        window.dataLayer.push({
+          event: "wibi_source_attribution",
+          success: true,
+          status: response.status,
+          utk: utk,
+          source: source
+        });
+        return; // Success
       }
       
-      // Detect if social media
-      if (['facebook.com', 'twitter.com', 'linkedin.com', 'instagram.com'].some(sm => referrerUrl.hostname.includes(sm))) {
-        source = 'SOCIAL_MEDIA';
+      if (response.status === 404 && attempt < retries) {
+        // Visitor not found, wait and retry
+        await new Promise(resolve => setTimeout(resolve, delay * attempt));
+        continue;
       }
-    } catch (e) {
-      // Invalid referrer URL format
+      
+      throw new Error(`HTTP error! status: ${response.status}`);
+    } catch (error) {
+      if (attempt === retries) {
+        console.error('Error tracking source after all retries:', error);
+        // Track failure
+        window.dataLayer = window.dataLayer || [];
+        window.dataLayer.push({
+          event: "wibi_source_attribution",
+          success: false,
+          status: error.status || 'error',
+          utk: utk,
+          source: source,
+          error: error.message
+        });
+      }
     }
-  }
-  
-  // Override source if UTM parameters exist
-  if (utmSource) {
-    source = utmSource.toUpperCase();
-    sourceDetail = utmSource;
-  }
-  
-  // Send to backend
-  try {
-    await fetch('https://wibi.wilbertzgroup.com/api/track/track-source', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        utk,
-        websiteId,
-        source,
-        sourceDetail,
-        referrer: document.referrer,
-        campaign: utmCampaign,
-        content: utmContent,
-        medium: utmMedium,
-        term: utmTerm
-      }),
-    });
-  } catch (error) {
-    console.error('Error tracking source:', error);
   }
 }
