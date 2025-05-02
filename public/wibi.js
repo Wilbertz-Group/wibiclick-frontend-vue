@@ -142,6 +142,13 @@ async function createWidget(n) {
 		window.dataLayer = window.dataLayer || [];
 		window.dataLayer.push(payload);
 	}
+
+	// Generate UUID fallback if no UTK exists
+	function generateUUID() {
+		return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
+			(c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+		);
+	}
 	
 	// Session Management
 	function initSessionTracking() {
@@ -360,12 +367,6 @@ async function createWidget(n) {
 			!c_utk ? c_utk = false : ''
 			function checkTime() { var d = new Date(); var hours = d.getHours(); var mins = d.getMinutes(); var day = d.getDay(); return day >= 1 && day <= 5 && hours >= 9 && (hours < 13 || hours === 13 && mins <= 30); }
 			function getCookie(name) { var value = "; " + document.cookie; var parts = value.split("; " + name + "="); if (parts.length == 2) return parts.pop().split(";").shift(); }
-			// Generate UUID fallback if no UTK exists
-			function generateUUID() {
-				return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
-					(c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
-				);
-			}
 			
 			// Initialize session tracking
 			const session = initSessionTracking();
