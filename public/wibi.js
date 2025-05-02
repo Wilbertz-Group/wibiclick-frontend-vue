@@ -254,114 +254,6 @@ async function createWidget(n) {
 		return utk;
 	}
 	
-	// Enhanced Source Detection
-	function detectSource() {
-		const urlParams = new URLSearchParams(window.location.search);
-		const referrer = document.referrer;
-		
-		// Default values
-		let source = 'DIRECT_TRAFFIC';
-		let sourceDetail = window.location.hostname;
-		let medium = 'none';
-		
-		// UTM Parameters take precedence
-		if (urlParams.has('utm_source')) {
-			source = urlParams.get('utm_source').toUpperCase();
-			sourceDetail = urlParams.get('utm_source');
-			medium = urlParams.get('utm_medium') || 'campaign';
-			return { source, sourceDetail, medium };
-		}
-		
-		// Check paid search
-		if (urlParams.has('gclid') || urlParams.has('fbclid') || urlParams.has('msclkid')) {
-			source = 'PAID_SEARCH';
-			sourceDetail = urlParams.has('gclid') ? 'google' : 
-						   urlParams.has('fbclid') ? 'facebook' : 'bing';
-			medium = 'cpc';
-			return { source, sourceDetail, medium };
-		}
-		
-		// Parse referrer
-		if (referrer) {
-			try {
-				const referrerUrl = new URL(referrer);
-				const referrerHost = referrerUrl.hostname.toLowerCase();
-				
-				// Enhanced search engine detection
-				const searchEngines = {
-					'google.': 'ORGANIC_SEARCH',
-					'bing.': 'ORGANIC_SEARCH',
-					'yahoo.': 'ORGANIC_SEARCH',
-					'duckduckgo.': 'ORGANIC_SEARCH',
-					'baidu.': 'ORGANIC_SEARCH',
-					'yandex.': 'ORGANIC_SEARCH',
-					'ecosia.': 'ORGANIC_SEARCH'
-				};
-				
-				// Enhanced social media detection
-				const socialNetworks = {
-					'facebook.': 'SOCIAL_MEDIA',
-					'twitter.': 'SOCIAL_MEDIA',
-					'linkedin.': 'SOCIAL_MEDIA',
-					'instagram.': 'SOCIAL_MEDIA',
-					'pinterest.': 'SOCIAL_MEDIA',
-					'youtube.': 'SOCIAL_MEDIA',
-					'tiktok.': 'SOCIAL_MEDIA',
-					'reddit.': 'SOCIAL_MEDIA',
-					'whatsapp.': 'SOCIAL_MEDIA',
-					't.co': 'SOCIAL_MEDIA', // Twitter shortlinks
-					'fb.me': 'SOCIAL_MEDIA' // Facebook shortlinks
-				};
-				
-				// Email clients
-				const emailClients = {
-					'mail.google.': 'EMAIL',
-					'mail.yahoo.': 'EMAIL',
-					'outlook.': 'EMAIL',
-					'mail.': 'EMAIL' // Generic mail domains
-				};
-				
-				// Check each category
-				for (const [domain, src] of Object.entries(searchEngines)) {
-					if (referrerHost.includes(domain)) {
-						source = src;
-						sourceDetail = referrerHost;
-						medium = 'organic';
-						return { source, sourceDetail, medium };
-					}
-				}
-				
-				for (const [domain, src] of Object.entries(socialNetworks)) {
-					if (referrerHost.includes(domain)) {
-						source = src;
-						sourceDetail = referrerHost;
-						medium = 'social';
-						return { source, sourceDetail, medium };
-					}
-				}
-				
-				for (const [domain, src] of Object.entries(emailClients)) {
-					if (referrerHost.includes(domain)) {
-						source = src;
-						sourceDetail = referrerHost;
-						medium = 'email';
-						return { source, sourceDetail, medium };
-					}
-				}
-				
-				// Default referral
-				source = 'REFERRAL';
-				sourceDetail = referrerHost;
-				medium = 'referral';
-				
-			} catch (e) {
-				console.warn('Invalid referrer URL:', referrer);
-			}
-		}
-		
-		return { source, sourceDetail, medium };
-	}
-	
 	async function run() {
 			var c_utk = localStorage.getItem("wibi_utk") || getCookie("wibi_utk");
 			!c_utk ? c_utk = false : ''
@@ -733,6 +625,114 @@ async function createWidget(n) {
 	run();
 }
 createWidget(document.currentScript.dataset.id)
+
+// Enhanced Source Detection
+function detectSource() {
+	const urlParams = new URLSearchParams(window.location.search);
+	const referrer = document.referrer;
+	
+	// Default values
+	let source = 'DIRECT_TRAFFIC';
+	let sourceDetail = window.location.hostname;
+	let medium = 'none';
+	
+	// UTM Parameters take precedence
+	if (urlParams.has('utm_source')) {
+		source = urlParams.get('utm_source').toUpperCase();
+		sourceDetail = urlParams.get('utm_source');
+		medium = urlParams.get('utm_medium') || 'campaign';
+		return { source, sourceDetail, medium };
+	}
+	
+	// Check paid search
+	if (urlParams.has('gclid') || urlParams.has('fbclid') || urlParams.has('msclkid')) {
+		source = 'PAID_SEARCH';
+		sourceDetail = urlParams.has('gclid') ? 'google' : 
+						 urlParams.has('fbclid') ? 'facebook' : 'bing';
+		medium = 'cpc';
+		return { source, sourceDetail, medium };
+	}
+	
+	// Parse referrer
+	if (referrer) {
+		try {
+			const referrerUrl = new URL(referrer);
+			const referrerHost = referrerUrl.hostname.toLowerCase();
+			
+			// Enhanced search engine detection
+			const searchEngines = {
+				'google.': 'ORGANIC_SEARCH',
+				'bing.': 'ORGANIC_SEARCH',
+				'yahoo.': 'ORGANIC_SEARCH',
+				'duckduckgo.': 'ORGANIC_SEARCH',
+				'baidu.': 'ORGANIC_SEARCH',
+				'yandex.': 'ORGANIC_SEARCH',
+				'ecosia.': 'ORGANIC_SEARCH'
+			};
+			
+			// Enhanced social media detection
+			const socialNetworks = {
+				'facebook.': 'SOCIAL_MEDIA',
+				'twitter.': 'SOCIAL_MEDIA',
+				'linkedin.': 'SOCIAL_MEDIA',
+				'instagram.': 'SOCIAL_MEDIA',
+				'pinterest.': 'SOCIAL_MEDIA',
+				'youtube.': 'SOCIAL_MEDIA',
+				'tiktok.': 'SOCIAL_MEDIA',
+				'reddit.': 'SOCIAL_MEDIA',
+				'whatsapp.': 'SOCIAL_MEDIA',
+				't.co': 'SOCIAL_MEDIA', // Twitter shortlinks
+				'fb.me': 'SOCIAL_MEDIA' // Facebook shortlinks
+			};
+			
+			// Email clients
+			const emailClients = {
+				'mail.google.': 'EMAIL',
+				'mail.yahoo.': 'EMAIL',
+				'outlook.': 'EMAIL',
+				'mail.': 'EMAIL' // Generic mail domains
+			};
+			
+			// Check each category
+			for (const [domain, src] of Object.entries(searchEngines)) {
+				if (referrerHost.includes(domain)) {
+					source = src;
+					sourceDetail = referrerHost;
+					medium = 'organic';
+					return { source, sourceDetail, medium };
+				}
+			}
+			
+			for (const [domain, src] of Object.entries(socialNetworks)) {
+				if (referrerHost.includes(domain)) {
+					source = src;
+					sourceDetail = referrerHost;
+					medium = 'social';
+					return { source, sourceDetail, medium };
+				}
+			}
+			
+			for (const [domain, src] of Object.entries(emailClients)) {
+				if (referrerHost.includes(domain)) {
+					source = src;
+					sourceDetail = referrerHost;
+					medium = 'email';
+					return { source, sourceDetail, medium };
+				}
+			}
+			
+			// Default referral
+			source = 'REFERRAL';
+			sourceDetail = referrerHost;
+			medium = 'referral';
+			
+		} catch (e) {
+			console.warn('Invalid referrer URL:', referrer);
+		}
+	}
+	
+	return { source, sourceDetail, medium };
+}
 
 // Source Attribution Tracking with Enhanced Error Recovery
 async function trackPageVisit(websiteId, utk, retries = 3, delay = 1000) {
