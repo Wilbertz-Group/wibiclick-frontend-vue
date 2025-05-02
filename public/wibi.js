@@ -7,6 +7,13 @@ async function createWidget(n) {
 			w = "",
 			v = [];
 	
+	// Cookie getter utility (moved to top-level for consistent access)
+	function getCookie(name) {
+		var value = "; " + document.cookie;
+		var parts = value.split("; " + name + "=");
+		if (parts.length == 2) return parts.pop().split(";").shift();
+	}
+
 	// Tracking queue system
 	const trackingQueue = {
 		queue: [],
@@ -110,7 +117,77 @@ async function createWidget(n) {
 			}
 		}
 	}
-	
+
+	// Source Attribution Tracking with Enhanced Error Recovery
+	async function trackPageVisit(websiteId, utk, retries = 3, delay = 1000) {
+	  // Use detectSource function for better source detection
+	  const { source, sourceDetail, medium } = detectSource();
+	  
+	  // Extract UTM parameters for additional tracking
+	  const urlParams = new URLSearchParams(window.location.search);
+	  const utmCampaign = urlParams.get('utm_campaign');
+	  const utmContent = urlParams.get('utm_content');
+	  const utmTerm = urlParams.get('utm_term');
+	  
+	  // Send to backend with retry logic
+	  for (let attempt = 1; attempt <= retries; attempt++) {
+	    try {
+	      const response = await trackingFetch('https://wibi.wilbertzgroup.com/api/track/track-source', {
+	        method: 'POST',
+	        headers: {
+	          'Content-Type': 'application/json',
+	        },
+	        body: JSON.stringify({
+	          utk,
+	          websiteId,
+	          source,
+	          sourceDetail,
+	          referrer: document.referrer,
+	          campaign: utmCampaign,
+	          content: utmContent,
+	          medium: medium,
+	          term: utmTerm
+	        })
+	      });
+	      
+	      if (response.ok) {
+	        // Track success
+	        window.dataLayer = window.dataLayer || [];
+	        window.dataLayer.push({
+	          event: "wibi_source_attribution",
+	          success: true,
+	          status: response.status,
+	          utk: utk,
+	          source: source
+	        });
+	        return; // Success
+	      }
+	      
+	      if (response.status === 404 && attempt < retries) {
+	        // Visitor not found, wait and retry
+	        await new Promise(resolve => setTimeout(resolve, delay * attempt));
+	        continue;
+	      }
+	      
+	      throw new Error(`HTTP error! status: ${response.status}`);
+	    } catch (error) {
+	      if (attempt === retries) {
+	        console.error('Error tracking source after all retries:', error);
+	        // Track failure
+	        window.dataLayer = window.dataLayer || [];
+	        window.dataLayer.push({
+	          event: "wibi_source_attribution",
+	          success: false,
+	          status: error.status || 'error',
+	          utk: utk,
+	          source: source,
+	          error: error.message
+	        });
+	      }
+	    }
+	  }
+	}
+
 	// Utility: Push to dataLayer with new schema
 	function pushToDataLayer(eventName, extraFields = {}) {
 		// Get all available identifiers
@@ -258,7 +335,6 @@ async function createWidget(n) {
 			var c_utk = localStorage.getItem("wibi_utk") || getCookie("wibi_utk");
 			!c_utk ? c_utk = false : ''
 			function checkTime() { var d = new Date(); var hours = d.getHours(); var mins = d.getMinutes(); var day = d.getDay(); return day >= 1 && day <= 5 && hours >= 9 && (hours < 13 || hours === 13 && mins <= 30); }
-			function getCookie(name) { var value = "; " + document.cookie; var parts = value.split("; " + name + "="); if (parts.length == 2) return parts.pop().split(";").shift(); }
 			
 			// Initialize session tracking
 			const session = initSessionTracking();
@@ -735,71 +811,3 @@ function detectSource() {
 }
 
 // Source Attribution Tracking with Enhanced Error Recovery
-async function trackPageVisit(websiteId, utk, retries = 3, delay = 1000) {
-  // Use detectSource function for better source detection
-  const { source, sourceDetail, medium } = detectSource();
-  
-  // Extract UTM parameters for additional tracking
-  const urlParams = new URLSearchParams(window.location.search);
-  const utmCampaign = urlParams.get('utm_campaign');
-  const utmContent = urlParams.get('utm_content');
-  const utmTerm = urlParams.get('utm_term');
-  
-  // Send to backend with retry logic
-  for (let attempt = 1; attempt <= retries; attempt++) {
-    try {
-      const response = await trackingFetch('https://wibi.wilbertzgroup.com/api/track/track-source', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          utk,
-          websiteId,
-          source,
-          sourceDetail,
-          referrer: document.referrer,
-          campaign: utmCampaign,
-          content: utmContent,
-          medium: medium,
-          term: utmTerm
-        })
-      });
-      
-      if (response.ok) {
-        // Track success
-        window.dataLayer = window.dataLayer || [];
-        window.dataLayer.push({
-          event: "wibi_source_attribution",
-          success: true,
-          status: response.status,
-          utk: utk,
-          source: source
-        });
-        return; // Success
-      }
-      
-      if (response.status === 404 && attempt < retries) {
-        // Visitor not found, wait and retry
-        await new Promise(resolve => setTimeout(resolve, delay * attempt));
-        continue;
-      }
-      
-      throw new Error(`HTTP error! status: ${response.status}`);
-    } catch (error) {
-      if (attempt === retries) {
-        console.error('Error tracking source after all retries:', error);
-        // Track failure
-        window.dataLayer = window.dataLayer || [];
-        window.dataLayer.push({
-          event: "wibi_source_attribution",
-          success: false,
-          status: error.status || 'error',
-          utk: utk,
-          source: source,
-          error: error.message
-        });
-      }
-    }
-  }
-}
