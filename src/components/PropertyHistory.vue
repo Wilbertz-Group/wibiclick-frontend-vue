@@ -52,17 +52,51 @@
         <p class="text-gray-400 text-sm max-w-xs">There are no changes recorded for this property.</p>
       </div>
 
-      <!-- Timeline -->
+      <!-- Timeline with filters -->
       <div v-else class="relative px-6 py-8">
-        <h3 class="text-white font-semibold text-sm pb-4 uppercase tracking-wide flex items-center">
-          <font-awesome-icon icon="stream" class="mr-2 text-cyan-400" />
-          Change Timeline
-        </h3>
-        <div class="relative">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
+          <h3 class="text-white font-semibold text-sm uppercase tracking-wide flex items-center">
+            <font-awesome-icon icon="stream" class="mr-2 text-cyan-400" />
+            Change Timeline
+          </h3>
+          
+          <!-- Filters -->
+          <div class="flex flex-wrap gap-3">
+            <select
+              v-model="propertyFilter"
+              class="bg-gray-800 border border-cyan-700/30 text-cyan-300 text-sm rounded-md px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+            >
+              <option value="">All Properties</option>
+              <option v-for="prop in uniqueProperties" :key="prop" :value="prop">
+                {{ formatPropertyName(prop) }}
+              </option>
+            </select>
+            
+            <select
+              v-model="sourceTypeFilter"
+              class="bg-gray-800 border border-cyan-700/30 text-cyan-300 text-sm rounded-md px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+            >
+              <option value="all">All Sources</option>
+              <option v-for="source in uniqueSourceTypes" :key="source" :value="source">
+                {{ source }}
+              </option>
+            </select>
+          </div>
+        </div>
+        
+        <!-- Result count -->
+        <div class="text-xs text-gray-400 mb-2">
+          Showing {{ filteredHistory.length }} of {{ sortedHistory.length }} changes
+        </div>
+        
+        <!-- Scrollable timeline container -->
+        <div class="relative max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
           <!-- Vertical line -->
           <div class="absolute left-4 top-0 bottom-0 w-0.5 bg-cyan-700/30"></div>
+          
+          <!-- Timeline items -->
           <div
-            v-for="(item, idx) in sortedHistory"
+            v-for="(item, idx) in filteredHistory"
             :key="item.id"
             class="relative flex items-start group"
           >
@@ -109,7 +143,7 @@
                     class="text-sm text-gray-400"
                   >{{ item.oldValue || '-' }}</span>
                 </div>
-                <font-awesome-icon icon="arrow-right" class="text-cyan-400 text-xs mx-2" />
+                <font-awesome-icon icon="arrow-right" class="text-cyan-400 text-xs mx-2 hidden sm:block" />
                 <div class="flex items-center gap-2">
                   <span class="text-xs text-gray-400">New:</span>
                   <span
@@ -133,6 +167,11 @@
                 <span v-if="item.userId" class="ml-2 text-xs text-gray-400">User ID: {{ item.userId }}</span>
               </div>
             </div>
+          </div>
+          
+          <!-- No results message -->
+          <div v-if="filteredHistory.length === 0" class="text-center py-8 text-gray-400">
+            No changes match your filters
           </div>
         </div>
       </div>
@@ -169,6 +208,8 @@ const history = ref<PropertyHistoryItem[]>([]);
 const loading = ref(true);
 const error = ref<string | null>(null);
 const userStore = useUserStore();
+const propertyFilter = ref('');
+const sourceTypeFilter = ref('all');
 
 const fetchHistory = async () => {
   loading.value = true;
@@ -229,5 +270,66 @@ const sortedHistory = computed(() =>
   [...history.value].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
 );
 
+// Get unique properties for filter dropdown
+const uniqueProperties = computed(() => 
+  [...new Set(history.value.map(item => item.propertyName))].sort()
+);
+
+// Get unique source types for filter dropdown
+const uniqueSourceTypes = computed(() => 
+  [...new Set(history.value.map(item => item.sourceType))].sort()
+);
+
+// Apply filters
+const filteredHistory = computed(() => {
+  let filtered = sortedHistory.value;
+  
+  if (propertyFilter.value) {
+    filtered = filtered.filter(item => 
+      item.propertyName === propertyFilter.value
+    );
+  }
+  
+  if (sourceTypeFilter.value !== 'all') {
+    filtered = filtered.filter(item => 
+      item.sourceType === sourceTypeFilter.value
+    );
+  }
+  
+  return filtered;
+});
+
 onMounted(fetchHistory);
 </script>
+
+<style scoped>
+/* Custom scrollbar styling */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(31, 41, 55, 0.5);
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(6, 182, 212, 0.5);
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(6, 182, 212, 0.7);
+}
+
+/* Firefox scrollbar */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(6, 182, 212, 0.5) rgba(31, 41, 55, 0.5);
+}
+
+/* Smooth scrolling */
+.custom-scrollbar {
+  scroll-behavior: smooth;
+}
+</style>

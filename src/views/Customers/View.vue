@@ -56,7 +56,6 @@ import CustomerAppliances from '@/components/Customers/View/CustomerAppliances.v
 import CustomerRelatedRecords from '@/components/Customers/View/CustomerRelatedRecords.vue';
 import CustomerActivityTabs from '@/components/Customers/View/CustomerActivityTabs.vue';
 import CustomerVisitorActivity from '@/components/Customers/View/CustomerVisitorActivity.vue';
-import CustomerSourceAttribution from '@/components/Customers/View/CustomerSourceAttribution.vue';
 
 // Font Awesome imports
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
@@ -1145,12 +1144,6 @@ watchEffect(() => {
             :key="propertyHistoryKey"
             entityType="Customer"
             :entityId="customerStore.customer.id"
-          />
-
-          <!-- Source Attribution -->
-          <CustomerSourceAttribution
-            v-if="customerStore.customer"
-            :customerId="customerStore.customer.id"
           />
 
         </div>

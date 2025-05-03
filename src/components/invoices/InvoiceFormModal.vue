@@ -388,7 +388,7 @@ const fetchRecipientProfiles = async (customerId) => {
 
   } catch (error) {
     // console.error("Error fetching recipient profiles:", error); // Keep console.error commented for now
-    toast.error("Could not load recipient profiles for this customer.");
+    //toast.error("Could not load recipient profiles for this customer.");
     // Keep profiles empty on error
   } finally {
     isFetchingProfiles.value = false;
