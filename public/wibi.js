@@ -14,6 +14,105 @@ async function createWidget(n) {
 		if (parts.length == 2) return parts.pop().split(";").shift();
 	}
 
+	// Device and browser detection functions
+	function detectDeviceType() {
+		const ua = navigator.userAgent;
+		if (/tablet|ipad|playbook|silk/i.test(ua)) return 'tablet';
+		if (/mobile|iphone|ipod|android|blackberry|opera|mini|windows\sce|palm|smartphone|iemobile/i.test(ua)) return 'mobile';
+		return 'desktop';
+	}
+
+	function detectBrowser() {
+		const ua = navigator.userAgent;
+		let browser = 'Unknown';
+		let version = '';
+		
+		if (ua.indexOf('Firefox') > -1) {
+			browser = 'Firefox';
+			version = ua.match(/Firefox\/([0-9.]+)/)?.[1] || '';
+		} else if (ua.indexOf('SamsungBrowser') > -1) {
+			browser = 'Samsung Browser';
+			version = ua.match(/SamsungBrowser\/([0-9.]+)/)?.[1] || '';
+		} else if (ua.indexOf('Opera') > -1 || ua.indexOf('OPR') > -1) {
+			browser = 'Opera';
+			version = ua.match(/(?:Opera|OPR)\/([0-9.]+)/)?.[1] || '';
+		} else if (ua.indexOf('Trident') > -1) {
+			browser = 'Internet Explorer';
+			version = ua.match(/rv:([0-9.]+)/)?.[1] || '';
+		} else if (ua.indexOf('Edge') > -1) {
+			browser = 'Edge';
+			version = ua.match(/Edge\/([0-9.]+)/)?.[1] || '';
+		} else if (ua.indexOf('Chrome') > -1) {
+			browser = 'Chrome';
+			version = ua.match(/Chrome\/([0-9.]+)/)?.[1] || '';
+		} else if (ua.indexOf('Safari') > -1) {
+			browser = 'Safari';
+			version = ua.match(/Version\/([0-9.]+)/)?.[1] || '';
+		}
+		
+		return { browser, version };
+	}
+
+	function detectOS() {
+		const ua = navigator.userAgent;
+		let os = 'Unknown';
+		let version = '';
+		
+		if (ua.indexOf('Windows NT 10.0') > -1) {
+			os = 'Windows';
+			version = '10';
+		} else if (ua.indexOf('Windows NT 6.3') > -1) {
+			os = 'Windows';
+			version = '8.1';
+		} else if (ua.indexOf('Windows NT 6.2') > -1) {
+			os = 'Windows';
+			version = '8';
+		} else if (ua.indexOf('Windows NT 6.1') > -1) {
+			os = 'Windows';
+			version = '7';
+		} else if (ua.indexOf('Windows NT 6.0') > -1) {
+			os = 'Windows';
+			version = 'Vista';
+		} else if (ua.indexOf('Windows NT 5.1') > -1) {
+			os = 'Windows';
+			version = 'XP';
+		} else if (ua.indexOf('Mac OS X') > -1) {
+			os = 'macOS';
+			version = ua.match(/Mac OS X ([0-9_]+)/)?.[1]?.replace(/_/g, '.') || '';
+		} else if (ua.indexOf('Android') > -1) {
+			os = 'Android';
+			version = ua.match(/Android ([0-9.]+)/)?.[1] || '';
+		} else if (ua.indexOf('iOS') > -1) {
+			os = 'iOS';
+			version = ua.match(/OS ([0-9_]+)/)?.[1]?.replace(/_/g, '.') || '';
+		} else if (ua.indexOf('Linux') > -1) {
+			os = 'Linux';
+		}
+		
+		return { os, version };
+	}
+
+	// Collect all visitor data
+	async function collectVisitorData() {
+		const browserInfo = detectBrowser();
+		const osInfo = detectOS();
+		
+		const data = {
+			device: {
+				type: detectDeviceType(),
+				browser: browserInfo.browser,
+				browserVersion: browserInfo.version,
+				os: osInfo.os,
+				osVersion: osInfo.version,
+				screenResolution: `${window.screen.width}x${window.screen.height}`,
+				language: navigator.language || navigator.userLanguage,
+				timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+			}
+		};
+		
+		return data;
+	}
+
 	// Tracking queue system
 	const trackingQueue = {
 		queue: [],
@@ -121,112 +220,111 @@ async function createWidget(n) {
 
 	// Source Attribution Tracking with Enhanced Error Recovery
 	async function trackPageVisit(websiteId, utk, retries = 3, delay = 1000) {
-	  // Use detectSource function for better source detection
-	  const { source, sourceDetail, medium } = detectSource();
-	  
-	  // Extract UTM parameters for additional tracking
-	  const urlParams = new URLSearchParams(window.location.search);
-	  const utmCampaign = urlParams.get('utm_campaign');
-	  const utmContent = urlParams.get('utm_content');
-	  const utmTerm = urlParams.get('utm_term');
-	  
-	  // Store in local storage as backup
-	  const sourceKey = `wibi_source_${utk}`;
-	  const sourceData = {
-	    utk,
-	    websiteId,
-	    source,
-	    sourceDetail,
-	    referrer: document.referrer,
-	    campaign: utmCampaign,
-	    content: utmContent,
-	    medium: medium,
-	    term: utmTerm,
-	    timestamp: Date.now()
-	  };
-	  
-	  localStorage.setItem(sourceKey, JSON.stringify(sourceData));
-	  
-	  // Send to backend with retry logic
-	  for (let attempt = 1; attempt <= retries; attempt++) {
-	    try {
-	      const response = await trackingFetch('https://wibi.wilbertzgroup.com/api/track/track-source', {
-	        method: 'POST',
-	        headers: {
-	          'Content-Type': 'application/json',
-	        },
-	        body: JSON.stringify(sourceData)
-	      });
-	      
-	      if (response.ok) {
-	        // Remove from local storage on success
-	        localStorage.removeItem(sourceKey);
-	        // Track success
-	        window.dataLayer = window.dataLayer || [];
-	        window.dataLayer.push({
-	          event: "wibi_source_attribution",
-	          success: true,
-	          status: response.status,
-	          utk: utk,
-	          source: source
-	        });
-	        return; // Success
-	      }
-	      
-	      if (response.status === 404 && attempt < retries) {
-	        // Visitor not found, wait and retry
-	        await new Promise(resolve => setTimeout(resolve, delay * attempt));
-	        continue;
-	      }
-	      
-	      throw new Error(`HTTP error! status: ${response.status}`);
-	    } catch (error) {
-	      if (attempt === retries) {
-	        console.error('Error tracking source after all retries:', error);
-	        // Track failure
-	        window.dataLayer = window.dataLayer || [];
-	        window.dataLayer.push({
-	          event: "wibi_source_attribution",
-	          success: false,
-	          status: error.status || 'error',
-	          utk: utk,
-	          source: source,
-	          error: error.message
-	        });
-	      }
-	    }
-	  }
+		const { source, sourceDetail, medium } = detectSource();
+		
+		// Extract UTM parameters for additional tracking
+		const urlParams = new URLSearchParams(window.location.search);
+		const utmCampaign = urlParams.get('utm_campaign');
+		const utmContent = urlParams.get('utm_content');
+		const utmTerm = urlParams.get('utm_term');
+		
+		// Store in local storage as backup
+		const sourceKey = `wibi_source_${utk}`;
+		const sourceData = {
+			utk,
+			websiteId,
+			source,
+			sourceDetail,
+			referrer: document.referrer,
+			campaign: utmCampaign,
+			content: utmContent,
+			medium: medium,
+			term: utmTerm,
+			timestamp: Date.now()
+		};
+		
+		localStorage.setItem(sourceKey, JSON.stringify(sourceData));
+		
+		// Send to backend with retry logic
+		for (let attempt = 1; attempt <= retries; attempt++) {
+			try {
+				const response = await trackingFetch('https://wibi.wilbertzgroup.com/api/track/track-source', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify(sourceData)
+				});
+				
+				if (response.ok) {
+					// Remove from local storage on success
+					localStorage.removeItem(sourceKey);
+					// Track success
+					window.dataLayer = window.dataLayer || [];
+					window.dataLayer.push({
+						event: "wibi_source_attribution",
+						success: true,
+						status: response.status,
+						utk: utk,
+						source: source
+					});
+					return; // Success
+				}
+				
+				if (response.status === 404 && attempt < retries) {
+					// Visitor not found, wait and retry
+					await new Promise(resolve => setTimeout(resolve, delay * attempt));
+					continue;
+				}
+				
+				throw new Error(`HTTP error! status: ${response.status}`);
+			} catch (error) {
+				if (attempt === retries) {
+					console.error('Error tracking source after all retries:', error);
+					// Track failure
+					window.dataLayer = window.dataLayer || [];
+					window.dataLayer.push({
+						event: "wibi_source_attribution",
+						success: false,
+						status: error.status || 'error',
+						utk: utk,
+						source: source,
+						error: error.message
+					});
+				}
+			}
+		}
 	}
 
 	// Process stored source data
 	function processStoredSourceData() {
-	  const keys = Object.keys(localStorage).filter(key => key.startsWith('wibi_source_'));
-	  
-	  keys.forEach(async (key) => {
-	    try {
-	      const data = JSON.parse(localStorage.getItem(key));
-	      
-	      // Only process if data is less than 24 hours old
-	      if (Date.now() - data.timestamp < 24 * 60 * 60 * 1000) {
-	        const response = await trackingFetch('https://wibi.wilbertzgroup.com/api/track/track-source', {
-	          method: 'POST',
-	          headers: {
-	            'Content-Type': 'application/json',
-	          },
-	          body: JSON.stringify(data)
-	        });
-	        
-	        if (response.ok) {
-	          localStorage.removeItem(key);
-	        }
-	      } else {
-	        // Remove old data
-	        localStorage.removeItem(key);
-	      }
-	    } catch (e) {
-	      console.error('Error processing stored source data:', e);
-	    }
-	  });
+		const keys = Object.keys(localStorage).filter(key => key.startsWith('wibi_source_'));
+		
+		keys.forEach(async (key) => {
+			try {
+				const data = JSON.parse(localStorage.getItem(key));
+				
+				// Only process if data is less than 24 hours old
+				if (Date.now() - data.timestamp < 24 * 60 * 60 * 1000) {
+					const response = await trackingFetch('https://wibi.wilbertzgroup.com/api/track/track-source', {
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/json',
+						},
+						body: JSON.stringify(data)
+					});
+					
+					if (response.ok) {
+						localStorage.removeItem(key);
+					}
+				} else {
+					// Remove old data
+					localStorage.removeItem(key);
+				}
+			} catch (e) {
+				console.error('Error processing stored source data:', e);
+			}
+		});
 	}
 
 	// Utility: Push to dataLayer with new schema
@@ -401,8 +499,16 @@ async function createWidget(n) {
 				term: urlParams.get('utm_term')
 			};
 			
+			// Collect enhanced visitor data
+			const visitorData = await collectVisitorData();
+			
+			// Include client data in the request
+			const clientData = {
+				screenResolution: visitorData.device.screenResolution
+			};
+			
 			pg = window.location.href,
-			P = await fetch(`https://wibi.wilbertzgroup.com/wibi-options?id=${n}&c=0&pg=${pg}&utk=${utk}&source=${encodeURIComponent(JSON.stringify(sourceData))}`),
+			P = await fetch(`https://wibi.wilbertzgroup.com/wibi-options?id=${n}&c=0&pg=${pg}&utk=${utk}&source=${encodeURIComponent(JSON.stringify(sourceData))}&clientData=${encodeURIComponent(JSON.stringify(clientData))}`),
 			B = await P.json();
 			localStorage.setItem("wibi_utk", utk);
 			
@@ -489,6 +595,29 @@ async function createWidget(n) {
 				!gtmAlreadyInstalled(gtm_container_id)
 			) {
 				injectGTM(gtm_container_id);
+				
+				// Push enhanced visitor data to dataLayer
+				window.dataLayer = window.dataLayer || [];
+				window.dataLayer.push({
+					event: 'wibi_visitor_data',
+					visitor_info: {
+						device_type: visitorData.device.type,
+						browser: visitorData.device.browser,
+						browser_version: visitorData.device.browserVersion,
+						os: visitorData.device.os,
+						os_version: visitorData.device.osVersion,
+						screen_resolution: visitorData.device.screenResolution,
+						language: visitorData.device.language,
+						timezone: visitorData.device.timezone
+					},
+					source_info: {
+						source: sourceData.source,
+						source_detail: sourceData.sourceDetail,
+						medium: sourceData.medium,
+						campaign: sourceData.campaign,
+						referrer: sourceData.referrer
+					}
+				});
 			}
 			// --- GTM Injection Logic End ---
 
@@ -542,7 +671,10 @@ async function createWidget(n) {
 					document.getElementById("openButton__phoneIcon").style.display = "none";
 					document.getElementById("openButton__label").innerText = `${u}`;
 					// Track widget opened
-					pushToDataLayer("wibi_widget_opened");
+					pushToDataLayer("wibi_widget_opened", {
+						visitor_device: visitorData.device.type,
+						visitor_browser: visitorData.device.browser
+					});
 					trackSessionAction("widget_opened", {});
 					// Start idle timer
 					resetIdleTimer();
@@ -552,7 +684,10 @@ async function createWidget(n) {
 					document.getElementById("openButton__phoneIcon").style.display = "block";
 					document.getElementById("openButton__label").innerText = `${h}`;
 					// Track widget closed
-					pushToDataLayer("wibi_widget_closed");
+					pushToDataLayer("wibi_widget_closed", {
+						visitor_device: visitorData.device.type,
+						visitor_browser: visitorData.device.browser
+					});
 					trackSessionAction("widget_closed", {});
 					clearIdleTimer();
 				}
@@ -754,6 +889,9 @@ async function createWidget(n) {
 			// Idle timer reset on interaction
 			document.getElementById("myForm").addEventListener("mousemove", resetIdleTimer);
 			document.getElementById("myForm").addEventListener("keydown", resetIdleTimer);
+
+			// Process stored source data on load
+			window.addEventListener('load', processStoredSourceData);
 		}
 	run();
 	
@@ -762,7 +900,7 @@ async function createWidget(n) {
 }
 createWidget(document.currentScript.dataset.id)
 
-// Enhanced Source Detection
+// Enhanced Source Detection (remains the same)
 function detectSource() {
 	const urlParams = new URLSearchParams(window.location.search);
 	const referrer = document.referrer;
