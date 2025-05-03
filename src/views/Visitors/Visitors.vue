@@ -1,142 +1,48 @@
-// wibiclick-frontend-vue/src/views/Visitors/Visitors.vue
 <script setup>
   import VisitorTrendChart from "@/components/Visitors/VisitorTrendChart.vue";
-  import VisitorProfile from "@/components/Visitors/VisitorProfile.vue"; // Import VisitorProfile component
-  import UserJourneyGraph from "@/components/Visitors/UserJourneyGraph.vue"; // Import UserJourneyGraph component
-  // import Header from "@/components/Header.vue"; // Removed old header
   import { useUserStore } from "@/stores/UserStore"
-  import { onMounted, ref, reactive, watchEffect, computed, watch } from "vue"; // Added computed, watch
+  import { onMounted, ref, reactive, watchEffect, computed, watch } from "vue";
   import moment from 'moment'
   import axios from "axios";
-  import _ from 'lodash'; // Keep lodash for chart data processing
+  import _ from 'lodash';
   import { useToast } from 'vue-toast-notification';
-  import ScaleLoader from 'vue-spinner/src/ScaleLoader.vue' // Added ScaleLoader
-  import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome' // Added FontAwesome
-  import { library } from '@fortawesome/fontawesome-svg-core' // Added FontAwesome library
+  import ScaleLoader from 'vue-spinner/src/ScaleLoader.vue'
+  import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+  import { library } from '@fortawesome/fontawesome-svg-core'
   import {
-    faSun, faMoon, faSync, faUsers, faSearch, // Added icons (using faUsers for visitors)
-    faChevronLeft, faChevronRight // Added pagination icons
+    faSun, faMoon, faSync, faUsers, faSearch, faFilter,
+    faChevronLeft, faChevronRight, faExternalLinkAlt, faUserCheck,
+    faChartLine, faPercentage, faUserClock, faMapMarkerAlt, faGlobe,
+    faExclamationTriangle, faTimes, faClock
   } from '@fortawesome/free-solid-svg-icons'
 
-  // --- Customer Association State ---
-  const customerSearchTerm = ref("");
-  const customerSearchResults = ref([]);
-  const selectedCustomer = ref(null);
-  const isSearchingCustomers = ref(false);
-  const isAssociatingCustomer = ref(false);
-
-  // Debounced customer search
-  const debouncedSearchCustomers = _.debounce(async (term) => {
-    if (!term || term.length < 2) {
-      customerSearchResults.value = [];
-      return;
-    }
-    isSearchingCustomers.value = true;
-    try {
-      const res = await axios.get(`/api/customers/search?q=${encodeURIComponent(term)}`);
-      customerSearchResults.value = res.data;
-    } catch (err) {
-      customerSearchResults.value = [];
-    } finally {
-      isSearchingCustomers.value = false;
-    }
-  }, 350);
-
-  watch(customerSearchTerm, (val) => {
-    debouncedSearchCustomers(val);
-  });
-
-  function handleCustomerSelected(customer) {
-    selectedCustomer.value = customer;
-  }
-
-  async function associateVisitorWithCustomer() {
-    if (!selectedVisitorProfile.value?.visitorId || !selectedCustomer.value?.id) return;
-    isAssociatingCustomer.value = true;
-    try {
-      await axios.post(`/api/analytics/visitors/${selectedVisitorProfile.value.visitorId}/associate`, {
-        customerId: selectedCustomer.value.id
-      });
-      toast.success("Visitor associated with customer!");
-      // Refresh visitor details to show new association
-      await fetchVisitorDetails(selectedVisitorProfile.value.visitorId);
-      // Reset search state
-      customerSearchTerm.value = "";
-      customerSearchResults.value = [];
-      selectedCustomer.value = null;
-    } catch (err) {
-      toast.error("Failed to associate visitor with customer.");
-    } finally {
-      isAssociatingCustomer.value = false;
-    }
-  }
-
-  // Removed AG Grid imports
-  // import { AgGridVue } from "ag-grid-vue3";
-  // import "ag-grid-community/styles/ag-grid.css";
-  // import "ag-grid-community/styles/ag-theme-alpine.css";
-
   const userStore = useUserStore()
-  const paginationPageSize = ref(15) // Adjusted page size
-
-  // const visitorsNode = ref(null) // Removed unused ref
+  const paginationPageSize = ref(15)
   const toast = useToast();
   const loading = ref(false);
-  const options = ref(); // Keep chart options
-  const series = ref(); // Keep chart series
-  const isDarkMode = ref(localStorage.getItem('darkMode') === 'true'); // Added dark mode state
-  const currentPage = ref(1); // Added pagination state
-  const visitors = ref([]); // Added state for visitor list
-  const selectedVisitorId = ref(null); // Added state for selected visitor ID
-  const selectedVisitorProfile = ref(null); // Added state for selected visitor profile
-  const selectedVisitorJourney = ref(null); // Added state for selected visitor journey
-  const showVisitorDetailsModal = ref(false); // Added state for modal visibility
-  const combinedUserJourney = ref([]); // Added state for combined user journey
+  const options = ref();
+  const series = ref();
+  const isDarkMode = ref(localStorage.getItem('darkMode') === 'true');
+  const currentPage = ref(1);
+  const visitors = ref([]);
+  const detailedVisitorData = ref([]); // Store detailed visitor data for accurate stats
 
-  library.add( // Added FontAwesome library setup
-    faSun, faMoon, faSync, faUsers, faSearch,
-    faChevronLeft, faChevronRight
+  library.add(
+    faSun, faMoon, faSync, faUsers, faSearch, faFilter,
+    faChevronLeft, faChevronRight, faExternalLinkAlt, faUserCheck,
+    faChartLine, faPercentage, faUserClock, faMapMarkerAlt, faGlobe,
+    faExclamationTriangle, faTimes, faClock
   )
 
-  options.value = {
-    chart: {
-      height: 350,
-      type: 'bar'
-    },
-    dataLabels: {
-      enabled: false
-    },
-    stroke: {
-      curve: 'smooth'
-    },
-    xaxis: {
-      type: 'datetime',
-      labels: {
-      datetimeUTC: false
-    },
-      categories: []
-    },
-    tooltip: {
-      x: {
-        format: 'dd MMM yyyy'
-      },
-    },
-  },
+  // Add filters reactive object
+  const filters = reactive({
+    search: '',
+    hasCustomer: 'all', // 'all', 'yes', 'no'
+    deviceType: 'all', // 'all', 'desktop', 'mobile', 'tablet'
+    timeRange: '7d', // '24h', '7d', '30d', 'all'
+  });
 
-  series.value = [{
-      name: 'visitors',
-      data: []
-  }]
- 
-  // Removed unused groups variable (Confirmed removal)
- 
-  // Removed AG Grid specific variables and functions
-  // const gridApi = ref(null);
-  // const onGridReady = (params) => { ... };
-  // const rowData = reactive({});
- 
-  // Keep dateFormatter, but adapt if needed for new display format
-  // Always show full date and time in a human-readable format
+  // Enhanced date formatter
   const dateFormatter = (dateString) => {
     if (!dateString) return '-';
     const dt = moment(dateString);
@@ -149,220 +55,155 @@
     return dt.format('MMM DD, YYYY, h:mm A');
   }
 
-  // Removed columnDefs and defaultColDef
-
-  // Add filters reactive object
-  const filters = reactive({
-    search: '',
-    // Add other filters if needed (e.g., date range)
+  // Apply time range filter
+  const timeFilteredVisitors = computed(() => {
+    if (filters.timeRange === 'all') return visitors.value;
+    
+    const now = moment();
+    let cutoffDate;
+    
+    switch (filters.timeRange) {
+      case '24h':
+        cutoffDate = now.subtract(24, 'hours');
+        break;
+      case '7d':
+        cutoffDate = now.subtract(7, 'days');
+        break;
+      case '30d':
+        cutoffDate = now.subtract(30, 'days');
+        break;
+      default:
+        cutoffDate = now.subtract(7, 'days');
+    }
+    
+    return visitors.value.filter(visitor => 
+      moment(visitor.createdAt).isAfter(cutoffDate)
+    );
   });
 
-   // Add computed properties for filtering and pagination
-   const filteredVisitors = computed(() => {
-     return visitors.value.filter(visitor => {
-       const searchLower = filters.search.toLowerCase();
-       const matchesSearch = !searchLower ||
-                            (visitor.page?.url?.toLowerCase().includes(searchLower)); // Search by page URL
-       // Add other filter conditions here
-       return matchesSearch;
-     });
-   });
+  // Enhanced computed properties for filtering and pagination
+  const filteredVisitors = computed(() => {
+    return timeFilteredVisitors.value.filter(visitor => {
+      const searchLower = filters.search.toLowerCase();
+      
+      // Search filter - check all possible location fields
+      const matchesSearch = !searchLower || 
+        visitor.id?.toLowerCase().includes(searchLower) ||
+        visitor.page?.url?.toLowerCase().includes(searchLower) ||
+        visitor.customer?.name?.toLowerCase().includes(searchLower) ||
+        visitor.country?.toLowerCase().includes(searchLower) ||
+        visitor.city?.toLowerCase().includes(searchLower) ||
+        visitor.region?.toLowerCase().includes(searchLower) ||
+        visitor.location?.toLowerCase().includes(searchLower);
+      
+      // Customer filter
+      const matchesCustomer = filters.hasCustomer === 'all' ||
+        (filters.hasCustomer === 'yes' && visitor.customer) ||
+        (filters.hasCustomer === 'no' && !visitor.customer);
+      
+      // Device type filter (if available in data)
+      const matchesDevice = filters.deviceType === 'all' ||
+        visitor.deviceType === filters.deviceType;
+      
+      return matchesSearch && matchesCustomer && matchesDevice;
+    });
+  });
 
-   const totalVisitors = computed(() => filteredVisitors.value.length);
-   const totalPages = computed(() => Math.ceil(totalVisitors.value / paginationPageSize.value));
-   const startIndex = computed(() => (currentPage.value - 1) * paginationPageSize.value);
-   const endIndex = computed(() => Math.min(startIndex.value + paginationPageSize.value, totalVisitors.value));
+  const totalVisitors = computed(() => filteredVisitors.value.length);
+  const totalPages = computed(() => Math.ceil(totalVisitors.value / paginationPageSize.value));
+  const startIndex = computed(() => (currentPage.value - 1) * paginationPageSize.value);
+  const endIndex = computed(() => Math.min(startIndex.value + paginationPageSize.value, totalVisitors.value));
 
-   // Professional/insightful stats
-   const convertedVisitors = computed(() =>
-     filteredVisitors.value.filter(v => v.customer && v.customer.name).length
-   );
-   const conversionRate = computed(() =>
-     totalVisitors.value > 0 ? ((convertedVisitors.value / totalVisitors.value) * 100).toFixed(1) : "0.0"
-   );
-   // A returning visitor has more than one session recorded.
-   // Assuming the visitor object from the main list fetch has a 'sessionCount' property.
-   const returningVisitors = computed(() =>
-     filteredVisitors.value.filter(v => v.sessionCount && v.sessionCount > 1).length
-   );
+  // Accurate statistics calculation
+  const visitorStats = computed(() => {
+    const filtered = filteredVisitors.value;
+    const converted = filtered.filter(v => v.customer).length;
+    const total = filtered.length;
+    
+    // Count returning visitors (those who appear in multiple sessions)
+    const visitorsByUTK = {};
+    filtered.forEach(v => {
+      if (v.utk) {
+        visitorsByUTK[v.utk] = (visitorsByUTK[v.utk] || 0) + 1;
+      }
+    });
+    
+    const returning = Object.values(visitorsByUTK).filter(count => count > 1).length;
+    
+    // Count unique locations - check multiple possible fields for country/city data
+    const countries = new Set();
+    const cities = new Set();
+    
+    filtered.forEach(v => {
+      // Check for country in various possible locations
+      const country = v.country || v.location?.country || null;
+      const city = v.city || v.location?.city || null;
+      
+      if (country) countries.add(country);
+      if (city) cities.add(city);
+    });
+    
+    return {
+      total,
+      converted,
+      conversionRate: total > 0 ? ((converted / total) * 100).toFixed(1) : "0.0",
+      returning,
+      returningRate: total > 0 ? ((returning / total) * 100).toFixed(1) : "0.0",
+      uniqueCountries: countries.size,
+      uniqueCities: cities.size
+    };
+  });
 
-   // Enhance each visitor with computed fields for table display
-   const enhancedVisitors = computed(() =>
-     paginatedVisitors.value.map(v => {
-       const isConverted = !!(v.customer && v.customer.name);
-       const associatedCustomer = isConverted ? v.customer.name : null;
-       const firstSeen = v.createdAt ? dateFormatter(v.createdAt) : "-";
-       const lastCommunication = v.lastCommunication
-         ? dateFormatter(v.lastCommunication)
-         : "-";
-       // Check based on sessionCount property from the main list data
-       const isReturning = v.sessionCount && v.sessionCount > 1;
-       return {
-         ...v,
-         isConverted,
-         associatedCustomer,
-         firstSeen,
-         lastCommunication,
-         isReturning
-       };
-     })
-   );
+  // Enhanced visitors with computed fields
+  const enhancedVisitors = computed(() =>
+    paginatedVisitors.value.map(v => ({
+      ...v,
+      isConverted: !!v.customer,
+      associatedCustomer: v.customer?.name || null,
+      lastSeen: v.updatedAt ? dateFormatter(v.updatedAt) : "-",
+      location: [
+        v.city || v.location?.city,
+        v.region || v.location?.region, 
+        v.country || v.location?.country
+      ].filter(Boolean).join(', ') || 'Unknown',
+      deviceInfo: v.deviceType || 'Unknown',
+      hasMergeSuggestions: v.possibleContactSuggestions?.length > 0
+    }))
+  );
 
-   const paginatedVisitors = computed(() => {
-     return filteredVisitors.value.slice(startIndex.value, endIndex.value);
-   });
+  const paginatedVisitors = computed(() => {
+    return filteredVisitors.value.slice(startIndex.value, endIndex.value);
+  });
 
-   // Add pagination functions
-   const prevPage = () => {
-     if (currentPage.value > 1) currentPage.value--;
-   }
-   const nextPage = () => {
-     if (currentPage.value < totalPages.value) currentPage.value++;
-   }
+  // Pagination functions
+  const prevPage = () => {
+    if (currentPage.value > 1) currentPage.value--;
+  }
+  
+  const nextPage = () => {
+    if (currentPage.value < totalPages.value) currentPage.value++;
+  }
 
-   // Add clearFilters function
-   const clearFilters = () => {
-     filters.search = '';
-     // Reset other filters
-   }
- 
-   // Function to fetch detailed visitor data
-   async function fetchVisitorDetails(visitorId) {
-     try {
-       loading.value = true;
-       const response = await axios.get(`/api/analytics/visitors/${visitorId}/history`);
-       const data = response.data;
+  // Clear filters function
+  const clearFilters = () => {
+    filters.search = '';
+    filters.hasCustomer = 'all';
+    filters.deviceType = 'all';
+    filters.timeRange = '7d';
+    currentPage.value = 1;
+  }
 
-       // Calculate derived fields
-       let firstSeen = null;
-       let lastSeen = null;
-       let totalEvents = 0;
+  async function fetchVisitors() {
+    try {
+      loading.value = true;
+      const response = await axios.get(
+        `visitors?id=${userStore.currentWebsite}&limit=1500&offset=0`
+      );
 
-       if (data.sessions && data.sessions.length > 0) {
-         // Find the earliest startedAt for First Seen
-         firstSeen = data.sessions.reduce((earliest, session) => {
-           const sessionStartedAt = new Date(session.startedAt);
-           return earliest === null || sessionStartedAt < earliest ? sessionStartedAt : earliest;
-         }, null);
-
-         // Find the latest lastActivityAt for Last Seen
-         lastSeen = data.sessions.reduce((latest, session) => {
-           const sessionLastActivityAt = new Date(session.lastActivityAt);
-           return latest === null || sessionLastActivityAt > latest ? sessionLastActivityAt : latest;
-         }, null);
-
-         // Calculate total events
-         totalEvents = data.sessions.reduce((sum, session) => sum + (session.events ? session.events.length : 0), 0);
-       }
-
-       // Prepare customer details if present
-       let customerDetails = null;
-       if (data.customer) {
-         customerDetails = {
-           id: data.customer.id,
-           name: data.customer.name,
-           email: data.customer.email,
-           phone: data.customer.phone,
-           address: data.customer.address,
-           createdAt: data.customer.createdAt
-         };
-       }
-
-       // Prepare clicks
-       let clicks = [];
-       if (data.clicks && Array.isArray(data.clicks)) {
-         clicks = data.clicks;
-       }
-
-       // Prepare communications: sort by date descending, take 5 most recent, and format for display
-       let communications = [];
-       if (data.communications && Array.isArray(data.communications)) {
-         communications = [...data.communications]
-           .sort((a, b) => {
-             // Prefer createdAt, fallback to messageTimestamp
-             const aTime = new Date(a.createdAt || a.messageTimestamp).getTime();
-             const bTime = new Date(b.createdAt || b.messageTimestamp).getTime();
-             return bTime - aTime;
-           })
-           .slice(0, 5)
-           .map(comm => {
-             // Human readable summary for each type
-             let summary = '';
-             if (comm.commType === 'Whatsapp') {
-               summary = `WhatsApp${comm.fromMe ? ' (from us)' : ''}: ${comm.text || ''}`;
-             } else if (comm.commType === 'Email') {
-               summary = `Email: ${comm.subject ? comm.subject + ' - ' : ''}${comm.bodyText || ''}`;
-             } else if (comm.commType === 'Note') {
-               summary = `Note: ${comm.title ? comm.title + ' - ' : ''}${comm.body || ''}`;
-             } else {
-               summary = comm.text || comm.bodyText || comm.body || '';
-             }
-             // Always show full date and time
-             const date = comm.createdAt || comm.messageTimestamp || comm.sentAt;
-             return {
-               ...comm,
-               summary,
-               displayDate: dateFormatter(date)
-             };
-           });
-       }
-
-       selectedVisitorProfile.value = {
-         visitorId: data.visitor?.id || visitorId,
-         firstSeen: firstSeen ? dateFormatter(firstSeen) : '-',
-         lastSeen: lastSeen ? dateFormatter(lastSeen) : '-',
-         totalSessions: data.sessions ? data.sessions.length : 0,
-         totalEvents: totalEvents,
-         sessions: data.sessions || [],
-         customer: customerDetails,
-         clicks: clicks,
-         communications: communications
-       };
-
-       // Extract and combine all events from all sessions
-       let allEvents = [];
-       if (data.sessions) {
-         data.sessions.forEach(session => {
-           if (session.events) {
-             allEvents = allEvents.concat(session.events);
-           }
-         });
-       }
-
-       // Sort all events chronologically by timestamp
-       combinedUserJourney.value = _.sortBy(allEvents, 'timestamp');
-
-       selectedVisitorJourney.value = null; // No longer need a separate journey object here
-
-       showVisitorDetailsModal.value = true; // Open the modal
-       loading.value = false;
-     } catch (error) {
-       console.error("Error fetching visitor details:", error);
-       loading.value = false;
-       toast.error("Error fetching visitor details");
-     }
-   }
-
-   // Function to close the visitor details modal
-   const closeVisitorDetailsModal = () => {
-     showVisitorDetailsModal.value = false;
-     selectedVisitorId.value = null;
-     selectedVisitorProfile.value = null;
-     combinedUserJourney.value = []; // Clear combined journey on modal close
-     // selectedVisitorJourney.value = null; // No longer needed
-   };
-
-   async function fetchVisitors() {
-     try {
-       loading.value = true;
-       const response = await axios.get(
-         `visitors?id=${userStore.currentWebsite}&limit=1500&offset=0` // Keep existing visitor list fetch
-       );
-
-      visitors.value = response.data.visitors; // Assign to the new ref
-
+      visitors.value = response.data.visitors;
+      
+      // Prepare chart data
       let visitorss = [];
-
       for (const c of response.data.visitors) {
         visitorss.push({
           x: c.updatedAt,
@@ -371,80 +212,78 @@
       }
 
       const data = _.sortBy(visitorss, 'x')
-
-      const currentGroup = 'byDay';
-      // Grouping logic - ensure 'byDay' function is available or define inline
       const byDay = (item) => moment(item.x).format('MMM DD YYYY');
       const grouped = _.groupBy(data, byDay);
-      const seriesData = Object.values(grouped).map( a => a.length )
+      const seriesData = Object.values(grouped).map(a => a.length)
       const optionsData = Object.keys(grouped)
           
       options.value = {
-          chart: {
-            height: 350,
-            type: 'bar',
-            toolbar: {
-              autoSelected: "pan",
-              show: false
-            } 
+        chart: {
+          height: 350,
+          type: 'bar',
+          toolbar: {
+            autoSelected: "pan",
+            show: false
+          } 
+        },
+        dataLabels: {
+          enabled: false
+        },
+        stroke: {
+          curve: 'smooth'
+        },
+        xaxis: {
+          type: 'datetime',
+          labels: {
+            datetimeUTC: false
           },
-          dataLabels: {
-            enabled: false
-          },
-          stroke: {
-            curve: 'smooth'
-          },
-          xaxis: {
-            type: 'datetime',
-            labels: {
-              datetimeUTC: false
-            },
-            categories: optionsData,
-            labels: {
-              style: {
-                colors: '#FFFFFF'
-              }
+          categories: optionsData,
+          labels: {
+            style: {
+              colors: '#FFFFFF'
             }
-          },
+          }
+        },
+        yaxis: {
+          min: 0,
+          tickAmount: 4,
+          labels: {
+            style: {
+              colors: '#FFFFFF'
+            }
+          }
+        },
+        fill: {
+          gradient: {
+            enabled: true,
+            opacityFrom: 0.55,
+            opacityTo: 0
+          }
+        },
+        grid: {
+          borderColor: "#fff",
+          strokeDashArray: 2,
+          clipMarkers: false,
           yaxis: {
-            min: 0,
-            tickAmount: 4,
-            labels: {
-              style: {
-                colors: '#FFFFFF'
-              }
+            lines: {
+              show: true
             }
+          }
+        },
+        markers: {
+          size: 5,
+          colors: ["#ffffff"],
+          strokeColor: "#00BAEC",
+          strokeWidth: 3
+        },
+        tooltip: {
+          theme: "dark",
+          x: {
+            format: 'dd MMM yyyy'
           },
-          fill: {
-            gradient: {
-              enabled: true,
-              opacityFrom: 0.55,
-              opacityTo: 0
-            }
-          },
-          grid: {
-            borderColor: "#fff",
-            strokeDashArray: 2,
-            clipMarkers: false,
-            yaxis: {
-              lines: {
-                show: true
-              }
-            }
-          },
-          markers: {
-            size: 5,
-            colors: ["#ffffff"],
-            strokeColor: "#00BAEC",
-            strokeWidth: 3
-          },
-          tooltip: {
-            theme: "dark",
-            x: {
-              format: 'dd MMM yyyy'
-            },
-          },
+        },
       }
+      
       series.value = [{
         name: 'visitors',
         data: seriesData
@@ -458,61 +297,53 @@
     }
   }
 
-  // onMounted(() => {
-  //   if(userStore.currentWebsite && userStore.user){
-  //     fetchVisitors()  
-  //   }
-  // })
-
-  // Add dark mode toggle function
+  // Dark mode toggle function
   const toggleDarkMode = () => {
     isDarkMode.value = !isDarkMode.value;
     localStorage.setItem('darkMode', isDarkMode.value);
     document.documentElement.classList.toggle('dark', isDarkMode.value);
-    // Update chart theme if needed
     updateChartTheme();
   };
 
-  // Function to update chart theme based on dark mode (copied from Customers.vue)
+  // Update chart theme based on dark mode
   const updateChartTheme = () => {
     if (options.value) {
-      const textColor = isDarkMode.value ? '#FFFFFF' : '#374151'; // Example colors
+      const textColor = isDarkMode.value ? '#FFFFFF' : '#374151';
       const gridColor = isDarkMode.value ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)';
       options.value = {
         ...options.value,
         chart: {
           ...options.value.chart,
-          foreColor: textColor // Update base text color
+          foreColor: textColor
         },
         xaxis: {
           ...options.value.xaxis,
           labels: {
             ...options.value.xaxis.labels,
-            style: { colors: [textColor] } // Update x-axis label color
+            style: { colors: [textColor] }
           },
           title: {
-             style: { color: textColor } // Update x-axis title color if present
+             style: { color: textColor }
           }
         },
         yaxis: {
           ...options.value.yaxis,
           labels: {
             ...options.value.yaxis.labels,
-            style: { colors: [textColor] } // Update y-axis label color
+            style: { colors: [textColor] }
           },
            title: {
-             style: { color: textColor } // Update y-axis title color if present
+             style: { color: textColor }
           }
         },
         grid: {
           ...options.value.grid,
-          borderColor: gridColor // Update grid line color
+          borderColor: gridColor
         },
         tooltip: {
           ...options.value.tooltip,
-          theme: isDarkMode.value ? 'dark' : 'light' // Update tooltip theme
+          theme: isDarkMode.value ? 'dark' : 'light'
         },
-        // Update legend colors if needed
         legend: {
           ...options.value.legend,
           labels: { colors: textColor }
@@ -522,7 +353,7 @@
   };
 
   onMounted(() => {
-    document.documentElement.classList.toggle('dark', isDarkMode.value); // Apply on initial load
+    document.documentElement.classList.toggle('dark', isDarkMode.value);
     if(userStore.currentWebsite){
       fetchVisitors();
     }
@@ -530,7 +361,7 @@
 
   watchEffect(() => {
     if(userStore.currentWebsite){
-      currentPage.value = 1; // Reset page on website change
+      currentPage.value = 1;
       fetchVisitors();
     }
   });
@@ -539,63 +370,160 @@
   watch(isDarkMode, () => {
     updateChartTheme();
   });
+
+  // Watch filters to reset pagination
+  watch(filters, () => {
+    currentPage.value = 1;
+  });
 </script>
 
 <template>
- <!-- Main container with background and padding -->
  <div :class="{ 'dark': isDarkMode }" class="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 dark:from-gray-900 dark:via-gray-950 dark:to-blue-950 text-gray-800 dark:text-gray-200 font-sans transition-colors duration-300">
    <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-12">
+     
      <!-- Header Section -->
      <header class="flex flex-col md:flex-row justify-between items-center mb-10 md:mb-14 space-y-4 md:space-y-0">
        <h1 class="text-3xl sm:text-4xl font-bold tracking-tight text-gray-900 dark:text-white flex items-center">
-         <font-awesome-icon icon="users" class="mr-3 text-indigo-500 dark:text-indigo-400" /> Website Visitors
+         <font-awesome-icon icon="users" class="mr-3 text-indigo-500 dark:text-indigo-400" />
+         Website Visitors
        </h1>
        <div class="flex items-center space-x-2 sm:space-x-3">
-         <!-- Add Website Selector if needed -->
          <button @click="fetchVisitors" class="btn-icon-modern" title="Reload Visitors">
             <font-awesome-icon icon="sync" :class="{ 'fa-spin': loading }" />
          </button>
          <button @click="toggleDarkMode" class="btn-icon-modern" title="Toggle Dark Mode">
             <font-awesome-icon :icon="isDarkMode ? 'sun' : 'moon'" />
          </button>
-         <!-- No "Add Visitor" button needed -->
        </div>
      </header>
 
-     <!-- Summary Bar -->
-     <section class="mb-8 flex flex-wrap gap-4 items-center">
-       <div class="card-modern px-6 py-3 flex flex-col items-center">
-         <span class="text-xs text-gray-500 dark:text-gray-400">Total Visitors</span>
-         <span class="text-xl font-bold text-indigo-600 dark:text-indigo-400">{{ totalVisitors }}</span>
+     <!-- Enhanced Statistics Cards -->
+     <section class="mb-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
+       <!-- Total Visitors -->
+       <div class="card-modern p-4 hover:shadow-lg transition-shadow">
+         <div class="flex items-center justify-between">
+           <div>
+             <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Visitors</p>
+             <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ visitorStats.total }}</p>
+           </div>
+           <div class="p-3 bg-indigo-100 dark:bg-indigo-900/30 rounded-full">
+             <font-awesome-icon icon="users" class="text-indigo-600 dark:text-indigo-400" />
+           </div>
+         </div>
        </div>
-       <div class="card-modern px-6 py-3 flex flex-col items-center">
-         <span class="text-xs text-gray-500 dark:text-gray-400">Converted</span>
-         <span class="text-xl font-bold text-green-600 dark:text-green-400">{{ convertedVisitors }}</span>
+
+       <!-- Converted Visitors -->
+       <div class="card-modern p-4 hover:shadow-lg transition-shadow">
+         <div class="flex items-center justify-between">
+           <div>
+             <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Converted</p>
+             <p class="text-2xl font-bold text-green-600 dark:text-green-400">{{ visitorStats.converted }}</p>
+           </div>
+           <div class="p-3 bg-green-100 dark:bg-green-900/30 rounded-full">
+             <font-awesome-icon icon="user-check" class="text-green-600 dark:text-green-400" />
+           </div>
+         </div>
        </div>
-       <div class="card-modern px-6 py-3 flex flex-col items-center">
-         <span class="text-xs text-gray-500 dark:text-gray-400">Conversion Rate</span>
-         <span class="text-xl font-bold text-blue-600 dark:text-blue-400">{{ conversionRate }}%</span>
+
+       <!-- Conversion Rate -->
+       <div class="card-modern p-4 hover:shadow-lg transition-shadow">
+         <div class="flex items-center justify-between">
+           <div>
+             <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Conversion Rate</p>
+             <p class="text-2xl font-bold text-blue-600 dark:text-blue-400">{{ visitorStats.conversionRate }}%</p>
+           </div>
+           <div class="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-full">
+             <font-awesome-icon icon="percentage" class="text-blue-600 dark:text-blue-400" />
+           </div>
+         </div>
        </div>
-       <div class="card-modern px-6 py-3 flex flex-col items-center">
-         <span class="text-xs text-gray-500 dark:text-gray-400">Returning Visitors</span>
-         <span class="text-xl font-bold text-purple-600 dark:text-purple-400">{{ returningVisitors }}</span>
+
+       <!-- Returning Visitors -->
+       <div class="card-modern p-4 hover:shadow-lg transition-shadow">
+         <div class="flex items-center justify-between">
+           <div>
+             <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Returning</p>
+             <p class="text-2xl font-bold text-purple-600 dark:text-purple-400">{{ visitorStats.returning }}</p>
+           </div>
+           <div class="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-full">
+             <font-awesome-icon icon="user-clock" class="text-purple-600 dark:text-purple-400" />
+           </div>
+         </div>
+       </div>
+
+       <!-- Countries -->
+       <div class="card-modern p-4 hover:shadow-lg transition-shadow">
+         <div class="flex items-center justify-between">
+           <div>
+             <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Countries</p>
+             <p class="text-2xl font-bold text-orange-600 dark:text-orange-400">{{ visitorStats.uniqueCountries }}</p>
+           </div>
+           <div class="p-3 bg-orange-100 dark:bg-orange-900/30 rounded-full">
+             <font-awesome-icon icon="globe" class="text-orange-600 dark:text-orange-400" />
+           </div>
+         </div>
+       </div>
+
+       <!-- Cities -->
+       <div class="card-modern p-4 hover:shadow-lg transition-shadow">
+         <div class="flex items-center justify-between">
+           <div>
+             <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Cities</p>
+             <p class="text-2xl font-bold text-cyan-600 dark:text-cyan-400">{{ visitorStats.uniqueCities }}</p>
+           </div>
+           <div class="p-3 bg-cyan-100 dark:bg-cyan-900/30 rounded-full">
+             <font-awesome-icon icon="map-marker-alt" class="text-cyan-600 dark:text-cyan-400" />
+           </div>
+         </div>
        </div>
      </section>
 
-     <!-- Filter Section -->
-     <section class="mb-10 p-5 sm:p-6 card-modern">
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-5 gap-y-4 items-end">
+     <!-- Enhanced Filter Section -->
+     <section class="mb-6 p-5 sm:p-6 card-modern">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
            <!-- Search Input -->
-           <div class="relative sm:col-span-2 lg:col-span-1">
-              <font-awesome-icon icon="search" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-              <input v-model="filters.search" placeholder="Search page URL..." class="input-modern pl-10 pr-3" /> <!-- Adjusted padding -->
+           <div class="lg:col-span-2">
+              <label class="label-modern">Search</label>
+              <div class="relative">
+                <font-awesome-icon icon="search" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                <input 
+                  v-model="filters.search" 
+                  placeholder="Search by URL, ID, customer, location..." 
+                  class="input-modern pl-10 pr-3" 
+                />
+              </div>
            </div>
-           <!-- Add other filters if needed -->
+
+           <!-- Customer Filter -->
+           <div>
+              <label class="label-modern">Customer Status</label>
+              <select v-model="filters.hasCustomer" class="input-modern input-modern--select">
+                <option value="all">All Visitors</option>
+                <option value="yes">With Customer</option>
+                <option value="no">Without Customer</option>
+              </select>
+           </div>
+
+           <!-- Time Range Filter -->
+           <div>
+              <label class="label-modern">Time Range</label>
+              <select v-model="filters.timeRange" class="input-modern input-modern--select">
+                <option value="24h">Last 24 Hours</option>
+                <option value="7d">Last 7 Days</option>
+                <option value="30d">Last 30 Days</option>
+                <option value="all">All Time</option>
+              </select>
+           </div>
 
            <!-- Filter Actions -->
-           <div class="flex items-center justify-end space-x-2 mt-2 sm:mt-0 lg:col-start-3">
-              <button @click="clearFilters" class="btn-secondary-modern text-xs sm:text-sm whitespace-nowrap">
-                 Clear Filters
+           <div class="flex items-center justify-end space-x-2">
+              <button 
+                @click="clearFilters" 
+                class="btn-secondary-modern w-full md:w-auto"
+                :disabled="!filters.search && filters.hasCustomer === 'all' && filters.timeRange === '7d'"
+              >
+                <font-awesome-icon icon="times" class="mr-2" />
+                Clear Filters
               </button>
            </div>
         </div>
@@ -603,438 +531,229 @@
 
      <!-- Visitor List Section -->
      <section>
-        <!-- Loading Skeleton -->
-        <div v-if="loading" class="animate-pulse">
-           <!-- Desktop Skeleton -->
-           <div class="hidden md:block bg-white dark:bg-gray-800/50 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700/50 overflow-hidden">
-              <table class="min-w-full">
-                <thead class="border-b border-gray-200 dark:border-gray-700">
-                  <tr>
-                    <th class="th-modern"><div class="h-4 bg-gray-300 dark:bg-gray-700 rounded w-full"></div></th>
-                    <th class="th-modern"><div class="h-4 bg-gray-300 dark:bg-gray-700 rounded w-1/4"></div></th>
-                    <th class="th-modern"><div class="h-4 bg-gray-300 dark:bg-gray-700 rounded w-1/4"></div></th>
-                    <th class="th-modern"><div class="h-4 bg-gray-300 dark:bg-gray-700 rounded w-1/2"></div></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="n in 10" :key="`skel-row-${n}`" class="border-b border-gray-100 dark:border-gray-700/50">
-                    <td class="td-modern"><div class="h-4 bg-gray-300 dark:bg-gray-700 rounded w-full"></div></td>
-                    <td class="td-modern"><div class="h-4 bg-gray-300 dark:bg-gray-700 rounded w-1/2"></div></td>
-                    <td class="td-modern"><div class="h-4 bg-gray-300 dark:bg-gray-700 rounded w-1/2"></div></td>
-                    <td class="td-modern"><div class="h-4 bg-gray-300 dark:bg-gray-700 rounded w-3/4"></div></td>
-                  </tr>
-                </tbody>
-              </table>
-           </div>
-           <!-- Mobile Skeleton -->
-           <div class="md:hidden space-y-4">
-              <div v-for="n in 5" :key="`skel-mob-${n}`" class="card-modern p-4 animate-pulse">
-                 <div class="h-4 bg-gray-300 dark:bg-gray-700 rounded w-full mb-3"></div>
-                 <div class="space-y-2">
-                   <div class="h-4 bg-gray-300 dark:bg-gray-700 rounded w-1/4"></div>
-                   <div class="h-4 bg-gray-300 dark:bg-gray-700 rounded w-1/4"></div>
-                   <div class="h-4 bg-gray-300 dark:bg-gray-700 rounded w-1/2 pt-2"></div>
-                 </div>
-              </div>
-           </div>
-        </div>
-
-        <!-- Visitor Table (Desktop) -->
+        <!-- Desktop Table -->
         <div v-if="!loading && paginatedVisitors.length > 0" class="hidden md:block bg-white dark:bg-gray-800/50 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700/50 overflow-hidden">
             <table class="min-w-full divide-y divide-gray-100 dark:divide-gray-700/50">
                <thead class="bg-gray-50 dark:bg-gray-900/30">
                   <tr>
-                     <th scope="col" class="th-modern">Page URL</th>
-                     <th scope="col" class="th-modern">Converted</th>
+                     <th scope="col" class="th-modern">Status</th>
                      <th scope="col" class="th-modern">Customer</th>
-                     <th scope="col" class="th-modern">Views</th>
-                     <th scope="col" class="th-modern">Clicks</th>
-                     <th scope="col" class="th-modern">First Seen</th>
-                     <th scope="col" class="th-modern">Returning</th>
-                     <th scope="col" class="th-modern">Last Visit</th>
+                     <th scope="col" class="th-modern">Location</th>
+                     <th scope="col" class="th-modern">Page URL</th>
+                     <th scope="col" class="th-modern">Activity</th>
+                     <th scope="col" class="th-modern">Last Seen</th>
+                     <th scope="col" class="th-modern text-center">Actions</th>
                   </tr>
-
                </thead>
                <tbody class="divide-y divide-gray-100 dark:divide-gray-700/50">
                   <tr v-for="visitor in enhancedVisitors" :key="visitor.id"
-                      class="hover:bg-gray-50/50 dark:hover:bg-white/5 transition-colors duration-150 cursor-pointer"
-                      @click="$router.push({ name: 'VisitorView', params: { visitorId: visitor.id } })"
+                      class="hover:bg-gray-50/50 dark:hover:bg-white/5 transition-colors duration-150"
                   >
-                    <td class="td-modern text-gray-600 dark:text-gray-400 max-w-xl truncate" :title="visitor.page?.url">
-                      <a :href="visitor.page?.url" target="_blank" rel="noopener noreferrer" class="hover:underline hover:text-indigo-600 dark:hover:text-indigo-400" @click.stop>
-                        {{ visitor.page?.url }}
+                    <td class="td-modern">
+                      <span v-if="visitor.isConverted" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                        <font-awesome-icon icon="user-check" class="mr-1 text-xs" />
+                        Converted
+                      </span>
+                      <span v-else class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400">
+                        Visitor
+                      </span>
+                    </td>
+                    <td class="td-modern">
+                      <span v-if="visitor.associatedCustomer" class="text-gray-900 dark:text-white">
+                        {{ visitor.associatedCustomer }}
+                      </span>
+                      <span v-else class="text-gray-400 dark:text-gray-500">-</span>
+                    </td>
+                    <td class="td-modern text-gray-500 dark:text-gray-400">
+                      <div class="flex items-center">
+                        <font-awesome-icon icon="map-marker-alt" class="mr-2 text-gray-400" />
+                        {{ visitor.location }}
+                      </div>
+                    </td>
+                    <td class="td-modern">
+                      <a :href="visitor.page?.url" target="_blank" rel="noopener noreferrer" 
+                         class="text-indigo-600 dark:text-indigo-400 hover:underline flex items-center"
+                         @click.stop>
+                        {{ visitor.page?.url || '-' }}
+                        <font-awesome-icon icon="external-link-alt" class="ml-1 text-xs" />
                       </a>
-                      <span v-if="visitor.hasMergeSuggestions" class="ml-2 text-yellow-500" title="Possible merge suggestions">⚠️</span>
+                    </td>
+                    <td class="td-modern">
+                      <div class="flex items-center space-x-4 text-sm">
+                        <div class="flex items-center text-gray-500 dark:text-gray-400">
+                          <span class="font-medium">{{ visitor.views || 0 }}</span>
+                          <span class="ml-1 text-xs">views</span>
+                        </div>
+                        <div class="flex items-center text-gray-500 dark:text-gray-400">
+                          <span class="font-medium">{{ visitor.clicks || 0 }}</span>
+                          <span class="ml-1 text-xs">clicks</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="td-modern text-gray-500 dark:text-gray-400">
+                      <div class="flex items-center">
+                        <font-awesome-icon icon="clock" class="mr-2 text-gray-400" />
+                        {{ visitor.lastSeen }}
+                      </div>
                     </td>
                     <td class="td-modern text-center">
-                      <span v-if="visitor.isConverted" class="inline-block px-2 py-1 rounded bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 text-xs font-semibold">Yes</span>
-                      <span v-else class="inline-block px-2 py-1 rounded bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400 text-xs">No</span>
+                      <button 
+                        @click="$router.push({ name: 'VisitorView', params: { visitorId: visitor.id } })"
+                        class="btn-primary-modern text-xs inline-flex items-center"
+                      >
+                        View Details
+                        <font-awesome-icon icon="chevron-right" class="ml-1" />
+                      </button>
                     </td>
-                    <td class="td-modern text-gray-700 dark:text-gray-200 text-center">
-                      <span v-if="visitor.associatedCustomer">{{ visitor.associatedCustomer }}</span>
-                      <span v-else class="text-xs text-gray-400">-</span>
-                    </td>
-                    <td class="td-modern text-gray-500 dark:text-gray-400 text-center">{{ visitor.views }}</td>
-                    <td class="td-modern text-gray-500 dark:text-gray-400 text-center">{{ visitor.clicks }}</td>
-                    <td class="td-modern text-gray-500 dark:text-gray-400 text-center">{{ visitor.firstSeen }}</td>
-                    <td class="td-modern text-center">
-                      <span v-if="visitor.isReturning" class="inline-block px-2 py-1 rounded bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300 text-xs font-semibold">Yes</span>
-                      <span v-else class="inline-block px-2 py-1 rounded bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400 text-xs">No</span>
-                    </td>
-                    <td class="td-modern text-gray-500 dark:text-gray-400 whitespace-nowrap">{{ dateFormatter(visitor.updatedAt) }}</td>
                   </tr>
                </tbody>
             </table>
         </div>
 
-
-        <!-- Visitor Cards (Mobile) -->
+        <!-- Mobile Cards -->
         <div class="md:hidden space-y-4">
-           <div v-if="!loading && paginatedVisitors.length > 0" v-for="visitor in paginatedVisitors" :key="visitor.id"
-                class="card-modern p-4 cursor-pointer"
+           <div v-if="!loading && paginatedVisitors.length > 0" v-for="visitor in enhancedVisitors" :key="visitor.id"
+                class="card-modern p-4 hover:shadow-lg transition-all duration-150"
               >
-                <router-link
-                  :to="{ name: 'VisitorView', params: { visitorId: visitor.id } }"
-                  class="block w-full"
-                  style="text-decoration: none; color: inherit;"
-                >
-                  <a :href="visitor.page?.url" target="_blank" rel="noopener noreferrer" class="block text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:underline truncate mb-2" :title="visitor.page?.url" @click.stop>
-                    {{ visitor.page?.url }}
-                  </a>
-                  <div class="text-xs text-gray-500 dark:text-gray-400 space-y-1">
-                    <p>Views: <span class="font-medium text-gray-700 dark:text-gray-300">{{ visitor.views }}</span></p>
-                    <p>Clicks: <span class="font-medium text-gray-700 dark:text-gray-300">{{ visitor.clicks }}</span></p>
-                    <p>Last Visit: {{ dateFormatter(visitor.updatedAt) }}</p>
-                  </div>
-                </router-link>
-            </div>
+              <div class="flex justify-between items-start mb-3">
+                <div>
+                  <h3 class="text-sm font-semibold text-gray-900 dark:text-white flex items-center">
+                    <span v-if="visitor.hasMergeSuggestions" class="mr-2 text-yellow-500">
+                      <font-awesome-icon icon="exclamation-triangle" class="text-sm" />
+                    </span>
+                    Visitor
+                  </h3>
+                  <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    Last seen: {{ visitor.lastSeen }}
+                  </p>
+                </div>
+                <span v-if="visitor.isConverted" 
+                      class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                  Converted
+                </span>
+                <span v-else 
+                      class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400">
+                  Visitor
+                </span>
+              </div>
+              
+              <div class="space-y-2 mb-3">
+                <div class="flex items-center text-sm">
+                  <span class="text-gray-500 dark:text-gray-400 w-20">Customer:</span>
+                  <span class="text-gray-900 dark:text-white">{{ visitor.associatedCustomer || '-' }}</span>
+                </div>
+                <div class="flex items-center text-sm">
+                  <span class="text-gray-500 dark:text-gray-400 w-20">Location:</span>
+                  <span class="text-gray-900 dark:text-white">{{ visitor.location }}</span>
+                </div>
+                <div class="flex items-center text-sm">
+                  <span class="text-gray-500 dark:text-gray-400 w-20">Activity:</span>
+                  <span class="text-gray-900 dark:text-white">
+                    {{ visitor.views || 0 }} views, {{ visitor.clicks || 0 }} clicks
+                  </span>
+                </div>
+              </div>
+              
+              <a :href="visitor.page?.url" target="_blank" rel="noopener noreferrer" 
+                 class="block text-sm text-indigo-600 dark:text-indigo-400 hover:underline mb-3 truncate"
+                 @click.stop>
+                {{ visitor.page?.url }}
+              </a>
+              
+              <button 
+                @click="$router.push({ name: 'VisitorView', params: { visitorId: visitor.id } })"
+                class="btn-primary-modern w-full text-sm"
+              >
+                View Details
+              </button>
+           </div>
+        </div>
+
+        <!-- Loading State -->
+        <div v-if="loading" class="animate-pulse">
+           <div class="hidden md:block bg-white dark:bg-gray-800/50 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700/50 overflow-hidden">
+              <div class="p-4 space-y-4">
+                <div v-for="n in 10" :key="`skel-${n}`" class="h-12 bg-gray-200 dark:bg-gray-700 rounded"></div>
+              </div>
+           </div>
+           <div class="md:hidden space-y-4">
+              <div v-for="n in 5" :key="`skel-mob-${n}`" class="card-modern p-4">
+                 <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-4"></div>
+                 <div class="space-y-2">
+                   <div class="h-3 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                   <div class="h-3 bg-gray-200 dark:bg-gray-700 rounded w-5/6"></div>
+                 </div>
+              </div>
+           </div>
+        </div>
+
+        <!-- No Results -->
+        <div v-if="!loading && filteredVisitors.length === 0" class="text-center py-16">
+           <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 mb-4">
+             <font-awesome-icon icon="users" class="text-2xl text-gray-400" />
+           </div>
+           <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-1">No visitors found</h3>
+           <p class="text-sm text-gray-500 dark:text-gray-400">
+             {{ filters.search || filters.hasCustomer !== 'all' || filters.timeRange !== '7d' 
+                ? 'Try adjusting your filters'
+                : 'No visitor data recorded yet' }}
+           </p>
+           <button v-if="filters.search || filters.hasCustomer !== 'all' || filters.timeRange !== '7d'"
+                   @click="clearFilters"
+                   class="mt-4 btn-primary-modern">
+             Clear Filters
+           </button>
         </div>
 
         <!-- Pagination -->
-        <nav v-if="!loading && totalPages > 1" class="mt-6 flex flex-col sm:flex-row justify-between items-center text-sm">
-           <p class="text-gray-600 dark:text-gray-400 mb-2 sm:mb-0">
+        <nav v-if="!loading && totalPages > 1" class="mt-6 flex flex-col sm:flex-row justify-between items-center text-sm space-y-4 sm:space-y-0">
+           <p class="text-gray-600 dark:text-gray-400">
               Showing <span class="font-medium">{{ startIndex + 1 }}</span> to <span class="font-medium">{{ endIndex }}</span> of <span class="font-medium">{{ totalVisitors }}</span> results
            </p>
            <div class="flex space-x-1">
-              <button :disabled="currentPage === 1" @click="prevPage" class="btn-pagination-modern">
+              <button 
+                :disabled="currentPage === 1" 
+                @click="prevPage" 
+                class="btn-pagination-modern"
+              >
                  <font-awesome-icon icon="chevron-left" class="h-3 w-3 mr-1" /> Previous
               </button>
-              <button :disabled="currentPage === totalPages" @click="nextPage" class="btn-pagination-modern">
+              <button 
+                :disabled="currentPage === totalPages" 
+                @click="nextPage" 
+                class="btn-pagination-modern"
+              >
                  Next <font-awesome-icon icon="chevron-right" class="h-3 w-3 ml-1" />
               </button>
            </div>
         </nav>
-
-        <!-- No Results Message -->
-        <div v-if="!loading && paginatedVisitors.length === 0" class="text-center py-16 text-gray-500">
-           <font-awesome-icon icon="users" class="mx-auto h-12 w-12 text-gray-400" /> <!-- Using users icon as placeholder -->
-           <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">No visitors found</h3>
-           <p class="mt-1 text-sm text-gray-500">No visitor data recorded for the selected website yet.</p>
-        </div>
-
      </section>
 
      <!-- Chart Section -->
-      <section class="mt-12 card-modern p-6">
-         <h3 class="text-lg font-semibold mb-6 text-gray-900 dark:text-white">Visitor Trend</h3>
-         <div class="relative w-full min-h-[200px]">
-           <VisitorTrendChart
-             :rawData="visitors"
-             :loading="loading"
-             :isDarkMode="isDarkMode"
-           />
-         </div>
+     <section class="mt-12 card-modern p-6">
+        <h3 class="text-lg font-semibold mb-6 text-gray-900 dark:text-white flex items-center">
+          <font-awesome-icon icon="chart-line" class="mr-2 text-indigo-500 dark:text-indigo-400" />
+          Visitor Trend Analysis
+        </h3>
+        <div class="relative w-full min-h-[200px]">
+          <VisitorTrendChart
+            :rawData="visitors"
+            :loading="loading"
+            :isDarkMode="isDarkMode"
+          />
+        </div>
+     </section>
 
-         <!-- Possible Contacts to Merge Section -->
-         <div v-if="selectedVisitorProfile && selectedVisitorProfile.possibleContactSuggestions && selectedVisitorProfile.possibleContactSuggestions.length > 0" class="mt-6">
-           <h4 class="text-lg font-semibold mb-3 text-gray-900 dark:text-white">Possible Contacts to Merge</h4>
-           <div class="space-y-4">
-             <div v-for="(suggestion, idx) in selectedVisitorProfile.possibleContactSuggestions" :key="suggestion.candidate.id + '-' + idx" class="border-l-4 border-yellow-400 dark:border-yellow-600 pl-4 pb-2">
-               <div class="mb-2">
-                 <span class="font-medium text-gray-700 dark:text-gray-200">Contact:</span>
-                 <span class="ml-1">{{ suggestion.candidate.name || 'No Name' }}</span>
-                 <span v-if="suggestion.candidate.phone" class="ml-2 text-xs text-gray-500">({{ suggestion.candidate.phone }})</span>
-                 <span v-if="suggestion.candidate.email" class="ml-2 text-xs text-gray-500">({{ suggestion.candidate.email }})</span>
-                 <span class="ml-2 text-xs text-gray-400">Created: {{ dateFormatter(suggestion.candidate.createdAt) }}</span>
-               </div>
-               <div class="mb-2">
-                 <span class="font-medium text-gray-700 dark:text-gray-200">Matched WhatsApp Click:</span>
-                 <span class="ml-1">{{ suggestion.click.button || 'WhatsApp' }}</span>
-                 <span v-if="suggestion.click.pageUrl" class="ml-2 text-xs text-gray-500">on <a :href="suggestion.click.pageUrl" target="_blank" rel="noopener noreferrer" class="text-indigo-600 dark:text-indigo-400 hover:underline">{{ suggestion.click.pageUrl }}</a></span>
-                 <span class="ml-2 text-xs text-gray-400">at {{ dateFormatter(suggestion.click.clicksDate) }}</span>
-               </div>
-               <div>
-                 <span class="font-medium text-gray-700 dark:text-gray-200">First 3 WhatsApp Messages:</span>
-                 <ul class="list-disc ml-6 mt-1">
-                   <li v-for="msg in suggestion.messages" :key="msg.id" class="text-xs text-gray-600 dark:text-gray-400">
-                     <span v-if="msg.fromMe" class="font-semibold text-green-600 dark:text-green-400">From Us:</span>
-                     <span v-else class="font-semibold text-blue-600 dark:text-blue-400">From Customer:</span>
-                     <span class="ml-1">{{ msg.text }}</span>
-                     <span class="ml-2 text-gray-400">({{ dateFormatter(msg.createdAt) }})</span>
-                   </li>
-                   <li v-if="!suggestion.messages || suggestion.messages.length === 0" class="text-xs text-gray-400">No WhatsApp messages found.</li>
-                 </ul>
-               </div>
-               <!-- Placeholder for associate action -->
-               <div class="mt-2">
-                 <button class="btn-primary-modern text-xs" disabled title="Association action not implemented yet">Associate this Contact</button>
-               </div>
-             </div>
-           </div>
-           <div v-if="selectedVisitorProfile.possibleContactSuggestions.length === 0" class="text-xs text-gray-500 mt-2">No possible contacts found to merge.</div>
-         </div>
-      </section>
-
-   </div> <!-- End container -->
+   </div>
 
    <!-- Loading Overlay -->
    <div v-if="loading" class="fixed inset-0 z-[60] bg-gray-900 bg-opacity-50 dark:bg-opacity-80 flex items-center justify-center">
       <scale-loader :loading="true" color="#4f46e5" height="40px" width="5px" />
    </div>
-
-
-   <!-- Loading Overlay -->
-   <div v-if="loading" class="fixed inset-0 z-[60] bg-gray-900 bg-opacity-50 dark:bg-opacity-80 flex items-center justify-center">
-      <scale-loader :loading="true" color="#4f46e5" height="40px" width="5px" />
-   </div>
-
-   <!-- Visitor Details Modal -->
-   <transition name="modal-fade">
-     <div v-if="showVisitorDetailsModal" class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-       <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-         <!-- Background overlay -->
-         <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" @click="closeVisitorDetailsModal"></div>
-
-         <!-- Modal content -->
-         <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-         <div class="modal-content-modern">
-           <div class="flex justify-between items-center mb-4">
-             <h3 class="text-xl font-bold text-gray-900 dark:text-white" id="modal-title">Visitor Details</h3>
-             <button @click="closeVisitorDetailsModal" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
-               <span class="sr-only">Close</span>
-               <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-               </svg>
-             </button>
-           </div>
-
-           <!-- Communications Section -->
-           <div v-if="selectedVisitorProfile.communications && selectedVisitorProfile.communications.length > 0" class="mt-6">
-             <h4 class="text-lg font-semibold mb-3 text-gray-900 dark:text-white">Recent Communications</h4>
-             <div class="space-y-2">
-               <div v-for="comm in selectedVisitorProfile.communications" :key="comm.id" class="border-l-2 border-purple-300 dark:border-purple-700 pl-4">
-                 <p class="text-xs text-gray-600 dark:text-gray-400">
-                   <span class="font-medium">{{ comm.displayDate }}:</span>
-                   <span> {{ comm.summary }}</span>
-                 </p>
-               </div>
-             </div>
-             <div v-if="selectedVisitorProfile.communications.length === 0" class="text-xs text-gray-500 mt-2">No communications found.</div>
-           </div>
-           <div class="mt-2 space-y-6">
-             <!-- Visitor Details Content -->
-             <div v-if="selectedVisitorProfile" class="space-y-6">
-               <!-- Visitor Profile -->
-               <div>
-                 <h4 class="text-lg font-semibold mb-3 text-gray-900 dark:text-white">Visitor Profile</h4>
-                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-gray-700 dark:text-gray-300">
-                   <div>
-                     <p class="font-medium text-gray-600 dark:text-gray-400">Visitor ID:</p>
-                     <p class="break-all">{{ selectedVisitorProfile.visitorId }}</p>
-                   </div>
-                   <div>
-                     <p class="font-medium text-gray-600 dark:text-gray-400">First Seen:</p>
-                     <p>{{ selectedVisitorProfile.firstSeen }}</p>
-                   </div>
-                   <div>
-                     <p class="font-medium text-gray-600 dark:text-gray-400">Last Seen:</p>
-                     <p>{{ selectedVisitorProfile.lastSeen }}</p>
-                   </div>
-                   <div>
-                     <p class="font-medium text-gray-600 dark:text-gray-400">Total Sessions:</p>
-                     <p>{{ selectedVisitorProfile.totalSessions }}</p>
-                   </div>
-                   <div>
-                     <p class="font-medium text-gray-600 dark:text-gray-400">Total Events:</p>
-                     <p>{{ selectedVisitorProfile.totalEvents }}</p>
-                   </div>
-                 </div>
- 
-                 <!-- Customer Association Section -->
-                 <div class="mt-6">
-                   <h4 class="text-lg font-semibold mb-3 text-gray-900 dark:text-white">
-                     {{ selectedVisitorProfile.customer ? 'Update Associated Customer' : 'Associate with Customer' }}
-                   </h4>
-                   <div class="mb-3">
-                     <label class="label-modern" for="customer-search">Search Customer</label>
-                     <input
-                       id="customer-search"
-                       v-model="customerSearchTerm"
-                       class="input-modern"
-                       placeholder="Type name, email, or phone..."
-                       autocomplete="off"
-                       :disabled="isAssociatingCustomer"
-                     />
-                     <div v-if="isSearchingCustomers" class="text-xs text-gray-500 mt-1">Searching...</div>
-                     <ul v-if="customerSearchResults.length > 0" class="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded mt-1 max-h-48 overflow-y-auto shadow z-10">
-                       <li
-                         v-for="customer in customerSearchResults"
-                         :key="customer.id"
-                         @click="handleCustomerSelected(customer)"
-                         class="px-3 py-2 cursor-pointer hover:bg-indigo-50 dark:hover:bg-indigo-800"
-                       >
-                         <span class="font-medium">{{ customer.name }}</span>
-                         <span v-if="customer.email" class="ml-2 text-xs text-gray-500">{{ customer.email }}</span>
-                         <span v-if="customer.phone" class="ml-2 text-xs text-gray-400">{{ customer.phone }}</span>
-                         <span v-if="customer.address" class="ml-2 text-xs text-gray-400 italic">{{ customer.address }}</span>
-                       </li>
-                     </ul>
-                     <div v-if="customerSearchTerm && !isSearchingCustomers && customerSearchResults.length === 0" class="text-xs text-gray-400 mt-1">
-                       No customers found.
-                     </div>
-                   </div>
-                   <div v-if="selectedCustomer" class="mb-3 p-2 rounded bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-700 flex items-center justify-between">
-                     <div>
-                       <span class="font-semibold">{{ selectedCustomer.name }}</span>
-                       <span v-if="selectedCustomer.email" class="ml-2 text-xs text-gray-500">{{ selectedCustomer.email }}</span>
-                       <span v-if="selectedCustomer.phone" class="ml-2 text-xs text-gray-400">{{ selectedCustomer.phone }}</span>
-                     </div>
-                     <button class="btn-ghost-modern ml-2" @click="selectedCustomer = null" :disabled="isAssociatingCustomer">Clear</button>
-                   </div>
-                   <button
-                     class="btn-primary-modern"
-                     :disabled="!selectedCustomer || isAssociatingCustomer"
-                     @click="associateVisitorWithCustomer"
-                   >
-                     {{ selectedVisitorProfile.customer ? 'Update Association' : 'Associate Customer' }}
-                   </button>
-                 </div>
-
-                 <!-- Customer Details -->
-                 <div v-if="selectedVisitorProfile.customer" class="mt-6">
-                   <h4 class="text-lg font-semibold mb-3 text-gray-900 dark:text-white">Customer Details</h4>
-                   <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-gray-700 dark:text-gray-300">
-                     <div>
-                       <p class="font-medium text-gray-600 dark:text-gray-400">Customer Name:</p>
-                       <p>{{ selectedVisitorProfile.customer.name || '-' }}</p>
-                     </div>
-                     <div>
-                       <p class="font-medium text-gray-600 dark:text-gray-400">Email:</p>
-                       <p>{{ selectedVisitorProfile.customer.email || '-' }}</p>
-                     </div>
-                     <div>
-                       <p class="font-medium text-gray-600 dark:text-gray-400">Phone:</p>
-                       <p>{{ selectedVisitorProfile.customer.phone || '-' }}</p>
-                     </div>
-                     <div>
-                       <p class="font-medium text-gray-600 dark:text-gray-400">Address:</p>
-                       <p>{{ selectedVisitorProfile.customer.address || '-' }}</p>
-                     </div>
-                     <div>
-                       <p class="font-medium text-gray-600 dark:text-gray-400">Customer Since:</p>
-                       <p>{{ dateFormatter(selectedVisitorProfile.customer.createdAt) }}</p>
-                     </div>
-                   </div>
-                 </div>
- 
-                 <!-- Clicks Section -->
-                 <div v-if="selectedVisitorProfile.clicks && selectedVisitorProfile.clicks.length > 0" class="mt-6">
-                   <h4 class="text-lg font-semibold mb-3 text-gray-900 dark:text-white">Clicks</h4>
-                   <div class="space-y-2">
-                     <div v-for="click in selectedVisitorProfile.clicks" :key="click.id" class="border-l-2 border-blue-300 dark:border-blue-700 pl-4">
-                       <p class="text-xs text-gray-600 dark:text-gray-400">
-                         <span class="font-medium">Date:</span> {{ dateFormatter(click.clicksDate) }}
-                         <span v-if="click.button"> | <span class="font-medium">Button:</span> {{ click.button }}</span>
-                         <span v-if="click.page?.url"> | <span class="font-medium">Page:</span>
-                           <a :href="click.page.url" target="_blank" rel="noopener noreferrer" class="text-indigo-600 dark:text-indigo-400 hover:underline">{{ click.page.url }}</a>
-                         </span>
-                       </p>
-                     </div>
-                   </div>
-                 </div>
- 
-                 <!-- Communications Section -->
-                 <div v-if="selectedVisitorProfile.communications && selectedVisitorProfile.communications.length > 0" class="mt-6">
-                   <h4 class="text-lg font-semibold mb-3 text-gray-900 dark:text-white">Communications</h4>
-                   <div class="space-y-2">
-                     <div v-for="comm in selectedVisitorProfile.communications" :key="comm.id" class="border-l-2 border-purple-300 dark:border-purple-700 pl-4">
-                       <p class="text-xs text-gray-600 dark:text-gray-400">
-                         <span class="font-medium">{{ comm.commType }}:</span>
-                         <span v-if="comm.createdAt">{{ dateFormatter(comm.createdAt) }}</span>
-                         <span v-else-if="comm.messageTimestamp">{{ dateFormatter(comm.messageTimestamp) }}</span>
-                         <span v-if="comm.text"> | <span class="font-medium">Message:</span> {{ comm.text }}</span>
-                         <span v-if="comm.bodyText"> | <span class="font-medium">Email:</span> {{ comm.bodyText }}</span>
-                         <span v-if="comm.subject"> | <span class="font-medium">Subject:</span> {{ comm.subject }}</span>
-                         <span v-if="comm.title"> | <span class="font-medium">Note:</span> {{ comm.title }}</span>
-                         <span v-if="comm.body"> | <span class="font-medium">Note Body:</span> {{ comm.body }}</span>
-                         <span v-if="comm.from"> | <span class="font-medium">From:</span> {{ comm.from }}</span>
-                         <span v-if="comm.to"> | <span class="font-medium">To:</span> {{ comm.to }}</span>
-                         <span v-if="comm.tag"> | <span class="font-medium">Tag:</span> {{ comm.tag }}</span>
-                       </p>
-                     </div>
-                   </div>
-                 </div>
-               </div>
-
-               <!-- Recent Sessions -->
-               <div v-if="selectedVisitorProfile.sessions && selectedVisitorProfile.sessions.length > 0">
-                 <h4 class="text-lg font-semibold mb-3 text-gray-900 dark:text-white">Recent Sessions</h4>
-                 <div class="space-y-4">
-                   <div v-for="session in selectedVisitorProfile.sessions" :key="session.id" class="card-modern p-4">
-                     <p class="text-sm font-medium text-gray-800 dark:text-gray-200 mb-2">Session ID: <span class="break-all font-normal">{{ session.id }}</span></p>
-                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-gray-600 dark:text-gray-400 mb-4">
-                       <p>Started At: <span class="font-medium">{{ dateFormatter(session.startedAt) }}</span></p>
-                       <p>Last Activity At: <span class="font-medium">{{ dateFormatter(session.lastActivityAt) }}</span></p>
-                       <p class="sm:col-span-2">Website: <a :href="session.website?.url" target="_blank" rel="noopener noreferrer" class="text-indigo-600 dark:text-indigo-400 hover:underline">{{ session.website?.url || 'N/A' }}</a></p>
-                     </div>
-                     <!-- Per-Session User Journey -->
-                     <div v-if="session.events && session.events.length > 0">
-                        <h5 class="text-md font-semibold mb-2 text-gray-800 dark:text-gray-200">Session Journey</h5>
-                        <div class="space-y-3 border-l-2 border-gray-200 dark:border-gray-700 pl-4">
-                          <div v-for="event in session.events" :key="event.id" class="relative">
-                            <div class="absolute -left-3.5 top-1.5 w-3 h-3 bg-indigo-500 rounded-full ring-4 ring-white dark:ring-gray-800"></div>
-                            <p class="text-sm font-medium text-gray-800 dark:text-gray-200">{{ event.eventType }}</p>
-                            <p class="text-xs text-gray-600 dark:text-gray-400">{{ dateFormatter(event.timestamp) }}</p>
-                            <p v-if="event.eventDetails?.pageUrl" class="text-xs text-gray-600 dark:text-gray-400 break-all">Page: <a :href="event.eventDetails.pageUrl" target="_blank" rel="noopener noreferrer" class="text-indigo-600 dark:text-indigo-400 hover:underline">{{ event.eventDetails.pageUrl }}</a></p>
-                          </div>
-                        </div>
-                     </div>
-                      <div v-else class="text-sm text-gray-500 dark:text-gray-400 italic">No events recorded for this session.</div>
-                   </div>
-                 </div>
-               </div>
-
-               <!-- Combined User Journey -->
-               <div v-if="combinedUserJourney && combinedUserJourney.length > 0">
-                 <h4 class="text-lg font-semibold mb-3 text-gray-900 dark:text-white">Combined User Journey</h4>
-                  <div class="space-y-3 border-l-2 border-gray-200 dark:border-gray-700 pl-4">
-                    <div v-for="event in combinedUserJourney" :key="event.id" class="relative">
-                      <div class="absolute -left-3.5 top-1.5 w-3 h-3 bg-green-500 rounded-full ring-4 ring-white dark:ring-gray-800"></div> <!-- Using a different color for combined journey -->
-                      <p class="text-sm font-medium text-gray-800 dark:text-gray-200">{{ event.eventType }}</p>
-                      <p class="text-xs text-gray-600 dark:text-gray-400">{{ dateFormatter(event.timestamp) }}</p>
-                      <p v-if="event.eventDetails?.pageUrl" class="text-xs text-gray-600 dark:text-gray-400 break-all">Page: <a :href="event.eventDetails.pageUrl" target="_blank" rel="noopener noreferrer" class="text-indigo-600 dark:text-indigo-400 hover:underline">{{ event.eventDetails.pageUrl }}</a></p>
-                    </div>
-                  </div>
-               </div>
-                <div v-else class="text-center py-8 text-gray-500">
-                   <p>No combined journey data available for this visitor.</p>
-                </div>
-             </div>
-             <div v-else class="text-center py-8 text-gray-500">
-                <p>No detailed information available for this visitor.</p>
-             </div>
-           </div>
-         </div>
-       </div>
-     </div>
-   </transition>
-
- </div> <!-- End main div -->
+ </div>
 </template>
 
 <style scoped>
-/* Import modern styles - Assuming these are globally available or defined in a main CSS file */
-
 /* Minimalist Input Styles */
 .input-modern {
  @apply block w-full px-3 py-2 text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600/50 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500;
@@ -1066,11 +785,6 @@
  @apply hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:focus:ring-indigo-400;
  @apply transition-colors duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed;
 }
-.btn-ghost-modern {
- @apply inline-flex items-center justify-center px-2 py-1 text-xs font-medium text-indigo-600 dark:text-indigo-400 rounded;
- @apply hover:bg-indigo-100 dark:hover:bg-indigo-900/50 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:focus:ring-indigo-400;
- @apply transition-colors duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed;
-}
 .btn-icon-modern {
  @apply inline-flex items-center justify-center w-8 h-8 text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600/50 rounded-md shadow-sm;
  @apply hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:focus:ring-indigo-400;
@@ -1095,32 +809,9 @@
  @apply px-4 py-3 text-sm;
 }
 
-/* Modal Styles (Keep for consistency if modals are added later) */
-.modal-content-modern {
- @apply inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-xl md:max-w-2xl lg:max-w-3xl sm:w-full p-6 sm:p-8;
-}
-.modal-fade-enter-active,
-.modal-fade-leave-active {
- transition: opacity 0.3s ease;
-}
-.modal-fade-enter-from,
-.modal-fade-leave-to {
- opacity: 0;
-}
-.modal-fade-enter-active .modal-content-modern,
-.modal-fade-leave-active .modal-content-modern {
- transition: all 0.3s ease;
-}
-.modal-fade-enter-from .modal-content-modern,
-.modal-fade-leave-to .modal-content-modern {
-  transform: translateY(20px) scale(0.98);
-  opacity: 0;
-}
-
-/* Custom scrollbar styles (optional) */
+/* Custom scrollbar styles */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { @apply bg-gray-100 dark:bg-gray-800/50; }
 ::-webkit-scrollbar-thumb { @apply bg-gray-300 dark:bg-gray-600 rounded; }
 ::-webkit-scrollbar-thumb:hover { @apply bg-gray-400 dark:bg-gray-500; }
-
 </style>
