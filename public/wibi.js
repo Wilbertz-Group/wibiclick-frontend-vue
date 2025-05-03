@@ -83,6 +83,7 @@ async function createWidget(n) {
 	// Check online status
 	window.addEventListener('online', () => {
 		offlineQueue.process();
+		processStoredSourceData();
 	});
 	
 	// Enhanced fetch wrapper
@@ -129,6 +130,23 @@ async function createWidget(n) {
 	  const utmContent = urlParams.get('utm_content');
 	  const utmTerm = urlParams.get('utm_term');
 	  
+	  // Store in local storage as backup
+	  const sourceKey = `wibi_source_${utk}`;
+	  const sourceData = {
+	    utk,
+	    websiteId,
+	    source,
+	    sourceDetail,
+	    referrer: document.referrer,
+	    campaign: utmCampaign,
+	    content: utmContent,
+	    medium: medium,
+	    term: utmTerm,
+	    timestamp: Date.now()
+	  };
+	  
+	  localStorage.setItem(sourceKey, JSON.stringify(sourceData));
+	  
 	  // Send to backend with retry logic
 	  for (let attempt = 1; attempt <= retries; attempt++) {
 	    try {
@@ -137,20 +155,12 @@ async function createWidget(n) {
 	        headers: {
 	          'Content-Type': 'application/json',
 	        },
-	        body: JSON.stringify({
-	          utk,
-	          websiteId,
-	          source,
-	          sourceDetail,
-	          referrer: document.referrer,
-	          campaign: utmCampaign,
-	          content: utmContent,
-	          medium: medium,
-	          term: utmTerm
-	        })
+	        body: JSON.stringify(sourceData)
 	      });
 	      
 	      if (response.ok) {
+	        // Remove from local storage on success
+	        localStorage.removeItem(sourceKey);
 	        // Track success
 	        window.dataLayer = window.dataLayer || [];
 	        window.dataLayer.push({
@@ -186,6 +196,37 @@ async function createWidget(n) {
 	      }
 	    }
 	  }
+	}
+
+	// Process stored source data
+	function processStoredSourceData() {
+	  const keys = Object.keys(localStorage).filter(key => key.startsWith('wibi_source_'));
+	  
+	  keys.forEach(async (key) => {
+	    try {
+	      const data = JSON.parse(localStorage.getItem(key));
+	      
+	      // Only process if data is less than 24 hours old
+	      if (Date.now() - data.timestamp < 24 * 60 * 60 * 1000) {
+	        const response = await trackingFetch('https://wibi.wilbertzgroup.com/api/track/track-source', {
+	          method: 'POST',
+	          headers: {
+	            'Content-Type': 'application/json',
+	          },
+	          body: JSON.stringify(data)
+	        });
+	        
+	        if (response.ok) {
+	          localStorage.removeItem(key);
+	        }
+	      } else {
+	        // Remove old data
+	        localStorage.removeItem(key);
+	      }
+	    } catch (e) {
+	      console.error('Error processing stored source data:', e);
+	    }
+	  });
 	}
 
 	// Utility: Push to dataLayer with new schema
@@ -344,12 +385,28 @@ async function createWidget(n) {
 			var cookieExpiry = new Date();
 			cookieExpiry.setFullYear(cookieExpiry.getFullYear() + 1);
 			document.cookie = `wibi_utk=${utk}; expires=${cookieExpiry.toUTCString()}; path=/; SameSite=Lax`;
-					pg = window.location.href,
-					P = await fetch(`https://wibi.wilbertzgroup.com/wibi-options?id=${n}&c=0&pg=${pg}&utk=${utk}`),
-					B = await P.json();
+			
+			// Get source attribution immediately
+			const { source, sourceDetail, medium } = detectSource();
+			const urlParams = new URLSearchParams(window.location.search);
+			
+			// Include source data in initial request
+			const sourceData = {
+				source,
+				sourceDetail,
+				referrer: document.referrer,
+				campaign: urlParams.get('utm_campaign'),
+				content: urlParams.get('utm_content'),
+				medium: medium,
+				term: urlParams.get('utm_term')
+			};
+			
+			pg = window.location.href,
+			P = await fetch(`https://wibi.wilbertzgroup.com/wibi-options?id=${n}&c=0&pg=${pg}&utk=${utk}&source=${encodeURIComponent(JSON.stringify(sourceData))}`),
+			B = await P.json();
 			localStorage.setItem("wibi_utk", utk);
 			
-			// Wait a bit to ensure visitor is created, then track source with queue
+			// Still track source as fallback in case the initial request didn't process it
 			await new Promise(resolve => setTimeout(resolve, 500));
 			trackingQueue.add(() => trackPageVisit(n, utk));
 			
@@ -699,6 +756,9 @@ async function createWidget(n) {
 			document.getElementById("myForm").addEventListener("keydown", resetIdleTimer);
 		}
 	run();
+	
+	// Process stored source data on load
+	window.addEventListener('load', processStoredSourceData);
 }
 createWidget(document.currentScript.dataset.id)
 
@@ -809,5 +869,3 @@ function detectSource() {
 	
 	return { source, sourceDetail, medium };
 }
-
-// Source Attribution Tracking with Enhanced Error Recovery
