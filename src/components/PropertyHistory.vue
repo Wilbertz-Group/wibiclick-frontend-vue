@@ -54,39 +54,71 @@
 
       <!-- Timeline with filters -->
       <div v-else class="relative px-6 py-8">
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
-          <h3 class="text-white font-semibold text-sm uppercase tracking-wide flex items-center">
-            <font-awesome-icon icon="stream" class="mr-2 text-cyan-400" />
-            Change Timeline
-          </h3>
-          
-          <!-- Filters -->
-          <div class="flex flex-wrap gap-3">
-            <select
-              v-model="propertyFilter"
-              class="bg-gray-800 border border-cyan-700/30 text-cyan-300 text-sm rounded-md px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
-            >
-              <option value="">All Properties</option>
-              <option v-for="prop in uniqueProperties" :key="prop" :value="prop">
-                {{ formatPropertyName(prop) }}
-              </option>
-            </select>
+        <!-- Enhanced Filter Section -->
+        <div class="bg-gray-800/50 rounded-lg p-4 mb-6 border border-cyan-800/20">
+          <div class="flex flex-col lg:flex-row lg:items-center gap-4">
+            <!-- Title and Result Count -->
+            <div class="flex-1">
+              <h3 class="text-white font-semibold text-sm uppercase tracking-wide flex items-center">
+                <font-awesome-icon icon="stream" class="mr-2 text-cyan-400" />
+                Change Timeline
+              </h3>
+              <div class="text-xs text-gray-400 mt-1">
+                Showing <span class="text-cyan-300 font-medium">{{ filteredHistory.length }}</span> of <span class="text-cyan-300 font-medium">{{ sortedHistory.length }}</span> changes
+              </div>
+            </div>
             
-            <select
-              v-model="sourceTypeFilter"
-              class="bg-gray-800 border border-cyan-700/30 text-cyan-300 text-sm rounded-md px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
-            >
-              <option value="all">All Sources</option>
-              <option v-for="source in uniqueSourceTypes" :key="source" :value="source">
-                {{ source }}
-              </option>
-            </select>
+            <!-- Filter Controls -->
+            <div class="flex flex-col sm:flex-row gap-3 sm:gap-4">
+              <!-- Property Filter -->
+              <div class="relative flex-1 sm:flex-initial">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <font-awesome-icon icon="filter" class="text-cyan-400 text-xs" />
+                </div>
+                <select
+                  v-model="propertyFilter"
+                  class="w-full sm:w-48 bg-gray-900/70 border border-cyan-700/30 text-cyan-300 text-sm rounded-md pl-9 pr-3 py-2 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-all appearance-none cursor-pointer"
+                >
+                  <option value="">All Properties</option>
+                  <option v-for="prop in uniqueProperties" :key="prop" :value="prop">
+                    {{ formatPropertyName(prop) }}
+                  </option>
+                </select>
+                <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                  <font-awesome-icon icon="chevron-down" class="text-cyan-400 text-xs" />
+                </div>
+              </div>
+              
+              <!-- Source Type Filter -->
+                <div class="relative flex-1 sm:flex-initial sm:hidden sm:block">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <font-awesome-icon icon="code-branch" class="text-cyan-400 text-xs" />
+                </div>
+                <select
+                  v-model="sourceTypeFilter"
+                  class="w-full sm:w-48 bg-gray-900/70 border border-cyan-700/30 text-cyan-300 text-sm rounded-md pl-9 pr-3 py-2 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-all appearance-none cursor-pointer"
+                >
+                  <option value="all">All Sources</option>
+                  <option v-for="source in uniqueSourceTypes" :key="source" :value="source">
+                  {{ source }}
+                  </option>
+                </select>
+                <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                  <font-awesome-icon icon="chevron-down" class="text-cyan-400 text-xs" />
+                </div>
+                </div>
+              
+              <!-- Clear Filters Button (shows only when filters are active) -->
+              <button
+                v-if="propertyFilter || sourceTypeFilter !== 'all'"
+                @click="clearFilters"
+                class="w-full sm:w-auto px-4 py-2 bg-red-900/20 hover:bg-red-900/30 text-red-300 rounded-md transition-all duration-150 text-sm flex items-center justify-center gap-2"
+              >
+                <font-awesome-icon icon="times-circle" />
+                Clear Filters
+              </button>
+            </div>
           </div>
-        </div>
-        
-        <!-- Result count -->
-        <div class="text-xs text-gray-400 mb-2">
-          Showing {{ filteredHistory.length }} of {{ sortedHistory.length }} changes
         </div>
         
         <!-- Scrollable timeline container -->
@@ -170,8 +202,12 @@
           </div>
           
           <!-- No results message -->
-          <div v-if="filteredHistory.length === 0" class="text-center py-8 text-gray-400">
-            No changes match your filters
+          <div v-if="filteredHistory.length === 0" class="flex flex-col items-center justify-center py-12 text-center">
+            <div class="w-16 h-16 mx-auto bg-cyan-900/20 rounded-full flex items-center justify-center mb-4">
+              <font-awesome-icon icon="search" class="text-cyan-400 text-xl" />
+            </div>
+            <p class="text-cyan-300 font-medium mb-1">No matching changes</p>
+            <p class="text-gray-400 text-sm">Try adjusting your filters to see more results</p>
           </div>
         </div>
       </div>
@@ -299,6 +335,12 @@ const filteredHistory = computed(() => {
   return filtered;
 });
 
+// Clear filters function
+const clearFilters = () => {
+  propertyFilter.value = '';
+  sourceTypeFilter.value = 'all';
+};
+
 onMounted(fetchHistory);
 </script>
 
@@ -331,5 +373,14 @@ onMounted(fetchHistory);
 /* Smooth scrolling */
 .custom-scrollbar {
   scroll-behavior: smooth;
+}
+
+/* Custom select styling for better cross-browser appearance */
+select {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2367e8f9' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 0.5rem center;
+  background-repeat: no-repeat;
+  background-size: 1.5em 1.5em;
+  padding-right: 2.5rem;
 }
 </style>
