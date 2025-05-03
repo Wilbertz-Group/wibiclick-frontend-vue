@@ -120,22 +120,14 @@
     const converted = filtered.filter(v => v.customer).length;
     const total = filtered.length;
     
-    // Count returning visitors (those who appear in multiple sessions)
-    const visitorsByUTK = {};
-    filtered.forEach(v => {
-      if (v.utk) {
-        visitorsByUTK[v.utk] = (visitorsByUTK[v.utk] || 0) + 1;
-      }
-    });
+    // Count returning visitors (those with more than one session)
+    const returning = filtered.filter(v => v.totalSessions > 1).length;
     
-    const returning = Object.values(visitorsByUTK).filter(count => count > 1).length;
-    
-    // Count unique locations - check multiple possible fields for country/city data
+    // Count unique locations
     const countries = new Set();
     const cities = new Set();
     
     filtered.forEach(v => {
-      // Check for country in various possible locations
       const country = v.country || v.location?.country || null;
       const city = v.city || v.location?.city || null;
       
