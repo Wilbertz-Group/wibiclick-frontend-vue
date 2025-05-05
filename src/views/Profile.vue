@@ -347,30 +347,47 @@
   }
 
   async function uploadImage(data) {
-    // We need to submit this as a multipart/form-data
-    // to do this we use the FormData API.
-    const body = new FormData()
-    // We can append other data to our form data:
-    body.append('name', data.logo[0].name)
-    // Finally, we append the actual File object
-    body.append('logo', data.logo[0].file)
+    // Debug: log the structure of the file input
+    console.log('data.logo:', data.logo);
+    if (data.logo && data.logo[0]) {
+      console.log('data.logo[0]:', data.logo[0]);
+      console.log('data.logo[0].file:', data.logo[0].file);
+    }
+
+    // Robust validation
+    if (
+      !data.logo ||
+      !Array.isArray(data.logo) ||
+      !data.logo[0] ||
+      !data.logo[0].file ||
+      !(data.logo[0].file instanceof File)
+    ) {
+      toast.error("No valid logo file selected. Please choose a file before uploading.");
+      return;
+    }
+
+    const body = new FormData();
+    body.append('name', data.logo[0].name);
+    body.append('logo', data.logo[0].file);
 
     try {
-      loading.value = true
+      loading.value = true;
 
       const res = await axios.post(`upload-logo?id=${userStore.currentWebsite}`, body, {
-          headers: {
-            'Content-Type': 'multipart/form-data'
-          }
-      })
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
 
       if (res.status == 200) {
-        logo.value = res.data.downloadUrl
+        logo.value = res.data.downloadUrl;
       }
 
-      loading.value = false
+      loading.value = false;
     } catch (error) {
-      console.log(error)
+      console.log(error);
+      toast.error("Failed to upload logo. Please try again.");
+      loading.value = false;
     }
   }
 

@@ -281,19 +281,20 @@ const createInsurancePDF = (report, path, action = 'download') => {
       .text(props.customerData?.address || 'N/A', 350, detailsTop + 45, { width: 230 }); // Added width for address
 
     generateHr(doc, detailsTop + 80);
+    doc.moveDown(2);
   }
 
  // This function parses HTML content from TipTap editor and preserves formatting in the PDF
  // It handles headings, paragraphs, lists, text formatting, and other rich text elements
  function generateNotes(doc, report) {
-    doc.moveDown(2);
+    doc.moveDown(1);
     if (report.notes) {
         doc
             .fontSize(11)
             .font("Helvetica-Bold")
             .text("Details / Notes:", 50)
             .moveDown(0.6)
-            .fontSize(10)
+            .fontSize(18)
             .font("Helvetica");
 
         // Improved HTML content handling to preserve formatting from TipTap editor

@@ -102,7 +102,7 @@ async function deleteInsuranceReport() {
 
 <template>
   <!-- Style based on InvoiceCustom.vue -->
-  <div class="shadow rounded-xl px-3 pt-3 pb-1 border border-white mt-3 cursor-move w-full dark:bg-white bg-white dark:bg-gray-800">
+  <div class="shadow rounded-xl px-3 pt-3 pb-1 border border-white mt-3 cursor-move w-full border-b border-gray-100 dark:border-gray-700/50 last:border-b-0 bg-white dark:bg-gray-800">
     <div class="mb-2 p-0">
       <modal :heading="heading" :body="body" :isOpen="isOpen" @close-modal="closeModal"></modal>
       <div class="flex justify-between mb-2">
