@@ -431,7 +431,7 @@ const conversionFunnelSeries = computed(() => {
           <div>
             <div class="flex justify-between items-center mb-1">
               <span class="text-xs text-gray-600 dark:text-gray-400 flex items-center">
-                <font-awesome-icon icon="chrome" class="mr-1.5 text-blue-500" />
+                <font-awesome-icon :icon="['fab', 'chrome']" class="mr-1.5 text-blue-500" />
                 Chrome
               </span>
               <span class="text-xs font-medium text-gray-700 dark:text-gray-300">60%</span>
@@ -445,7 +445,7 @@ const conversionFunnelSeries = computed(() => {
           <div>
             <div class="flex justify-between items-center mb-1">
               <span class="text-xs text-gray-600 dark:text-gray-400 flex items-center">
-                <font-awesome-icon icon="safari" class="mr-1.5 text-green-500" />
+                <font-awesome-icon :icon="['fab', 'safari']" class="mr-1.5 text-green-500" />
                 Safari
               </span>
               <span class="text-xs font-medium text-gray-700 dark:text-gray-300">25%</span>
@@ -459,7 +459,7 @@ const conversionFunnelSeries = computed(() => {
           <div>
             <div class="flex justify-between items-center mb-1">
               <span class="text-xs text-gray-600 dark:text-gray-400 flex items-center">
-                <font-awesome-icon icon="firefox" class="mr-1.5 text-orange-500" />
+                <font-awesome-icon :icon="['fab', 'firefox']" class="mr-1.5 text-orange-500" />
                 Firefox
               </span>
               <span class="text-xs font-medium text-gray-700 dark:text-gray-300">10%</span>
@@ -473,7 +473,7 @@ const conversionFunnelSeries = computed(() => {
           <div>
             <div class="flex justify-between items-center mb-1">
               <span class="text-xs text-gray-600 dark:text-gray-400 flex items-center">
-                <font-awesome-icon icon="edge" class="mr-1.5 text-purple-500" />
+                <font-awesome-icon :icon="['fab', 'edge']" class="mr-1.5 text-purple-500" />
                 Other
               </span>
               <span class="text-xs font-medium text-gray-700 dark:text-gray-300">5%</span>

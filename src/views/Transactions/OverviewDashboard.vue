@@ -582,6 +582,28 @@ const handleSendMessage = (customerOrJid) => {
   toast.info(`Compose message for ${customerOrJid.name || customerOrJid.remoteJid}`)
 }
 
+// Add methods to handle the emitted events
+const handleWebsitePerformanceRefresh = () => {
+  fetchWebsitePerformance()
+}
+
+const handleViewPerformanceDetail = (detail) => {
+  // Navigate to a detailed analytics page or open a modal
+  console.log('View detail:', detail)
+  // Example:
+  // router.push({
+  //   name: 'website-analytics-detail',
+  //   params: { websiteId: selectedWebsite.value },
+  //   query: { view: detail.type, metric: detail.key }
+  // })
+}
+
+const handleExportPerformanceData = (data) => {
+  // Handle exporting data (e.g., download CSV)
+  console.log('Export data:', data)
+  toast.success('Exporting analytics data...')
+}
+
 // Fetch all data
 const fetchAllData = async () => {
   if (!selectedWebsite.value || selectedWebsite.value === 'default') {
