@@ -7,42 +7,54 @@
 
     <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-16">
 
-      <!-- Header Section -->
-      <header class="flex flex-col md:flex-row justify-between items-center mb-10 md:mb-14 space-y-4 md:space-y-0">
-        <h1 class="text-3xl sm:text-4xl font-bold tracking-tight text-gray-900 dark:text-white">
-          Manage Jobs
-        </h1>
-        <div class="flex items-center space-x-2 sm:space-x-3">
-          <!-- Website Selector (Minimalist Style) -->
-          <Listbox v-model="selectedWebsite" as="div" class="relative w-72"> <!-- Added w-72 -->
-            <ListboxButton class="input-modern input-modern--select pr-8 text-sm">
-              <span class="block truncate">
-                {{ opt.find(a => a.value === selectedWebsite)?.label || 'Select Website' }}
-              </span>
-              <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
-                <font-awesome-icon icon="chevron-down" class="h-4 w-4 text-gray-400" aria-hidden="true" />
-              </span>
-            </ListboxButton>
-            <transition leave-active-class="transition duration-100 ease-in" leave-from-class="opacity-100" leave-to-class="opacity-0">
-              <ListboxOptions class="absolute z-20 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white dark:bg-gray-800 py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
-                <ListboxOption v-for="website in opt" :key="website.value" :value="website.value" v-slot="{ active, selected }">
-                  <li :class="[ active ? 'bg-indigo-100 dark:bg-indigo-700 text-indigo-900 dark:text-white' : 'text-gray-900 dark:text-gray-100', 'relative cursor-default select-none py-2 pl-10 pr-4']"> <!-- Adjusted dark text color -->
-                    <span :class="[selected ? 'font-semibold' : 'font-normal', 'block truncate']">{{ website.label }}</span>
-                    <span v-if="selected" class="absolute inset-y-0 left-0 flex items-center pl-3 text-indigo-600 dark:text-indigo-400">
-                      <font-awesome-icon icon="check" class="h-5 w-5" aria-hidden="true" />
-                    </span>
-                  </li>
-                </ListboxOption>
-              </ListboxOptions>
-            </transition>
-          </Listbox>
-
-          <button @click="reloadJobs" class="btn-icon-modern" title="Reload Jobs">
-             <font-awesome-icon icon="sync" :class="{ 'fa-spin': loading }" />
-          </button>
-          <button @click="openAddJobModal" class="btn-primary-modern">
-             <font-awesome-icon icon="plus" class="mr-1.5 h-4 w-4" /> Add Job
-          </button>
+      <!-- Header Section with improved mobile responsiveness -->
+      <header class="mb-10 md:mb-14">
+        <!-- Title and actions container - stacks on mobile, side-by-side on desktop -->
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-6 mb-4">
+          <h1 class="text-3xl sm:text-4xl font-bold tracking-tight text-gray-900 dark:text-white">
+            Manage Jobs
+          </h1>
+          
+          <!-- Action buttons container - full width on mobile -->
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
+            <!-- Website Selector - takes full width on mobile -->
+            <Listbox v-model="selectedWebsite" as="div" class="relative w-full sm:w-72">
+              <ListboxButton class="input-modern input-modern--select pl-3 pr-8 text-sm w-full flex items-center justify-between">
+                <span class="block truncate">
+                  {{ opt.find(a => a.value === selectedWebsite)?.label || 'Select Website' }}
+                </span>
+                <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
+                  <font-awesome-icon icon="chevron-down" class="h-4 w-4 text-gray-400" aria-hidden="true" />
+                </span>
+              </ListboxButton>
+              <transition leave-active-class="transition duration-100 ease-in" leave-from-class="opacity-100" leave-to-class="opacity-0">
+                <ListboxOptions class="absolute z-20 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white dark:bg-gray-800 py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+                  <ListboxOption v-for="website in opt" :key="website.value" :value="website.value" v-slot="{ active, selected }">
+                    <li :class="[ active ? 'bg-indigo-100 dark:bg-indigo-700 text-indigo-900 dark:text-white' : 'text-gray-900 dark:text-gray-100', 'relative cursor-default select-none py-2 pl-10 pr-4']">
+                      <span :class="[selected ? 'font-semibold' : 'font-normal', 'block truncate']">{{ website.label }}</span>
+                      <!-- <span v-if="selected" class="absolute inset-y-0 left-0 flex items-center pl-3 text-indigo-600 dark:text-indigo-400">
+                        <font-awesome-icon icon="check" class="h-5 w-5" aria-hidden="true" />
+                      </span> -->
+                    </li>
+                  </ListboxOption>
+                </ListboxOptions>
+              </transition>
+            </Listbox>
+            
+            <!-- Action buttons - flex row that wraps nicely -->
+            <div class="flex items-center gap-2">
+              <button @click="reloadJobs" 
+                class="btn-icon-modern flex-shrink-0" 
+                title="Reload Jobs">
+                <font-awesome-icon icon="sync" :class="{ 'fa-spin': loading }" />
+              </button>
+              <button @click="openAddJobModal" 
+                class="btn-primary-modern flex-grow sm:flex-grow-0">
+                <font-awesome-icon icon="plus" class="mr-1.5 h-4 w-4" /> 
+                <span>Add Job</span>
+              </button>
+            </div>
+          </div>
         </div>
       </header>
 
