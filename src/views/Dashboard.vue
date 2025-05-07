@@ -373,9 +373,6 @@ watch(isDarkMode, () => {
               <span class="block truncate">
                 {{ websites.find(a => a.value === selectedWebsite)?.label || 'Select Website' }}
               </span>
-              <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
-                <font-awesome-icon icon="chevron-down" class="h-4 w-4 text-gray-400" aria-hidden="true" />
-              </span>
             </ListboxButton>
             <transition leave-active-class="transition duration-100 ease-in" leave-from-class="opacity-100" leave-to-class="opacity-0">
               <ListboxOptions class="absolute z-20 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white dark:bg-gray-800 py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">

@@ -16,9 +16,6 @@
               <span class="block truncate">
                 {{ websites.find(a => a.value === selectedWebsite)?.label || 'Select Website' }}
               </span>
-              <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
-                <font-awesome-icon icon="chevron-down" class="h-4 w-4 text-gray-400" aria-hidden="true" />
-              </span>
             </ListboxButton>
             <transition leave-active-class="transition duration-100 ease-in" leave-from-class="opacity-100" leave-to-class="opacity-0">
               <ListboxOptions class="absolute z-20 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white dark:bg-gray-800 py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
@@ -38,9 +35,6 @@
           <Listbox v-model="month" as="div" class="relative w-36">
             <ListboxButton class="input-modern input-modern--select pr-8 text-sm">
               <span class="block truncate">{{ moment().month(month - 1).format('MMMM') }}</span>
-              <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
-                <font-awesome-icon icon="chevron-down" class="h-4 w-4 text-gray-400" aria-hidden="true" />
-              </span>
             </ListboxButton>
             <transition leave-active-class="transition duration-100 ease-in" leave-from-class="opacity-100" leave-to-class="opacity-0">
               <ListboxOptions class="absolute z-20 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white dark:bg-gray-800 py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
@@ -60,9 +54,6 @@
           <Listbox v-model="year" as="div" class="relative w-28">
             <ListboxButton class="input-modern input-modern--select pr-8 text-sm">
               <span class="block truncate">{{ year }}</span>
-              <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
-                <font-awesome-icon icon="chevron-down" class="h-4 w-4 text-gray-400" aria-hidden="true" />
-              </span>
             </ListboxButton>
             <transition leave-active-class="transition duration-100 ease-in" leave-from-class="opacity-100" leave-to-class="opacity-0">
               <ListboxOptions class="absolute z-20 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white dark:bg-gray-800 py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
@@ -93,194 +84,76 @@
       <!-- Dashboard Content -->
       <div v-else class="space-y-8">
 
+        <ExecutiveSummary
+          v-if="!loading" 
+          :financialOverview="financialOverview"
+          :accountsReceivable="accountsReceivable"
+          :technicianPerformance="technicianPerformance"
+          :jobAnalytics="jobAnalytics"
+          :websitePerformance="websitePerformance"
+          :isDarkMode="isDarkMode"
+        />
+
         <!-- Financial Overview Section -->
-        <section v-if="financialOverview" class="card-modern p-5 sm:p-6">
-          <h2 class="text-xl font-semibold mb-6 text-gray-900 dark:text-white">Financial Overview</h2>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <!-- Key Metrics -->
-            <div class="grid grid-cols-2 gap-6">
-              <div v-for="(data, key) in financialOverview" :key="key" class="text-center border-r dark:border-gray-700 last:border-r-0 pr-4 last:pr-0">
-                <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 capitalize">{{ formatTitle(key) }}</h3>
-                <p class="text-2xl font-bold mt-1 text-gray-900 dark:text-white">
-                  {{ key === 'profitMargin' ? formatPercentage(data.current) : formatCurrency(data.current) }}
-                </p>
-                <p class="text-xs mt-1" :class="getComparisonClass(data, key)">
-                  <font-awesome-icon :icon="getComparisonIcon(data, key)" class="mr-0.5"/>
-                  {{ getPercentageChange(data.current, data.previous) }}% vs last month
-                </p>
-              </div>
-            </div>
-            <!-- Earnings Distribution Chart -->
-            <div>
-              <h3 class="text-lg font-medium mb-3 text-center text-gray-700 dark:text-gray-300">Earnings Distribution</h3>
-              <apexchart
-                type="pie"
-                height="250"
-                :options="earningsDistributionOptions"
-                :series="earningsDistributionSeries"
-              ></apexchart>
-            </div>
-          </div>
-        </section>
+        <EnhancedFinancialOverview
+          v-if="financialOverview"
+          :financialOverview="financialOverview"
+          :websiteId="selectedWebsite"
+          :isDarkMode="isDarkMode"
+          :year="year"
+          :month="month"
+          :loadingData="loading"
+          @refresh-data="fetchFinancialOverview"
+        />
+
+        <CompanyEarningsTrend 
+          v-if="selectedWebsite && selectedWebsite !== 'default'"
+          :websiteId="selectedWebsite"
+          :isDarkMode="isDarkMode"
+          :year="year"
+        />
 
         <!-- Accounts Receivable Section -->
-        <section v-if="accountsReceivable" class="card-modern p-5 sm:p-6">
-          <h2 class="text-xl font-semibold mb-6 text-gray-900 dark:text-white">Accounts Receivable</h2>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6 text-center">
-            <div>
-              <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Outstanding</h3>
-              <p class="text-3xl font-bold mt-1 text-red-600 dark:text-red-400">{{ formatCurrency(accountsReceivable.totalOutstanding) }}</p>
-            </div>
-            <div>
-              <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Outstanding Invoices</h3>
-              <p class="text-3xl font-bold mt-1 text-gray-900 dark:text-white">{{ accountsReceivable.count }}</p>
-            </div>
-          </div>
-          <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-100 dark:divide-gray-700/50">
-              <thead class="bg-gray-50 dark:bg-gray-900/30">
-                <tr>
-                  <th class="th-modern">Invoice #</th>
-                  <th class="th-modern">Customer</th>
-                  <th class="th-modern">Issue Date</th>
-                  <th class="th-modern">Due Date</th>
-                  <th class="th-modern text-right">Amount</th>
-                  <th class="th-modern text-right">Days Overdue</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-gray-100 dark:divide-gray-700/50">
-                <tr v-if="!accountsReceivable.outstandingInvoices || accountsReceivable.outstandingInvoices.length === 0">
-                  <td colspan="6" class="px-4 py-4 text-center text-sm text-gray-500 dark:text-gray-400">No outstanding invoices.</td>
-                </tr>
-                <tr v-for="invoice in accountsReceivable.outstandingInvoices" :key="invoice.id" class="hover:bg-gray-50/50 dark:hover:bg-white/5 transition-colors">
-                  <td class="td-modern">{{ invoice.number }}</td>
-                  <td class="td-modern">
-                    <router-link
-                      :to="{ name: 'contact', query: { customer_id: invoice.customer?.id } }"
-                      class="font-medium text-indigo-600 dark:text-indigo-400 hover:underline"
-                    >
-                      {{ invoice.customer?.name || 'N/A' }}
-                    </router-link>
-                  </td>
-                  <td class="td-modern whitespace-nowrap">{{ formatDate(invoice.issuedAt) }}</td>
-                  <td class="td-modern whitespace-nowrap">{{ formatDate(invoice.dueAt) }}</td>
-                  <td class="td-modern text-right whitespace-nowrap">{{ formatCurrency(invoice.sales) }}</td>
-                  <td class="td-modern text-right whitespace-nowrap font-medium" :class="calculateDaysOverdue(invoice.dueAt) > 30 ? 'text-red-600 dark:text-red-400' : calculateDaysOverdue(invoice.dueAt) > 0 ? 'text-yellow-600 dark:text-yellow-400' : 'text-gray-500 dark:text-gray-400'">
-                    {{ calculateDaysOverdue(invoice.dueAt) }}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </section>
+        <EnhancedAccountsReceivable
+          v-if="accountsReceivable"
+          :accountsReceivable="accountsReceivable"
+          :isDarkMode="isDarkMode"
+          @view-invoice="handleViewInvoice"
+          @send-reminder="handleSendReminder"
+        />
 
-        <!-- Technician Performance Section -->
-        <section v-if="technicianPerformance.length > 0" class="card-modern p-5 sm:p-6">
-          <h2 class="text-xl font-semibold mb-6 text-gray-900 dark:text-white">Technician Performance</h2>
-          <apexchart
-            type="bar"
-            height="350"
-            :options="technicianPerformanceChartOptions"
-            :series="technicianPerformanceChartSeries"
-          ></apexchart>
-           <div class="overflow-x-auto mt-6">
-             <table class="min-w-full divide-y divide-gray-100 dark:divide-gray-700/50">
-               <thead class="bg-gray-50 dark:bg-gray-900/30">
-                 <tr>
-                   <th class="th-modern">Technician</th>
-                   <th class="th-modern text-right">Total Earnings</th>
-                   <th class="th-modern text-right">Jobs Completed</th>
-                 </tr>
-               </thead>
-               <tbody class="divide-y divide-gray-100 dark:divide-gray-700/50">
-                 <tr v-for="tech in technicianPerformance" :key="tech.technicianId" class="hover:bg-gray-50/50 dark:hover:bg-white/5 transition-colors">
-                   <td class="td-modern">{{ tech.name }}</td>
-                   <td class="td-modern text-right">{{ formatCurrency(tech.totalEarnings) }}</td>
-                   <td class="td-modern text-right">{{ tech.jobsCompleted }}</td>
-                 </tr>
-               </tbody>
-             </table>
-           </div>
-        </section>
+        <!-- Technician Performance section -->
+        <TechnicianPerformance
+          v-if="technicianPerformance && technicianPerformance.length > 0"
+          :technicianPerformance="technicianPerformance"
+          :isDarkMode="isDarkMode"
+          @view-technician="handleViewTechnician"
+          @view-jobs="handleViewJobs"
+        />
 
         <!-- Job Analytics & Customer Metrics Grid -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <!-- Job Analytics Section -->
-          <section v-if="jobAnalytics" class="card-modern p-5 sm:p-6">
-            <h2 class="text-xl font-semibold mb-6 text-gray-900 dark:text-white">Job Analytics</h2>
-            <div class="space-y-6">
-              <div>
-                <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Jobs</h3>
-                <p class="text-3xl font-bold mt-1 text-gray-900 dark:text-white">{{ jobAnalytics.totalJobs.current }}</p>
-                <p class="text-xs mt-1" :class="getComparisonClass(jobAnalytics.totalJobs, 'totalJobs')">
-                  <font-awesome-icon :icon="getComparisonIcon(jobAnalytics.totalJobs, 'totalJobs')" class="mr-0.5"/>
-                  {{ getPercentageChange(jobAnalytics.totalJobs.current, jobAnalytics.totalJobs.previous) }}% vs last month
-                </p>
-              </div>
-              <div>
-                <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Job Completion Rate</h3>
-                <p class="text-3xl font-bold mt-1 text-gray-900 dark:text-white">{{ jobAnalytics.jobCompletionRate.current.toFixed(1) }}%</p>
-                <p class="text-xs mt-1" :class="getComparisonClass(jobAnalytics.jobCompletionRate, 'jobCompletionRate')">
-                  <font-awesome-icon :icon="getComparisonIcon(jobAnalytics.jobCompletionRate, 'jobCompletionRate')" class="mr-0.5"/>
-                  {{ getPercentageChange(jobAnalytics.jobCompletionRate.current, jobAnalytics.jobCompletionRate.previous) }}% vs last month
-                </p>
-              </div>
-            </div>
-          </section>
+        <AnalyticsGrid
+          v-if="jobAnalytics || customerMetrics"
+          :jobAnalytics="jobAnalytics"
+          :customerMetrics="customerMetrics"
+          :isDarkMode="isDarkMode"
+        />
 
-          <!-- Customer Metrics Section -->
-          <section v-if="customerMetrics" class="card-modern p-5 sm:p-6">
-            <h2 class="text-xl font-semibold mb-6 text-gray-900 dark:text-white">Customer Metrics</h2>
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
-              <div v-for="(metric, key) in customerMetrics" :key="key" class="text-center">
-                <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 capitalize">{{ formatTitle(key) }}</h3>
-                <p class="text-3xl font-bold mt-1 text-gray-900 dark:text-white">
-                  {{ key === 'repeatCustomerRate' ? metric.current.toFixed(1) + '%' : metric.current }}
-                </p>
-                <p class="text-xs mt-1" :class="getComparisonClass(metric, key)">
-                  <font-awesome-icon :icon="getComparisonIcon(metric, key)" class="mr-0.5"/>
-                  {{ getPercentageChange(metric.current, metric.previous) }}% vs last month
-                </p>
-              </div>
-            </div>
-          </section>
-        </div>
+        <!-- Website Performance section -->
+        <WebsitePerformance
+          v-if="websitePerformance"
+          :websitePerformance="websitePerformance"
+          :isDarkMode="isDarkMode"
+        />
 
-        <!-- Website Performance Section -->
-        <section v-if="websitePerformance" class="card-modern p-5 sm:p-6">
-          <h2 class="text-xl font-semibold mb-6 text-gray-900 dark:text-white">Website Performance</h2>
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6 text-center">
-            <div v-for="(metric, key) in websitePerformance" :key="key">
-              <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 capitalize">{{ formatMetricName(key) }}</h3>
-              <p class="text-3xl font-bold mt-1 text-gray-900 dark:text-white">
-                {{ formatMetricValue(key, metric) }}
-              </p>
-            </div>
-          </div>
-          <!-- Chart removed for brevity, can be added back if needed -->
-          <!-- <apexchart type="line" height="300" :options="websitePerformanceChartOptions" :series="websitePerformanceChartSeries"></apexchart> -->
-        </section>
-
-        <!-- Whatsapp Interactions Section -->
-        <section v-if="whatsappInteractions && whatsappInteractions.length > 0" class="card-modern p-5 sm:p-6">
-          <h2 class="text-xl font-semibold mb-6 text-gray-900 dark:text-white">Recent Whatsapp Interactions</h2>
-          <div class="space-y-4 max-h-96 overflow-y-auto pr-2">
-            <div v-for="interaction in whatsappInteractions" :key="interaction.id"
-                 class="flex items-start space-x-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-              <div :class="['w-8 h-8 min-w-[32px] rounded-full flex items-center justify-center',
-                            interaction.fromMe ? 'bg-indigo-500' : 'bg-green-500']">
-                <font-awesome-icon :icon="interaction.fromMe ? 'paper-plane' : 'user'" class="text-white text-xs" />
-              </div>
-              <div class="flex-grow overflow-hidden">
-                <div class="flex justify-between items-baseline mb-1">
-                  <span class="text-sm font-medium text-gray-800 dark:text-white truncate">{{ interaction.customer?.name || interaction.remoteJid }}</span>
-                  <span class="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap ml-2">{{ formatDateDist(interaction.createdAt) }}</span>
-                </div>
-                <p class="text-sm text-gray-600 dark:text-gray-300">{{ interaction.text }}</p>
-              </div>
-            </div>
-          </div>
-        </section>
+        <!-- WhatsApp Interactions section -->
+        <WhatsappInteractions
+          v-if="whatsappInteractions && whatsappInteractions.length > 0"
+          :interactions="whatsappInteractions"
+          :isDarkMode="isDarkMode"
+          @view-chat="handleViewChat"
+          @send-message="handleSendMessage"
+        />        
 
       </div> <!-- End Dashboard Content v-else -->
     </div> <!-- End container -->
@@ -312,6 +185,14 @@ import {
   ListboxOption,
 } from '@headlessui/vue'
 import { useRouter } from 'vue-router'
+import CompanyEarningsTrend from '@/components/Dashboard/CompanyEarningsTrend.vue'
+import EnhancedFinancialOverview from '@/components/Dashboard/EnhancedFinancialOverview.vue'
+import ExecutiveSummary from '@/components/Dashboard/ExecutiveSummary.vue'
+import EnhancedAccountsReceivable from '@/components/Dashboard/EnhancedAccountsReceivable.vue'
+import TechnicianPerformance from '@/components/Dashboard/TechnicianPerformance.vue'
+import AnalyticsGrid from '@/components/Dashboard/AnalyticsGrid.vue'
+import WebsitePerformance from '@/components/Dashboard/WebsitePerformance.vue'
+import WhatsappInteractions from '@/components/Dashboard/WhatsappInteractions.vue'
 
 library.add(faArrowUp, faArrowDown, faMinus, faPaperPlane, faUser, faSun, faMoon, faChevronDown, faCheck)
 
@@ -650,6 +531,55 @@ const getComparisonIcon = (data, key) => {
   }
   // For other metrics, higher is generally better
   return current > previous ? 'arrow-up' : current < previous ? 'arrow-down' : 'minus'
+}
+
+const handleViewInvoice = (invoice) => {
+  // Navigate to invoice details page or open modal
+  router.push({ 
+    name: 'invoice', 
+    params: { id: invoice.id } 
+  });
+}
+
+const handleSendReminder = (invoice) => {
+  // Show toast to indicate this feature
+  toast.info(`Sending payment reminder for invoice #${invoice.number}`);
+  // In a real implementation, you would call an API endpoint
+  // to send the reminder email or message
+}
+
+const handleViewTechnician = (technician) => {
+  // Navigate to technician profile page
+  router.push({ 
+    name: 'employee', 
+    params: { id: technician.technicianId } 
+  })
+}
+
+const handleViewJobs = (technician) => {
+  // Navigate to jobs with filter for technician
+  router.push({ 
+    name: 'jobs',
+    query: { technician_id: technician.technicianId }
+  })
+}
+
+// WhatsApp handlers
+const handleViewChat = (customerOrJid) => {
+  // Navigate to customer chat page
+  if (customerOrJid.id) {
+    router.push({
+      name: 'customer-chat',
+      params: { id: customerOrJid.id }
+    })
+  } else {
+    toast.info(`View chat for ${customerOrJid.remoteJid}`)
+  }
+}
+
+const handleSendMessage = (customerOrJid) => {
+  // Could open a modal or navigate to messaging page
+  toast.info(`Compose message for ${customerOrJid.name || customerOrJid.remoteJid}`)
 }
 
 // Fetch all data

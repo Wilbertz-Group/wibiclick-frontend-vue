@@ -84,9 +84,6 @@
                     {{ formatPropertyName(prop) }}
                   </option>
                 </select>
-                <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                  <font-awesome-icon icon="chevron-down" class="text-cyan-400 text-xs" />
-                </div>
               </div>
               
               <!-- Source Type Filter -->

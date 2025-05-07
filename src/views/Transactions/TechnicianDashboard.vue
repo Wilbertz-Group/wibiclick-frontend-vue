@@ -301,9 +301,6 @@ const formatDateDist = (timestamp) => {
               <span class="block truncate">
                 {{ (websites.find(a => a.value === selectedWebsite) || {}).label || 'Select Website' }} <!-- Corrected syntax -->
               </span>
-              <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
-                <font-awesome-icon icon="chevron-down" class="h-4 w-4 text-gray-400" aria-hidden="true" />
-              </span>
             </ListboxButton>
             <transition leave-active-class="transition duration-100 ease-in" leave-from-class="opacity-100" leave-to-class="opacity-0">
               <ListboxOptions class="absolute z-20 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white dark:bg-gray-800 py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
@@ -323,9 +320,6 @@ const formatDateDist = (timestamp) => {
           <Listbox v-model="selectedTechnician" as="div" class="relative w-48" :disabled="!selectedWebsite">
             <ListboxButton class="input-modern input-modern--select pr-8 text-sm disabled:opacity-50 disabled:cursor-not-allowed">
               <span class="block truncate">{{ technicians.find(t => t.id === selectedTechnician)?.firstName || 'Select Technician' }}</span>
-              <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
-                <font-awesome-icon icon="chevron-down" class="h-4 w-4 text-gray-400" aria-hidden="true" />
-              </span>
             </ListboxButton>
             <transition leave-active-class="transition duration-100 ease-in" leave-from-class="opacity-100" leave-to-class="opacity-0">
               <ListboxOptions class="absolute z-20 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white dark:bg-gray-800 py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
@@ -345,9 +339,6 @@ const formatDateDist = (timestamp) => {
           <Listbox v-model="month" as="div" class="relative w-36">
             <ListboxButton class="input-modern input-modern--select pr-8 text-sm">
               <span class="block truncate">{{ moment().month(month - 1).format('MMMM') }}</span>
-              <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
-                <font-awesome-icon icon="chevron-down" class="h-4 w-4 text-gray-400" aria-hidden="true" />
-              </span>
             </ListboxButton>
             <transition leave-active-class="transition duration-100 ease-in" leave-from-class="opacity-100" leave-to-class="opacity-0">
               <ListboxOptions class="absolute z-20 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white dark:bg-gray-800 py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
@@ -367,9 +358,6 @@ const formatDateDist = (timestamp) => {
           <Listbox v-model="year" as="div" class="relative w-28">
             <ListboxButton class="input-modern input-modern--select pr-8 text-sm">
               <span class="block truncate">{{ year }}</span>
-              <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
-                <font-awesome-icon icon="chevron-down" class="h-4 w-4 text-gray-400" aria-hidden="true" />
-              </span>
             </ListboxButton>
             <transition leave-active-class="transition duration-100 ease-in" leave-from-class="opacity-100" leave-to-class="opacity-0">
               <ListboxOptions class="absolute z-20 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white dark:bg-gray-800 py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
