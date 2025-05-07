@@ -411,7 +411,7 @@ watch(selectedWebsite, (newValue) => {
                         <div class="px-3 py-1 text-xs font-semibold text-gray-400 uppercase tracking-wider">Dashboards</div>
                         <router-link :to="{name: 'admin-dashboard'}" v-if="userStore.user.permission === 'owner' || userStore.user.permission === 'admin'" class="flex items-center text-gray-200 px-3 py-2 rounded-md text-sm font-medium hover:underline">
                           <box-icon color="white" type='solid' name='chart'></box-icon>
-                          <span class="ml-2">Admin Dashboard</span>
+                          <span class="ml-2">Transactions Dashboard</span>
                         </router-link>
                         <router-link :to="{name: 'technician-dashboard'}" class="flex items-center text-gray-200 px-3 py-2 rounded-md text-sm font-medium hover:underline">
                           <box-icon color="white" type='solid' name='user-detail'></box-icon>
@@ -897,7 +897,7 @@ watch(selectedWebsite, (newValue) => {
               <MenuItems>
                 <div v-if="dropdownDashboards" class="pl-6">
                   <router-link :to="{ name: 'admin-dashboard' }" v-if="userStore.user.permission === 'owner' || userStore.user.permission === 'admin'" class="block text-white px-3 py-2 rounded-md text-base font-medium">
-                    Admin Dashboard
+                    Transactions Dashboard
                   </router-link>
                   <router-link :to="{ name: 'technician-dashboard' }" class="block text-white px-3 py-2 rounded-md text-base font-medium">
                     Technician Dashboard
