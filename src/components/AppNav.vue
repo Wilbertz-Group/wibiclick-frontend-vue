@@ -342,9 +342,11 @@ onMounted(() => {
     // Watch for route changes to close menus
     watch(
       () => route.fullPath,
-      () => {
-        closeAllDropdowns();
-        closeMobileMenu();
+      (newPath, oldPath) => {
+        nextTick(() => {
+          closeAllDropdowns();
+          closeMobileMenu();
+        });
       }
     );
   }
@@ -374,9 +376,12 @@ watch(selectedWebsite, (newValue) => {
     width="6px"
   />
   
-  <Disclosure 
-    as="nav" 
-    v-slot="{ open }" 
+  <Disclosure
+    :key="route.fullPath"
+    as="nav"
+    :open="mobileMenuOpen"
+    @update:open="mobileMenuOpen = $event"
+    v-slot="{ open }"
     class="bg-gray-800 shadow-lg"
     @click:outside="mobileMenuOpen = false"
   >
@@ -386,7 +391,7 @@ watch(selectedWebsite, (newValue) => {
         <div class="flex items-center">
           <!-- Logo -->
           <div class="flex-shrink-0">
-            <router-link to="/" class="flex space-x-2 items-center" @click="closeMobileMenu">
+            <router-link to="/" class="flex space-x-2 items-center">
               <div aria-hidden="true" class="flex space-x-1">
                 <div class="h-6 w-2 bg-sky-500 rounded"></div>
                 <div class="h-6 w-6 bg-sky-500 rounded-lg opacity-75"></div>
@@ -1053,28 +1058,27 @@ watch(selectedWebsite, (newValue) => {
           <DisclosureButton
             ref="mobileMenuButtonRef"
             class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none focus:ring-1 focus:ring-inset focus:ring-white transition-colors"
-            @click="mobileMenuOpen = !mobileMenuOpen"
           >
-            <span class="sr-only">{{ mobileMenuOpen ? 'Close main menu' : 'Open main menu' }}</span>
-            <svg 
-              v-if="!mobileMenuOpen" 
-              class="block h-6 w-6" 
-              xmlns="http://www.w3.org/2000/svg" 
-              fill="none" 
-              viewBox="0 0 24 24" 
-              stroke-width="1.5" 
+            <span class="sr-only">{{ open ? 'Close main menu' : 'Open main menu' }}</span>
+            <svg
+              v-if="!open"
+              class="block h-6 w-6"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
               stroke="currentColor"
             >
               <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
             </svg>
-
-            <svg 
-              v-else 
-              class="block h-6 w-6" 
-              xmlns="http://www.w3.org/2000/svg" 
-              fill="none" 
-              viewBox="0 0 24 24" 
-              stroke-width="1.5" 
+          
+            <svg
+              v-else
+              class="block h-6 w-6"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
               stroke="currentColor"
             >
               <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -1094,7 +1098,7 @@ watch(selectedWebsite, (newValue) => {
       leave-from-class="transform opacity-100 scale-100"
       leave-to-class="transform opacity-0 scale-95"
     >
-      <DisclosurePanel v-if="mobileMenuOpen" class="md:hidden bg-gray-700">
+      <DisclosurePanel v-if="open" class="md:hidden bg-gray-700">
         <!-- Mobile Search -->
         <div class="p-4">
           <div class="relative w-full mb-2">
@@ -1190,14 +1194,12 @@ watch(selectedWebsite, (newValue) => {
                   :to="{ name: 'admin-dashboard' }"
                   v-if="userStore.user.permission === 'owner' || userStore.user.permission === 'admin'"
                   class="block text-gray-300 hover:bg-gray-600 hover:text-white px-3 py-2 rounded-md text-base font-medium transition-colors"
-                  @click="closeMobileMenu"
                 >
                   Transactions Dashboard
                 </router-link>
                 <router-link
                   :to="{ name: 'technician-dashboard' }"
                   class="block text-gray-300 hover:bg-gray-600 hover:text-white px-3 py-2 rounded-md text-base font-medium transition-colors"
-                  @click="closeMobileMenu"
                 >
                   Technician Dashboard
                 </router-link>
@@ -1205,7 +1207,6 @@ watch(selectedWebsite, (newValue) => {
                   :to="{ name: 'dashboard' }"
                   v-if="userStore.user.permission == 'owner'"
                   class="block text-gray-300 hover:bg-gray-600 hover:text-white px-3 py-2 rounded-md text-base font-medium transition-colors"
-                  @click="closeMobileMenu"
                 >
                   Analytics Dashboard
                 </router-link>
@@ -1242,21 +1243,18 @@ watch(selectedWebsite, (newValue) => {
                 <router-link
                   :to="{ name: 'contacts' }"
                   class="block text-gray-300 hover:bg-gray-600 hover:text-white px-3 py-2 rounded-md text-base font-medium transition-colors"
-                  @click="closeMobileMenu"
                 >
                   Contacts
                 </router-link>
                 <router-link
                   :to="{ name: 'merge-overview' }"
                   class="block text-gray-300 hover:bg-gray-600 hover:text-white px-3 py-2 rounded-md text-base font-medium transition-colors"
-                  @click="closeMobileMenu"
                 >
                   Customer Merges
                 </router-link>
                 <router-link
                   :to="{ name: 'employees' }"
                   class="block text-gray-300 hover:bg-gray-600 hover:text-white px-3 py-2 rounded-md text-base font-medium transition-colors"
-                  @click="closeMobileMenu"
                 >
                   Employees
                 </router-link>
@@ -1264,7 +1262,6 @@ watch(selectedWebsite, (newValue) => {
                   :to="{ name: 'users' }"
                   v-if="userStore.user.role == 'admin' && userStore.user.permission == 'owner'"
                   class="block text-gray-300 hover:bg-gray-600 hover:text-white px-3 py-2 rounded-md text-base font-medium transition-colors"
-                  @click="closeMobileMenu"
                 >
                   Users
                 </router-link>
@@ -1301,14 +1298,12 @@ watch(selectedWebsite, (newValue) => {
                 <router-link
                   :to="{ name: 'visitors' }"
                   class="block text-gray-300 hover:bg-gray-600 hover:text-white px-3 py-2 rounded-md text-base font-medium transition-colors"
-                  @click="closeMobileMenu"
                 >
                   Visitors
                 </router-link>
                 <router-link
                   :to="{ name: 'forms' }"
                   class="block text-gray-300 hover:bg-gray-600 hover:text-white px-3 py-2 rounded-md text-base font-medium transition-colors"
-                  @click="closeMobileMenu"
                 >
                   Forms
                 </router-link>
@@ -1345,35 +1340,30 @@ watch(selectedWebsite, (newValue) => {
                 <router-link
                   :to="{ name: 'jobs' }"
                   class="block text-gray-300 hover:bg-gray-600 hover:text-white px-3 py-2 rounded-md text-base font-medium transition-colors"
-                  @click="closeMobileMenu"
                 >
                   Jobs
                 </router-link>
                 <router-link
                   :to="{ name: 'estimates' }"
                   class="block text-gray-300 hover:bg-gray-600 hover:text-white px-3 py-2 rounded-md text-base font-medium transition-colors"
-                  @click="closeMobileMenu"
                 >
                   Estimates
                 </router-link>
                 <router-link
                   :to="{ name: 'invoices' }"
                   class="block text-gray-300 hover:bg-gray-600 hover:text-white px-3 py-2 rounded-md text-base font-medium transition-colors"
-                  @click="closeMobileMenu"
                 >
                   Invoices
                 </router-link>
                 <router-link
                   :to="{ name: 'payments-list' }"
                   class="block text-gray-300 hover:bg-gray-600 hover:text-white px-3 py-2 rounded-md text-base font-medium transition-colors"
-                  @click="closeMobileMenu"
                 >
                   Payments
                 </router-link>
                 <router-link
                   :to="{ name: 'expenses-list' }"
                   class="block text-gray-300 hover:bg-gray-600 hover:text-white px-3 py-2 rounded-md text-base font-medium transition-colors"
-                  @click="closeMobileMenu"
                 >
                   Expenses
                 </router-link>
@@ -1410,21 +1400,18 @@ watch(selectedWebsite, (newValue) => {
                 <router-link
                   :to="{ name: 'suppliers' }"
                   class="block text-gray-300 hover:bg-gray-600 hover:text-white px-3 py-2 rounded-md text-base font-medium transition-colors"
-                  @click="closeMobileMenu"
                 >
                   Suppliers
                 </router-link>
                 <router-link
                   :to="{ name: 'insurance-reports' }"
                   class="block text-gray-300 hover:bg-gray-600 hover:text-white px-3 py-2 rounded-md text-base font-medium transition-colors"
-                  @click="closeMobileMenu"
                 >
                   Insurance
                 </router-link>
                 <router-link
                   :to="{ name: 'notes' }"
                   class="block text-gray-300 hover:bg-gray-600 hover:text-white px-3 py-2 rounded-md text-base font-medium transition-colors"
-                  @click="closeMobileMenu"
                 >
                   Notes
                 </router-link>
@@ -1510,34 +1497,30 @@ watch(selectedWebsite, (newValue) => {
           <!-- Mobile User Actions -->
           <div class="mt-3 px-2 space-y-1">
             <router-link 
-              :to="{name: 'profile'}" 
+              :to="{name: 'profile'}"
               class="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-gray-600 transition-colors"
-              @click="closeMobileMenu"
             >
               Your Profile
             </router-link>
             
-            <router-link 
-              :to="{name: 'billing'}" 
+            <router-link
+              :to="{name: 'billing'}"
               class="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-gray-600 transition-colors"
-              @click="closeMobileMenu"
             >
               Billing & Usage
             </router-link>
             
-            <router-link 
-              :to="{name: 'snippet'}" 
-              v-if="userStore.user.permission == 'owner'" 
+            <router-link
+              :to="{name: 'snippet'}"
+              v-if="userStore.user.permission == 'owner'"
               class="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-gray-600 transition-colors"
-              @click="closeMobileMenu"
             >
               Snippet
             </router-link>
             
-            <router-link 
-              :to="{name: 'feedback'}" 
+            <router-link
+              :to="{name: 'feedback'}"
               class="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-gray-600 transition-colors"
-              @click="closeMobileMenu"
             >
               Feedback
             </router-link>
