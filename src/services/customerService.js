@@ -59,20 +59,6 @@ export default {
     const response = await axios.post(`customers/${customerId}/profitability-analysis?id=${websiteId}`);
     return response.data;
   },
-  
-  /**
-   * Generate AI suggestions for missing customer fields
-   * @param {string} websiteId - Current website ID
-   * @param {string} customerId - Customer ID
-   * @param {Array} missingFields - Array of field names that need suggestions
-   * @returns {Promise<Object>} Response with suggestions
-   */
-  async generateMissingFieldSuggestions(websiteId, customerId, missingFields) {
-    const response = await axios.post(`customers/${customerId}/suggest-missing-fields?id=${websiteId}`, {
-      missingFields
-    });
-    return response.data;
-  },
 
   /**
    * Generate sentiment analysis
@@ -86,14 +72,19 @@ export default {
   },
 
   /**
-   * Generate follow-up suggestions
-   * @param {string} websiteId - Current website ID
-   * @param {string} customerId - Customer ID
-   * @returns {Promise<Object>} Response data with suggestions
+   * Generate follow-up suggestions for a customer using AI
+   * @param {string} websiteId - The website ID
+   * @param {string} customerId - The customer ID
+   * @returns {Promise<Object>} - The response containing suggestions
    */
   async generateFollowupSuggestions(websiteId, customerId) {
-    const response = await axios.post(`customers/${customerId}/followup-suggestions?id=${websiteId}`);
-    return response.data;
+    try {
+      const { data } = await axios.post(`/customers/${customerId}/followup-suggestions?id=${websiteId}`);
+      return data;
+    } catch (error) {
+      console.error('Error generating follow-up suggestions:', error);
+      throw error;
+    }
   },
 
   /**
@@ -250,5 +241,197 @@ export default {
   async deleteAppliance(websiteId, applianceId) {
     const response = await axios.delete(`appliances/${applianceId}?id=${websiteId}`);
     return response.data;
-  }
+  },
+
+  /**
+   * Fetch customer follow-up suggestions using AI
+   * @param {string} websiteId - The website ID
+   * @param {string} customerId - The customer ID
+   * @returns {Promise} - The response data
+   */
+  fetchFollowupSuggestions(websiteId, customerId) {
+    const response =  axios.post(`/customers/${customerId}/followup-suggestions?id=${websiteId}`);
+    return response.data;
+  },
+  
+  /**
+   * Generate missing field suggestions using AI
+   * @param {string} websiteId - The website ID
+   * @param {string} customerId - The customer ID
+   * @param {Array} missingFields - Array of field names to suggest
+   * @returns {Promise} - The response data
+   */
+  generateMissingFieldSuggestions(websiteId, customerId, missingFields) {
+    const response =  axios.post(`/customers/${customerId}/suggest-missing-fields?id=${websiteId}`, {
+      missingFields
+    });
+
+    return response.data;
+  },
+  
+  /**
+   * Schedule a message for later delivery
+   * @param {string} websiteId - The website ID
+   * @param {Object} messageData - The message data
+   * @returns {Promise} - The response data
+   */
+  scheduleMessage(websiteId, messageData) {
+    const response =  axios.post(`/scheduled-messages?id=${websiteId}`, messageData);
+    return response.data;
+  },
+  
+  /**
+   * Send a message immediately
+   * @param {string} websiteId - The website ID
+   * @param {Object} messageData - The message data
+   * @returns {Promise} - The response data
+   */
+  sendDirectMessage(websiteId, messageData) {
+    const response =  axios.post(`/send-message?id=${websiteId}`, messageData);
+    return response.data;
+  },
+  
+  /**
+   * Fetch scheduled messages for a customer
+   * @param {string} websiteId - The website ID
+   * @param {string} customerId - The customer ID
+   * @returns {Promise} - The response data
+   */
+  fetchScheduledMessages(websiteId, customerId) {
+    const response =  axios.get(`/scheduled-messages?id=${websiteId}&customerId=${customerId}`);
+    return response.data;
+  },
+  
+  /**
+   * Cancel a scheduled message
+   * @param {string} websiteId - The website ID
+   * @param {string} messageId - The message ID
+   * @returns {Promise} - The response data
+   */
+  cancelScheduledMessage(websiteId, messageId) {
+    const response =  axios.delete(`/scheduled-messages/${messageId}?id=${websiteId}`);
+    return response.data;
+  },
+
+  /**
+   * Generate follow-up suggestions for a customer using AI
+   * @param {string} websiteId - The website ID
+   * @param {string} customerId - The customer ID
+   * @returns {Promise<Object>} - The response containing suggestions
+   */
+  async generateFollowupSuggestions(websiteId, customerId) {
+    try {
+      const { data } = await axios.post(`/scheduled-messages/generate?id=${websiteId}`, {
+        customerId,
+        count: 1 // Request 1 suggestion to reduce costs
+      });
+      return data;
+    } catch (error) {
+      console.error('Error generating follow-up suggestions:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Get scheduled messages for a customer
+   * @param {string} websiteId - The website ID
+   * @param {string} customerId - The customer ID
+   * @param {Array|string} status - The status(es) to filter by (e.g., ['SCHEDULED', 'SENT'])
+   * @returns {Promise<Object>} - The response containing follow-ups
+   */
+  async getScheduledMessages(websiteId, customerId, status = 'SCHEDULED') {
+    try {
+      // Construct query parameters
+      let query = `websiteId=${websiteId}&customerId=${customerId}`;
+      
+      // Handle status array or string
+      if (Array.isArray(status)) {
+        status.forEach(s => {
+          query += `&status=${s}`;
+        });
+      } else if (status) {
+        query += `&status=${status}`;
+      }
+      
+      const { data } = await axios.get(`/scheduled-messages?${query}`);
+      return data;
+    } catch (error) {
+      console.error('Error fetching scheduled messages:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Get recent AI suggestions for a customer
+   * If your backend doesn't have a specific endpoint for this,
+   * you could use follow-ups with a specific type
+   * @param {string} websiteId - The website ID
+   * @param {string} customerId - The customer ID
+   * @returns {Promise<Object>} - The response containing suggestions
+   */
+  async getRecentSuggestions(websiteId, customerId) {
+    try {
+      // Assuming you store generated suggestions as follow-ups with type 'AI_SUGGESTION'
+      // If not, you might need to create a dedicated endpoint
+      const { data } = await axios.get(`/follow-ups?id=${websiteId}&customerId=${customerId}&type=AI_SUGGESTION`);
+      return { suggestions: data.followUps || [] };
+    } catch (error) {
+      console.error('Error fetching recent suggestions:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Create a scheduled message
+   * @param {string} websiteId - The website ID
+   * @param {Object} messageData - The message data
+   * @returns {Promise<Object>} - The response containing the created follow-up
+   */
+  async scheduleMessage(websiteId, messageData) {
+    try {
+      const { data } = await axios.post(`/scheduled-messages?id=${websiteId}`, messageData);
+      return data;
+    } catch (error) {
+      console.error('Error scheduling message:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Cancel a scheduled message
+   * @param {string} websiteId - The website ID
+   * @param {string} messageId - The message ID
+   * @returns {Promise<Object>} - The response confirming cancellation
+   */
+  async cancelScheduledMessage(websiteId, messageId) {
+    try {
+      const { data } = await axios.delete(`/scheduled-messages/${messageId}?id=${websiteId}`);
+      return data;
+    } catch (error) {
+      console.error('Error cancelling scheduled message:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Rewrite a message based on specific instructions
+   * @param {string} websiteId - The website ID
+   * @param {string} customerId - The customer ID
+   * @param {Object} rewriteData - The rewrite data
+   * @returns {Promise<Object>} - The response containing the rewritten message
+   */
+  async rewriteMessage(websiteId, customerId, rewriteData) {
+    try {
+      const { data } = await axios.post(`/scheduled-messages/rewrite?id=${websiteId}`, {
+        customerId,
+        originalMessage: rewriteData.originalMessage,
+        rewriteInstructions: rewriteData.rewriteInstructions,
+        customerContext: rewriteData.customerContext || {}
+      });
+      return data;
+    } catch (error) {
+      console.error('Error rewriting message:', error);
+      throw error;
+    }
+  },
 };

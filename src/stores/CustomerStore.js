@@ -356,12 +356,76 @@ export const useCustomerStore = defineStore('customer', () => {
     
     try {
       const response = await customerService.generateFollowupSuggestions(websiteId, customerId);
-      // Assuming backend returns { suggestions: [...] } which might be stringified JSON
+      // Process suggestions to ensure they have the right format
       const suggestions = response.suggestions;
-      followupSuggestions.value = typeof suggestions === 'string' ? JSON.parse(suggestions) : suggestions || [];
+      let parsedSuggestions = typeof suggestions === 'string' ? JSON.parse(suggestions) : suggestions || [];
+      
+      if (!Array.isArray(parsedSuggestions)) {
+        parsedSuggestions = [];
+      }
+      
+      // If no suggestions were returned, create a default message
+      if (parsedSuggestions.length === 0) {
+        // Use customer data to create a basic suggestion
+        const customerName = customer.value?.name?.split(' ')[0] || 'valued customer';
+        const lastJobDate = customer.value?.jobs?.length > 0 
+          ? new Date(customer.value.jobs[0].createdAt).toLocaleDateString()
+          : null;
+        
+        // Create message based on customer data
+        let defaultMessage = `Hello ${customerName},\n\nI hope this message finds you well.`;
+        
+        // Add context if we have job data
+        if (lastJobDate) {
+          defaultMessage += `\n\nI wanted to follow up regarding your service on ${lastJobDate}. Is everything still working as expected?`;
+        } else {
+          defaultMessage += `\n\nI wanted to reach out to see if there's anything we can assist you with at this time.`;
+        }
+        
+        // Add closing
+        defaultMessage += `\n\nYour satisfaction is our top priority, so please don't hesitate to let us know if you have any questions or need any support.\n\nBest regards,\nYour Service Team`;
+        
+        // Determine preferred communication channel
+        const preferredChannel = customer.value?.preferredContactMethod || 
+                                (customer.value?.phone ? 'WHATSAPP' : 'EMAIL');
+        
+        // Create a default suggestion object
+        parsedSuggestions = [{
+          id: 'default-suggestion-' + Date.now(),
+          title: 'Follow-up Message',
+          type: 'FOLLOW_UP',
+          channel: preferredChannel,
+          priority: 'MEDIUM',
+          draftMessage: defaultMessage,
+          suggestedActions: ['CONTACT', 'SCHEDULE'],
+          generatedAt: new Date().toISOString(),
+          customerName: customer.value?.name || '',
+          customerPhone: customer.value?.phone || '',
+          customerEmail: customer.value?.email || ''
+        }];
+      }
+      
+      followupSuggestions.value = parsedSuggestions;
+      return followupSuggestions.value;
     } catch (error) {
       suggestionsError.value = error.response?.data?.message || error.message || 'Failed to load suggestions';
       console.error('Error fetching follow-up suggestions:', error);
+      
+      // Even on error, provide a default suggestion
+      const customerName = customer.value?.name?.split(' ')[0] || 'valued customer';
+      followupSuggestions.value = [{
+        id: 'default-suggestion-' + Date.now(),
+        title: 'Standard Follow-up',
+        type: 'FOLLOW_UP',
+        channel: customer.value?.phone ? 'WHATSAPP' : 'EMAIL',
+        priority: 'MEDIUM',
+        draftMessage: `Hello ${customerName},\n\nI hope this message finds you well. I wanted to check in and see if there's anything we can assist you with. Your satisfaction is our priority.\n\nDon't hesitate to reach out if you have any questions or need any support.\n\nBest regards,\nYour Service Team`,
+        suggestedActions: ['CONTACT'],
+        generatedAt: new Date().toISOString(),
+        customerName: customer.value?.name || '',
+        customerPhone: customer.value?.phone || '',
+        customerEmail: customer.value?.email || ''
+      }];
     } finally {
       isFetchingSuggestions.value = false;
     }

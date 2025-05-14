@@ -56,6 +56,7 @@ import CustomerAppliances from '@/components/Customers/View/CustomerAppliances.v
 import CustomerRelatedRecords from '@/components/Customers/View/CustomerRelatedRecords.vue';
 import CustomerActivityTabs from '@/components/Customers/View/CustomerActivityTabs.vue';
 import CustomerVisitorActivity from '@/components/Customers/View/CustomerVisitorActivity.vue';
+import SuggestedMessageCard from '@/components/Customers/View/SuggestedMessageCard.vue';
 
 // Font Awesome imports
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
@@ -132,6 +133,8 @@ const customerContextForModal = ref(null);
 const isGeneratingAISuggestions = ref(false);
 const aiSuggestedFields = ref({});
 const showAISuggestions = ref(false);
+const recentSuggestions = ref([]);
+const isFetchingRecentSuggestions = ref(false);
 
 // --- Computed Properties ---
 const isLoading = computed(() => 
@@ -194,6 +197,9 @@ async function fetchCustomerData() {
     // Fetch additional data
     await fetchAdditionalData();
 
+    // Fetch recent suggestions (without generating new ones)
+    await fetchRecentSuggestions();
+
     // Update PropertyHistory key after data is fetched
     if (customerStore.customer?.id) {
       propertyHistoryKey.value = `${customerStore.customer.id}-${Date.now()}`;
@@ -215,7 +221,7 @@ function resetEditableCustomer() {
   customerStore.resetEditableCustomer();
 }
 
-// New function: Generate AI field suggestions
+// Generate AI field suggestions
 async function generateAIFieldSuggestions() {
   if (!customerStore.customer?.id) return;
   
@@ -254,6 +260,46 @@ async function generateAIFieldSuggestions() {
     toast.error("Could not generate AI suggestions: " + (error.response?.data?.message || error.message));
   } finally {
     isGeneratingAISuggestions.value = false;
+  }
+}
+
+// fetch recent suggestions
+async function fetchRecentSuggestions() {
+  if (!customerStore.customer?.id) return;
+  
+  isFetchingRecentSuggestions.value = true;
+  
+  try {
+    // Fetch both generated suggestions and scheduled/sent messages
+    const [suggestionsResponse, scheduledResponse] = await Promise.all([
+      // Fetch recent AI suggestions (if you have an endpoint for this)
+      customerService.getRecentSuggestions(userStore.currentWebsite, customerStore.customer.id),
+      // Fetch scheduled/sent messages
+      customerService.getScheduledMessages(userStore.currentWebsite, customerStore.customer.id, ['SCHEDULED', 'SENT'])
+    ]);
+    
+    // Combine both types of suggestions into one array and remove duplicates by id or draftMessage
+    const allSuggestionsRaw = [
+      ...(suggestionsResponse?.suggestions || []),
+      ...(scheduledResponse?.followUps || [])
+    ];
+
+    // Remove duplicates: prefer unique by 'id', fallback to 'draftMessage' if no id
+    const seen = new Set();
+    const allSuggestions = allSuggestionsRaw.filter(suggestion => {
+      const key = suggestion.id || suggestion.draftMessage;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+    
+    // Update state
+    recentSuggestions.value = allSuggestions;
+  } catch (error) {
+    console.error('Error fetching recent suggestions:', error);
+    toast.error('Failed to load recent message suggestions');
+  } finally {
+    isFetchingRecentSuggestions.value = false;
   }
 }
 
@@ -1093,7 +1139,20 @@ watchEffect(() => {
             @generate-ai-suggestions="generateAIFieldSuggestions"
             @apply-ai-suggestion="applyAISuggestion"
             @apply-all-ai-suggestions="applyAllAISuggestions"
-          />        
+          />
+          
+          <!-- AI Suggested Message Card -->
+          <SuggestedMessageCard
+            :customer="customerStore.customer"
+            :suggestions="customerStore.followupSuggestions"
+            :isLoading="customerStore.isFetchingSuggestions"
+            :recentSuggestions="recentSuggestions"
+            :error="customerStore.suggestionsError"
+            @fetch-suggestions="generateSuggestion"
+            @send-suggestion-now="sendSuggestionNow"
+            @schedule-suggestion="scheduleSuggestion"
+            @log-suggestion-manually="logSuggestionManually"
+          />
 
           <!-- Communication Preferences Card -->
           <CustomerCommunicationPrefs 
