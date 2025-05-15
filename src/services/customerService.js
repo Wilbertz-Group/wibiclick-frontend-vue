@@ -281,17 +281,6 @@ export default {
   },
   
   /**
-   * Send a message immediately
-   * @param {string} websiteId - The website ID
-   * @param {Object} messageData - The message data
-   * @returns {Promise} - The response data
-   */
-  sendDirectMessage(websiteId, messageData) {
-    const response =  axios.post(`/send-message?id=${websiteId}`, messageData);
-    return response.data;
-  },
-  
-  /**
    * Fetch scheduled messages for a customer
    * @param {string} websiteId - The website ID
    * @param {string} customerId - The customer ID
