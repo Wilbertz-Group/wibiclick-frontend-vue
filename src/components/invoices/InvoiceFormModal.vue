@@ -12,6 +12,11 @@ import imageHolder from '@/helpers/logo.js';
 import { getBase64FromUrl, generateTableRow } from '@/helpers/index.js'; // Assuming these exist in helpers
 import JobFormModal from '@/components/jobs/JobFormModal.vue'; // Import Job Modal
 import RecipientProfileFormModal from '@/components/Customers/RecipientProfileFormModal.vue'; // Import Recipient Profile Modal
+import LineItemParserModal from '@/components/estimates/LineItemParserModal.vue';
+import { library } from '@fortawesome/fontawesome-svg-core';
+import { faMagic } from '@fortawesome/free-solid-svg-icons';
+
+library.add(faMagic); // Add this icon to your library
 
 const props = defineProps({
   modelValue: { // Controls modal visibility (v-model)
@@ -42,6 +47,7 @@ const userStore = useUserStore();
 const toast = useToast();
 const loading = ref(false);
 const profile = ref(null);
+const showLineItemParser = ref(false);
 
 const save_type = ref('save'); // 'save', 'download', 'whatsapp'
 const isOpen = ref(false); // WhatsApp modal state
@@ -335,6 +341,20 @@ await fetchRecipientProfiles(customer.id); // Fetch profiles for this customer
       associatedJob.value = null; // Reset associated job data if no ID
   }
 };
+
+const handleParsedLineItems = (parsedItems) => {
+  if (parsedItems && parsedItems.length > 0) {
+    // Add all parsed items to the invoice
+    parsedItems.forEach(item => {
+      invoiceForm.items.push(item);
+    });
+    
+    // Recalculate total
+    getSum(invoiceForm.items);
+    
+    toast.success(`Added ${parsedItems.length} line items from parser`);
+  }
+}
 
 const fetchProfile = async () => {
   try {
@@ -1178,6 +1198,17 @@ onMounted(() => {
                   </table>
                 </div>
 
+                <div class="flex justify-end mb-3">
+                  <button 
+                    type="button" 
+                    @click="showLineItemParser = true" 
+                    class="btn-secondary-modern flex items-center"
+                  >
+                    <font-awesome-icon icon="magic" class="mr-1.5 h-4 w-4" />
+                    Parse Line Items with AI
+                  </button>
+                </div>
+
                 <!-- Add Line Item Form -->
                 <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 bg-gray-50 dark:bg-gray-800 p-3 rounded-md">
                   <div class="sm:col-span-5">
@@ -1285,6 +1316,12 @@ onMounted(() => {
     :customer-id="invoiceForm.customerId"
     :profile-data="selectedProfileForEdit"
     @profile-saved="handleRecipientProfileSaved"
+  />
+
+  <LineItemParserModal
+    v-model="showLineItemParser"
+    :customer-id="invoiceForm.customerId"
+    @line-items-parsed="handleParsedLineItems"
   />
 </template>
 

@@ -10,9 +10,15 @@ import { useUserStore } from '@/stores/UserStore';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import modal from "@/components/misc/modalWAMessage.vue";
 import imageHolder from '@/helpers/logo.js';
+import { library } from '@fortawesome/fontawesome-svg-core';
+import { faMagic } from '@fortawesome/free-solid-svg-icons';
 import { getBase64FromUrl, generateTableRow } from '@/helpers/index.js'; // Assuming these exist in helpers
 import JobFormModal from '@/components/jobs/JobFormModal.vue'; // Import Job Modal
 import RecipientProfileFormModal from '@/components/Customers/RecipientProfileFormModal.vue'; // Import Recipient Profile Modal
+import LineItemParserModal from '@/components/estimates/LineItemParserModal.vue'; // Import Line Item Parser Modal
+
+
+library.add(faMagic); // Add this icon to your library
 
 const props = defineProps({
   modelValue: { // Controls modal visibility (v-model)
@@ -57,6 +63,8 @@ const isFetchingProfiles = ref(false); // Loading state for profiles
 // --- Recipient Profile Modal State ---
 const showRecipientProfileModal = ref(false);
 const selectedProfileForEdit = ref(null); // To pass data for editing
+
+const showLineItemParser = ref(false);
 
 // --- Form State ---
 const estimateForm = reactive({
@@ -269,6 +277,20 @@ const addItem = () => {
 const cancelEdit = () => {
   resetLineItemForm();
 };
+
+const handleParsedLineItems = (parsedItems) => {
+  if (parsedItems && parsedItems.length > 0) {
+    // Add all parsed items to the estimate
+    parsedItems.forEach(item => {
+      estimateForm.items.push(item);
+    });
+    
+    // Recalculate total
+    getSum(estimateForm.items);
+    
+    toast.success(`Added ${parsedItems.length} line items from parser`);
+  }
+}
 
 // Track removed items to properly disconnect them from the estimate
 const removedItems = ref([]);
@@ -1181,6 +1203,17 @@ if (!document.querySelector('script[src*="blob-stream.js"]')) {
                   </table>
                 </div>
 
+                <div class="flex justify-end mb-3">
+                  <button 
+                    type="button" 
+                    @click="showLineItemParser = true" 
+                    class="btn-secondary-modern flex items-center"
+                  >
+                    <font-awesome-icon icon="magic" class="mr-1.5 h-4 w-4" />
+                    Parse Line Items with AI
+                  </button>
+                </div>
+
                 <!-- Add Line Item Form -->
                 <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 bg-gray-50 dark:bg-gray-800 p-3 rounded-md">
                   <div class="sm:col-span-5">
@@ -1293,6 +1326,12 @@ if (!document.querySelector('script[src*="blob-stream.js"]')) {
     :customer-id="estimateForm.customerId"
     :profile-data="selectedProfileForEdit"
     @profile-saved="handleRecipientProfileSaved"
+  />
+
+  <LineItemParserModal
+    v-model="showLineItemParser"
+    :customer-id="estimateForm.customerId"
+    @line-items-parsed="handleParsedLineItems"
   />
 </template>
 
