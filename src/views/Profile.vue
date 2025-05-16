@@ -347,12 +347,6 @@
   }
 
   async function uploadImage(data) {
-    // Debug: log the structure of the file input
-    console.log('data.logo:', data.logo);
-    if (data.logo && data.logo[0]) {
-      console.log('data.logo[0]:', data.logo[0]);
-      console.log('data.logo[0].file:', data.logo[0].file);
-    }
 
     // Robust validation
     if (

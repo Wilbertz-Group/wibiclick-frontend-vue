@@ -16,7 +16,7 @@ import { getBase64FromUrl, generateTableRow } from '@/helpers/index.js'; // Assu
 import JobFormModal from '@/components/jobs/JobFormModal.vue'; // Import Job Modal
 import RecipientProfileFormModal from '@/components/Customers/RecipientProfileFormModal.vue'; // Import Recipient Profile Modal
 import LineItemParserModal from '@/components/estimates/LineItemParserModal.vue'; // Import Line Item Parser Modal
-
+import { generateEstimate } from '@/utils/pdf-document-helper';
 
 library.add(faMagic); // Add this icon to your library
 
@@ -644,292 +644,48 @@ const convertToInvoice = async () => {
 
 
 // --- PDF Generation & WhatsApp --- 
-
 const closeModalWA = () => {
   isOpen.value = false;
 };
 
-const createEstimatePDF = (estimate, path, action = 'download') => {
-  let doc;
-  // Check if PDFDocument is available on window
-  if (!window.PDFDocument || !window.blobStream) {
-      toast.error("PDF generation library not loaded yet. Please wait a moment and try again.");
-      // Removed console.error
-      return;
-  }
-  try {
-    doc = new window.PDFDocument({ size: "A4", margin: 50 });
-  } catch (error) {
-    // Removed console.error
-    toast.error("Failed to initialize PDF generation. Reload and try again!");
-    return; // Stop if PDFDocument fails
-  }
 
-  const stream = doc.pipe(window.blobStream());
-
-  // --- PDF Content Generation Functions (Adapted for estimateForm) ---
-  function generateHeader(doc, estimate) {
-    // This function relies on 'img' being available in its scope
-    // We will fetch it before calling createEstimatePDF
-    doc
-      .image(img, 50, 45, { width: 50 })
-      .fillColor("#444444")
-      .fontSize(14)
-      .text(estimate.company.name || '', 110, 57)
-      .fontSize(10)
-      .text(estimate.company.slogan || '', 110, 75)
-      .text(estimate.company.name || '', 200, 50, { align: "right" })
-      .text(estimate.company.address1 || '', 200, 65, { align: "right" })
-      .text(`${estimate.company.address2 || ''} ${estimate.company.city || ''}`, 200, 80, { align: "right" })
-      .text(`${estimate.company.state || ''}, ${estimate.company.country || ''}`, 200, 95, { align: "right" })
-      .text(estimate.company.postal_code || '', 200, 110, { align: "right" })
-      .text(`Email: ${estimate.company.email || ''}`, 200, 130, { align: "right" })
-      .moveDown();
-  }
-
-  function generateCustomerInformation(doc, estimate) {
-    doc.fillColor("#444444").fontSize(20).text("Estimate", 50, 160);
-    generateHr(doc, 185);
-    const customerInformationTop = 200, bankingDetails = 200, estimateSpace = 130;
-
-    doc
-      //Estimate Data
-      .fontSize(10)
-      .font("Helvetica-Bold")
-      .text("Estimate Details:", 50, bankingDetails)
-      .font("Helvetica")
-      .text("Estimate #:", 50, customerInformationTop + 15)
-      .text(estimate.estimate_nr, estimateSpace, customerInformationTop + 15)
-      .text("Estimate Date:", 50, customerInformationTop + 30)
-      .text(estimate.estimate_date, estimateSpace, customerInformationTop + 30)
-      .text("Estimate Due:", 50, customerInformationTop + 45)
-      .text(estimate.estimate_due_date, estimateSpace, customerInformationTop + 45)
-      .font("Helvetica-Bold")
-      .text("Balance Due:", 50, customerInformationTop + 60)
-      .text(
-        formatCurrency(estimate.subtotal - (estimate.paid || 0), estimate.company.currency_symbol),
-        estimateSpace,
-        customerInformationTop + 60
-      )
-      //Banking Details
-      .font("Helvetica-Bold")
-      .text("Banking Details:", 300, bankingDetails)
-      .font("Helvetica")
-      .text("Name:", 300, bankingDetails + 15)
-      .text(estimate.banking.account_name || '', 380, bankingDetails + 15)
-      .text("Bank Name:", 300, bankingDetails + 30)
-      .text(estimate.banking.bank || '', 380, bankingDetails + 30)
-      .text("Account #:", 300, bankingDetails + 45)
-      .text(estimate.banking.account_number || '', 380, bankingDetails + 45)
-      .text("Account Type:", 300, bankingDetails + 60)
-      .text(estimate.banking.account_type || '', 380, bankingDetails + 60)
-      .text("Branch Code:", 300, bankingDetails + 75)
-      .text(estimate.banking.branch_code || '', 380, bankingDetails + 75)
-      .moveDown();
-
-    generateHr(doc, 300);
-
-    //Billed To
-    let billed_to = 315
-    doc
-      .fontSize(10)
-      .font("Helvetica-Bold")
-      .text("Billed To:", 50, billed_to)
-      .font("Helvetica")
-      .text("Name:", 50, billed_to + 15)
-      // Use selected recipient profile name, fallback to linked customer name
-      .text(estimate.recipientProfile?.name || estimate.customer?.name || '', 130, billed_to + 15)
-      .text("Address:", 50, billed_to + 30)
-      // Use selected recipient profile address, fallback to linked customer address
-      .text(estimate.recipientProfile?.address || estimate.customer?.address || '', 130, billed_to + 30)
-      .text("Phone:", 50, billed_to + 45)
-      // Use selected recipient profile phone, fallback to linked customer phone
-      .text(estimate.recipientProfile?.phone || estimate.customer?.phone || '', 130, billed_to + 45)
-      .text("VAT:", 50, billed_to + 60)
-      // Use selected recipient profile VAT, fallback to linked customer VAT
-      .text(estimate.recipientProfile?.vatNumber || estimate.customer?.vat || '', 130, billed_to + 60) // Use vatNumber from profile
-      .moveDown();
-
-    generateHr(doc, 400);
-  }
-
-  function generateEstimateTable(doc, estimate) {
-    let i;
-    const estimateTableTop = 425;
-
-    doc.font("Helvetica-Bold");
-    generateTableRow(
-      doc,
-      estimateTableTop,
-      "Item",
-      "Description", // Added description header
-      "Unit Cost",
-      "Quantity",
-      "Line Total"
-    );
-    generateHr(doc, estimateTableTop + 20);
-    doc.font("Helvetica");
-
-    for (i = 0; i < estimate.items.length; i++) {
-      const item = estimate.items[i];
-      const position = estimateTableTop + (i + 1) * 30;
-      generateTableRow(
-        doc,
-        position,
-        item.item || item.name,
-        item.description || '', // Added description
-        formatCurrency(item.amount, estimate.company.currency_symbol),
-        item.quantity,
-        formatCurrency(item.amount * item.quantity, estimate.company.currency_symbol)
-      );
-      generateHr(doc, position + 20);
-    }
-
-    const subtotalPosition = estimateTableTop + (i + 1) * 30;
-    generateTableRow(
-      doc,
-      subtotalPosition,
-      "",
-      "",
-      "Subtotal",
-      "",
-      formatCurrency(estimate.subtotal, estimate.company.currency_symbol)
-    );
-
-    const paidToDatePosition = subtotalPosition + 20;
-    generateTableRow(
-      doc,
-      paidToDatePosition,
-      "",
-      "",
-      "Paid To Date",
-      "",
-      formatCurrency(estimate.paid || 0, estimate.company.currency_symbol)
-    );
-
-    const duePosition = paidToDatePosition + 25;
-    doc.font("Helvetica-Bold");
-    generateTableRow(
-      doc,
-      duePosition,
-      "",
-      "",
-      "Balance Due",
-      "",
-      formatCurrency(estimate.subtotal - (estimate.paid || 0), estimate.company.currency_symbol)
-    );
-    doc.font("Helvetica");
-  }
-
-  function generateNotes(doc, estimate) {
-    if (estimate.notes) {
-      doc
-        .fontSize(11)
-        .font("Helvetica-Bold")
-        .text("Notes:", 50, 580) // Removed "Notes" label repetition
-        .fontSize(10)
-        .font("Helvetica")
-        .text(
-          estimate.notes,
-          50,
-          595,
-          { align: "left", width: 500 } // Increased width for notes
-        );
-    }
-  }
-
-  function generateFooter(doc) {
-    doc
-      .fontSize(10)
-      .text(
-        "Thank you for your business. Use the Estimate # as your payment reference.",
-        50,
-        780,
-        { align: "center", width: 500 }
-      );
-  }
-
-  function generateHr(doc, y) {
-    doc.strokeColor("#aaaaaa").lineWidth(1).moveTo(50, y).lineTo(550, y).stroke();
-  }
-
-  function formatCurrency(value, symbol = 'R') {
-    return `${symbol}${Number(value).toFixed(2)}`;
-  }
-
-  function formatDate(date) {
-    // Assuming date is already in 'YYYY-MM-DD' format from the form
-    return date; 
-  }
-  // --- End PDF Content Generation Functions ---
-
-  // Add content to the document
-  generateHeader(doc, estimate);
-  generateCustomerInformation(doc, estimate);
-  generateEstimateTable(doc, estimate);
-  generateNotes(doc, estimate);
-  generateFooter(doc);
-
-  doc.end();
-
-  stream.on("finish", function() {
-    const pdfBlob = stream.toBlob("application/pdf");
-    if (action === 'download') {
-      const a = document.createElement("a");
-      document.body.appendChild(a);
-      a.style = "display: none";
-      const url = window.URL.createObjectURL(pdfBlob);
-      a.href = url;
-      a.download = path;
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-      toast.success("Estimate downloaded successfully");
-    } else if (action === 'whatsapp') {
-      blob.value = pdfBlob; // Set blob for WhatsApp modal
-      isOpen.value = true; // Open WhatsApp modal
-    }
-  });
-};
 
 let img; // Variable to hold the logo image dataURL
 
-const prepareAndGeneratePDF = async (estimate, path, action = 'download') => {
+const prepareAndGeneratePDF = async (estimate, filename, action = 'download') => {
   loading.value = true;
   try {
-    const logoUrl = profile.value?.estimate_logo || '';
-    if (logoUrl) {
-      img = await getBase64FromUrl(logoUrl);
-    } else {
-      img = imageHolder; // Use placeholder if no logo URL
-    }
-    // Construct the data object for the PDF, ensuring all required fields are present
+    // Construct the data object for the PDF
     const pdfData = {
-       // Core fields likely returned from backend save
       id: estimate.id || estimateForm.id,
-      estimate_nr: estimate.number || estimateForm.estimate_nr, // Use 'number' from backend response if available
+      estimate_nr: estimate.number || estimateForm.estimate_nr,
       estimate_date: estimate.issuedAt ? moment(estimate.issuedAt).format('YYYY-MM-DD') : estimateForm.estimate_date,
       estimate_due_date: estimate.dueAt ? moment(estimate.dueAt).format('YYYY-MM-DD') : estimateForm.estimate_due_date,
       subtotal: estimate.subtotal || estimateForm.subtotal,
-      paid: estimate.deposit || estimateForm.paid, // Use 'deposit' from backend if available
+      paid: estimate.deposit || estimateForm.paid,
       notes: estimate.notes || estimateForm.notes,
-      // Use recipient profile from backend response if available, otherwise construct from local state (less ideal)
       recipientProfile: estimate.recipientProfile || recipientProfiles.value.find(p => p.id === selectedRecipientProfileId.value) || null,
-      // Use items from the local form state (guaranteed to be present)
       items: estimateForm.items || [],
-      // Use customer details from local form state (safer than assuming backend returns it)
       customer: estimateForm.customer || {},
-      // Use company and banking details from the fetched profile
       company: profile.value?.company || {},
       banking: profile.value?.banking || {},
     };
-    createEstimatePDF(pdfData, path, action); // Call the PDF creation logic with carefully constructed data
+
+    // Use the new helper to generate the PDF
+    const blob = await generateEstimate(pdfData, { 
+      action, 
+      filename,
+      profile: profile.value
+    });
+
+    // If generating for WhatsApp, we need to set the blob value
+    if (action === 'whatsapp') {
+      blob.value = blob;
+      isOpen.value = true;
+    }
   } catch (error) {
-    console.error("Error in prepareAndGeneratePDF (Estimate):", error); // Log the specific error
-    toast.error(`Error preparing PDF: ${error.message || 'Unknown error'}`); // Show more specific error
-    img = imageHolder; // Fallback image
-    // Optionally try generating PDF with fallback image - commented out for now
-    // createEstimatePDF(estimate, path, action);
+    console.error("Error generating PDF:", error);
+    toast.error(`Error preparing PDF: ${error.message || 'Unknown error'}`);
   } finally {
     loading.value = false;
   }
