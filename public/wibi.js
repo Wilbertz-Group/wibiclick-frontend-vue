@@ -92,11 +92,122 @@ async function createWidget(n) {
 		return { os, version };
 	}
 
+	// --- Bot Detection Logic Start ---
+	function detectBot() {
+		let botScore = 0;
+		let reasons = [];
+
+		// 1. WebDriver/Automation detection
+		if (navigator.webdriver) {
+			botScore += 2;
+			reasons.push('navigator.webdriver');
+		}
+		if (window.document.documentElement.getAttribute('webdriver')) {
+			botScore += 2;
+			reasons.push('documentElement.webdriver');
+		}
+		if (window.callPhantom || window._phantom) {
+			botScore += 2;
+			reasons.push('PhantomJS');
+		}
+		if (window.__nightmare) {
+			botScore += 2;
+			reasons.push('Nightmare.js');
+		}
+		if (window.navigator && window.navigator.languages === '') {
+			botScore += 1;
+			reasons.push('navigator.languages empty');
+		}
+		if (window.chrome && window.chrome.runtime && !window.chrome.runtime.id) {
+			botScore += 1;
+			reasons.push('chrome.runtime.id missing');
+		}
+		// 2. Headless browser detection
+		if (navigator.userAgent.match(/HeadlessChrome/)) {
+			botScore += 2;
+			reasons.push('HeadlessChrome');
+		}
+		if (navigator.plugins && navigator.plugins.length === 0) {
+			botScore += 1;
+			reasons.push('No plugins');
+		}
+		if (navigator.languages && navigator.languages.length === 0) {
+			botScore += 1;
+			reasons.push('No languages');
+		}
+		// 3. Known bot user agent patterns
+		const botUserAgents = [
+			'bot', 'spider', 'crawl', 'slurp', 'curl', 'wget', 'python', 'phantom', 'headless', 'selenium', 'scrapy', 'httpclient', 'facebookexternalhit', 'pingdom', 'monitor', 'datadog'
+		];
+		const ua = navigator.userAgent.toLowerCase();
+		if (botUserAgents.some(b => ua.includes(b))) {
+			botScore += 2;
+			reasons.push('Known bot UA');
+		}
+		// 4. Fingerprinting: missing or inconsistent properties
+		if (!navigator.hardwareConcurrency || navigator.hardwareConcurrency < 2) {
+			botScore += 1;
+			reasons.push('Low hardwareConcurrency');
+		}
+		if (!navigator.deviceMemory) {
+			botScore += 1;
+			reasons.push('No deviceMemory');
+		}
+		if (!window.screen || window.screen.width === 0 || window.screen.height === 0) {
+			botScore += 1;
+			reasons.push('Screen size 0');
+		}
+		// 5. Permissions API (headless browsers often fail this)
+		if (navigator.permissions && navigator.permissions.query) {
+			try {
+				navigator.permissions.query({ name: 'notifications' }).then(function (result) {
+					if (result.state === 'denied') {
+						botScore += 1;
+						reasons.push('Notifications denied');
+					}
+				});
+			} catch (e) {}
+		}
+		// 6. Behavior analysis (basic: no mouse movement/scroll in first 2s)
+		let behaviorBot = false;
+		let behaviorChecked = false;
+		function setupBehaviorCheck(cb) {
+			let moved = false, scrolled = false, clicked = false;
+			function mark() { moved = true; }
+			function markScroll() { scrolled = true; }
+			function markClick() { clicked = true; }
+			window.addEventListener('mousemove', mark, { once: true });
+			window.addEventListener('scroll', markScroll, { once: true });
+			window.addEventListener('click', markClick, { once: true });
+			setTimeout(() => {
+				if (!moved && !scrolled && !clicked) {
+					behaviorBot = true;
+					botScore += 1;
+					reasons.push('No interaction in 2s');
+				}
+				behaviorChecked = true;
+				if (cb) cb();
+			}, 2000);
+		}
+		return new Promise(resolve => {
+			setupBehaviorCheck(() => {
+				resolve({
+					isBot: botScore >= 3 || behaviorBot,
+					botScore,
+					reasons
+				});
+			});
+		});
+	}
+	// --- Bot Detection Logic End ---
+
 	// Collect all visitor data
 	async function collectVisitorData() {
 		const browserInfo = detectBrowser();
 		const osInfo = detectOS();
-		
+
+		const botDetection = await detectBot();
+
 		const data = {
 			device: {
 				type: detectDeviceType(),
@@ -107,9 +218,10 @@ async function createWidget(n) {
 				screenResolution: `${window.screen.width}x${window.screen.height}`,
 				language: navigator.language || navigator.userLanguage,
 				timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
-			}
+			},
+			botDetection
 		};
-		
+
 		return data;
 	}
 
@@ -221,13 +333,22 @@ async function createWidget(n) {
 	// Source Attribution Tracking with Enhanced Error Recovery
 	async function trackPageVisit(websiteId, utk, retries = 3, delay = 1000) {
 		const { source, sourceDetail, medium } = detectSource();
-		
+
 		// Extract UTM parameters for additional tracking
 		const urlParams = new URLSearchParams(window.location.search);
 		const utmCampaign = urlParams.get('utm_campaign');
 		const utmContent = urlParams.get('utm_content');
 		const utmTerm = urlParams.get('utm_term');
-		
+
+		// Collect bot detection for this visit
+		let botDetection = null;
+		try {
+			const visitorData = await collectVisitorData();
+			botDetection = visitorData.botDetection;
+		} catch (e) {
+			botDetection = null;
+		}
+
 		// Store in local storage as backup
 		const sourceKey = `wibi_source_${utk}`;
 		const sourceData = {
@@ -240,11 +361,12 @@ async function createWidget(n) {
 			content: utmContent,
 			medium: medium,
 			term: utmTerm,
-			timestamp: Date.now()
+			timestamp: Date.now(),
+			botDetection
 		};
-		
+
 		localStorage.setItem(sourceKey, JSON.stringify(sourceData));
-		
+
 		// Send to backend with retry logic
 		for (let attempt = 1; attempt <= retries; attempt++) {
 			try {
@@ -255,7 +377,7 @@ async function createWidget(n) {
 					},
 					body: JSON.stringify(sourceData)
 				});
-				
+
 				if (response.ok) {
 					// Remove from local storage on success
 					localStorage.removeItem(sourceKey);
@@ -270,13 +392,13 @@ async function createWidget(n) {
 					});
 					return; // Success
 				}
-				
+
 				if (response.status === 404 && attempt < retries) {
 					// Visitor not found, wait and retry
 					await new Promise(resolve => setTimeout(resolve, delay * attempt));
 					continue;
 				}
-				
+
 				throw new Error(`HTTP error! status: ${response.status}`);
 			} catch (error) {
 				if (attempt === retries) {
@@ -504,9 +626,10 @@ async function createWidget(n) {
 			
 			// Include client data in the request
 			const clientData = {
-				screenResolution: visitorData.device.screenResolution
+				screenResolution: visitorData.device.screenResolution,
+				botDetection: visitorData.botDetection
 			};
-			
+
 			pg = window.location.href,
 			P = await fetch(`https://wibi.wilbertzgroup.com/wibi-options?id=${n}&c=0&pg=${pg}&utk=${utk}&source=${encodeURIComponent(JSON.stringify(sourceData))}&clientData=${encodeURIComponent(JSON.stringify(clientData))}`),
 			B = await P.json();

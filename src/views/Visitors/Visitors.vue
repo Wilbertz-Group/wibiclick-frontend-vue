@@ -40,6 +40,7 @@
     hasCustomer: 'all', // 'all', 'yes', 'no'
     deviceType: 'all', // 'all', 'desktop', 'mobile', 'tablet'
     timeRange: '7d', // '24h', '7d', '30d', 'all'
+    botStatus: 'all', // 'all', 'onlyBots', 'noBots'
   });
 
   // Enhanced date formatter
@@ -87,7 +88,7 @@
       const searchLower = filters.search.toLowerCase();
       
       // Search filter - check all possible location fields
-      const matchesSearch = !searchLower || 
+      const matchesSearch = !searchLower ||
         visitor.id?.toLowerCase().includes(searchLower) ||
         visitor.page?.url?.toLowerCase().includes(searchLower) ||
         visitor.customer?.name?.toLowerCase().includes(searchLower) ||
@@ -104,8 +105,14 @@
       // Device type filter (if available in data)
       const matchesDevice = filters.deviceType === 'all' ||
         visitor.deviceType === filters.deviceType;
-      
-      return matchesSearch && matchesCustomer && matchesDevice;
+
+      // Bot status filter
+      const matchesBot =
+        filters.botStatus === 'all' ||
+        (filters.botStatus === 'onlyBots' && visitor.isBot) ||
+        (filters.botStatus === 'noBots' && !visitor.isBot);
+
+      return matchesSearch && matchesCustomer && matchesDevice && matchesBot;
     });
   });
 
@@ -155,11 +162,13 @@
       lastSeen: v.updatedAt ? dateFormatter(v.updatedAt) : "-",
       location: [
         v.city || v.location?.city,
-        v.region || v.location?.region, 
+        v.region || v.location?.region,
         v.country || v.location?.country
       ].filter(Boolean).join(', ') || 'Unknown',
       deviceInfo: v.deviceType || 'Unknown',
-      hasMergeSuggestions: v.possibleContactSuggestions?.length > 0
+      hasMergeSuggestions: v.possibleContactSuggestions?.length > 0,
+      isBot: v.isBot,
+      botTag: v.botTag || null
     }))
   );
 
@@ -367,6 +376,31 @@
   watch(filters, () => {
     currentPage.value = 1;
   });
+  // Bot traffic stats for dashboard
+  import { computed as computed2 } from "vue";
+  const botStats = computed2(() => {
+    const all = visitors.value || [];
+    const bots = all.filter(v => v.isBot);
+    const humans = all.filter(v => !v.isBot);
+    const total = all.length;
+    const totalBots = bots.length;
+    const humanCount = humans.length;
+    const botPercent = total > 0 ? ((totalBots / total) * 100).toFixed(1) : "0.0";
+    // Breakdown by botTag
+    const tagMap = {};
+    bots.forEach(b => {
+      const tag = b.botTag || "Unspecified";
+      tagMap[tag] = (tagMap[tag] || 0) + 1;
+    });
+    const botTagBreakdown = Object.entries(tagMap).map(([tag, count]) => ({ tag, count }));
+    return {
+      totalBots,
+      botPercent,
+      humanCount,
+      uniqueBotTags: botTagBreakdown.length,
+      botTagBreakdown
+    };
+  });
 </script>
 
 <template>
@@ -472,16 +506,16 @@
 
      <!-- Enhanced Filter Section -->
      <section class="mb-6 p-5 sm:p-6 card-modern">
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 items-end">
            <!-- Search Input -->
            <div class="lg:col-span-2">
               <label class="label-modern">Search</label>
               <div class="relative">
                 <font-awesome-icon icon="search" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-                <input 
-                  v-model="filters.search" 
-                  placeholder="Search by URL, ID, customer, location..." 
-                  class="input-modern pl-10 pr-3" 
+                <input
+                  v-model="filters.search"
+                  placeholder="Search by URL, ID, customer, location..."
+                  class="input-modern pl-10 pr-3"
                 />
               </div>
            </div>
@@ -507,12 +541,22 @@
               </select>
            </div>
 
+           <!-- Bot Filter -->
+           <div>
+              <label class="label-modern">Bot Traffic</label>
+              <select v-model="filters.botStatus" class="input-modern input-modern--select">
+                <option value="all">All Traffic</option>
+                <option value="noBots">Exclude Bots</option>
+                <option value="onlyBots">Only Bots</option>
+              </select>
+           </div>
+
            <!-- Filter Actions -->
            <div class="flex items-center justify-end space-x-2">
-              <button 
-                @click="clearFilters" 
+              <button
+                @click="clearFilters"
                 class="btn-secondary-modern w-full md:w-auto"
-                :disabled="!filters.search && filters.hasCustomer === 'all' && filters.timeRange === '7d'"
+                :disabled="!filters.search && filters.hasCustomer === 'all' && filters.timeRange === '7d' && filters.botStatus === 'all'"
               >
                 <font-awesome-icon icon="times" class="mr-2" />
                 Clear Filters
@@ -542,13 +586,22 @@
                       class="hover:bg-gray-50/50 dark:hover:bg-white/5 transition-colors duration-150"
                   >
                     <td class="td-modern">
-                      <span v-if="visitor.isConverted" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
-                        <font-awesome-icon icon="user-check" class="mr-1 text-xs" />
-                        Converted
-                      </span>
-                      <span v-else class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400">
-                        Visitor
-                      </span>
+                      <div class="flex flex-col space-y-1">
+                        <span v-if="visitor.isConverted" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                          <font-awesome-icon icon="user-check" class="mr-1 text-xs" />
+                          Converted
+                        </span>
+                        <span v-else class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400">
+                          Visitor
+                        </span>
+                        <span v-if="visitor.isBot" class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 mt-1" :title="visitor.botTag || 'Bot detected'">
+                          <font-awesome-icon icon="exclamation-triangle" class="mr-1 text-xs" />
+                          Bot
+                          <span v-if="visitor.botTag" class="ml-1">
+                            <font-awesome-icon icon="info-circle" class="text-xs" v-tooltip="visitor.botTag" />
+                          </span>
+                        </span>
+                      </div>
                     </td>
                     <td class="td-modern">
                       <span v-if="visitor.associatedCustomer" class="text-gray-900 dark:text-white">
@@ -619,13 +672,20 @@
                     Last seen: {{ visitor.lastSeen }}
                   </p>
                 </div>
-                <span v-if="visitor.isConverted" 
+                <span v-if="visitor.isConverted"
                       class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
                   Converted
                 </span>
-                <span v-else 
+                <span v-else
                       class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400">
                   Visitor
+                </span>
+                <span v-if="visitor.isBot" class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 mt-1" :title="visitor.botTag || 'Bot detected'">
+                  <font-awesome-icon icon="exclamation-triangle" class="mr-1 text-xs" />
+                  Bot
+                  <span v-if="visitor.botTag" class="ml-1">
+                    <font-awesome-icon icon="info-circle" class="text-xs" v-tooltip="visitor.botTag" />
+                  </span>
                 </span>
               </div>
               
@@ -702,6 +762,47 @@
            <p class="text-gray-600 dark:text-gray-400">
               Showing <span class="font-medium">{{ startIndex + 1 }}</span> to <span class="font-medium">{{ endIndex }}</span> of <span class="font-medium">{{ totalVisitors }}</span> results
            </p>
+<!-- Bot Traffic Report Section -->
+    <section class="mt-12 card-modern p-6">
+      <h3 class="text-lg font-semibold mb-6 text-gray-900 dark:text-white flex items-center">
+        <font-awesome-icon icon="exclamation-triangle" class="mr-2 text-yellow-500" />
+        Bot Traffic Report
+      </h3>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div class="card-modern p-4 flex flex-col items-center">
+          <span class="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{{ botStats.totalBots }}</span>
+          <span class="text-sm text-gray-500 dark:text-gray-400 mt-1">Total Bots Detected</span>
+        </div>
+        <div class="card-modern p-4 flex flex-col items-center">
+          <span class="text-2xl font-bold text-indigo-600 dark:text-indigo-400">{{ botStats.botPercent }}%</span>
+          <span class="text-sm text-gray-500 dark:text-gray-400 mt-1">Percent of Traffic</span>
+        </div>
+        <div class="card-modern p-4 flex flex-col items-center">
+          <span class="text-2xl font-bold text-green-600 dark:text-green-400">{{ botStats.humanCount }}</span>
+          <span class="text-sm text-gray-500 dark:text-gray-400 mt-1">Human Visitors</span>
+        </div>
+        <div class="card-modern p-4 flex flex-col items-center">
+          <span class="text-2xl font-bold text-blue-600 dark:text-blue-400">{{ botStats.uniqueBotTags }}</span>
+          <span class="text-sm text-gray-500 dark:text-gray-400 mt-1">Unique Bot Types</span>
+        </div>
+      </div>
+      <div v-if="botStats.botTagBreakdown.length > 0" class="mt-4">
+        <h4 class="text-md font-semibold mb-2 text-gray-900 dark:text-white">Bot Type Breakdown</h4>
+        <ul class="divide-y divide-gray-200 dark:divide-gray-700">
+          <li v-for="tag in botStats.botTagBreakdown" :key="tag.tag" class="py-2 flex items-center justify-between">
+            <span class="flex items-center">
+              <font-awesome-icon icon="robot" class="mr-2 text-yellow-400" />
+              <span class="font-mono">{{ tag.tag || 'Unspecified' }}</span>
+            </span>
+            <span class="text-sm text-gray-700 dark:text-gray-300">{{ tag.count }}</span>
+          </li>
+        </ul>
+      </div>
+      <div v-else class="text-gray-500 dark:text-gray-400 mt-4">
+        No bot traffic detected in the current filter.
+      </div>
+    </section>
+
            <div class="flex space-x-1">
               <button 
                 :disabled="currentPage === 1" 
@@ -729,7 +830,7 @@
         </h3>
         <div class="relative w-full min-h-[200px]">
           <VisitorTrendChart
-            :rawData="visitors"
+            :rawData="filteredVisitors"
             :loading="loading"
             :isDarkMode="isDarkMode"
           />
