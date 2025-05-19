@@ -340,6 +340,9 @@ async function createWidget(n) {
 		const utmContent = urlParams.get('utm_content');
 		const utmTerm = urlParams.get('utm_term');
 
+		// Get current page URL - IMPORTANT: Always include this
+		const currentPage = window.location.href;
+
 		// Collect bot detection for this visit
 		let botDetection = null;
 		try {
@@ -363,7 +366,8 @@ async function createWidget(n) {
 			term: utmTerm,
 			timestamp: Date.now(),
 			botDetection,
-			page: window.location.href // Added for backend compatibility
+			// Always include page URL - required by backend
+			page: currentPage
 		};
 
 		localStorage.setItem(sourceKey, JSON.stringify(sourceData));
@@ -371,12 +375,20 @@ async function createWidget(n) {
 		// Send to backend with retry logic
 		for (let attempt = 1; attempt <= retries; attempt++) {
 			try {
+				// Ensure page URL is explicitly included in the request payload
+				const payload = {
+					...sourceData,
+					page: currentPage // Double-ensure page is included (prevents undefined)
+				};
+
+				console.log('Sending source attribution payload:', payload);
+
 				const response = await trackingFetch('https://wibi.wilbertzgroup.com/api/track/track-source', {
 					method: 'POST',
 					headers: {
 						'Content-Type': 'application/json',
 					},
-					body: JSON.stringify(sourceData)
+					body: JSON.stringify(payload)
 				});
 
 				if (response.ok) {
@@ -389,9 +401,20 @@ async function createWidget(n) {
 						success: true,
 						status: response.status,
 						utk: utk,
-						source: source
+						source: source,
+						page: currentPage
 					});
 					return; // Success
+				}
+
+				// Log specific error information for debugging
+				if (!response.ok) {
+					const errorData = await response.json().catch(() => null);
+					console.error(`API Error (attempt ${attempt}/${retries}):`, {
+						status: response.status,
+						statusText: response.statusText,
+						data: errorData
+					});
 				}
 
 				if (response.status === 404 && attempt < retries) {
@@ -402,6 +425,8 @@ async function createWidget(n) {
 
 				throw new Error(`HTTP error! status: ${response.status}`);
 			} catch (error) {
+				console.error(`Source tracking error (attempt ${attempt}/${retries}):`, error);
+				
 				if (attempt === retries) {
 					console.error('Error tracking source after all retries:', error);
 					// Track failure
@@ -412,8 +437,12 @@ async function createWidget(n) {
 						status: error.status || 'error',
 						utk: utk,
 						source: source,
+						page: currentPage,
 						error: error.message
 					});
+				} else {
+					// Wait and retry
+					await new Promise(resolve => setTimeout(resolve, delay * attempt));
 				}
 			}
 		}

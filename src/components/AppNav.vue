@@ -83,6 +83,7 @@ const dropdownState = ref({
   marketing: false,
   sales: false,
   service: false,
+  security: false,
   pagesMobile: false
 });
 
@@ -792,6 +793,49 @@ watch(selectedWebsite, (newValue) => {
               </Menu>
             </div>
           </div>
+          <!-- Security Dropdown (owner/admin only) -->
+          <Menu v-if="userStore.user.permission === 'owner' || userStore.user.permission === 'admin'" as="div" class="relative">
+            <MenuButton
+              class="group flex items-center text-gray-200 hover:text-white px-3 py-2 rounded-md text-sm font-medium"
+              @click="toggleDropdown('security')"
+            >
+              <box-icon color="white" class="mr-2" type="solid" name='shield'></box-icon>
+              <span>Security</span>
+              <FontAwesomeIcon
+                :icon="dropdownState.security ? 'chevron-down' : 'chevron-right'"
+                class="ml-2 w-3 h-3 transition-transform"
+                :class="dropdownState.security ? 'transform rotate-180' : ''"
+              />
+            </MenuButton>
+            <Transition
+              enter-active-class="transition ease-out duration-100"
+              enter-from-class="transform opacity-0 scale-95"
+              enter-to-class="transform opacity-100 scale-100"
+              leave-active-class="transition ease-in duration-75"
+              leave-from-class="transform opacity-100 scale-100"
+              leave-to-class="transform opacity-0 scale-95"
+            >
+              <MenuItems
+                v-if="dropdownState.security"
+                class="origin-top-right absolute left-0 mt-2 rounded-md shadow-lg py-1 bg-gray-700 ring-1 ring-black ring-opacity-5 focus:outline-none min-w-[200px] z-50"
+              >
+                <div class="px-3 py-1 text-xs font-semibold text-gray-400 uppercase tracking-wider border-b border-gray-600">
+                  Security
+                </div>
+                <MenuItem v-slot="{ active }">
+                  <router-link
+                    :to="{ name: 'blocked-ips' }"
+                    class="flex items-center px-4 py-2 text-sm text-gray-200"
+                    :class="active ? 'bg-gray-600' : ''"
+                    @click="closeAllDropdowns"
+                  >
+                    <box-icon color="white" type='solid' name='block'></box-icon>
+                    <span class="ml-2">Blocked IPs</span>
+                  </router-link>
+                </MenuItem>
+              </MenuItems>
+            </Transition>
+          </Menu>
         </div>
 
         <!-- Right side with search, website selector, and profile dropdown -->
@@ -1420,6 +1464,42 @@ watch(selectedWebsite, (newValue) => {
           </div>
         </div>
         
+        <!-- Security Dropdown (owner/admin only) - Mobile -->
+        <div v-if="userStore.user.permission === 'owner' || userStore.user.permission === 'admin'">
+          <button
+            @click="toggleDropdown('security')"
+            class="w-full flex items-center justify-between text-gray-300 hover:bg-gray-600 hover:text-white px-3 py-2 rounded-md text-base font-medium transition-colors"
+          >
+            <span class="flex items-center">
+              <box-icon color="white" class="mr-2" type="solid" name="shield"></box-icon>
+              Security
+            </span>
+            <FontAwesomeIcon
+              :icon="dropdownState.security ? 'chevron-down' : 'chevron-right'"
+              class="w-3 h-3 transition-transform"
+              :class="dropdownState.security ? 'transform rotate-180' : ''"
+            />
+          </button>
+          <Transition
+            enter-active-class="transition ease-out duration-100"
+            enter-from-class="transform opacity-0 scale-95"
+            enter-to-class="transform opacity-100 scale-100"
+            leave-active-class="transition ease-in duration-75"
+            leave-from-class="transform opacity-100 scale-100"
+            leave-to-class="transform opacity-0 scale-95"
+          >
+            <div v-if="dropdownState.security" class="pl-6 mt-1 space-y-1">
+              <router-link
+                :to="{ name: 'blocked-ips' }"
+                class="block text-gray-300 hover:bg-gray-600 hover:text-white px-3 py-2 rounded-md text-base font-medium transition-colors"
+                @click="closeAllDropdowns"
+              >
+                Blocked IPs
+              </router-link>
+            </div>
+          </Transition>
+        </div>
+
         <!-- Mobile User Menu -->
         <div class="pt-4 pb-3 border-t border-gray-700">
           <!-- Website Selector -->

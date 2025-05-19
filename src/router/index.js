@@ -51,6 +51,7 @@ import OverviewDashboard from '@/views/Transactions/OverviewDashboard.vue'
 import TechnicianDashboard from '@/views/Transactions/TechnicianDashboard.vue'
 
 import ManualReview from '@/views/ManualReview.vue'
+import BlockedIps from '@/views/Security/BlockedIps.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -307,6 +308,12 @@ const router = createRouter({
       path: '/manual-review',
       name: 'manual-review',
       component: ManualReview
+    },
+    {
+      path: '/security/blocked-ips',
+      name: 'blocked-ips',
+      component: BlockedIps,
+      meta: { permission: ['owner', 'admin'] }
     }
   ]
 })
