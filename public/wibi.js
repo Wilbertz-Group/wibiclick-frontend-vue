@@ -427,6 +427,11 @@ async function createWidget(n) {
 			try {
 				const data = JSON.parse(localStorage.getItem(key));
 				
+				// Ensure page URL is present for backend compatibility
+				if (!data.page && !data.pageId) {
+					data.page = window.location.href;
+				}
+
 				// Only process if data is less than 24 hours old
 				if (Date.now() - data.timestamp < 24 * 60 * 60 * 1000) {
 					const response = await trackingFetch('https://wibi.wilbertzgroup.com/api/track/track-source', {
