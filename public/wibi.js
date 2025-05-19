@@ -362,7 +362,8 @@ async function createWidget(n) {
 			medium: medium,
 			term: utmTerm,
 			timestamp: Date.now(),
-			botDetection
+			botDetection,
+			page: window.location.href // Added for backend compatibility
 		};
 
 		localStorage.setItem(sourceKey, JSON.stringify(sourceData));
