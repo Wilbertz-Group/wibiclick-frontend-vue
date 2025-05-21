@@ -225,7 +225,17 @@ async function createWidget(n) {
 		return data;
 	}
 
-	// Tracking queue system
+	/**
+	 * Tracking queue system
+	 *
+	 * Part of the performance optimization that allows tracking operations to:
+	 * 1. Run asynchronously without blocking widget rendering
+	 * 2. Process multiple tracking requests in sequence
+	 * 3. Handle failures gracefully with retries
+	 *
+	 * This improves reliability while maintaining separation between
+	 * widget display and tracking operations.
+	 */
 	const trackingQueue = {
 		queue: [],
 		processing: false,
@@ -253,7 +263,17 @@ async function createWidget(n) {
 		}
 	};
 	
-	// Offline queue system
+	/**
+	 * Offline queue system
+	 *
+	 * Enhances the tracking optimization by:
+	 * 1. Storing tracking operations when offline
+	 * 2. Processing them when connection is restored
+	 * 3. Ensuring no tracking data is lost due to connectivity issues
+	 *
+	 * This complements the performance optimization by maintaining
+	 * tracking reliability without affecting widget performance.
+	 */
 	const offlineQueue = {
 		key: 'wibi_offline_queue',
 		
@@ -665,14 +685,47 @@ async function createWidget(n) {
 				botDetection: visitorData.botDetection
 			};
 
-			pg = window.location.href,
-			P = await fetch(`https://wibi.wilbertzgroup.com/wibi-options?id=${n}&c=0&pg=${pg}&utk=${utk}&source=${encodeURIComponent(JSON.stringify(sourceData))}&clientData=${encodeURIComponent(JSON.stringify(clientData))}`),
-			B = await P.json();
+			pg = window.location.href;
+			
+			/**
+			 * OPTIMIZATION: Two-step process for improved performance
+			 *
+			 * Step 1: Get widget display settings quickly from the optimized /wibi-options route
+			 * This allows the widget to render immediately without waiting for tracking operations
+			 */
+			const P = await fetch(`https://wibi.wilbertzgroup.com/wibi-options?id=${n}&pg=${pg}&utk=${utk}`);
+			const B = await P.json();
 			localStorage.setItem("wibi_utk", utk);
 			
-			// Still track source as fallback in case the initial request didn't process it
-			await new Promise(resolve => setTimeout(resolve, 500));
-			trackingQueue.add(() => trackPageVisit(n, utk));
+			/**
+			 * Step 2: Send tracking data in a separate asynchronous request
+			 * This happens in parallel with widget rendering and doesn't block the user experience
+			 * Using the tracking queue system for reliability and offline support
+			 */
+			trackingQueue.add(async () => {
+				try {
+					await fetch('https://wibi.wilbertzgroup.com/wibi-track', {
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/json'
+						},
+						body: JSON.stringify({
+							websiteId: n,
+							utk: utk,
+							pgUrlString: pg,
+							sourceData: sourceData,
+							clientData: clientData,
+							ip: null, // Will be determined by server
+							userAgent: navigator.userAgent,
+							referer: document.referrer
+						})
+					});
+				} catch (error) {
+					console.error('Error sending tracking data:', error);
+					// Fallback to old tracking method if the new endpoint fails
+					trackPageVisit(n, utk);
+				}
+			});
 			
 			// Mark user as returning if already had utk
 			if (localStorage.getItem("wibi_user_type") !== "returning" && c_utk) {
