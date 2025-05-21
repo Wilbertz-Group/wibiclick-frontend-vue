@@ -647,6 +647,52 @@ async function createWidget(n) {
 		return utk;
 	}
 	
+	/**
+	 * Attempts to get the client's IP address using a public API service
+	 * This is used as a fallback when server-side IP detection fails
+	 * @returns {Promise<string|null>} The client's IP address or null if detection fails
+	 */
+	async function getClientIpAddress() {
+		try {
+			// Try multiple IP detection services for redundancy
+			const services = [
+				'https://api.ipify.org?format=json',
+				'https://api.ipdata.co/ip',
+				'https://api64.ipify.org?format=json'
+			];
+			
+			// Try each service until one succeeds
+			for (const service of services) {
+				try {
+					const response = await fetch(service, {
+						timeout: 3000,
+						headers: { 'Accept': 'application/json' }
+					});
+					
+					if (!response.ok) continue;
+					
+					const data = await response.json();
+					const ip = data.ip || (typeof data === 'string' ? data : null);
+					
+					if (ip && typeof ip === 'string' && /^(\d{1,3}\.){3}\d{1,3}$/.test(ip)) {
+						//console.log('[Wibi] Client-side IP detection successful (fallback mechanism)');
+						return ip;
+					}
+				} catch (innerError) {
+					// Continue to next service on failure
+					//console.debug('[Wibi] IP detection service failed:', service);
+				}
+			}
+			
+			// All services failed
+			//console.warn('[Wibi] All client-side IP detection services failed');
+			return null;
+		} catch (error) {
+			//console.warn('[Wibi] Client-side IP detection failed:', error);
+			return null;
+		}
+	}
+	
 	async function run() {
 			var c_utk = localStorage.getItem("wibi_utk") || getCookie("wibi_utk");
 			!c_utk ? c_utk = false : ''
@@ -715,7 +761,7 @@ async function createWidget(n) {
 							pgUrlString: pg,
 							sourceData: sourceData,
 							clientData: clientData,
-							ip: null, // Will be determined by server
+							ip: await getClientIpAddress(), // Fallback client-side IP detection (server-side is still primary)
 							userAgent: navigator.userAgent,
 							referer: document.referrer
 						})
