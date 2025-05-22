@@ -350,25 +350,272 @@
         showConsentBanner(callback) {
             const banner = document.createElement('div');
             banner.id = 'wibi-consent-banner';
+            
+            // Add enhanced compact styles
+            const styleId = 'wibi-consent-banner-styles';
+            if (!document.getElementById(styleId)) {
+                const styleElement = document.createElement('style');
+                styleElement.id = styleId;
+                styleElement.textContent = `
+                    @keyframes wibiSlideUp {
+                        from { transform: translateY(120%); }
+                        to { transform: translateY(0); }
+                    }
+                    
+                    @keyframes wibiFadeIn {
+                        from { opacity: 0; }
+                        to { opacity: 1; }
+                    }
+                    
+                    @keyframes wibiGlow {
+                        0%, 100% { opacity: 0.5; }
+                        50% { opacity: 1; }
+                    }
+                    
+                    .wibi-consent-wrapper {
+                        position: fixed;
+                        bottom: 0;
+                        left: 0;
+                        right: 0;
+                        z-index: 9999999;
+                        padding: 16px;
+                        pointer-events: none;
+                    }
+                    
+                    .wibi-consent-backdrop {
+                        position: fixed;
+                        inset: 0;
+                        background: rgba(0, 0, 0, 0.4);
+                        backdrop-filter: blur(4px);
+                        -webkit-backdrop-filter: blur(4px);
+                        animation: wibiFadeIn 0.3s ease-out;
+                        pointer-events: all;
+                    }
+                    
+                    .wibi-consent-card {
+                        position: relative;
+                        background: #ffffff;
+                        border-radius: 20px;
+                        padding: 24px;
+                        max-width: 520px;
+                        margin: 0 auto;
+                        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(0, 0, 0, 0.05);
+                        animation: wibiSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+                        pointer-events: all;
+                    }
+                    
+                    .wibi-consent-glow {
+                        position: absolute;
+                        top: -2px;
+                        left: -2px;
+                        right: -2px;
+                        bottom: -2px;
+                        background: linear-gradient(45deg, #667eea, #764ba2, #f093fb, #4facfe);
+                        background-size: 400% 400%;
+                        border-radius: 22px;
+                        opacity: 0.7;
+                        z-index: -1;
+                        filter: blur(8px);
+                        animation: gradient 15s ease infinite, wibiGlow 2s ease-in-out infinite;
+                    }
+                    
+                    @keyframes gradient {
+                        0% { background-position: 0% 50%; }
+                        50% { background-position: 100% 50%; }
+                        100% { background-position: 0% 50%; }
+                    }
+                    
+                    .wibi-consent-content {
+                        display: flex;
+                        flex-direction: column;
+                        gap: 16px;
+                    }
+                    
+                    .wibi-consent-header {
+                        text-align: center;
+                    }
+                    
+                    .wibi-consent-title {
+                        font-size: 20px;
+                        font-weight: 700;
+                        color: #1a1a1a;
+                        margin: 0 0 8px 0;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 8px;
+                    }
+                    
+                    .wibi-consent-icon {
+                        font-size: 24px;
+                    }
+                    
+                    .wibi-consent-text {
+                        font-size: 14px;
+                        color: #666;
+                        line-height: 1.5;
+                        margin: 0;
+                    }
+                    
+                    .wibi-consent-highlight {
+                        color: #4f46e5;
+                        font-weight: 600;
+                    }
+                    
+                    .wibi-consent-actions {
+                        display: grid;
+                        grid-template-columns: repeat(3, 1fr);
+                        gap: 10px;
+                    }
+                    
+                    .wibi-consent-btn {
+                        padding: 12px 16px;
+                        border: none;
+                        border-radius: 12px;
+                        font-size: 14px;
+                        font-weight: 600;
+                        cursor: pointer;
+                        transition: all 0.2s ease;
+                        position: relative;
+                        overflow: hidden;
+                        white-space: nowrap;
+                        text-align: center;
+                    }
+                    
+                    .wibi-consent-btn:active {
+                        transform: scale(0.98);
+                    }
+                    
+                    .wibi-consent-btn-primary {
+                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                        color: white;
+                        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+                    }
+                    
+                    .wibi-consent-btn-primary:hover {
+                        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+                        transform: translateY(-1px);
+                    }
+                    
+                    .wibi-consent-btn-secondary {
+                        background: #f3f4f6;
+                        color: #4b5563;
+                        border: 1px solid #e5e7eb;
+                    }
+                    
+                    .wibi-consent-btn-secondary:hover {
+                        background: #e5e7eb;
+                        border-color: #d1d5db;
+                    }
+                    
+                    .wibi-consent-btn-minimal {
+                        background: transparent;
+                        color: #6b7280;
+                        border: 1px solid #e5e7eb;
+                    }
+                    
+                    .wibi-consent-btn-minimal:hover {
+                        background: #f9fafb;
+                        border-color: #d1d5db;
+                    }
+                    
+                    @media (max-width: 540px) {
+                        .wibi-consent-wrapper {
+                            padding: 0;
+                        }
+                        
+                        .wibi-consent-card {
+                            border-radius: 20px 20px 0 0;
+                            padding: 20px;
+                            max-width: 100%;
+                        }
+                        
+                        .wibi-consent-title {
+                            font-size: 18px;
+                        }
+                        
+                        .wibi-consent-text {
+                            font-size: 13px;
+                        }
+                        
+                        .wibi-consent-actions {
+                            grid-template-columns: 1fr;
+                            gap: 8px;
+                        }
+                        
+                        .wibi-consent-btn {
+                            padding: 14px;
+                        }
+                    }
+                    
+                    @media (prefers-color-scheme: dark) {
+                        .wibi-consent-card {
+                            background: #1f2937;
+                            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1);
+                        }
+                        
+                        .wibi-consent-title {
+                            color: #f9fafb;
+                        }
+                        
+                        .wibi-consent-text {
+                            color: #9ca3af;
+                        }
+                        
+                        .wibi-consent-highlight {
+                            color: #818cf8;
+                        }
+                        
+                        .wibi-consent-btn-secondary {
+                            background: #374151;
+                            color: #e5e7eb;
+                            border-color: #4b5563;
+                        }
+                        
+                        .wibi-consent-btn-secondary:hover {
+                            background: #4b5563;
+                            border-color: #6b7280;
+                        }
+                        
+                        .wibi-consent-btn-minimal {
+                            color: #9ca3af;
+                            border-color: #4b5563;
+                        }
+                        
+                        .wibi-consent-btn-minimal:hover {
+                            background: #374151;
+                            border-color: #6b7280;
+                        }
+                    }
+                `;
+                document.head.appendChild(styleElement);
+            }
+            
             banner.innerHTML = `
-                <div style="position: fixed; bottom: 0; left: 0; right: 0; background: #2c3e50; color: white; padding: 20px; z-index: 10000; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; box-shadow: 0 -2px 10px rgba(0,0,0,0.1);">
-                    <div style="max-width: 1200px; margin: 0 auto;">
-                        <div style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap;">
-                            <div style="flex: 1; min-width: 300px;">
-                                <h4 style="margin: 0 0 8px 0; font-size: 16px;">🍪 Privacy Settings</h4>
-                                <p style="margin: 0; font-size: 14px; line-height: 1.4; opacity: 0.9;">
-                                    We use cookies to provide contact functionality and improve your experience. 
-                                    <strong>Contact buttons will work regardless of your choice.</strong>
+                <div class="wibi-consent-backdrop"></div>
+                <div class="wibi-consent-wrapper">
+                    <div class="wibi-consent-card">
+                        <div class="wibi-consent-glow"></div>
+                        <div class="wibi-consent-content">
+                            <div class="wibi-consent-header">
+                                <h3 class="wibi-consent-title">
+                                    <span class="wibi-consent-icon">🍪</span>
+                                    <span>Cookie Consent</span>
+                                </h3>
+                                <p class="wibi-consent-text">
+                                    We use cookies to enhance your experience. 
+                                    <span class="wibi-consent-highlight">Contact buttons always work!</span>
                                 </p>
                             </div>
-                            <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
-                                <button id="wibi-consent-essential" style="background: transparent; border: 1px solid rgba(255,255,255,0.3); color: white; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 14px;">
-                                    Essential Only
+                            
+                            <div class="wibi-consent-actions">
+                                <button id="wibi-consent-essential" class="wibi-consent-btn wibi-consent-btn-minimal">
+                                    Essential
                                 </button>
-                                <button id="wibi-consent-settings" style="background: transparent; border: 1px solid rgba(255,255,255,0.3); color: white; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 14px;">
+                                <button id="wibi-consent-settings" class="wibi-consent-btn wibi-consent-btn-secondary">
                                     Settings
                                 </button>
-                                <button id="wibi-consent-accept" style="background: #27ae60; border: none; color: white; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: 500; font-size: 14px;">
+                                <button id="wibi-consent-accept" class="wibi-consent-btn wibi-consent-btn-primary">
                                     Accept All
                                 </button>
                             </div>
@@ -379,7 +626,7 @@
 
             document.body.appendChild(banner);
 
-            // Accept All - Full functionality + tracking
+            // Add click handlers
             document.getElementById('wibi-consent-accept').onclick = () => {
                 document.body.removeChild(banner);
                 callback({
@@ -393,32 +640,539 @@
                 });
             };
 
-            // Essential Only - Widget works, no tracking
             document.getElementById('wibi-consent-essential').onclick = () => {
                 document.body.removeChild(banner);
                 callback({
                     granted: true,
                     categories: {
                         necessary: true,
-                        functional: true,    // ✅ Still allow contact functionality
-                        analytics: false,    // ❌ No tracking
-                        marketing: false     // ❌ No marketing
+                        functional: true,
+                        analytics: false,
+                        marketing: false
                     }
                 });
             };
 
-            // Settings - Show limited options for now (simplified)
             document.getElementById('wibi-consent-settings').onclick = () => {
+                this.showSettingsModal(banner, callback);
+            };
+            
+            // Close on backdrop click
+            banner.querySelector('.wibi-consent-backdrop').onclick = () => {
                 document.body.removeChild(banner);
                 callback({
                     granted: true,
                     categories: {
                         necessary: true,
                         functional: true,
-                        analytics: true,     // Allow analytics but not marketing
+                        analytics: false,
                         marketing: false
                     }
                 });
+            };
+        }
+
+        showSettingsModal(banner, callback) {
+            const originalBanner = banner;
+            const settingsModal = document.createElement('div');
+            settingsModal.id = 'wibi-settings-modal';
+            
+            // Get current consent values
+            let consentState = {
+                functional: this.consentData?.categories?.functional || false,
+                analytics: this.consentData?.categories?.analytics || false,
+                marketing: this.consentData?.categories?.marketing || false
+            };
+            
+            // Add the enhanced compact styles
+            const styleId = 'wibi-settings-modal-styles';
+            if (!document.getElementById(styleId)) {
+                const styleElement = document.createElement('style');
+                styleElement.id = styleId;
+                styleElement.textContent = `
+                    @keyframes wibiModalSlide {
+                        from { transform: translateY(100%); }
+                        to { transform: translateY(0); }
+                    }
+                    
+                    .wibi-settings-backdrop {
+                        position: fixed;
+                        inset: 0;
+                        background: rgba(0, 0, 0, 0.6);
+                        backdrop-filter: blur(8px);
+                        -webkit-backdrop-filter: blur(8px);
+                        z-index: 9999999;
+                        animation: wibiFadeIn 0.3s ease-out;
+                    }
+                    
+                    .wibi-settings-wrapper {
+                        position: fixed;
+                        bottom: 0;
+                        left: 0;
+                        right: 0;
+                        z-index: 10000000;
+                        max-height: 80vh;
+                        display: flex;
+                        align-items: flex-end;
+                        justify-content: center;
+                    }
+                    
+                    .wibi-settings-panel {
+                        background: #ffffff;
+                        border-radius: 24px 24px 0 0;
+                        width: 100%;
+                        max-width: 480px;
+                        box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.15);
+                        animation: wibiModalSlide 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+                        overflow: hidden;
+                    }
+                    
+                    .wibi-settings-content {
+                        padding: 24px;
+                        max-height: 70vh;
+                        overflow-y: auto;
+                    }
+                    
+                    .wibi-settings-content::-webkit-scrollbar {
+                        width: 6px;
+                    }
+                    
+                    .wibi-settings-content::-webkit-scrollbar-track {
+                        background: #f1f1f1;
+                    }
+                    
+                    .wibi-settings-content::-webkit-scrollbar-thumb {
+                        background: #888;
+                        border-radius: 3px;
+                    }
+                    
+                    .wibi-settings-header {
+                        text-align: center;
+                        margin-bottom: 24px;
+                    }
+                    
+                    .wibi-settings-title {
+                        font-size: 20px;
+                        font-weight: 700;
+                        color: #1a1a1a;
+                        margin: 0 0 8px 0;
+                    }
+                    
+                    .wibi-settings-subtitle {
+                        font-size: 14px;
+                        color: #6b7280;
+                        margin: 0;
+                    }
+                    
+                    .wibi-cookie-list {
+                        display: flex;
+                        flex-direction: column;
+                        gap: 12px;
+                    }
+                    
+                    .wibi-cookie-item {
+                        background: #f9fafb;
+                        border: 1px solid #e5e7eb;
+                        border-radius: 12px;
+                        padding: 16px;
+                        transition: all 0.2s ease;
+                    }
+                    
+                    .wibi-cookie-item:hover {
+                        background: #f3f4f6;
+                        border-color: #d1d5db;
+                    }
+                    
+                    .wibi-cookie-row {
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                        gap: 16px;
+                    }
+                    
+                    .wibi-cookie-details {
+                        flex: 1;
+                    }
+                    
+                    .wibi-cookie-name {
+                        font-size: 15px;
+                        font-weight: 600;
+                        color: #1f2937;
+                        margin-bottom: 4px;
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                    }
+                    
+                    .wibi-cookie-tag {
+                        font-size: 11px;
+                        padding: 2px 6px;
+                        border-radius: 6px;
+                        font-weight: 500;
+                    }
+                    
+                    .wibi-cookie-tag.required {
+                        background: #dcfce7;
+                        color: #166534;
+                    }
+                    
+                    .wibi-cookie-tag.optional {
+                        background: #dbeafe;
+                        color: #1e40af;
+                    }
+                    
+                    .wibi-cookie-desc {
+                        font-size: 13px;
+                        color: #6b7280;
+                        line-height: 1.4;
+                        margin: 0;
+                    }
+                    
+                    /* Fixed Toggle Switch Styles */
+                    .wibi-switch {
+                        position: relative;
+                        width: 48px;
+                        height: 26px;
+                        flex-shrink: 0;
+                    }
+                    
+                    .wibi-switch input {
+                        position: absolute;
+                        opacity: 0;
+                        width: 100%;
+                        height: 100%;
+                        margin: 0;
+                        cursor: pointer;
+                        z-index: 2;
+                    }
+                    
+                    .wibi-switch-track {
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                        right: 0;
+                        bottom: 0;
+                        background: #cbd5e1;
+                        border-radius: 26px;
+                        transition: all 0.3s ease;
+                        cursor: pointer;
+                    }
+                    
+                    .wibi-switch-thumb {
+                        position: absolute;
+                        top: 3px;
+                        left: 3px;
+                        width: 20px;
+                        height: 20px;
+                        background: white;
+                        border-radius: 50%;
+                        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+                        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                    }
+                    
+                    .wibi-switch input:checked ~ .wibi-switch-track {
+                        background: #6366f1;
+                    }
+                    
+                    .wibi-switch input:checked ~ .wibi-switch-thumb {
+                        transform: translateX(22px);
+                    }
+                    
+                    .wibi-switch.disabled {
+                        opacity: 0.5;
+                        pointer-events: none;
+                    }
+                    
+                    .wibi-switch.disabled .wibi-switch-track {
+                        background: #e5e7eb !important;
+                    }
+                    
+                    .wibi-settings-footer {
+                        background: #f9fafb;
+                        padding: 16px 24px;
+                        border-top: 1px solid #e5e7eb;
+                        display: flex;
+                        gap: 12px;
+                        justify-content: flex-end;
+                    }
+                    
+                    .wibi-settings-btn {
+                        padding: 10px 20px;
+                        border: none;
+                        border-radius: 10px;
+                        font-size: 14px;
+                        font-weight: 600;
+                        cursor: pointer;
+                        transition: all 0.2s ease;
+                    }
+                    
+                    .wibi-settings-btn:active {
+                        transform: scale(0.98);
+                    }
+                    
+                    .wibi-settings-btn-cancel {
+                        background: #ffffff;
+                        color: #6b7280;
+                        border: 1px solid #e5e7eb;
+                    }
+                    
+                    .wibi-settings-btn-cancel:hover {
+                        background: #f9fafb;
+                        border-color: #d1d5db;
+                    }
+                    
+                    .wibi-settings-btn-save {
+                        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+                        color: white;
+                        box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+                    }
+                    
+                    .wibi-settings-btn-save:hover {
+                        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+                        transform: translateY(-1px);
+                    }
+                    
+                    @media (max-width: 540px) {
+                        .wibi-settings-panel {
+                            max-width: 100%;
+                            border-radius: 24px 24px 0 0;
+                        }
+                        
+                        .wibi-settings-content {
+                            padding: 20px;
+                        }
+                        
+                        .wibi-settings-footer {
+                            padding: 16px 20px;
+                            flex-direction: column;
+                        }
+                        
+                        .wibi-settings-btn {
+                            width: 100%;
+                            padding: 12px;
+                        }
+                    }
+                    
+                    @media (prefers-color-scheme: dark) {
+                        .wibi-settings-panel {
+                            background: #1f2937;
+                        }
+                        
+                        .wibi-settings-title {
+                            color: #f9fafb;
+                        }
+                        
+                        .wibi-settings-subtitle {
+                            color: #9ca3af;
+                        }
+                        
+                        .wibi-cookie-item {
+                            background: #111827;
+                            border-color: #374151;
+                        }
+                        
+                        .wibi-cookie-item:hover {
+                            background: #1f2937;
+                            border-color: #4b5563;
+                        }
+                        
+                        .wibi-cookie-name {
+                            color: #f3f4f6;
+                        }
+                        
+                        .wibi-cookie-desc {
+                            color: #9ca3af;
+                        }
+                        
+                        .wibi-cookie-tag.required {
+                            background: #064e3b;
+                            color: #6ee7b7;
+                        }
+                        
+                        .wibi-cookie-tag.optional {
+                            background: #1e3a8a;
+                            color: #93c5fd;
+                        }
+                        
+                        .wibi-switch-track {
+                            background: #4b5563;
+                        }
+                        
+                        .wibi-settings-footer {
+                            background: #111827;
+                            border-color: #374151;
+                        }
+                        
+                        .wibi-settings-btn-cancel {
+                            background: #374151;
+                            color: #e5e7eb;
+                            border-color: #4b5563;
+                        }
+                        
+                        .wibi-settings-btn-cancel:hover {
+                            background: #4b5563;
+                            border-color: #6b7280;
+                        }
+                    }
+                `;
+                document.head.appendChild(styleElement);
+            }
+            
+            settingsModal.innerHTML = `
+                <div class="wibi-settings-backdrop"></div>
+                <div class="wibi-settings-wrapper">
+                    <div class="wibi-settings-panel">
+                        <div class="wibi-settings-content">
+                            <div class="wibi-settings-header">
+                                <h3 class="wibi-settings-title">Privacy Settings</h3>
+                                <p class="wibi-settings-subtitle">Choose which cookies you want to accept</p>
+                            </div>
+                            
+                            <div class="wibi-cookie-list">
+                                <!-- Necessary Cookies -->
+                                <div class="wibi-cookie-item">
+                                    <div class="wibi-cookie-row">
+                                        <div class="wibi-cookie-details">
+                                            <div class="wibi-cookie-name">
+                                                Essential Cookies
+                                                <span class="wibi-cookie-tag required">Always On</span>
+                                            </div>
+                                            <p class="wibi-cookie-desc">
+                                                Required for basic website functionality
+                                            </p>
+                                        </div>
+                                        <div class="wibi-switch disabled">
+                                            <input type="checkbox" checked disabled>
+                                            <div class="wibi-switch-track"></div>
+                                            <div class="wibi-switch-thumb"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Functional Cookies -->
+                                <div class="wibi-cookie-item">
+                                    <div class="wibi-cookie-row">
+                                        <div class="wibi-cookie-details">
+                                            <div class="wibi-cookie-name">
+                                                Functional
+                                                <span class="wibi-cookie-tag optional">Optional</span>
+                                            </div>
+                                            <p class="wibi-cookie-desc">
+                                                Enhanced features and personalization
+                                            </p>
+                                        </div>
+                                        <div class="wibi-switch" id="functional-switch">
+                                            <input type="checkbox" ${consentState.functional ? 'checked' : ''}>
+                                            <div class="wibi-switch-track"></div>
+                                            <div class="wibi-switch-thumb"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Analytics Cookies -->
+                                <div class="wibi-cookie-item">
+                                    <div class="wibi-cookie-row">
+                                        <div class="wibi-cookie-details">
+                                            <div class="wibi-cookie-name">
+                                                Analytics
+                                                <span class="wibi-cookie-tag optional">Optional</span>
+                                            </div>
+                                            <p class="wibi-cookie-desc">
+                                                Help us improve with anonymous data
+                                            </p>
+                                        </div>
+                                        <div class="wibi-switch" id="analytics-switch">
+                                            <input type="checkbox" ${consentState.analytics ? 'checked' : ''}>
+                                            <div class="wibi-switch-track"></div>
+                                            <div class="wibi-switch-thumb"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Marketing Cookies -->
+                                <div class="wibi-cookie-item">
+                                    <div class="wibi-cookie-row">
+                                        <div class="wibi-cookie-details">
+                                            <div class="wibi-cookie-name">
+                                                Marketing
+                                                <span class="wibi-cookie-tag optional">Optional</span>
+                                            </div>
+                                            <p class="wibi-cookie-desc">
+                                                Personalized ads and promotions
+                                            </p>
+                                        </div>
+                                        <div class="wibi-switch" id="marketing-switch">
+                                            <input type="checkbox" ${consentState.marketing ? 'checked' : ''}>
+                                            <div class="wibi-switch-track"></div>
+                                            <div class="wibi-switch-thumb"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="wibi-settings-footer">
+                            <button id="wibi-settings-cancel" class="wibi-settings-btn wibi-settings-btn-cancel">
+                                Cancel
+                            </button>
+                            <button id="wibi-settings-save" class="wibi-settings-btn wibi-settings-btn-save">
+                                Save Settings
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Hide the original banner
+            originalBanner.style.display = 'none';
+            
+            // Add the settings modal to the DOM
+            document.body.appendChild(settingsModal);
+            
+            // Make switches clickable on the entire area
+            const switches = settingsModal.querySelectorAll('.wibi-switch:not(.disabled)');
+            switches.forEach(switchEl => {
+                switchEl.addEventListener('click', (e) => {
+                    if (e.target.tagName !== 'INPUT') {
+                        const input = switchEl.querySelector('input');
+                        input.checked = !input.checked;
+                    }
+                });
+            });
+
+            // Handle Cancel button
+            document.getElementById('wibi-settings-cancel').onclick = () => {
+                document.body.removeChild(settingsModal);
+                originalBanner.style.display = 'block';
+            };
+            
+            // Handle Save button
+            document.getElementById('wibi-settings-save').onclick = () => {
+                // Get toggle values
+                const functionalConsent = settingsModal.querySelector('#functional-switch input').checked;
+                const analyticsConsent = settingsModal.querySelector('#analytics-switch input').checked;
+                const marketingConsent = settingsModal.querySelector('#marketing-switch input').checked;
+                
+                // Remove both modals
+                document.body.removeChild(settingsModal);
+                document.body.removeChild(originalBanner);
+                
+                // Call the callback with new settings
+                callback({
+                    granted: true,
+                    categories: {
+                        necessary: true,
+                        functional: functionalConsent,
+                        analytics: analyticsConsent,
+                        marketing: marketingConsent
+                    }
+                });
+            };
+            
+            // Close on backdrop click
+            settingsModal.querySelector('.wibi-settings-backdrop').onclick = () => {
+                document.body.removeChild(settingsModal);
+                originalBanner.style.display = 'block';
             };
         }
     }
@@ -1395,21 +2149,21 @@
                 await this.visitor.initialize();
                 this.session.initialize();
 
+                // Fetch widget configuration UNCONDITIONALLY - before consent handling
+                await this.fetchWidgetConfig();
+                await this.gtm.injectGTM(this.websiteId);
+
                 // Handle consent (but don't block widget rendering)
                 if (WIBI_CONFIG.consentRequired) {
                     await this.consent.requestConsent();
                     
                     // ✅ ALWAYS continue with widget rendering
-                    this.logger.info('Consent status', { 
+                    this.logger.info('Consent status', {
                         analytics: this.consent.isAllowed('analytics'),
                         marketing: this.consent.isAllowed('marketing'),
                         functional: this.consent.isAllowed('functional')
                     });
                 }
-
-                // Fetch widget configuration and render
-                await this.fetchWidgetConfig();
-                await this.gtm.injectGTM(this.websiteId);
 
                 this.renderWidget();
                 this.setupEventTracking();
