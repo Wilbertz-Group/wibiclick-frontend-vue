@@ -1152,8 +1152,7 @@ async function createWidget(n) {
 		}
 	run();
 	
-	// Process stored source data on load
-	window.addEventListener('load', processStoredSourceData);
+	// The processStoredSourceData function is already called in the run() function's load event listener
 }
 createWidget(document.currentScript.dataset.id)
 
