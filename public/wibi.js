@@ -64,8 +64,11 @@
         },
         
         // Privacy & Compliance
-        consentRequired: true,
+        consentRequired: true, // Set to false to disable consent management entirely
         cookieExpiry: 365 * 24 * 60 * 60 * 1000, // 1 year
+        
+        // Widget always shows contact buttons regardless of consent
+        // Only analytics/tracking is disabled when consent not given
         
         // Debug Mode
         debug: window.WIBI_DEBUG || false
@@ -268,7 +271,12 @@
         loadConsent() {
             return this.storage.get(WIBI_CONFIG.storageKeys.consent) || {
                 granted: false,
-                categories: {},
+                categories: {
+                    necessary: true,      // Always true - needed for basic functionality
+                    functional: false,    // Widget functionality (contact buttons)
+                    analytics: false,     // Tracking and analytics
+                    marketing: false      // Marketing cookies and ads
+                },
                 timestamp: null,
                 version: '1.0'
             };
@@ -310,8 +318,15 @@
 
         isAllowed(category) {
             if (!WIBI_CONFIG.consentRequired) return true;
+            
+            // Always allow necessary and functional features
+            if (category === 'necessary' || category === 'functional') {
+                return true;
+            }
+            
+            // Require explicit consent for analytics and marketing
             return this.hasValidConsent() && 
-                   (this.consentData.categories[category] !== false);
+                   (this.consentData.categories[category] === true);
         }
 
         onConsentChange(callback) {
@@ -333,21 +348,26 @@
             banner.id = 'wibi-consent-banner';
             banner.innerHTML = `
                 <div style="position: fixed; bottom: 0; left: 0; right: 0; background: #2c3e50; color: white; padding: 20px; z-index: 10000; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; box-shadow: 0 -2px 10px rgba(0,0,0,0.1);">
-                    <div style="max-width: 1200px; margin: 0 auto; display: flex; align-items: center; gap: 20px; flex-wrap: wrap;">
-                        <div style="flex: 1; min-width: 300px;">
-                            <h4 style="margin: 0 0 8px 0; font-size: 16px;">🍪 Cookie Consent</h4>
-                            <p style="margin: 0; font-size: 14px; line-height: 1.4; opacity: 0.9;">
-                                We use cookies and tracking to improve your experience, analyze site usage, and assist with marketing. 
-                                You can manage your preferences at any time.
-                            </p>
-                        </div>
-                        <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
-                            <button id="wibi-consent-settings" style="background: transparent; border: 1px solid rgba(255,255,255,0.3); color: white; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 14px;">
-                                Settings
-                            </button>
-                            <button id="wibi-consent-accept" style="background: #27ae60; border: none; color: white; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: 500; font-size: 14px;">
-                                Accept All
-                            </button>
+                    <div style="max-width: 1200px; margin: 0 auto;">
+                        <div style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap;">
+                            <div style="flex: 1; min-width: 300px;">
+                                <h4 style="margin: 0 0 8px 0; font-size: 16px;">🍪 Privacy Settings</h4>
+                                <p style="margin: 0; font-size: 14px; line-height: 1.4; opacity: 0.9;">
+                                    We use cookies to provide contact functionality and improve your experience. 
+                                    <strong>Contact buttons will work regardless of your choice.</strong>
+                                </p>
+                            </div>
+                            <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                                <button id="wibi-consent-essential" style="background: transparent; border: 1px solid rgba(255,255,255,0.3); color: white; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 14px;">
+                                    Essential Only
+                                </button>
+                                <button id="wibi-consent-settings" style="background: transparent; border: 1px solid rgba(255,255,255,0.3); color: white; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 14px;">
+                                    Settings
+                                </button>
+                                <button id="wibi-consent-accept" style="background: #27ae60; border: none; color: white; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: 500; font-size: 14px;">
+                                    Accept All
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -355,28 +375,44 @@
 
             document.body.appendChild(banner);
 
+            // Accept All - Full functionality + tracking
             document.getElementById('wibi-consent-accept').onclick = () => {
                 document.body.removeChild(banner);
                 callback({
                     granted: true,
                     categories: {
                         necessary: true,
+                        functional: true,
                         analytics: true,
-                        marketing: true,
-                        preferences: true
+                        marketing: true
                     }
                 });
             };
 
+            // Essential Only - Widget works, no tracking
+            document.getElementById('wibi-consent-essential').onclick = () => {
+                document.body.removeChild(banner);
+                callback({
+                    granted: true,
+                    categories: {
+                        necessary: true,
+                        functional: true,    // ✅ Still allow contact functionality
+                        analytics: false,    // ❌ No tracking
+                        marketing: false     // ❌ No marketing
+                    }
+                });
+            };
+
+            // Settings - Show limited options for now (simplified)
             document.getElementById('wibi-consent-settings').onclick = () => {
                 document.body.removeChild(banner);
                 callback({
                     granted: true,
                     categories: {
                         necessary: true,
-                        analytics: true,
-                        marketing: false,
-                        preferences: true
+                        functional: true,
+                        analytics: true,     // Allow analytics but not marketing
+                        marketing: false
                     }
                 });
             };
@@ -1351,17 +1387,23 @@
             try {
                 this.logger.info('Initializing Wibi Widget', { websiteId: this.websiteId });
 
+                // Initialize core components first
+                await this.visitor.initialize();
+                this.session.initialize();
+
+                // Handle consent (but don't block widget rendering)
                 if (WIBI_CONFIG.consentRequired) {
                     await this.consent.requestConsent();
                     
-                    if (!this.consent.isAllowed('analytics')) {
-                        this.logger.info('Analytics consent not granted');
-                        return;
-                    }
+                    // ✅ ALWAYS continue with widget rendering
+                    this.logger.info('Consent status', { 
+                        analytics: this.consent.isAllowed('analytics'),
+                        marketing: this.consent.isAllowed('marketing'),
+                        functional: this.consent.isAllowed('functional')
+                    });
                 }
 
-                await this.visitor.initialize();
-                this.session.initialize();
+                // Fetch widget configuration and render
                 await this.fetchWidgetConfig();
                 await this.gtm.injectGTM(this.websiteId);
 
@@ -1369,17 +1411,25 @@
                 this.setupEventTracking();
                 this.setupFormTracking();
 
-                await this.trackPageView();
-                await this.trackSourceAttribution();
+                // Only track if analytics consent is given
+                if (this.consent.isAllowed('analytics')) {
+                    await this.trackPageView();
+                    await this.trackSourceAttribution();
+                } else {
+                    this.logger.info('Analytics tracking disabled - user did not consent');
+                }
 
                 this.isInitialized = true;
                 this.logger.info('Wibi Widget initialized successfully');
 
-                this.gtm.pushEvent('wibi_widget_initialized', {
-                    website_id: this.websiteId,
-                    visitor_utk: this.visitor.getUTK(),
-                    session_id: this.session.getSession().id
-                });
+                // Send init event only if analytics consent given
+                if (this.consent.isAllowed('analytics')) {
+                    this.gtm.pushEvent('wibi_widget_initialized', {
+                        website_id: this.websiteId,
+                        visitor_utk: this.visitor.getUTK(),
+                        session_id: this.session.getSession().id
+                    });
+                }
 
             } catch (error) {
                 this.logger.error('Widget initialization failed', error);
@@ -1980,7 +2030,10 @@
         }
 
         async trackPageView() {
-            if (!this.consent.isAllowed('analytics')) return;
+            if (!this.consent.isAllowed('analytics')) {
+                this.logger.debug('Page view tracking skipped - no analytics consent');
+                return;
+            }
 
             const visitorData = this.visitor.getVisitorData();
             const sessionData = this.session.getSession();
@@ -2017,7 +2070,10 @@
         }
 
         async trackSourceAttribution() {
-            if (!this.consent.isAllowed('analytics')) return;
+            if (!this.consent.isAllowed('analytics')) {
+                this.logger.debug('Source attribution tracking skipped - no analytics consent');
+                return;
+            }
 
             const visitorData = this.visitor.getVisitorData();
             const sourceData = visitorData.source;
@@ -2043,7 +2099,12 @@
         }
 
         async trackInteraction(actionType, actionData = {}) {
-            if (!this.consent.isAllowed('analytics')) return;
+            // Contact buttons always work, but detailed tracking requires consent
+            if (!this.consent.isAllowed('analytics')) {
+                this.logger.debug('Interaction tracking skipped - no analytics consent');
+                // Still allow the contact action to proceed
+                return;
+            }
 
             const payload = {
                 websiteId: this.websiteId,
