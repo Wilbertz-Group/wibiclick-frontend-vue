@@ -89,24 +89,28 @@
         }
 
         log(level, message, data = null) {
-            if (this.levels[level] <= this.levels[this.level] || WIBI_CONFIG.debug) {
-                const timestamp = new Date().toISOString();
-                const logData = {
-                    timestamp,
-                    level: level.toUpperCase(),
-                    context: this.context,
-                    message,
-                    data,
-                    url: window.location.href,
-                    userAgent: navigator.userAgent
-                };
-                
+            // Always collect log data for potential backend reporting
+            const timestamp = new Date().toISOString();
+            const logData = {
+                timestamp,
+                level: level.toUpperCase(),
+                context: this.context,
+                message,
+                data,
+                url: window.location.href,
+                userAgent: navigator.userAgent
+            };
+            
+            // Only output to console if:
+            // 1. It's an error (always show errors) OR
+            // 2. Debug mode is enabled
+            if (level === 'error' || WIBI_CONFIG.debug) {
                 console[level](`[Wibi:${this.context}]`, message, data);
-                
-                // Send critical errors to backend for monitoring
-                if (level === 'error' && !WIBI_CONFIG.debug) {
-                    this.sendErrorToBackend(logData);
-                }
+            }
+            
+            // Send critical errors to backend for monitoring
+            if (level === 'error' && !WIBI_CONFIG.debug) {
+                this.sendErrorToBackend(logData);
             }
         }
 
@@ -2227,7 +2231,9 @@
 
             // Check if already initialized
             if (window.WibiWidget) {
-                console.warn('Wibi widget already initialized');
+                if (WIBI_CONFIG.debug) {
+                    console.warn('Wibi widget already initialized');
+                }
                 return window.WibiWidget;
             }
 
