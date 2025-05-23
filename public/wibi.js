@@ -2252,7 +2252,7 @@
                     <div class="wibi-widget-content">
                         ${this.generateContactButtons()}
                         ${this.generateCustomButtons()}
-                        ${config.branding_show ? this.generateBrandingLink() : ''}
+                        
                     </div>
                 </div>
                 
@@ -2485,34 +2485,62 @@
                 }
 
                 .wibi-chat-popup {
-                    position: fixed;
-                    bottom: 80px;
                     ${this.widgetConfig.position || 'right'}: 24px;
-                    background: white;
-                    border-radius: 12px;
-                    box-shadow: 0 10px 40px rgba(0,0,0,0.15);
-                    padding: 16px;
-                    min-width: 280px;
-                    max-width: 320px;
                     z-index: 999998;
                     max-height: 70vh;
                     overflow-y: auto;
+                    box-sizing: border-box;
+                    text-align: center;
+                    position: fixed;
+                    bottom: 67px;
+                    max-width: 300px;
+                    background-color: transparent;
+                    box-shadow: none;
+                    border-radius: 8px;
+                    padding: 16px 24px;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                    align-items: center;
+                    min-width: 250px;
                 }
 
                 .wibi-contact-btn {
-                    display: flex;
-                    align-items: center;
-                    gap: 12px;
-                    padding: 12px 16px;
-                    margin: 6px 0;
-                    border-radius: 8px;
-                    text-decoration: none;
-                    color: white;
-                    transition: all 0.2s ease;
-                    font-size: 14px;
-                    font-weight: 500;
                     width: 94%;
-                    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                    -webkit-box-shadow: 0 5px 10px 2px rgba(88, 103, 221, .19) !important;
+                    box-shadow: 0 5px 10px 2px rgba(88, 103, 221, .3) !important;
+                    font-size: 13px;
+                    line-height: 16px;
+                    fill: #fff;
+                    text-decoration: none;
+                    margin-top: 9px;
+                    color: #fff;
+                    display: flex;
+                    border-radius: 24px;
+                    padding: 12px 16px;
+                    fill: #fff;
+                    text-decoration: none;
+                    justify-content: center;
+                    align-items: center;
+                }
+
+                .wibi-widget-content {
+                    box-sizing: border-box;
+                    text-align: center;
+                    position: fixed;
+                    bottom: 67px;
+                    right: 28px;
+                    max-width: 300px;
+                    background-color: transparent;
+                    box-shadow: none;
+                    border-radius: 8px;
+                    padding: 16px 24px;
+                    z-index: 1000;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                    align-items: center;
+                    min-width: 250px;
                 }
 
                 .wibi-call-btn { background: #28a745; }
@@ -2527,21 +2555,24 @@
                 .wibi-booking-btn { background: #6f42c1; }
 
                 .wibi-contact-btn:hover {
-                    transform: translateY(-1px);
-                    opacity: 0.9;
-                    color: white;
-                    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+                    color: #fff;
+                    opacity: 0.8;
                 }
 
                 .wibi-btn-icon {
-                    width: 20px;
-                    height: 20px;
                     fill: currentColor;
                     flex-shrink: 0;
+                    height: 17px;
+                    width: 17px;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
                 }
 
                 .wibi-btn-text {
-                    flex: 1;
+                    margin-left: 8px;
+                    font-size: 16px;
+                    font-weight: 500;
                 }
 
                 .wibi-custom-btn {
