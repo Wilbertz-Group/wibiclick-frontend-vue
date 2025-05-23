@@ -165,7 +165,23 @@
         v.region || v.location?.region,
         v.country || v.location?.country
       ].filter(Boolean).join(', ') || 'Unknown',
-      deviceInfo: v.deviceType || 'Unknown',
+      deviceInfo: v.device?.type || v.deviceType || 'Unknown',
+      deviceSummary: v.device
+        ? [
+            v.device.type || '',
+            v.device.os ? `(${v.device.os})` : '',
+            v.device.browser ? `- ${v.device.browser}` : ''
+          ].filter(Boolean).join(' ') || 'Unknown'
+        : (v.deviceType || 'Unknown'),
+      performanceSummary: v.performance
+        ? (
+            v.performance.pageLoad
+              ? `Load: ${v.performance.pageLoad}ms`
+              : v.performance.score
+                ? `Score: ${v.performance.score}`
+                : '—'
+          )
+        : '—',
       hasMergeSuggestions: v.possibleContactSuggestions?.length > 0,
       isBot: v.isBot,
       botTag: v.botTag || null
@@ -575,6 +591,8 @@
                      <th scope="col" class="th-modern">Status</th>
                      <th scope="col" class="th-modern">Customer</th>
                      <th scope="col" class="th-modern">Location</th>
+                     <th scope="col" class="th-modern">Device</th>
+                     <th scope="col" class="th-modern">Performance</th>
                      <th scope="col" class="th-modern">Page URL</th>
                      <th scope="col" class="th-modern">Activity</th>
                      <th scope="col" class="th-modern">Last Seen</th>
@@ -616,12 +634,18 @@
                       </div>
                     </td>
                     <td class="td-modern">
-                      <a :href="visitor.page?.url" target="_blank" rel="noopener noreferrer" 
+                      <a :href="visitor.page?.url" target="_blank" rel="noopener noreferrer"
                          class="text-indigo-600 dark:text-indigo-400 hover:underline flex items-center"
                          @click.stop>
                         {{ visitor.page?.url || '-' }}
                         <font-awesome-icon icon="external-link-alt" class="ml-1 text-xs" />
                       </a>
+                    </td>
+                    <td class="td-modern">
+                      {{ visitor.deviceSummary }}
+                    </td>
+                    <td class="td-modern">
+                      {{ visitor.performanceSummary }}
                     </td>
                     <td class="td-modern">
                       <div class="flex items-center space-x-4 text-sm">
@@ -642,7 +666,7 @@
                       </div>
                     </td>
                     <td class="td-modern text-center">
-                      <button 
+                      <button
                         @click="$router.push({ name: 'VisitorView', params: { visitorId: visitor.id } })"
                         class="btn-primary-modern text-xs inline-flex items-center"
                       >
@@ -697,6 +721,14 @@
                 <div class="flex items-center text-sm">
                   <span class="text-gray-500 dark:text-gray-400 w-20">Location:</span>
                   <span class="text-gray-900 dark:text-white">{{ visitor.location }}</span>
+                </div>
+                <div class="flex items-center text-sm">
+                  <span class="text-gray-500 dark:text-gray-400 w-20">Device:</span>
+                  <span class="text-gray-900 dark:text-white">{{ visitor.deviceSummary }}</span>
+                </div>
+                <div class="flex items-center text-sm">
+                  <span class="text-gray-500 dark:text-gray-400 w-20">Performance:</span>
+                  <span class="text-gray-900 dark:text-white">{{ visitor.performanceSummary }}</span>
                 </div>
                 <div class="flex items-center text-sm">
                   <span class="text-gray-500 dark:text-gray-400 w-20">Activity:</span>

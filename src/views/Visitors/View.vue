@@ -397,6 +397,26 @@ async function disassociateCustomer() {
 
             <!-- Geographic Visualization -->
             <GeographicVisualization :website-id="userStore.currentWebsite" />
+
+            <!-- Device & Performance Section -->
+            <section v-if="visitor.device || visitor.performance" class="card-modern p-6">
+              <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Device & Performance</h2>
+              <div class="space-y-2 text-gray-700 dark:text-gray-300">
+                <div v-if="visitor.device">
+                  <p><strong>Device Type:</strong> {{ visitor.device.type || 'Unknown' }}</p>
+                  <p v-if="visitor.device.os"><strong>OS:</strong> {{ visitor.device.os }}</p>
+                  <p v-if="visitor.device.browser"><strong>Browser:</strong> {{ visitor.device.browser }}</p>
+                  <p v-if="visitor.device.brand"><strong>Brand:</strong> {{ visitor.device.brand }}</p>
+                  <p v-if="visitor.device.model"><strong>Model:</strong> {{ visitor.device.model }}</p>
+                </div>
+                <div v-if="visitor.performance" class="mt-2">
+                  <p v-if="visitor.performance.pageLoad"><strong>Page Load:</strong> {{ visitor.performance.pageLoad }} ms</p>
+                  <p v-if="visitor.performance.score"><strong>Performance Score:</strong> {{ visitor.performance.score }}</p>
+                  <p v-if="visitor.performance.details"><strong>Details:</strong> {{ visitor.performance.details }}</p>
+                </div>
+                <div v-if="!visitor.device && !visitor.performance" class="text-gray-400">No device or performance data available.</div>
+              </div>
+            </section>
           </div>
 
           <!-- Right Column -->

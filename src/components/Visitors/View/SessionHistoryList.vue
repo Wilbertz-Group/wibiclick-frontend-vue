@@ -54,11 +54,26 @@
               Campaign: {{ session.sessionCampaign }}
             </span>
           </div>
+        <!-- Session Actions -->
+        <div v-if="session.actions && session.actions.length" class="mt-3 pt-3 border-t border-gray-700">
+          <div class="text-xs text-gray-400 mb-1">Actions ({{ session.actions.length }})</div>
+          <ul class="list-disc ml-6 space-y-1">
+            <li v-for="(action, idx) in session.actions.slice(0, 10)" :key="idx" class="text-xs text-gray-300">
+              <span class="font-semibold">{{ action.type || action.actionType || 'Action' }}</span>
+              <span v-if="action.timestamp" class="ml-2 text-gray-400">({{ formatSessionDate(action.timestamp) }})</span>
+              <span v-if="action.details" class="ml-2 text-gray-400">- {{ action.details }}</span>
+            </li>
+            <li v-if="session.actions.length > 10" class="text-xs text-gray-400">...and {{ session.actions.length - 10 }} more</li>
+          </ul>
+        </div>
+        <div v-else class="mt-3 pt-3 border-t border-gray-700 text-xs text-gray-500">
+          No actions recorded for this session.
         </div>
       </div>
     </div>
   </div>
 </template>
+
 
 <script setup lang="ts">
 const props = defineProps<{
