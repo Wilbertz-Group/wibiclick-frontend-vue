@@ -64,7 +64,7 @@
         },
         
         // Privacy & Compliance
-        consentRequired: true, // Set to false to disable consent management entirely
+        consentRequired: false, // Set to false to disable consent management entirely
         cookieExpiry: 365 * 24 * 60 * 60 * 1000, // 1 year
         
         // Widget always shows contact buttons regardless of consent
