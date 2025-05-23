@@ -2123,6 +2123,27 @@
      * Main Wibi widget class with complete functionality
      */
     class WibiWidget {
+        // Static property to cache the public IP
+        static _publicIp = null;
+        static _publicIpPromise = null;
+
+        static async getPublicIp() {
+            if (WibiWidget._publicIp) return WibiWidget._publicIp;
+            if (WibiWidget._publicIpPromise) return WibiWidget._publicIpPromise;
+            // Fetch and cache the public IP
+            WibiWidget._publicIpPromise = fetch('https://api.ipify.org?format=json', { cache: 'reload' })
+                .then(res => res.json())
+                .then(data => {
+                    WibiWidget._publicIp = data.ip;
+                    return data.ip;
+                })
+                .catch(() => {
+                    WibiWidget._publicIp = null;
+                    return null;
+                });
+            return WibiWidget._publicIpPromise;
+        }
+
         constructor(websiteId) {
             this.websiteId = websiteId;
             this.logger = new Logger('WibiWidget');
@@ -2867,6 +2888,14 @@
             const visitorData = this.visitor.getVisitorData();
             const sourceData = visitorData.source;
 
+            // Fetch the public IP (with fallback)
+            let clientIp = null;
+            try {
+                clientIp = await WibiWidget.getPublicIp();
+            } catch (e) {
+                this.logger.warn('Failed to fetch public IP for source attribution', e);
+            }
+
             const payload = {
                 utk: this.visitor.getUTK(),
                 websiteId: this.websiteId,
@@ -2875,6 +2904,9 @@
                 timestamp: Date.now(),
                 botDetection: visitorData.bot
             };
+            if (clientIp) {
+                payload.clientIp = clientIp;
+            }
 
             this.queue.add({
                 url: `${WIBI_CONFIG.apiBaseUrl}${WIBI_CONFIG.endpoints.sourceAttribution}`,
