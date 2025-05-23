@@ -102,7 +102,7 @@ const prefillForm = (customer) => {
   if (props.jobData) {
     Object.assign(jobForm, {
       id: props.jobData.id,
-      customerId: props.jobData.customerId,
+      customerId: props.jobData.customer.id,
       // Remove name from here to ensure we always use customer name
       jobStatus: props.jobData.jobStatus || 'scheduled',
       callout: props.jobData.callout || 'R350',
@@ -111,7 +111,7 @@ const prefillForm = (customer) => {
       phone: props.jobData.phone || '', // Use job phone if available, fallback to customer phone
       slotStart: props.jobData.slotStart ? moment(props.jobData.slotStart).format('YYYY-MM-DDTHH:mm') : '',
       slotTime: props.jobData.slotTime || '1hr',
-      employeeId: props.jobData.employeeId || '',
+      employeeId: props.jobData.employee.id || '',
       to_do: props.jobData.to_do || '',
       issue: props.jobData.issue || '',
       notify: props.jobData.notify || false, // Assuming notify is a boolean
@@ -229,7 +229,7 @@ watch(() => props.modelValue, (newValue) => {
   if (newValue) {
     // When modal opens, always prefill with customer data first.
     // prefillForm will handle checking props.jobData internally for editing.
-    prefillForm(props.customerData);
+    prefillForm(props.jobData || props.customerData);
 
     // Fetch technicians if needed
     if (technicians.value.length === 0) {
