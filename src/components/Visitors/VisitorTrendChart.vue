@@ -1,6 +1,6 @@
 // wibiclick-frontend-vue/src/components/Visitors/VisitorTrendChart.vue
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue';
+import { ref, computed, watch, onMounted, nextTick } from 'vue';
 import moment from 'moment';
 
 const props = defineProps({
@@ -17,6 +17,7 @@ const periodOptions = [
   { label: 'Monthly', value: 'monthly' }
 ];
 const selectedPeriod = ref('monthly');
+const chartReady = ref(false);
 
 function setPeriod(period) {
   selectedPeriod.value = period;
@@ -25,7 +26,9 @@ function setPeriod(period) {
 
 // Group and aggregate data by selected period
 const groupedData = computed(() => {
-  if (!props.rawData) return [];
+  if (!props.rawData || props.rawData.length === 0) {
+    return [];
+  }
   let groupFormat;
   switch (selectedPeriod.value) {
     case 'weekly':
@@ -53,10 +56,21 @@ const groupedData = computed(() => {
 
 // Chart categories and series
 const categories = computed(() => groupedData.value.map(d => d.x));
-const series = computed(() => [{
-  name: 'New Visitors',
-  data: groupedData.value.map(d => d.y)
-}]);
+const series = computed(() => {
+  const data = groupedData.value.map(d => d.y);
+  return [{
+    name: 'New Visitors',
+    data: data
+  }];
+});
+
+// Check if chart has valid data to render
+const hasValidData = computed(() => {
+  return !props.loading &&
+         props.rawData &&
+         props.rawData.length > 0 &&
+         groupedData.value.length > 0;
+});
 
 // Chart options
 const options = computed(() => {
@@ -212,8 +226,21 @@ const options = computed(() => {
 // Watch for dark mode changes to update chart
 watch(() => props.isDarkMode, () => {}, { immediate: true });
 
-onMounted(() => {
-  // No-op, but could be used for further chart setup
+onMounted(async () => {
+  // Ensure DOM is ready before allowing chart to render
+  await nextTick();
+  chartReady.value = true;
+});
+
+// Watch for loading state changes
+watch(() => props.loading, async (newLoading) => {
+  if (!newLoading) {
+    // Wait for DOM to be ready after loading completes
+    await nextTick();
+    chartReady.value = true;
+  } else {
+    chartReady.value = false;
+  }
 });
 </script>
 
@@ -237,15 +264,22 @@ onMounted(() => {
     </div>
     <div class="relative w-full min-h-[200px]">
       <apexchart
-        v-if="!loading"
+        v-if="chartReady && hasValidData"
         type="area"
         height="350"
         width="100%"
         :options="options"
         :series="series"
+        key="visitor-trend-chart"
       />
-      <div v-else class="flex items-center justify-center h-64">
+      <div v-else-if="props.loading" class="flex items-center justify-center h-64">
         <span class="text-gray-400 dark:text-gray-500">Loading chart...</span>
+      </div>
+      <div v-else-if="!hasValidData" class="flex items-center justify-center h-64">
+        <span class="text-gray-400 dark:text-gray-500">No data available for chart</span>
+      </div>
+      <div v-else class="flex items-center justify-center h-64">
+        <span class="text-gray-400 dark:text-gray-500">Preparing chart...</span>
       </div>
     </div>
   </div>
