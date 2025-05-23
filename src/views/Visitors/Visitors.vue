@@ -302,8 +302,12 @@
         <!-- List Header with Actions -->
         <div class="flex items-center justify-between mb-4">
           <div class="flex items-center gap-4">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
               Visitor Intelligence
+              <div v-if="liveVisitorsCount > 0" class="flex items-center gap-1 text-sm">
+                <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span class="text-green-600 dark:text-green-400 font-medium">{{ liveVisitorsCount }} live</span>
+              </div>
             </h3>
             <div class="flex items-center gap-2">
               <button
@@ -335,9 +339,9 @@
             <select 
               v-model="sortBy" 
               class="input-modern input-modern--select text-sm"
-              style="min-width: 150px;"
+              style="min-width: 160px;"
             >
-              <option value="updatedAt">Last Activity</option>
+              <option value="updatedAt">Recent Activity</option>
               <option value="quality">Quality Score</option>
               <option value="createdAt">First Visit</option>
               <option value="totalPageViews">Page Views</option>
@@ -364,7 +368,7 @@
                 <th scope="col" class="th-modern">Geographic</th>
                 <th scope="col" class="th-modern">Technology</th>
                 <th scope="col" class="th-modern">Engagement</th>
-                <th scope="col" class="th-modern">Journey</th>
+                <th scope="col" class="th-modern">Recent Activity</th>
                 <th scope="col" class="th-modern text-center">Actions</th>
               </tr>
             </thead>
@@ -498,8 +502,11 @@
                     <div class="text-xs text-gray-500 dark:text-gray-400">
                       {{ formatDuration(visitor.totalTimeOnSite) }} total
                     </div>
-                    <div class="text-xs text-gray-500 dark:text-gray-400">
-                      Last: {{ formatDateShort(visitor.updatedAt) }}
+                    <div class="flex items-center gap-1">
+                      <div v-if="isRecentVisitor(visitor.updatedAt)" class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                      <div class="text-xs" :class="isRecentVisitor(visitor.updatedAt) ? 'text-green-600 dark:text-green-400 font-medium' : 'text-green-600 dark:text-green-400 font-medium'">
+                        {{ formatLastVisit(visitor.updatedAt) }}
+                      </div>
                     </div>
                   </div>
                 </td>
@@ -581,17 +588,22 @@
                 <div class="font-medium text-gray-900 dark:text-white">{{ visitor.sessions?.length || 0 }}</div>
               </div>
               <div>
-                <span class="text-gray-500 dark:text-gray-400">Engagement:</span>
-                <div class="font-medium text-gray-900 dark:text-white">{{ visitor.engagementScore }}%</div>
+                <span class="text-gray-500 dark:text-gray-400">Last Visit:</span>
+                <div class="flex items-center gap-1">
+                  <div v-if="isRecentVisitor(visitor.updatedAt)" class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
+                  <div class="font-medium" :class="isRecentVisitor(visitor.updatedAt) ? 'text-green-600 dark:text-green-400' : 'text-gray-900 dark:text-white'">
+                    {{ formatLastVisit(visitor.updatedAt) }}
+                  </div>
+                </div>
               </div>
             </div>
 
             <!-- Engagement Progress -->
             <div class="mb-3">
               <div class="flex justify-between items-center mb-1">
-                <span class="text-xs text-gray-500 dark:text-gray-400">Activity Level</span>
+                <span class="text-xs text-gray-500 dark:text-gray-400">Engagement Level</span>
                 <span class="text-xs font-medium text-gray-700 dark:text-gray-300">
-                  {{ visitor.views || 0 }} views • {{ visitor.clicks || 0 }} clicks
+                  {{ visitor.engagementScore }}% • {{ visitor.views || 0 }} views • {{ visitor.clicks || 0 }} clicks
                 </span>
               </div>
               <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
@@ -780,7 +792,7 @@ const paginationPageSize = ref(15);
 const visitors = ref([]);
 const selectedVisitors = ref([]);
 const viewMode = ref('table');
-const sortBy = ref('updatedAt');
+const sortBy = ref('updatedAt'); // Default to most recent activity
 const bulkAction = ref('');
 
 // Filters
@@ -998,8 +1010,8 @@ const botStats = computed(() => {
 
 // Additional computed properties
 const liveVisitorsCount = computed(() => {
-  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
-  return visitors.value.filter(v => new Date(v.updatedAt) >= oneHourAgo).length;
+  const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
+  return visitors.value.filter(v => new Date(v.updatedAt) >= tenMinutesAgo).length;
 });
 
 const averageQualityScore = computed(() => {
@@ -1131,17 +1143,113 @@ function formatDeviceSummary(visitor) {
   return browser ? `${type} • ${browser}` : type;
 }
 
-function formatDateShort(dateStr) {
-  if (!dateStr) return '-';
-  const date = new Date(dateStr);
+function formatDateShort(dateStrr) {
+  if (!dateStrr) return '-';
+  const date = new Date(dateStrr);
+  if (isNaN(date.getTime())) return '-';
+  
   const now = new Date();
   const diffMs = now - date;
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
   
-  if (diffDays === 0) return 'Today';
-  if (diffDays === 1) return 'Yesterday';
-  if (diffDays < 7) return `${diffDays}d ago`;
-  return date.toLocaleDateString();
+  // Check if today
+  if (diffDays === 0) {
+    return date.toLocaleTimeString(undefined, {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    });
+  }
+  
+  // Check if yesterday
+  if (diffDays === 1) {
+    const time = date.toLocaleTimeString(undefined, {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    });
+    return `Yesterday ${time}`;
+  }
+  
+  // Other days - show day, time, and days ago
+  const dayName = date.toLocaleDateString(undefined, { weekday: 'short' });
+  const time = date.toLocaleTimeString(undefined, {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true
+  });
+  
+  if (diffDays < 7) {
+    return `${dayName} ${time} (${diffDays} days ago)`;
+  }
+  
+  // For older dates, show date with time
+  const dateStri = date.toLocaleDateString(undefined, {
+    month: 'short',
+    day: 'numeric'
+  });
+  return `${dateStri} ${time}`;
+}
+
+function formatLastVisit(dateStri) {
+  if (!dateStri) return '-';
+  const date = new Date(dateStri);
+  if (isNaN(date.getTime())) return '-';
+  
+  const now = new Date();
+  const diffMs = now - date;
+  const diffMinutes = Math.floor(diffMs / (1000 * 60));
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  
+  // Less than 1 minute ago
+  if (diffMinutes < 1) {
+    return 'Just now';
+  }
+  
+  // Less than 1 hour ago
+  if (diffMinutes < 60) {
+    return `${diffMinutes}m ago`;
+  }
+  
+  // Check if today
+  if (diffDays === 0) {
+    const time = date.toLocaleTimeString(undefined, {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    });
+    return diffHours < 6 ? `${diffHours}h ago` : `Today ${time}`;
+  }
+  
+  // Check if yesterday
+  if (diffDays === 1) {
+    const time = date.toLocaleTimeString(undefined, {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    });
+    return `Yesterday ${time}`;
+  }
+  
+  // Other days - show day, time, and days ago
+  const dayName = date.toLocaleDateString(undefined, { weekday: 'short' });
+  const time = date.toLocaleTimeString(undefined, {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true
+  });
+  
+  if (diffDays < 7) {
+    return `${dayName} ${time} (${diffDays} days ago)`;
+  }
+  
+  // For older dates
+  const dateStro = date.toLocaleDateString(undefined, {
+    month: 'short',
+    day: 'numeric'
+  });
+  return `${dateStro} ${time}`;
 }
 
 function formatDuration(seconds) {
@@ -1167,6 +1275,14 @@ function getLocalTime(timezone) {
   } catch (error) {
     return '';
   }
+}
+
+function isRecentVisitor(dateStr) {
+  if (!dateStr) return false;
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diffMinutes = Math.floor((now - date) / (1000 * 60));
+  return diffMinutes <= 10; // Last 10 minutes
 }
 
 function toggleDarkMode() {
@@ -1228,31 +1344,38 @@ async function fetchVisitors() {
     console.error('Error fetching visitors:', error);
     
     // Fallback mock data for demo
-    visitors.value = Array.from({ length: 150 }, (_, i) => ({
-      id: `visitor-${i}`,
-      utk: `utk-${i}`,
-      createdAt: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
-      updatedAt: new Date(Date.now() - Math.random() * 24 * 60 * 60 * 1000).toISOString(),
-      country: ['South Africa', 'United States', 'United Kingdom', 'Germany', 'Australia'][Math.floor(Math.random() * 5)],
-      city: ['Cape Town', 'Johannesburg', 'New York', 'London', 'Berlin'][Math.floor(Math.random() * 5)],
-      region: ['Western Cape', 'Gauteng', 'NY', 'England', 'Berlin'][Math.floor(Math.random() * 5)],
-      deviceType: ['desktop', 'mobile', 'tablet'][Math.floor(Math.random() * 3)],
-      browser: ['Chrome', 'Firefox', 'Safari', 'Edge'][Math.floor(Math.random() * 4)],
-      totalPageViews: Math.floor(Math.random() * 20) + 1,
-      totalSessions: Math.floor(Math.random() * 5) + 1,
-      totalTimeOnSite: Math.floor(Math.random() * 1800) + 30,
-      isBot: Math.random() < 0.15,
-      botTag: Math.random() < 0.15 ? ['crawler', 'scraper', 'monitor'][Math.floor(Math.random() * 3)] : null,
-      customer: Math.random() < 0.25 ? { 
-        name: `${['John', 'Sarah', 'Michael', 'Emma', 'David', 'Lisa'][Math.floor(Math.random() * 6)]} ${['Smith', 'Johnson', 'Williams', 'Brown', 'Jones'][Math.floor(Math.random() * 5)]}`, 
-        id: `customer-${i}`,
-        email: `customer${i}@example.com`
-      } : null,
-      clicks: Math.floor(Math.random() * 10),
-      views: Math.floor(Math.random() * 15) + 1,
-      timezone: 'Africa/Johannesburg',
-      performance: { loadTime: Math.floor(Math.random() * 5000) + 500 }
-    }));
+    visitors.value = Array.from({ length: 150 }, (_, i) => {
+      // Make some visitors very recent (last 10 minutes) for live indicator
+      const isRecent = i < 3;
+      const recentTime = Date.now() - (Math.random() * 10 * 60 * 1000); // Last 10 minutes
+      const normalTime = Date.now() - (Math.random() * 30 * 24 * 60 * 60 * 1000); // Last 30 days
+      
+      return {
+        id: `visitor-${i}`,
+        utk: `utk-${i}`,
+        createdAt: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
+        updatedAt: new Date(isRecent ? recentTime : normalTime).toISOString(),
+        country: ['South Africa', 'United States', 'United Kingdom', 'Germany', 'Australia'][Math.floor(Math.random() * 5)],
+        city: ['Cape Town', 'Johannesburg', 'New York', 'London', 'Berlin'][Math.floor(Math.random() * 5)],
+        region: ['Western Cape', 'Gauteng', 'NY', 'England', 'Berlin'][Math.floor(Math.random() * 5)],
+        deviceType: ['desktop', 'mobile', 'tablet'][Math.floor(Math.random() * 3)],
+        browser: ['Chrome', 'Firefox', 'Safari', 'Edge'][Math.floor(Math.random() * 4)],
+        totalPageViews: Math.floor(Math.random() * 20) + 1,
+        totalSessions: Math.floor(Math.random() * 5) + 1,
+        totalTimeOnSite: Math.floor(Math.random() * 1800) + 30,
+        isBot: Math.random() < 0.15,
+        botTag: Math.random() < 0.15 ? ['crawler', 'scraper', 'monitor'][Math.floor(Math.random() * 3)] : null,
+        customer: Math.random() < 0.25 ? { 
+          name: `${['John', 'Sarah', 'Michael', 'Emma', 'David', 'Lisa'][Math.floor(Math.random() * 6)]} ${['Smith', 'Johnson', 'Williams', 'Brown', 'Jones'][Math.floor(Math.random() * 5)]}`, 
+          id: `customer-${i}`,
+          email: `customer${i}@example.com`
+        } : null,
+        clicks: Math.floor(Math.random() * 10),
+        views: Math.floor(Math.random() * 15) + 1,
+        timezone: 'Africa/Johannesburg',
+        performance: { loadTime: Math.floor(Math.random() * 5000) + 500 }
+      };
+    });
   } finally {
     loading.value = false;
   }
