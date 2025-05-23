@@ -10,7 +10,8 @@ import EnhancedVisitorAttribution from "@/components/Visitors/View/EnhancedVisit
 import AttributionFlowChart from "@/components/Visitors/View/AttributionFlowChart.vue";
 import VisitorJourneyTimeline from "@/components/Visitors/View/VisitorJourneyTimeline.vue";
 import SessionHistoryList from "@/components/Visitors/View/SessionHistoryList.vue";
-import GeographicVisualization from "@/components/Visitors/View/GeographicVisualization.vue";
+import VisitorOverview from "@/components/Visitors/View/VisitorOverview.vue";
+import VisitorSummaryCards from "@/components/Visitors/View/VisitorSummaryCards.vue";
 
 const route = useRoute();
 const router = useRouter();
@@ -306,6 +307,28 @@ async function disassociateCustomer() {
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
           <!-- Left Column -->
           <div class="lg:col-span-4 space-y-6">
+            <!-- Visitor Overview -->
+            <VisitorOverview
+              v-if="visitor"
+              :first-visit="visitor.firstVisitDate || (visitor.sessions && visitor.sessions.length ? visitor.sessions[visitor.sessions.length - 1]?.startTime : null)"
+              :last-visit="visitor.lastVisitDate || (visitor.sessions && visitor.sessions.length ? visitor.sessions[0]?.endTime : null)"
+              :total-sessions="visitor.sessions ? visitor.sessions.length : 0"
+              :avg-session-duration="visitor.sessions && visitor.sessions.length ? visitor.sessions.reduce((acc, s) => acc + (s.duration || 0), 0) / visitor.sessions.length : null"
+              :pages-per-session="visitor.sessions && visitor.sessions.length ? (visitor.sessions.reduce((acc, s) => acc + (s.pagesViewed || 0), 0) / visitor.sessions.length) : null"
+              :city="visitor.city"
+              :country="visitor.country"
+              :region="visitor.region"
+              :country-code="visitor.countryCode"
+              :postal-code="visitor.postalCode"
+              :latitude="visitor.latitude"
+              :longitude="visitor.longitude"
+              :timezone="visitor.timezone"
+              :language="visitor.language"
+              :total-page-views="visitor.totalPageViews"
+              :total-time-on-site="visitor.totalTimeOnSite"
+              :is-bot="visitor.isBot"
+              :bot-tag="visitor.botTag"
+            />
             <!-- Customer Association Section -->
             <section class="card-modern p-6">
               <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
@@ -395,28 +418,14 @@ async function disassociateCustomer() {
               </div>
             </section>
 
-            <!-- Geographic Visualization -->
-            <GeographicVisualization :website-id="userStore.currentWebsite" />
+            <!-- Visitor Overview replaces Geographic Visualization -->
 
-            <!-- Device & Performance Section -->
-            <section v-if="visitor.device || visitor.performance" class="card-modern p-6">
-              <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Device & Performance</h2>
-              <div class="space-y-2 text-gray-700 dark:text-gray-300">
-                <div v-if="visitor.device">
-                  <p><strong>Device Type:</strong> {{ visitor.device.type || 'Unknown' }}</p>
-                  <p v-if="visitor.device.os"><strong>OS:</strong> {{ visitor.device.os }}</p>
-                  <p v-if="visitor.device.browser"><strong>Browser:</strong> {{ visitor.device.browser }}</p>
-                  <p v-if="visitor.device.brand"><strong>Brand:</strong> {{ visitor.device.brand }}</p>
-                  <p v-if="visitor.device.model"><strong>Model:</strong> {{ visitor.device.model }}</p>
-                </div>
-                <div v-if="visitor.performance" class="mt-2">
-                  <p v-if="visitor.performance.pageLoad"><strong>Page Load:</strong> {{ visitor.performance.pageLoad }} ms</p>
-                  <p v-if="visitor.performance.score"><strong>Performance Score:</strong> {{ visitor.performance.score }}</p>
-                  <p v-if="visitor.performance.details"><strong>Details:</strong> {{ visitor.performance.details }}</p>
-                </div>
-                <div v-if="!visitor.device && !visitor.performance" class="text-gray-400">No device or performance data available.</div>
-              </div>
-            </section>
+            <!-- Device, Performance & Bot Detection Summary Cards -->
+            <VisitorSummaryCards
+              :device="visitor.device"
+              :performance="visitor.performance"
+              :bot="visitor.bot"
+            />
           </div>
 
           <!-- Right Column -->
