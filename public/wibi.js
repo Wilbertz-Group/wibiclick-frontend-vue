@@ -2252,7 +2252,7 @@
                     <div class="wibi-widget-content">
                         ${this.generateContactButtons()}
                         ${this.generateCustomButtons()}
-                        
+                        ${config.branding_show ? this.generateBrandingLink() : ''}
                     </div>
                 </div>
                 
