@@ -51,4 +51,20 @@ export default {
       throw error;
     }
   }
+,
+  /**
+   * Fetch attack logs for a specific IP (or all if no IP provided)
+   * @param {string} ip - IP address to filter logs (optional)
+   * @returns {Promise<Array>} List of attack logs
+   */
+  async getAttackLogs(ip) {
+    try {
+      const url = ip ? `/api/attack-logs?ip=${encodeURIComponent(ip)}` : '/api/attack-logs';
+      const { data } = await axios.get(url);
+      return data.attackLogs || [];
+    } catch (error) {
+      console.error('Error fetching attack logs:', error);
+      throw error;
+    }
+  }
 };
