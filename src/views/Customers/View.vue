@@ -379,6 +379,12 @@ function reloadTimeline() {
   });
 }
 
+function handleCommPrefsUpdated() {
+  // Reload customer data to reflect the updated preferences
+  reloadTimeline();
+  toast.success("Communication preferences updated successfully");
+}
+
 async function updateCustomer() {
   try {
     // Use the store action to update customer data with the store's editableCustomer
@@ -1071,6 +1077,14 @@ function handleAddRelatedItem(routeName, queryKey) {
   }
 }
 
+function handleAppliancesUpdated() {
+  // Reload customer data to reflect the new appliances
+  reloadTimeline();
+  // Also refresh predictive maintenance alerts since we have new appliances
+  fetchPredictiveMaintenance();
+  toast.success("Appliances updated successfully");
+}
+
 // --- Lifecycle Hooks ---
 onMounted(() => {
   document.documentElement.classList.toggle('dark', isDarkMode.value);
@@ -1161,6 +1175,7 @@ watchEffect(() => {
           <CustomerCommunicationPrefs 
             :customer="customerStore.customer"
             @edit-comm-prefs="openEditCommPrefsModal"
+            @preferences-updated="handleCommPrefsUpdated"
           />
 
           <CustomerAppliances 
@@ -1176,6 +1191,7 @@ watchEffect(() => {
             @schedule-service="handleScheduleServiceFromAlert"
             @dismiss-alert="handleDismissAlert"
             @fetch-predictive-maintenance="fetchPredictiveMaintenance"
+            @appliances-updated="handleAppliancesUpdated"
           />
 
           <CustomerRelatedRecords 

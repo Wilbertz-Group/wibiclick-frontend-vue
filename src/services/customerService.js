@@ -422,4 +422,109 @@ export default {
       throw error;
     }
   },
+
+  /**
+   * Generate AI suggestions for missing communication preferences
+   * @param {string} websiteId - The website ID
+   * @param {string} customerId - The customer ID
+   * @param {Array} missingFields - Array of missing preference field names
+   * @returns {Promise} - The response data
+   */
+  async generateCommPreferencesSuggestions(websiteId, customerId, missingFields) {
+    try {
+      const response = await axios.post(`/customers/${customerId}/suggest-communication-preferences?id=${websiteId}`, {
+        missingFields
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error generating communication preferences suggestions:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Update communication preferences for a customer
+   * @param {string} websiteId - The website ID
+   * @param {string} customerId - The customer ID
+   * @param {Object} preferences - The preferences to update
+   * @returns {Promise} - The response data
+   */
+  async updateCommunicationPreferences(websiteId, customerId, preferences) {
+    try {
+      const response = await axios.put(`/customers/${customerId}/communication-preferences?id=${websiteId}`, preferences);
+      return response.data;
+    } catch (error) {
+      console.error('Error updating communication preferences:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Detect appliances from communications using AI (enhanced version)
+   * @param {string} websiteId - The website ID
+   * @param {string} customerId - The customer ID
+   * @returns {Promise} - The response data
+   */
+  async detectAppliancesFromCommunications(websiteId, customerId) {
+    try {
+      const response = await axios.post(`/customers/${customerId}/detect-appliances-from-communications?id=${websiteId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error detecting appliances from communications:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Create a new appliance for a customer
+   * @param {string} websiteId - The website ID
+   * @param {string} customerId - The customer ID
+   * @param {Object} applianceData - The appliance data
+   * @returns {Promise} - The response data
+   */
+  async createAppliance(websiteId, customerId, applianceData) {
+    try {
+      const response = await axios.post(`/appliances?id=${websiteId}`, {
+        ...applianceData,
+        customerId: customerId
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error creating appliance:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Update an existing appliance
+   * @param {string} websiteId - The website ID
+   * @param {string} applianceId - The appliance ID
+   * @param {Object} applianceData - The appliance data to update
+   * @returns {Promise} - The response data
+   */
+  async updateAppliance(websiteId, applianceId, applianceData) {
+    try {
+      const response = await axios.put(`/appliances/${applianceId}?id=${websiteId}`, applianceData);
+      return response.data;
+    } catch (error) {
+      console.error('Error updating appliance:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Get appliance details with maintenance history
+   * @param {string} websiteId - The website ID
+   * @param {string} applianceId - The appliance ID
+   * @returns {Promise} - The response data
+   */
+  async getApplianceDetails(websiteId, applianceId) {
+    try {
+      const response = await axios.get(`/appliances/${applianceId}?id=${websiteId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching appliance details:', error);
+      throw error;
+    }
+  }
 };
