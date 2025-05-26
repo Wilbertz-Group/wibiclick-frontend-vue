@@ -2,7 +2,7 @@
 <script setup>
 import axios from "axios";
 import { uuid } from 'vue-uuid';
-import { onMounted, ref, computed, watchEffect, nextTick, onUnmounted } from "vue";
+import { onMounted, ref, computed, watchEffect, nextTick } from "vue";
 import { useToast } from 'vue-toast-notification';
 import { useRouter, useRoute } from "vue-router";
 import { useUserStore } from "@/stores/UserStore";
@@ -66,12 +66,9 @@ import {
   faExternalLinkAlt, faPhone, faEnvelope, faMapMarkerAlt, faUser, faUsers, faUserCog, 
   faBuilding, faLink, faInfoCircle, faBriefcase, faFileInvoiceDollar, faReceipt, 
   faMoneyBillWave, faShieldAlt, faListOl, faSync, faStar, faComments, faClock, 
-  faSignal, faLanguage, faExclamationTriangle, faMagic, faCopy, faWifi, faTimes,
-  faChartLine, faBell, faEye, faBookmark, faFlag, faHeart, faThumbsUp, faThumbsDown, 
-  faShare, faPrint, faDownload, faFilter, faCalendar, faMapPin, faMobileAlt, faGlobe,
-  faPlay, faPause, faStop, faCircle, faCheckCircle, faTimesCircle
+  faSignal, faLanguage, faExclamationTriangle, faMagic, faCopy
 } from '@fortawesome/free-solid-svg-icons'
-import { faStar as farStar, faClock as farClock, faBookmark as farBookmark, faHeart as farHeart } from '@fortawesome/free-regular-svg-icons'
+import { faStar as farStar, faClock as farClock } from '@fortawesome/free-regular-svg-icons'
 import { faWhatsapp } from '@fortawesome/free-brands-svg-icons'
 
 // Add all icons to library
@@ -80,11 +77,7 @@ library.add(
   faExternalLinkAlt, faPhone, faEnvelope, faMapMarkerAlt, faUser, faUsers, faUserCog, 
   faBuilding, faLink, faInfoCircle, faBriefcase, faFileInvoiceDollar, faReceipt, 
   faMoneyBillWave, faShieldAlt, faListOl, faWhatsapp, faSync, faStar, farStar, 
-  faComments, faClock, farClock, faSignal, faLanguage, faExclamationTriangle, faMagic, faCopy,
-  faWifi, faTimes, faChartLine, faBell, faEye, faBookmark, farBookmark, faFlag, 
-  faHeart, farHeart, faThumbsUp, faThumbsDown, faShare, faPrint, faDownload, faFilter, 
-  faCalendar, faMapPin, faMobileAlt, faGlobe, faPlay, faPause, faStop, faCircle, 
-  faCheckCircle, faTimesCircle
+  faComments, faClock, farClock, faSignal, faLanguage, faExclamationTriangle, faMagic, faCopy
 )
 
 // --- Setup Stores ---
@@ -94,7 +87,7 @@ const router = useRouter();
 const userStore = useUserStore();
 const customerStore = useCustomerStore();
 
-// --- Enhanced State Management ---
+// --- Component-specific State ---
 const isDarkMode = ref(localStorage.getItem('darkMode') === 'true');
 const isBookingJob = ref(false);
 const isEditingInfo = ref(false);
@@ -123,31 +116,8 @@ const showTaskModal = ref(false);
 const initialTaskDataForModal = ref({});
 const technicians = ref([]);
 const editableCustomer = ref({});
-
-// Enhanced features state
-const isOnline = ref(navigator.onLine);
-const lastRefreshTime = ref(new Date());
-const autoRefreshInterval = ref(null);
-const isAutoRefreshEnabled = ref(false);
-const refreshIntervalMinutes = ref(5);
-const showFullTimeline = ref(false);
-const isBookmarked = ref(false);
-const shareableLink = ref('');
-const selectedDeviceView = ref('all'); // all, mobile, desktop, tablet
-const selectedTimeRange = ref('all'); // all, today, week, month
-const showQuickActions = ref(false);
-const notifications = ref([]);
-const unreadNotifications = ref(0);
-
-// Mobile-specific state
-const isMobile = ref(window.innerWidth <= 768);
-const showMobileMenu = ref(false);
-const currentMobileSection = ref('overview'); // overview, timeline, records, insights
-
-// Real-time features state
-const isLiveMode = ref(false);
-const liveUpdates = ref([]);
-const websocketConnection = ref(null);
+// --- PropertyHistory reload key ---
+const propertyHistoryKey = ref('');
 
 // Form and modal state
 const notes = ref('');
@@ -157,7 +127,7 @@ const nkey = ref(0);
 const noteModalInstance = ref(null);
 const whatsappModalInstance = ref(null);
 const customerContextForModal = ref(null);
-const propertyHistoryKey = ref('');
+
 
 // AI Field Suggestion States
 const isGeneratingAISuggestions = ref(false);
@@ -166,11 +136,7 @@ const showAISuggestions = ref(false);
 const recentSuggestions = ref([]);
 const isFetchingRecentSuggestions = ref(false);
 
-// Performance tracking
-const loadTime = ref(0);
-const componentMountTime = ref(Date.now());
-
-// --- Enhanced Computed Properties ---
+// --- Computed Properties ---
 const isLoading = computed(() => 
   customerStore.isLoading || isBookingJob.value
 );
@@ -205,126 +171,21 @@ const activityTabs = computed(() => [
   { name: 'Receipts', component: null, type: 'receipts' },
 ]);
 
-// Enhanced computed properties
-const customerHealthScore = computed(() => {
-  const customer = customerStore.customer;
-  if (!customer) return null;
-
-  let score = 0;
-  let maxScore = 100;
-
-  // Communication responsiveness (30 points)
-  const recentWhatsapp = customer.whatsapp?.filter(msg => 
-    new Date(msg.createdAt) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
-  ) || [];
-  const responseRatio = recentWhatsapp.length > 0 ? 
-    recentWhatsapp.filter(msg => !msg.fromMe).length / recentWhatsapp.length : 0;
-  score += responseRatio * 30;
-
-  // Payment history (30 points)
-  const totalInvoiced = customer.invoice?.reduce((sum, inv) => sum + (Number(inv.sales) || 0), 0) || 0;
-  const totalPaid = customer.payments?.reduce((sum, pay) => sum + (Number(pay.total) || 0), 0) || 0;
-  const paymentRatio = totalInvoiced > 0 ? Math.min(totalPaid / totalInvoiced, 1) : 1;
-  score += paymentRatio * 30;
-
-  // Job completion rate (25 points)
-  const completedJobs = customer.jobs?.filter(job => 
-    ['completed', 'invoiced', 'paid'].includes(job.jobStatus?.toLowerCase())
-  ).length || 0;
-  const totalJobs = customer.jobs?.length || 0;
-  const completionRatio = totalJobs > 0 ? completedJobs / totalJobs : 1;
-  score += completionRatio * 25;
-
-  // Recency of interaction (15 points)
-  const lastActivity = customer.activities?.[0]?.createdAt;
-  if (lastActivity) {
-    const daysSinceLastActivity = (Date.now() - new Date(lastActivity).getTime()) / (1000 * 60 * 60 * 24);
-    const recencyScore = Math.max(0, (30 - daysSinceLastActivity) / 30) * 15;
-    score += recencyScore;
-  }
-
-  return Math.round(Math.min(score, maxScore));
-});
-
-const riskLevel = computed(() => {
-  const score = customerHealthScore.value;
-  if (score === null) return { level: 'unknown', color: 'gray', description: 'Insufficient data' };
-  if (score >= 80) return { level: 'low', color: 'green', description: 'Healthy relationship' };
-  if (score >= 60) return { level: 'medium', color: 'yellow', description: 'Needs attention' };
-  return { level: 'high', color: 'red', description: 'At risk' };
-});
-
-const opportunityScore = computed(() => {
-  const customer = customerStore.customer;
-  if (!customer) return null;
-
-  let score = 0;
-  
-  // Upselling opportunities
-  const hasAppliances = customer.appliances?.length > 0;
-  const hasMultipleJobs = customer.jobs?.length > 1;
-  const hasHighValue = customer.payments?.some(p => Number(p.total) > 1000);
-  
-  if (hasAppliances) score += 25;
-  if (hasMultipleJobs) score += 30;
-  if (hasHighValue) score += 35;
-  
-  // Referral potential
-  const hasPositiveFeedback = customer.jobs?.some(job => 
-    job.reviews?.some(review => Number(review.rating) >= 4)
-  );
-  if (hasPositiveFeedback) score += 10;
-
-  return Math.min(score, 100);
-});
-
-const filteredActivities = computed(() => {
-  let activities = customerStore.customer?.activities || [];
-  
-  if (selectedTimeRange.value !== 'all') {
-    const now = new Date();
-    let cutoffDate;
-    
-    switch (selectedTimeRange.value) {
-      case 'today':
-        cutoffDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        break;
-      case 'week':
-        cutoffDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-        break;
-      case 'month':
-        cutoffDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-        break;
-      default:
-        cutoffDate = null;
-    }
-    
-    if (cutoffDate) {
-      activities = activities.filter(activity => 
-        new Date(activity.createdAt) >= cutoffDate
-      );
-    }
-  }
-  
-  return showFullTimeline.value ? activities : activities.slice(0, 20);
-});
-
-const connectionStatus = computed(() => {
-  return isOnline.value ? 'online' : 'offline';
-});
-
-// --- Enhanced Data Fetching Functions ---
+// --- Core Data Fetching Function ---
 async function fetchCustomerData() {
-  const startTime = Date.now();
+  // Reset UI-specific state that depends on customer data
   resetUIState();
 
   try {
+    // Use the store action to fetch customer data
     await customerStore.fetchCustomer(userStore.currentWebsite, route.query.customer_id);
     
+    // Process activities with UUID (component-specific)
     if (customerStore.customer?.activities) {
       customerStore.customer.activities.forEach((a) => { a.uid = uuid.v1() });
     }
 
+    // Initialize editable form data
     resetEditableCustomer();
 
     // Initialize Modals
@@ -333,13 +194,11 @@ async function fetchCustomerData() {
     whatsappModalInstance.value = await whatsappModal(whatsapp, userStore.currentWebsite, customerStore.customer.phone);
     noteModalInstance.value = await noteModal(notes, userStore.currentWebsite, customerStore.customer.id, reloadTimeline);
 
-    // Fetch additional data in parallel
-    await Promise.allSettled([
-      fetchAdditionalData(),
-      fetchRecentSuggestions(),
-      checkBookmarkStatus(),
-      generateShareableLink()
-    ]);
+    // Fetch additional data
+    await fetchAdditionalData();
+
+    // Fetch recent suggestions (without generating new ones)
+    await fetchRecentSuggestions();
 
     // Update PropertyHistory key after data is fetched
     if (customerStore.customer?.id) {
@@ -347,43 +206,22 @@ async function fetchCustomerData() {
     } else {
       propertyHistoryKey.value = `${Date.now()}`;
     }
-
-    // Track load time
-    loadTime.value = Date.now() - startTime;
-    lastRefreshTime.value = new Date();
-
-    // Show success notification if manual refresh
-    if (startTime > componentMountTime.value + 5000) {
-      toast.success('Customer data refreshed successfully');
-    }
-
   } catch (error) {
     toast.error("Error fetching customer data. Please try again.");
-    handleError(error);
   } finally {
+    // Ensure tooltips are initialized after DOM updates
     await nextTick();
     tooltips();
   }
 }
 
-// Enhanced error handling
-function handleError(error) {
-  console.error('Customer view error:', error);
-  
-  // Add to notifications
-  addNotification({
-    type: 'error',
-    title: 'Data Load Error',
-    message: error.message || 'Failed to load customer data',
-    timestamp: new Date()
-  });
-}
-
 // --- Customer Information Management ---
 function resetEditableCustomer() {
+  // Use the store's resetEditableCustomer method
   customerStore.resetEditableCustomer();
 }
 
+// Generate AI field suggestions
 async function generateAIFieldSuggestions() {
   if (!customerStore.customer?.id) return;
   
@@ -392,6 +230,7 @@ async function generateAIFieldSuggestions() {
   aiSuggestedFields.value = {};
   
   try {
+    // Create a payload of what fields are missing or empty
     const missingFields = [];
     const fieldsToCheck = ['address', 'phone', 'email', 'channel', 'message'];
     
@@ -401,6 +240,7 @@ async function generateAIFieldSuggestions() {
       }
     });
     
+    // Only proceed if we actually have missing fields
     if (missingFields.length > 0) {
       const response = await customerService.generateMissingFieldSuggestions(
         userStore.currentWebsite,
@@ -423,22 +263,28 @@ async function generateAIFieldSuggestions() {
   }
 }
 
+// fetch recent suggestions
 async function fetchRecentSuggestions() {
   if (!customerStore.customer?.id) return;
   
   isFetchingRecentSuggestions.value = true;
   
   try {
+    // Fetch both generated suggestions and scheduled/sent messages
     const [suggestionsResponse, scheduledResponse] = await Promise.all([
+      // Fetch recent AI suggestions (if you have an endpoint for this)
       customerService.getRecentSuggestions(userStore.currentWebsite, customerStore.customer.id),
+      // Fetch scheduled/sent messages
       customerService.getScheduledMessages(userStore.currentWebsite, customerStore.customer.id, ['SCHEDULED', 'SENT'])
     ]);
     
+    // Combine both types of suggestions into one array and remove duplicates by id or draftMessage
     const allSuggestionsRaw = [
       ...(suggestionsResponse?.suggestions || []),
       ...(scheduledResponse?.followUps || [])
     ];
 
+    // Remove duplicates: prefer unique by 'id', fallback to 'draftMessage' if no id
     const seen = new Set();
     const allSuggestions = allSuggestionsRaw.filter(suggestion => {
       const key = suggestion.id || suggestion.draftMessage;
@@ -447,6 +293,7 @@ async function fetchRecentSuggestions() {
       return true;
     });
     
+    // Update state
     recentSuggestions.value = allSuggestions;
   } catch (error) {
     console.error('Error fetching recent suggestions:', error);
@@ -456,11 +303,14 @@ async function fetchRecentSuggestions() {
   }
 }
 
+// Helper to apply a specific AI suggestion to the form
 function applyAISuggestion(field) {
   if (aiSuggestedFields.value[field]) {
     customerStore.editableCustomer[field] = aiSuggestedFields.value[field];
+    // Remove the applied suggestion
     delete aiSuggestedFields.value[field];
     
+    // If no more suggestions, hide the suggestion panel
     if (Object.keys(aiSuggestedFields.value).length === 0) {
       showAISuggestions.value = false;
     }
@@ -469,6 +319,7 @@ function applyAISuggestion(field) {
   }
 }
 
+// Apply all AI suggestions at once
 function applyAllAISuggestions() {
   for (const field in aiSuggestedFields.value) {
     customerStore.editableCustomer[field] = aiSuggestedFields.value[field];
@@ -478,266 +329,9 @@ function applyAllAISuggestions() {
   toast.success("Applied all AI suggestions");
 }
 
-// --- Enhanced Features ---
-
-// Auto-refresh functionality
-function toggleAutoRefresh() {
-  isAutoRefreshEnabled.value = !isAutoRefreshEnabled.value;
-  
-  if (isAutoRefreshEnabled.value) {
-    startAutoRefresh();
-    toast.success(`Auto-refresh enabled (${refreshIntervalMinutes.value} min intervals)`);
-  } else {
-    stopAutoRefresh();
-    toast.info('Auto-refresh disabled');
-  }
-}
-
-function startAutoRefresh() {
-  if (autoRefreshInterval.value) {
-    clearInterval(autoRefreshInterval.value);
-  }
-  
-  autoRefreshInterval.value = setInterval(() => {
-    if (document.visibilityState === 'visible') {
-      reloadTimeline();
-    }
-  }, refreshIntervalMinutes.value * 60 * 1000);
-}
-
-function stopAutoRefresh() {
-  if (autoRefreshInterval.value) {
-    clearInterval(autoRefreshInterval.value);
-    autoRefreshInterval.value = null;
-  }
-}
-
-// Bookmark functionality
-async function toggleBookmark() {
-  isBookmarked.value = !isBookmarked.value;
-  
-  try {
-    const bookmarks = JSON.parse(localStorage.getItem('customer_bookmarks') || '[]');
-    const customerId = customerStore.customer?.id;
-    
-    if (isBookmarked.value) {
-      if (!bookmarks.includes(customerId)) {
-        bookmarks.push(customerId);
-        toast.success('Customer bookmarked');
-      }
-    } else {
-      const index = bookmarks.indexOf(customerId);
-      if (index > -1) {
-        bookmarks.splice(index, 1);
-        toast.info('Bookmark removed');
-      }
-    }
-    
-    localStorage.setItem('customer_bookmarks', JSON.stringify(bookmarks));
-  } catch (error) {
-    console.error('Error managing bookmark:', error);
-  }
-}
-
-function checkBookmarkStatus() {
-  try {
-    const bookmarks = JSON.parse(localStorage.getItem('customer_bookmarks') || '[]');
-    isBookmarked.value = bookmarks.includes(customerStore.customer?.id);
-  } catch (error) {
-    console.error('Error checking bookmark status:', error);
-  }
-}
-
-// Share functionality
-function generateShareableLink() {
-  const baseUrl = window.location.origin;
-  const currentPath = window.location.pathname;
-  const customerId = route.query.customer_id;
-  shareableLink.value = `${baseUrl}${currentPath}?customer_id=${customerId}`;
-}
-
-async function shareCustomer() {
-  if (navigator.share) {
-    try {
-      await navigator.share({
-        title: `Customer: ${customerStore.customer?.name}`,
-        text: `View customer details for ${customerStore.customer?.name}`,
-        url: shareableLink.value
-      });
-    } catch (error) {
-      if (error.name !== 'AbortError') {
-        copyShareLink();
-      }
-    }
-  } else {
-    copyShareLink();
-  }
-}
-
-function copyShareLink() {
-  navigator.clipboard.writeText(shareableLink.value);
-  toast.success('Share link copied to clipboard');
-}
-
-// Print functionality
-function printCustomerDetails() {
-  const printContent = generatePrintContent();
-  const printWindow = window.open('', '_blank');
-  printWindow.document.write(printContent);
-  printWindow.document.close();
-  printWindow.print();
-}
-
-function generatePrintContent() {
-  const customer = customerStore.customer;
-  return `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <title>Customer Details - ${customer?.name}</title>
-      <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        .header { border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 20px; }
-        .section { margin-bottom: 20px; }
-        .section h3 { color: #333; border-bottom: 1px solid #ccc; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background-color: #f2f2f2; }
-      </style>
-    </head>
-    <body>
-      <div class="header">
-        <h1>Customer Details</h1>
-        <h2>${customer?.name || 'N/A'}</h2>
-        <p>Generated on: ${new Date().toLocaleString()}</p>
-      </div>
-      
-      <div class="section">
-        <h3>Contact Information</h3>
-        <table>
-          <tr><th>Phone</th><td>${customer?.phone || 'N/A'}</td></tr>
-          <tr><th>Email</th><td>${customer?.email || 'N/A'}</td></tr>
-          <tr><th>Address</th><td>${customer?.address || 'N/A'}</td></tr>
-        </table>
-      </div>
-      
-      <div class="section">
-        <h3>Financial Summary</h3>
-        <table>
-          <tr><th>Total Revenue</th><td>${formatCurrency(customerStore.customerFinancials?.totalRevenue)}</td></tr>
-          <tr><th>Total Costs</th><td>${formatCurrency(customerStore.customerFinancials?.totalCosts)}</td></tr>
-          <tr><th>Net Profit</th><td>${formatCurrency(customerStore.customerFinancials?.netProfit)}</td></tr>
-        </table>
-      </div>
-    </body>
-    </html>
-  `;
-}
-
-// Notification system
-function addNotification(notification) {
-  notifications.value.unshift({
-    id: Date.now(),
-    ...notification
-  });
-  
-  if (notification.type === 'error' || notification.type === 'warning') {
-    unreadNotifications.value++;
-  }
-  
-  // Auto-remove after 5 seconds for non-error notifications
-  if (notification.type !== 'error') {
-    setTimeout(() => {
-      removeNotification(notification.id);
-    }, 5000);
-  }
-}
-
-function removeNotification(id) {
-  const index = notifications.value.findIndex(n => n.id === id);
-  if (index > -1) {
-    notifications.value.splice(index, 1);
-  }
-}
-
-function clearAllNotifications() {
-  notifications.value = [];
-  unreadNotifications.value = 0;
-}
-
-// Mobile-specific functions
-function toggleMobileMenu() {
-  showMobileMenu.value = !showMobileMenu.value;
-}
-
-function switchMobileSection(section) {
-  currentMobileSection.value = section;
-  showMobileMenu.value = false;
-}
-
-// Device filtering for visitor activity
-function setDeviceFilter(device) {
-  selectedDeviceView.value = device;
-}
-
-// Time range filtering
-function setTimeRangeFilter(range) {
-  selectedTimeRange.value = range;
-}
-
-// Live mode toggle
-function toggleLiveMode() {
-  isLiveMode.value = !isLiveMode.value;
-  
-  if (isLiveMode.value) {
-    // In a real implementation, you'd establish a WebSocket connection here
-    toast.success('Live mode enabled');
-  } else {
-    toast.info('Live mode disabled');
-  }
-}
-
-// Pull to refresh (mobile)
-let pullToRefreshStartY = 0;
-let pullToRefreshCurrentY = 0;
-let isPulling = false;
-
-function handleTouchStart(e) {
-  if (!isMobile.value || window.scrollY > 0) return;
-  pullToRefreshStartY = e.touches[0].clientY;
-  isPulling = true;
-}
-
-function handleTouchMove(e) {
-  if (!isPulling) return;
-  pullToRefreshCurrentY = e.touches[0].clientY;
-  
-  const pullDistance = pullToRefreshCurrentY - pullToRefreshStartY;
-  if (pullDistance > 100) {
-    e.preventDefault();
-    // Show pull to refresh indicator
-  }
-}
-
-function handleTouchEnd() {
-  if (!isPulling) return;
-  
-  const pullDistance = pullToRefreshCurrentY - pullToRefreshStartY;
-  if (pullDistance > 100) {
-    reloadTimeline();
-    toast.info('Refreshing...');
-  }
-  
-  isPulling = false;
-}
-
-// Window resize handler
-function handleResize() {
-  isMobile.value = window.innerWidth <= 768;
-}
-
 // Helper to reset UI state on data reload
 function resetUIState() {
+  // Reset any component UI state that should be cleared when customer data changes
   isEditingInfo.value = false;
   selectedEstimate.value = null;
   selectedInvoice.value = null;
@@ -750,29 +344,41 @@ function resetUIState() {
 
 // Fetch additional customer-related data
 async function fetchAdditionalData() {
-  const promises = [
-    customerStore.fetchCustomerFinancials(userStore.currentWebsite, route.query.customer_id),
-    fetchVisitorActivity(),
-    fetchPredictiveMaintenance(),
-    fetchServiceFollowUps(),
-    fetchLoggedFollowUps(),
-    fetchScheduledMessages(),
-    fetchHolidayGreetings()
-  ];
+  // Fetch financials
+  customerStore.fetchCustomerFinancials(userStore.currentWebsite, route.query.customer_id);
   
-  await Promise.allSettled(promises);
+  // Fetch visitor activity
+  fetchVisitorActivity();
+  
+  // Fetch predictive maintenance alerts
+  fetchPredictiveMaintenance();
+  
+  // Fetch service follow-ups
+  fetchServiceFollowUps();
+  
+  // Fetch logged follow-ups
+  fetchLoggedFollowUps();
+  
+  // Fetch scheduled messages
+  fetchScheduledMessages();
+  
+  // Fetch holiday greetings
+  fetchHolidayGreetings();
 }
 
 // Central reload function that refreshes all data
 function reloadTimeline() {
   fetchCustomerData().then(() => {
+    // Increment keys for accordion components to force re-render
     wkey.value += 1;
     nkey.value += 1;
+    // PropertyHistory key is updated in fetchCustomerData
   });
 }
 
 async function updateCustomer() {
   try {
+    // Use the store action to update customer data with the store's editableCustomer
     await customerStore.updateCustomer(userStore.currentWebsite, {
       id: customerStore.customer.id,
       name: customerStore.editableCustomer.name,
@@ -820,27 +426,39 @@ function handleOpenWhatsappModal() {
 }
 
 // --- AI Data Generation Functions ---
+// Timeline Summary
 async function fetchTimelineSummary() {
   try {
-    await customerStore.fetchTimelineSummary(userStore.currentWebsite, route.query.customer_id);
+    await customerStore.fetchTimelineSummary(
+      userStore.currentWebsite, 
+      route.query.customer_id
+    );
     toast.success("Timeline summary generated. Refreshing data...");
   } catch (error) {
     toast.error(`Error generating timeline summary: ${error.message}`);
   }
 }
 
+// Profitability Analysis
 async function fetchProfitabilityAnalysis() {
   try {
-    await customerStore.fetchProfitabilityAnalysis(userStore.currentWebsite, route.query.customer_id);
+    await customerStore.fetchProfitabilityAnalysis(
+      userStore.currentWebsite, 
+      route.query.customer_id
+    );
     toast.success("Profitability analysis generated. Refreshing data...");
   } catch (error) {
     toast.error(`Error loading profitability analysis: ${error.message}`);
   }
 }
 
+// Sentiment Analysis
 async function fetchSentimentAnalysis() {
   try {
-    await customerStore.fetchSentimentAnalysis(userStore.currentWebsite, route.query.customer_id);
+    await customerStore.fetchSentimentAnalysis(
+      userStore.currentWebsite, 
+      route.query.customer_id
+    );
     toast.success("Sentiment analysis generated. Refreshing data...");
   } catch (error) {
     toast.error(`Could not load sentiment analysis: ${error.message}`);
@@ -850,19 +468,24 @@ async function fetchSentimentAnalysis() {
 // --- Visitor Activity ---
 async function fetchVisitorActivity() {
   try {
-    await customerStore.fetchVisitorActivity(userStore.currentWebsite, route.query.customer_id);
+    await customerStore.fetchVisitorActivity(
+      userStore.currentWebsite, 
+      route.query.customer_id
+    );
   } catch (error) {
     toast.error(`Error loading visitor activity: ${error.message}`);
   }
 }
 
-// Continue with the rest of the functions...
-// [The rest of the functions remain largely the same as in your original code]
-// I'll include the most important ones here for brevity
-
 // --- Modal and Operation Handlers ---
+// Job Modal Handlers
 function openAddJobModal() {
   selectedJob.value = null;
+  showAddJobModal.value = true;
+}
+
+function handleViewJob(job) {
+  selectedJob.value = job;
   showAddJobModal.value = true;
 }
 
@@ -870,7 +493,465 @@ function handleJobSaved() {
   reloadTimeline();
 }
 
-// [Include other modal handlers...]
+// Estimate Modal Handlers
+function openAddEstimateModal(estimate = null) {
+  selectedEstimate.value = estimate;
+  showAddEstimateModal.value = true;
+}
+
+function handleEstimateSaved() {
+  reloadTimeline();
+}
+
+// Invoice Modal Handlers
+function openAddInvoiceModal(invoice = null) {
+  selectedInvoice.value = invoice;
+  showAddInvoiceModal.value = true;
+}
+
+function handleInvoiceSaved() {
+  reloadTimeline();
+}
+
+function handleViewInvoice(invoice) {
+  openAddInvoiceModal(invoice);
+}
+
+function handleInvoiceCreated(newInvoice) {
+  reloadTimeline();
+  toast.info("Invoice list updated.");
+}
+
+// Payment Modal Handlers
+function openAddPaymentModal(payment = null) {
+  selectedPayment.value = payment;
+  showAddPaymentModal.value = true;
+}
+
+function handlePaymentSaved() {
+  reloadTimeline();
+}
+
+// Expense Modal Handlers
+function openAddExpenseModal(expense = null) {
+  selectedExpense.value = expense;
+  showAddExpenseModal.value = true;
+}
+
+function handleExpenseSaved() {
+  reloadTimeline();
+}
+
+function handleViewExpense(expense) {
+  openAddExpenseModal(expense);
+}
+
+// Insurance Modal Handlers
+function openAddInsuranceModal(insurance = null) {
+  selectedInsurance.value = insurance;
+  showAddInsuranceModal.value = true;
+}
+
+function handleInsuranceSaved() {
+  reloadTimeline();
+}
+
+// Appliance Modal Handlers
+function openAddApplianceModal() {
+  selectedAppliance.value = null;
+  showAddApplianceModal.value = true;
+}
+
+function openEditApplianceModal(applianceToEdit) {
+  if (applianceToEdit) {
+    selectedAppliance.value = { ...applianceToEdit };
+    showAddApplianceModal.value = true;
+  } else {
+    toast.error("Could not find appliance to edit.");
+  }
+}
+
+async function handleDeleteAppliance(applianceId) {
+  if (!confirm('Are you sure you want to delete this appliance? This action cannot be undone.')) {
+    return;
+  }
+  
+  try {
+    // Use customer service through the store (would need to be added)
+    await customerStore.deleteAppliance(
+      userStore.currentWebsite, 
+      applianceId
+    );
+    toast.success(`Appliance deleted successfully.`);
+    await reloadTimeline();
+  } catch (error) {
+    toast.error(`Error deleting appliance: ${error.response?.data?.message || error.message}`);
+  }
+}
+
+function handleApplianceSaved() {
+  reloadTimeline();
+}
+
+// Communication and Technician Preferences
+function openEditPreferredTechnicianModal() {
+  showPreferredTechnicianModal.value = true;
+}
+
+function handlePreferredTechnicianSaved() {
+  reloadTimeline();
+}
+
+function openEditCommPrefsModal() {
+  showCommPrefsModal.value = true;
+}
+
+function handleCommPrefsSaved() {
+  reloadTimeline();
+}
+
+// --- Follow-up and Suggestion Functions ---
+async function fetchFollowupSuggestions() {
+  try {
+    // This would need to be added to CustomerStore
+    await customerStore.fetchFollowupSuggestions(
+      userStore.currentWebsite, 
+      route.query.customer_id
+    );
+  } catch (error) {
+    toast.error(`Error loading suggestions: ${error.message}`);
+  }
+}
+
+// Maintenance Prediction Functions
+async function fetchPredictiveMaintenance() {
+  // This would need to be added to CustomerStore
+  try {
+    const appliances = customerStore.customer?.appliances;
+    
+    if (!appliances || appliances.length === 0) {
+      return;
+    }
+    
+    await customerStore.fetchPredictiveMaintenance(
+      userStore.currentWebsite, 
+      customerStore.customer.id
+    );
+  } catch (error) {
+    toast.error(`Error loading predictions: ${error.message}`);
+  }
+}
+
+// Handling Appliance Alerts
+function getApplianceName(applianceId) {
+  const appliance = customerStore.customer?.appliances?.find(a => a.id === applianceId);
+  return appliance ? `${appliance.type} (${appliance.brand || 'Unknown Brand'})` : `Appliance ID ${applianceId}`;
+}
+
+// Scheduling Service Function
+function handleScheduleServiceFromAlert(payload) {
+  selectedJob.value = {
+    customerId: customerStore.customer.id,
+    customerName: customerStore.customer.name,
+    customerPhone: customerStore.customer.phone,
+    customerAddress: customerStore.customer.address,
+    applianceType: payload.appliance?.type,
+    applianceBrand: payload.appliance?.brand,
+    applianceSerial: payload.appliance?.serialNumber,
+    description: `Predictive Maintenance Alert for ${payload.appliance?.type || 'Appliance'}:\nNeeds: ${payload.alert?.needs || 'Check Required'}\nRisk: ${payload.alert?.risk || 'Unknown'}\nDetails: ${payload.alert?.details || ''}`,
+    priority: 'Medium',
+    websiteId: userStore.currentWebsite,
+  };
+  showAddJobModal.value = true;
+  toast.info("Job modal opened with pre-filled alert details.");
+}
+
+// Dismissing Alerts
+async function handleDismissAlert(applianceId) {
+  try {
+    // This would need to be added to CustomerStore
+    await customerStore.dismissApplianceAlert(
+      userStore.currentWebsite, 
+      applianceId
+    );
+    toast.success(`Alert for ${getApplianceName(applianceId)} dismissed.`);
+    await fetchPredictiveMaintenance(); // Refresh alerts
+  } catch (error) {
+    toast.error(`Failed to dismiss alert: ${error.message}`);
+  }
+}
+
+// AI Appliance Detection
+async function detectAppliancesAI() {
+  if (!customerStore.customer?.id) return;
+  
+  try {
+    // This would need to be added to CustomerStore
+    await customerStore.detectAppliancesAI(
+      userStore.currentWebsite, 
+      customerStore.customer.id
+    );
+    toast.success("AI detection complete. Refreshing list...");
+    reloadTimeline();
+  } catch (error) {
+    toast.error(`AI detection failed: ${error.message}`);
+  }
+}
+
+// --- Follow-up and Scheduling Functions ---
+async function fetchServiceFollowUps() {
+  try {
+    // This would need to be added to CustomerStore
+    await customerStore.fetchServiceFollowUps(
+      userStore.currentWebsite, 
+      route.query.customer_id
+    );
+  } catch (error) {
+    toast.error("Could not load service follow-up data.");
+  }
+}
+
+async function fetchLoggedFollowUps() {
+  try {
+    // This would need to be added to CustomerStore
+    await customerStore.fetchLoggedFollowUps(
+      userStore.currentWebsite, 
+      route.query.customer_id
+    );
+  } catch (error) {
+    toast.error("Could not load follow-up history.");
+  }
+}
+
+async function fetchScheduledMessages() {
+  try {
+    // This would need to be added to CustomerStore
+    await customerStore.fetchScheduledMessages(
+      userStore.currentWebsite, 
+      route.query.customer_id
+    );
+  } catch (error) {
+    toast.error(`Could not load scheduled messages: ${error.message}`);
+  }
+}
+
+async function fetchHolidayGreetings() {
+  try {
+    // This would need to be added to CustomerStore
+    await customerStore.fetchHolidayGreetings(
+      userStore.currentWebsite, 
+      route.query.customer_id
+    );
+  } catch (error) {
+    toast.error(`Could not load greetings: ${error.message}`);
+  }
+}
+
+// --- Message Handling Functions ---
+// Suggestion Scheduling
+function scheduleSuggestion(suggestion) {
+  suggestionToSchedule.value = suggestion;
+  showScheduleModal.value = true;
+}
+
+async function handleConfirmScheduleSuggestion(selectedDateTime) {
+  if (!suggestionToSchedule.value) {
+    toast.error("An error occurred. Please try again.");
+    return;
+  }
+
+  const suggestion = suggestionToSchedule.value;
+  const payload = {
+    customerId: customerStore.customer.id,
+    jobId: null,
+    status: 'SCHEDULED',
+    type: 'AI_SUGGESTION',
+    messageContent: suggestion.draftMessage,
+    followUpDate: selectedDateTime.toISOString(),
+  };
+
+  try {
+    // This would need to be added to CustomerStore
+    await customerStore.scheduleMessage(
+      userStore.currentWebsite, 
+      payload
+    );
+    toast.success(`Suggestion scheduled for ${selectedDateTime.toLocaleString()}.`);
+
+    fetchFollowupSuggestions();
+    fetchScheduledMessages();
+  } catch (error) {
+    toast.error(`Failed to schedule suggestion: ${error.message}`);
+  } finally {
+    suggestionToSchedule.value = null;
+  }
+}
+
+// Greeting Scheduling
+function scheduleGreeting(greeting) {
+  suggestionToSchedule.value = null;
+  greetingToSchedule.value = greeting;
+  showScheduleModal.value = true;
+}
+
+async function handleConfirmScheduleGreeting(selectedDateTime) {
+  if (!greetingToSchedule.value) {
+    toast.error("An error occurred. Please try again.");
+    return;
+  }
+
+  const greeting = greetingToSchedule.value;
+  const payload = {
+    customerId: customerStore.customer.id,
+    jobId: null,
+    status: 'SCHEDULED',
+    type: 'GREETING',
+    messageContent: greeting.draftMessage,
+    followUpDate: selectedDateTime.toISOString(),
+  };
+
+  try {
+    // This would need to be added to CustomerStore
+    await customerStore.scheduleMessage(
+      userStore.currentWebsite, 
+      payload
+    );
+    toast.success(`Greeting scheduled for ${selectedDateTime.toLocaleString()}.`);
+
+    fetchHolidayGreetings();
+    fetchScheduledMessages();
+  } catch (error) {
+    toast.error(`Failed to schedule greeting: ${error.message}`);
+  } finally {
+    greetingToSchedule.value = null;
+  }
+}
+
+// Cancel Scheduled Message
+async function cancelScheduledMessage(followUpId) {
+  try {
+    // This would need to be added to CustomerStore
+    await customerStore.cancelScheduledMessage(
+      userStore.currentWebsite, 
+      followUpId
+    );
+    toast.success("Scheduled message cancelled.");
+    fetchScheduledMessages();
+  } catch (error) {
+    toast.error(`Failed to cancel message: ${error.message}`);
+  }
+}
+
+// Suggestion Direct Sending
+async function sendSuggestionNow(suggestion) {
+  const channel = customerStore.customer?.preferredContactMethod || 'WHATSAPP';
+
+  const payload = {
+    customerId: customerStore.customer.id,
+    message: suggestion.draftMessage,
+    channel: channel,
+    subject: suggestion.title || 'Following Up',
+    logAsFollowUp: true,
+    websiteId: userStore.currentWebsite,
+  };
+
+  try {
+    // This would need to be added to CustomerStore
+    await customerStore.sendDirectMessage(
+      userStore.currentWebsite, 
+      payload
+    );
+    toast.success(`Suggestion sent via ${channel}.`);
+  } catch (error) {
+    toast.error(`Failed to send suggestion: ${error.message}`);
+  }
+}
+
+// Greeting Direct Sending
+async function sendGreetingNow(greeting) {
+  const channel = customerStore.customer?.preferredContactMethod || 'WHATSAPP';
+
+  const payload = {
+    customerId: customerStore.customer.id,
+    message: greeting.draftMessage,
+    channel: channel,
+    subject: greeting.specificOccasion || 'A Message From Us',
+    logAsFollowUp: true,
+    websiteId: userStore.currentWebsite,
+  };
+
+  try {
+    // This would need to be added to CustomerStore
+    await customerStore.sendDirectMessage(
+      userStore.currentWebsite, 
+      payload
+    );
+    toast.success(`Greeting sent via ${channel}.`);
+  } catch (error) {
+    toast.error(`Failed to send greeting: ${error.message}`);
+  }
+}
+
+// Manual Logging
+function logSuggestionManually(suggestion) {
+  suggestionToLog.value = suggestion;
+  showManualLogModal.value = true;
+}
+
+async function handleConfirmManualLog(feedbackText) {
+  if (!suggestionToLog.value) {
+    toast.error("An error occurred. Please try again.");
+    return;
+  }
+
+  const suggestion = suggestionToLog.value;
+  const payload = {
+    customerId: customerStore.customer.id,
+    jobId: null,
+    status: 'COMPLETED',
+    type: 'MANUAL_LOG',
+    messageContent: suggestion.draftMessage,
+    feedback: feedbackText || `Manual action based on suggestion: ${suggestion.title}`,
+    followUpDate: new Date().toISOString(),
+  };
+
+  try {
+    // This would need to be added to CustomerStore
+    await customerStore.scheduleMessage(
+      userStore.currentWebsite, 
+      payload
+    );
+    toast.success(`Manual interaction logged.`);
+
+    fetchFollowupSuggestions();
+    fetchLoggedFollowUps();
+  } catch (error) {
+    toast.error(`Failed to log interaction: ${error.message}`);
+  } finally {
+    suggestionToLog.value = null;
+  }
+}
+
+// Dismiss Suggestion
+async function dismissSuggestion(index) {
+  const suggestion = customerStore.followupSuggestions[index];
+  if (!suggestion || !suggestion.id) {
+    toast.error("Cannot dismiss suggestion: ID missing.");
+    return;
+  }
+
+  try {
+    // This would need to be added to CustomerStore
+    await customerStore.dismissSuggestion(
+      userStore.currentWebsite, 
+      suggestion.id
+    );
+    toast.success(`Suggestion dismissed.`);
+    fetchFollowupSuggestions();
+  } catch (error) {
+    toast.error(`Failed to dismiss suggestion: ${error.message}`);
+  }
+}
 
 // --- AI Job Booking ---
 async function aiBookJob(customerId) {
@@ -886,61 +967,112 @@ async function aiBookJob(customerId) {
   }
 }
 
-// --- Network status handling ---
-function handleOnline() {
-  isOnline.value = true;
-  toast.success('Connection restored');
-  
-  // Automatically refresh data when coming back online
-  if (lastRefreshTime.value < new Date(Date.now() - 5 * 60 * 1000)) {
-    reloadTimeline();
+async function fetchCustomerFinancials() {
+  try {
+    await customerStore.fetchCustomerFinancials(
+      userStore.currentWebsite, 
+      route.query.customer_id
+    );
+  } catch (error) {
+    toast.error(`Error loading financial data: ${error.message}`);
   }
 }
 
-function handleOffline() {
-  isOnline.value = false;
-  toast.warning('Connection lost - some features may be limited');
+// --- Task Management ---
+async function handleSaveTask(taskData) {
+  try {
+    await axios.post(`task?id=${userStore.currentWebsite}`, taskData);
+    toast.success(`Task "${taskData.title}" created successfully.`);
+  } catch (error) {
+    toast.error(`Failed to save task: ${error.response?.data?.message || error.message}`);
+  }
 }
 
-// [Continue with other functions...]
+// --- Technician Management ---
+async function fetchTechnicians() {
+  if (technicians.value.length > 0 || !userStore.currentWebsite) return;
+  
+  try {
+    // This would need to be added to CustomerStore
+    const techList = await customerStore.fetchTechnicians(userStore.currentWebsite);
+    technicians.value = techList || [];
+  } catch (error) {
+    // Optional toast
+  }
+}
+
+// --- Related Item Management ---
+function handleAddRelatedItem(routeName, queryKey) {
+  if (routeName === 'add-job') {
+    openAddJobModal();
+    return;
+  }
+
+  if (routeName === 'add-estimate' || routeName === 'add-invoice') {
+    let context = {
+      id: customerStore.customer?.id,
+      name: customerStore.customer?.name,
+      phone: customerStore.customer?.phone,
+      address: customerStore.customer?.address,
+    };
+
+    const jobs = customerStore.customer?.jobs || [];
+    if (jobs.length > 0) {
+      const sortedJobs = [...jobs].sort((a, b) => {
+        const dateA = a.createdAt ? new Date(a.createdAt) : 0;
+        const dateB = b.createdAt ? new Date(b.createdAt) : 0;
+        if (isNaN(dateA) && isNaN(dateB)) return 0;
+        if (isNaN(dateA)) return 1;
+        if (isNaN(dateB)) return -1;
+        return dateB - dateA;
+      });
+      
+      const latestJob = sortedJobs[0];
+      if (latestJob) {
+        context.jobId = latestJob.id;
+        context.employeeId = latestJob.employeeId;
+        context.websiteId = latestJob.websiteId;
+      }
+    }
+
+    customerContextForModal.value = context;
+
+    if (routeName === 'add-estimate') {
+      openAddEstimateModal();
+    } else {
+      openAddInvoiceModal();
+    }
+    return;
+  }
+  
+  if (routeName === 'add-payment') {
+    openAddPaymentModal();
+    return;
+  }
+
+  if (routeName === 'add-expense') {
+    openAddExpenseModal();
+    return;
+  }
+  
+  if (routeName === 'add-insurance-report') {
+    openAddInsuranceModal();
+    return;
+  }
+
+  const query = {};
+  query[queryKey] = customerStore.customer?.id;
+
+  if (routeName) {
+    router.push({ name: routeName, query });
+  }
+}
 
 // --- Lifecycle Hooks ---
 onMounted(() => {
   document.documentElement.classList.toggle('dark', isDarkMode.value);
-  
-  // Set up event listeners
-  window.addEventListener('online', handleOnline);
-  window.addEventListener('offline', handleOffline);
-  window.addEventListener('resize', handleResize);
-  
-  // Mobile touch events for pull-to-refresh
-  if (isMobile.value) {
-    document.addEventListener('touchstart', handleTouchStart, { passive: false });
-    document.addEventListener('touchmove', handleTouchMove, { passive: false });
-    document.addEventListener('touchend', handleTouchEnd);
-  }
-  
   fetchCustomerData();
   fetchTechnicians();
-});
-
-onUnmounted(() => {
-  // Clean up
-  window.removeEventListener('online', handleOnline);
-  window.removeEventListener('offline', handleOffline);
-  window.removeEventListener('resize', handleResize);
-  
-  if (isMobile.value) {
-    document.removeEventListener('touchstart', handleTouchStart);
-    document.removeEventListener('touchmove', handleTouchMove);
-    document.removeEventListener('touchend', handleTouchEnd);
-  }
-  
-  stopAutoRefresh();
-  
-  if (websocketConnection.value) {
-    websocketConnection.value.close();
-  }
 });
 
 // Initialize PropertyHistory key on mount
@@ -954,116 +1086,14 @@ watchEffect(() => {
 watchEffect(() => {
   document.documentElement.classList.toggle('dark', isDarkMode.value);
 });
-
-// [Include other function implementations from your original code...]
-// Due to space constraints, I'm focusing on the enhanced features
-
-async function fetchTechnicians() {
-  try {
-    const techList = await customerStore.fetchTechnicians(userStore.currentWebsite);
-    technicians.value = techList || [];
-  } catch (error) {
-    // Optional toast
-  }
-}
-
-// Placeholder implementations for remaining functions
-async function fetchPredictiveMaintenance() {
-  try {
-    await customerStore.fetchPredictiveMaintenance(userStore.currentWebsite, route.query.customer_id);
-  } catch (error) {
-    console.error('Error fetching predictive maintenance:', error);
-  }
-}
-
-async function fetchServiceFollowUps() {
-  try {
-    await customerStore.fetchServiceFollowUps(userStore.currentWebsite, route.query.customer_id);
-  } catch (error) {
-    console.error('Error fetching service follow-ups:', error);
-  }
-}
-
-async function fetchLoggedFollowUps() {
-  try {
-    await customerStore.fetchLoggedFollowUps(userStore.currentWebsite, route.query.customer_id);
-  } catch (error) {
-    console.error('Error fetching logged follow-ups:', error);
-  }
-}
-
-async function fetchScheduledMessages() {
-  try {
-    await customerStore.fetchScheduledMessages(userStore.currentWebsite, route.query.customer_id);
-  } catch (error) {
-    console.error('Error fetching scheduled messages:', error);
-  }
-}
-
-async function fetchHolidayGreetings() {
-  try {
-    await customerStore.fetchHolidayGreetings(userStore.currentWebsite, route.query.customer_id);
-  } catch (error) {
-    console.error('Error fetching holiday greetings:', error);
-  }
-}
 </script>
 
 <template>
-  <!-- Main container with enhanced background and transition -->
-  <div 
-    :class="{ 'dark': isDarkMode }" 
-    class="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 dark:from-gray-900 dark:via-gray-950 dark:to-blue-950 text-gray-800 dark:text-gray-200 font-sans transition-all duration-500 ease-in-out"
-  >
-    <!-- Enhanced Status Bar - Positioned relative to avoid nav overlap -->
-    <div class="bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700 mb-4">
-      <div class="container mx-auto px-4 py-2">
-        <div class="flex items-center justify-between text-xs">
-          <!-- Left: Connection & Performance Info -->
-          <div class="flex items-center space-x-4">
-            <div class="flex items-center space-x-1">
-              <font-awesome-icon 
-                :icon="connectionStatus === 'online' ? 'wifi' : 'times-circle'" 
-                :class="connectionStatus === 'online' ? 'text-green-500' : 'text-red-500'"
-              />
-              <span class="text-gray-600 dark:text-gray-400">{{ connectionStatus }}</span>
-            </div>
-            
-            <div v-if="loadTime > 0" class="text-gray-500 dark:text-gray-500">
-              Load: {{ loadTime }}ms
-            </div>
-            
-            <div v-if="isAutoRefreshEnabled" class="flex items-center space-x-1 text-blue-600 dark:text-blue-400">
-              <font-awesome-icon icon="sync" class="animate-spin" />
-              <span>Auto-refresh: {{ refreshIntervalMinutes }}min</span>
-            </div>
-          </div>
-          
-          <!-- Right: Quick Actions & Notifications -->
-          <div class="flex items-center space-x-2">
-            <div v-if="unreadNotifications > 0" class="relative">
-              <font-awesome-icon icon="bell" class="text-orange-500" />
-              <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
-                {{ unreadNotifications }}
-              </span>
-            </div>
-            
-            <button @click="toggleAutoRefresh" class="text-gray-600 dark:text-gray-400 hover:text-blue-600 p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700">
-              <font-awesome-icon :icon="isAutoRefreshEnabled ? 'pause' : 'play'" />
-            </button>
-            
-            <div class="text-gray-500 dark:text-gray-500">
-              Last update: {{ formatRelativeTime(lastRefreshTime) }}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+  <!-- Main container with background and padding -->
+  <div :class="{ 'dark': isDarkMode }" class="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 dark:from-gray-900 dark:via-gray-950 dark:to-blue-950 text-gray-800 dark:text-gray-200 font-sans transition-colors duration-300">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-12">
 
-    <!-- Main Content with Enhanced Layout -->
-    <div class="container mx-auto px-4 sm:px-6 lg:px-8 pb-10">
-
-      <!-- Enhanced Header Section with Customer Health Score -->
+      <!-- Header Section -->
       <CustomerHeader
         :customer="customerStore.customer"
         :isLoading="customerStore.isFetchingCustomer"
@@ -1075,136 +1105,11 @@ async function fetchHolidayGreetings() {
         @ai-book-job="aiBookJob(customerStore.customer.id)"
       />
 
-      <!-- Customer Health & Risk Assessment Card -->
-      <div v-if="customerHealthScore !== null" class="mb-6">
-        <div class="card-modern p-5 border-l-4" :class="{
-          'border-green-500 bg-green-50 dark:bg-green-900/20': riskLevel.level === 'low',
-          'border-yellow-500 bg-yellow-50 dark:bg-yellow-900/20': riskLevel.level === 'medium',
-          'border-red-500 bg-red-50 dark:bg-red-900/20': riskLevel.level === 'high'
-        }">
-          <div class="flex items-center justify-between mb-3">
-            <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300">Customer Health Score</h3>
-            <div class="flex items-center space-x-4">
-              <div class="flex items-center space-x-2">
-                <span class="text-xs text-gray-500">Risk Level:</span>
-                <span :class="`px-2 py-1 rounded-full text-xs font-medium bg-${riskLevel.color}-100 text-${riskLevel.color}-800 dark:bg-${riskLevel.color}-900/50 dark:text-${riskLevel.color}-300`">
-                  {{ riskLevel.description }}
-                </span>
-              </div>
-              <button @click="toggleBookmark" class="text-gray-400 hover:text-yellow-500">
-                <font-awesome-icon :icon="isBookmarked ? 'bookmark' : ['far', 'bookmark']" />
-              </button>
-            </div>
-          </div>
-          
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <!-- Health Score -->
-            <div class="text-center">
-              <div class="text-3xl font-bold" :class="{
-                'text-green-600': customerHealthScore >= 80,
-                'text-yellow-600': customerHealthScore >= 60,
-                'text-red-600': customerHealthScore < 60
-              }">
-                {{ customerHealthScore }}%
-              </div>
-              <div class="text-xs text-gray-500">Overall Health</div>
-            </div>
-            
-            <!-- Opportunity Score -->
-            <div class="text-center" v-if="opportunityScore !== null">
-              <div class="text-3xl font-bold text-purple-600">
-                {{ opportunityScore }}%
-              </div>
-              <div class="text-xs text-gray-500">Opportunity Score</div>
-            </div>
-            
-            <!-- Quick Stats -->
-            <div class="text-center">
-              <div class="text-lg font-bold text-blue-600">
-                {{ customerStore.customer?.jobs?.length || 0 }}
-              </div>
-              <div class="text-xs text-gray-500">Total Jobs</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Enhanced Filter Bar -->
-      <div class="mb-6 card-modern p-4">
-        <div class="flex flex-wrap items-center justify-between gap-4">
-          <!-- Time Range Filter -->
-          <div class="flex items-center space-x-2">
-            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Time Range:</span>
-            <div class="flex space-x-1">
-              <button
-                v-for="range in [
-                  { key: 'all', label: 'All' },
-                  { key: 'today', label: 'Today' },
-                  { key: 'week', label: 'Week' },
-                  { key: 'month', label: 'Month' }
-                ]"
-                :key="range.key"
-                @click="setTimeRangeFilter(range.key)"
-                :class="[
-                  'px-3 py-1 text-xs rounded-md transition-colors',
-                  selectedTimeRange === range.key
-                    ? 'bg-indigo-600 text-white'
-                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-indigo-100 dark:hover:bg-gray-600'
-                ]"
-              >
-                {{ range.label }}
-              </button>
-            </div>
-          </div>
-          
-          <!-- Action Buttons -->
-          <div class="flex items-center space-x-2">
-            <button @click="shareCustomer" class="btn-ghost-modern text-xs">
-              <font-awesome-icon icon="share" class="mr-1" /> Share
-            </button>
-            
-            <button @click="printCustomerDetails" class="btn-ghost-modern text-xs">
-              <font-awesome-icon icon="print" class="mr-1" /> Print
-            </button>
-            
-            <button @click="toggleLiveMode" class="btn-ghost-modern text-xs" :class="{ 'bg-green-100 text-green-700': isLiveMode }">
-              <font-awesome-icon :icon="isLiveMode ? 'stop' : 'circle'" class="mr-1" /> 
-              {{ isLiveMode ? 'Live' : 'Live Mode' }}
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Mobile Navigation (shows on mobile) -->
-      <div v-if="isMobile" class="mb-6">
-        <div class="flex space-x-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
-          <button
-            v-for="section in [
-              { key: 'overview', label: 'Overview', icon: 'chart-line' },
-              { key: 'timeline', label: 'Timeline', icon: 'history' },
-              { key: 'records', label: 'Records', icon: 'briefcase' },
-              { key: 'insights', label: 'Insights', icon: 'magic' }
-            ]"
-            :key="section.key"
-            @click="switchMobileSection(section.key)"
-            :class="[
-              'flex-1 flex items-center justify-center py-2 px-3 text-xs rounded-md transition-colors',
-              currentMobileSection === section.key
-                ? 'bg-white dark:bg-gray-700 text-indigo-600 dark:text-indigo-400 shadow-sm'
-                : 'text-gray-600 dark:text-gray-400'
-            ]"
-          >
-            <font-awesome-icon :icon="section.icon" class="mr-1" />
-            {{ section.label }}
-          </button>
-        </div>
-      </div>
-
-      <!-- Main Content Grid with Enhanced Responsive Layout -->
+      <!-- Main Content Grid -->
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
 
         <!-- Left Column: Customer Info & Related Items -->
-        <div class="lg:col-span-4 space-y-6 lg:space-y-8" :class="{ 'hidden': isMobile && currentMobileSection !== 'overview' }">
+        <div class="lg:col-span-4 space-y-6 lg:space-y-8">
 
           <!-- Client Value Snapshot Card -->
           <CustomerValueSnapshot 
@@ -1214,7 +1119,7 @@ async function fetchHolidayGreetings() {
             :profitabilityAnalysisError="customerStore.profitabilityAnalysisError"
             :customer="customerStore.customer"
             @fetch-profitability-analysis="fetchProfitabilityAnalysis"
-            @fetch-financials="() => customerStore.fetchCustomerFinancials(userStore.currentWebsite, route.query.customer_id)"
+            @fetch-financials="fetchCustomerFinancials"
           />
 
           <!-- Customer Information Card -->
@@ -1230,7 +1135,7 @@ async function fetchHolidayGreetings() {
             @cancel-edit="handleCancelEdit"
             @update-customer="updateCustomer"
             @copy-to-clipboard="copyToClipboard"
-            @edit-preferred-technician="() => showPreferredTechnicianModal = true"
+            @edit-preferred-technician="openEditPreferredTechnicianModal"
             @generate-ai-suggestions="generateAIFieldSuggestions"
             @apply-ai-suggestion="applyAISuggestion"
             @apply-all-ai-suggestions="applyAllAISuggestions"
@@ -1243,16 +1148,16 @@ async function fetchHolidayGreetings() {
             :isLoading="customerStore.isFetchingSuggestions"
             :recentSuggestions="recentSuggestions"
             :error="customerStore.suggestionsError"
-            @fetch-suggestions="() => customerStore.fetchFollowupSuggestions(userStore.currentWebsite, customerStore.customer.id)"
-            @send-suggestion-now="(suggestion) => customerStore.sendDirectMessage(userStore.currentWebsite, { customerId: customerStore.customer.id, message: suggestion.draftMessage, channel: customerStore.customer.preferredContactMethod || 'WHATSAPP' })"
-            @schedule-suggestion="(suggestion) => { suggestionToSchedule = suggestion; showScheduleModal = true; }"
-            @log-suggestion-manually="(suggestion) => { suggestionToLog = suggestion; showManualLogModal = true; }"
+            @fetch-suggestions="generateSuggestion"
+            @send-suggestion-now="sendSuggestionNow"
+            @schedule-suggestion="scheduleSuggestion"
+            @log-suggestion-manually="logSuggestionManually"
           />
 
           <!-- Communication Preferences Card -->
           <CustomerCommunicationPrefs 
             :customer="customerStore.customer"
-            @edit-comm-prefs="() => showCommPrefsModal = true"
+            @edit-comm-prefs="openEditCommPrefsModal"
           />
 
           <CustomerAppliances 
@@ -1261,28 +1166,28 @@ async function fetchHolidayGreetings() {
             :isFetchingPredMaint="customerStore.isFetchingPredMaint"
             :predMaintError="customerStore.predMaintError"
             :isDetectingAppliances="customerStore.isDetectingAppliances"
-            @detect-appliances="() => customerStore.detectAppliancesAI(userStore.currentWebsite, customerStore.customer.id)"
-            @open-add-appliance-modal="() => showAddApplianceModal = true"
-            @edit-appliance="(appliance) => { selectedAppliance = appliance; showAddApplianceModal = true; }"
-            @delete-appliance="(id) => customerStore.deleteAppliance(userStore.currentWebsite, id)"
-            @schedule-service="() => {}"
-            @dismiss-alert="(id) => customerStore.dismissApplianceAlert(userStore.currentWebsite, id)"
+            @detect-appliances="detectAppliancesAI"
+            @open-add-appliance-modal="openAddApplianceModal"
+            @edit-appliance="openEditApplianceModal"
+            @delete-appliance="handleDeleteAppliance"
+            @schedule-service="handleScheduleServiceFromAlert"
+            @dismiss-alert="handleDismissAlert"
             @fetch-predictive-maintenance="fetchPredictiveMaintenance"
           />
 
           <CustomerRelatedRecords 
             :relatedItems="relatedItems"
-            @add-related-item="() => {}"
+            @add-related-item="handleAddRelatedItem"
             @reload-timeline="reloadTimeline"
-            @view-estimate="() => {}"
-            @view-invoice="() => {}"
-            @view-payment="() => {}"
-            @view-expense="() => {}"
-            @view-insurance="() => {}"
-            @view-job="() => {}"
+            @view-estimate="openAddEstimateModal"
+            @view-invoice="openAddInvoiceModal"
+            @view-payment="openAddPaymentModal"
+            @view-expense="openAddExpenseModal"
+            @view-insurance="openAddInsuranceModal"
+            @view-job="handleViewJob"
           />
 
-          <!-- Visitor Details -->
+          <!-- Visitor Details (from Visitors.vue modal, adapted for customer context) -->
           <CustomerVisitorActivity
             :visitorActivity="customerStore.visitorActivity"
             :isFetchingVisitorActivity="customerStore.isFetchingVisitorActivity"
@@ -1302,8 +1207,9 @@ async function fetchHolidayGreetings() {
 
         </div>
 
-        <!-- Right Column: Activity Timeline / Tabs -->
-        <div class="lg:col-span-8" :class="{ 'hidden': isMobile && !['timeline', 'records', 'insights'].includes(currentMobileSection) }">          
+        <div class="lg:col-span-8">          
+
+          <!-- Right Column: Activity Timeline / Tabs -->
           <CustomerActivityTabs
             :activityTabs="activityTabs"
             :customer="customerStore.customer"
@@ -1330,52 +1236,21 @@ async function fetchHolidayGreetings() {
             :isFetchingCustomer="customerStore.isFetchingCustomer"
             @fetch-timeline-summary="fetchTimelineSummary"
             @fetch-sentiment-analysis="fetchSentimentAnalysis"
-            @fetch-suggestions="() => customerStore.fetchFollowupSuggestions(userStore.currentWebsite, customerStore.customer.id)"
-            @schedule-suggestion="(suggestion) => { suggestionToSchedule = suggestion; showScheduleModal = true; }"
-            @send-suggestion-now="(suggestion) => customerStore.sendDirectMessage(userStore.currentWebsite, { customerId: customerStore.customer.id, message: suggestion.draftMessage, channel: customerStore.customer.preferredContactMethod || 'WHATSAPP' })"
-            @log-suggestion-manually="(suggestion) => { suggestionToLog = suggestion; showManualLogModal = true; }"
-            @dismiss-suggestion="(index) => customerStore.dismissSuggestion(userStore.currentWebsite, customerStore.followupSuggestions[index]?.id)"
+            @fetch-suggestions="fetchFollowupSuggestions"
+            @schedule-suggestion="scheduleSuggestion"
+            @send-suggestion-now="sendSuggestionNow"
+            @log-suggestion-manually="logSuggestionManually"
+            @dismiss-suggestion="dismissSuggestion"
             @fetch-scheduled-messages="fetchScheduledMessages"
-            @cancel-scheduled-message="(id) => customerStore.cancelScheduledMessage(userStore.currentWebsite, id)"
-            @schedule-greeting="() => {}"
-            @send-greeting-now="() => {}"
+            @cancel-scheduled-message="cancelScheduledMessage"
+            @schedule-greeting="scheduleGreeting"
+            @send-greeting-now="sendGreetingNow"
             @fetch-holiday-greetings="fetchHolidayGreetings"
           />
         </div>
       </div>
 
-      <!-- Enhanced Notification Panel -->
-      <div v-if="notifications.length > 0" class="fixed bottom-4 right-4 z-50 space-y-2 max-w-sm">
-        <div
-          v-for="notification in notifications.slice(0, 3)"
-          :key="notification.id"
-          class="bg-white dark:bg-gray-800 border-l-4 rounded-lg shadow-lg p-4 transition-all duration-300"
-          :class="{
-            'border-blue-500': notification.type === 'info',
-            'border-green-500': notification.type === 'success',
-            'border-yellow-500': notification.type === 'warning',
-            'border-red-500': notification.type === 'error'
-          }"
-        >
-          <div class="flex justify-between items-start">
-            <div class="flex-1">
-              <p class="font-medium text-sm text-gray-900 dark:text-white">{{ notification.title }}</p>
-              <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">{{ notification.message }}</p>
-            </div>
-            <button @click="removeNotification(notification.id)" class="text-gray-400 hover:text-gray-600 ml-2">
-              <font-awesome-icon icon="times" />
-            </button>
-          </div>
-        </div>
-        
-        <div v-if="notifications.length > 3" class="text-center">
-          <button @click="clearAllNotifications" class="text-xs text-gray-500 hover:text-gray-700">
-            Clear all ({{ notifications.length }})
-          </button>
-        </div>
-      </div>
-
-      <!-- Modals (keeping the original modals with enhanced error handling) -->
+      <!-- Modals -->
       <!-- Note Modal -->
       <div id="noteModal" data-modal-placement="center" tabindex="-1" class="fixed top-0 left-0 right-0 z-50 hidden w-full p-4 overflow-x-hidden overflow-y-auto md:inset-0 h-[calc(100%-1rem)] max-h-full" inert>
         <div class="relative w-full max-w-2xl max-h-full">
@@ -1420,152 +1295,115 @@ async function fetchHolidayGreetings() {
          </div>
        </div>
     
-      <!-- Include other modals as needed -->
-      <!-- [Other modals remain the same] -->
+      <!-- Add Job Modal -->
+      <JobFormModal
+        v-model="showAddJobModal"
+        :customer-data="customerStore.customer"
+        :job-data="selectedJob"
+        @job-saved="handleJobSaved"
+      />
+
+      <!-- Add/Edit Estimate Modal -->
+      <EstimateFormModal
+        v-model="showAddEstimateModal"
+        :customer-data="customerContextForModal || customerStore.customer"
+        :estimate-data="selectedEstimate"
+        @estimate-saved="handleEstimateSaved"
+        @invoice-created="handleInvoiceCreated"
+        :technicians="technicians"
+        :customer-jobs="customerStore.customer.jobs" 
+      />
+
+      <!-- Add/Edit Invoice Modal -->
+      <InvoiceFormModal
+        v-model="showAddInvoiceModal"
+        :customer-data="customerContextForModal || customerStore.customer"
+        :invoice-data="selectedInvoice"
+        @invoice-saved="handleInvoiceSaved"
+        :technicians="technicians"
+        :customer-jobs="customerStore.customer.jobs" 
+      />
+
+      <!-- Add/Edit Payment Modal -->
+      <PaymentFormModal
+        v-model="showAddPaymentModal"
+        :customer-data="customerStore.customer"
+        :payment-data="selectedPayment"
+        @payment-saved="handlePaymentSaved"
+      />
+
+      <!-- Add/Edit Expense Modal -->
+      <ExpenseFormModal
+        v-model="showAddExpenseModal"
+        :customer-data="customerStore.customer"
+        :expense-data="selectedExpense"
+        @expense-saved="handleExpenseSaved"
+      />
+
+      <!-- Add/Edit Insurance Report Modal -->
+      <InsuranceFormModal
+        v-model="showAddInsuranceModal"
+        :customer-data="customerStore.customer"
+        :insurance-data="selectedInsurance"
+        @insurance-saved="handleInsuranceSaved"
+      />
+
+      <!-- Add/Edit Appliance Modal -->
+      <ApplianceFormModal
+        v-model="showAddApplianceModal"
+        :appliance="selectedAppliance"
+        :customer-id="customerStore.customer.id"
+        @saved="handleApplianceSaved"
+      />
+
+      <!-- Preferred Technician Modal -->
+      <PreferredTechnicianModal
+        v-model="showPreferredTechnicianModal"
+        :customer-id="customerStore.customer.id"
+        :current-technician-id="customerStore.customer.preferredTechnicianId"
+        @saved="handlePreferredTechnicianSaved"
+      />
+
+      <!-- Communication Preferences Modal -->
+      <CommunicationPreferencesModal
+        v-model="showCommPrefsModal"
+        :customer-id="customerStore.customer.id"
+        :current-preferences="{
+          preferredContactMethod: customerStore.customer.preferredContactMethod,
+          preferredContactTimes: customerStore.customer.preferredContactTimes,
+          communicationFrequencyPreference: customerStore.customer.communicationFrequencyPreference,
+          languagePreference: customerStore.customer.languagePreference
+        }"
+        @saved="handleCommPrefsSaved"
+      />
+
+      <!-- Schedule Modal for Suggestions/Greetings -->
+      <ScheduleModal
+        v-model:isOpen="showScheduleModal"
+        :title="suggestionToSchedule ? 'Schedule Suggestion' : (greetingToSchedule ? 'Schedule Greeting' : 'Schedule Message')"
+        :message-preview="suggestionToSchedule?.draftMessage || greetingToSchedule?.draftMessage || ''"
+        :initial-date="suggestionToSchedule?.occasionDate || greetingToSchedule?.occasionDate"
+        @confirm-schedule="suggestionToSchedule ? handleConfirmScheduleSuggestion($event) : handleConfirmScheduleGreeting($event)"
+      />
+
+      <!-- Manual Log Modal for Suggestions -->
+      <ManualLogModal
+        v-model:isOpen="showManualLogModal"
+        :suggestion-context="suggestionToLog?.draftMessage || suggestionToLog?.title || ''"
+        @confirm-log="handleConfirmManualLog"
+      />
+
+      <!-- Task Form Modal -->
+      <TaskFormModal
+        v-model:isOpen="showTaskModal"
+        :initial-task-data="initialTaskDataForModal"
+        @save-task="handleSaveTask"
+      />
       
-      <!-- Enhanced Loading Overlay with Progress -->
-      <div v-if="isLoading" class="fixed inset-0 z-[60] bg-gray-900 bg-opacity-50 dark:bg-opacity-80 flex items-center justify-center">
-        <div class="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-sm mx-4 text-center">
-          <scale-loader :loading="true" color="#4f46e5" height="40px" width="5px" />
-          <p class="mt-4 text-gray-700 dark:text-gray-300">{{ isBookingJob ? 'Booking job...' : 'Loading customer data...' }}</p>
-          <div class="mt-2 text-xs text-gray-500">Please wait</div>
-        </div>
-      </div>
+      <!-- Loading Overlay -->
+     <div v-if="isLoading" class="fixed inset-0 z-[60] bg-gray-900 bg-opacity-50 dark:bg-opacity-80 flex items-center justify-center">
+        <scale-loader :loading="true" color="#4f46e5" height="40px" width="5px" />
+     </div>
    </div> <!-- End container -->
  </div> <!-- End main div -->
 </template>
-
-<style scoped>
-/* Enhanced Modern Styles */
-
-/* Improved Input Styles */
-.input-modern {
- @apply block w-full px-3 py-2 text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600/50 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500;
- @apply focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:focus:ring-indigo-400 dark:focus:border-indigo-400;
- @apply transition duration-200 ease-in-out;
-}
-
-/* Enhanced Button Styles */
-.btn-primary-modern {
- @apply inline-flex items-center justify-center px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-indigo-600 to-purple-600 rounded-md shadow-sm;
- @apply hover:from-indigo-700 hover:to-purple-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600;
- @apply transition-all duration-200 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105;
-}
-
-.btn-secondary-modern {
- @apply inline-flex items-center justify-center px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600/50 rounded-md shadow-sm;
- @apply hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400;
- @apply transition-all duration-200 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed;
-}
-
-.btn-ghost-modern {
- @apply inline-flex items-center justify-center px-3 py-2 text-sm font-medium text-indigo-600 dark:text-indigo-400 rounded-md;
- @apply hover:bg-indigo-100 dark:hover:bg-indigo-900/50 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400;
- @apply transition-all duration-200 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed;
-}
-
-.btn-icon-modern {
- @apply inline-flex items-center justify-center w-8 h-8 text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600/50 rounded-md shadow-sm;
- @apply hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400;
- @apply transition-all duration-200 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed;
-}
-
-/* Enhanced Card Style */
-.card-modern {
- @apply bg-white dark:bg-gray-800/70 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700/50 backdrop-blur-sm;
- @apply transition-all duration-300 ease-in-out hover:shadow-xl hover:scale-[1.02];
-}
-
-/* Enhanced Modal Styles */
-.modal-content-modern {
- @apply inline-block align-bottom bg-white dark:bg-gray-800 rounded-xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-xl md:max-w-2xl lg:max-w-3xl sm:w-full p-6 sm:p-8;
-}
-
-/* Smooth Transitions */
-* {
-  transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform;
-  transition-duration: 200ms;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* Custom Scrollbar */
-::-webkit-scrollbar { 
-  width: 8px; 
-  height: 8px; 
-}
-
-::-webkit-scrollbar-track { 
-  @apply bg-gray-100 dark:bg-gray-800/50 rounded-full; 
-}
-
-::-webkit-scrollbar-thumb { 
-  @apply bg-gray-300 dark:bg-gray-600 rounded-full hover:bg-gray-400 dark:hover:bg-gray-500; 
-}
-
-/* Loading Animation Enhancement */
-@keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
-}
-
-.loading-float {
-  animation: float 2s ease-in-out infinite;
-}
-
-/* Mobile Optimizations */
-@media (max-width: 768px) {
-  .card-modern {
-    @apply rounded-lg shadow-md;
-  }
-  
-  .btn-primary-modern,
-  .btn-secondary-modern {
-    @apply px-3 py-2 text-xs;
-  }
-}
-
-/* Pull to Refresh Indicator */
-.pull-to-refresh {
-  position: fixed;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(99, 102, 241, 0.9);
-  color: white;
-  padding: 8px 16px;
-  border-radius: 0 0 8px 8px;
-  font-size: 14px;
-  z-index: 1000;
-  transition: transform 0.3s ease;
-}
-
-/* Enhanced Focus States for Accessibility */
-.focus\:outline-enhanced:focus {
-  outline: 2px solid #6366f1;
-  outline-offset: 2px;
-}
-
-/* Dark Mode Improvements */
-@media (prefers-color-scheme: dark) {
-  .card-modern {
-    background: rgba(31, 41, 55, 0.8);
-    border: 1px solid rgba(75, 85, 99, 0.3);
-  }
-}
-
-/* Performance Optimizations */
-.gpu-accelerated {
-  transform: translateZ(0);
-  will-change: transform;
-}
-
-/* Health Score Animation */
-@keyframes pulse-success {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
-}
-
-.health-score-high {
-  animation: pulse-success 2s ease-in-out infinite;
-}
-</style>
