@@ -1,4 +1,3 @@
-// wibiclick-frontend-vue/src/services/customerService.js
 import axios from 'axios';
 
 /**
@@ -249,8 +248,8 @@ export default {
    * @param {string} customerId - The customer ID
    * @returns {Promise} - The response data
    */
-  fetchFollowupSuggestions(websiteId, customerId) {
-    const response =  axios.post(`/customers/${customerId}/followup-suggestions?id=${websiteId}`);
+  async fetchFollowupSuggestions(websiteId, customerId) {
+    const response = await axios.post(`/customers/${customerId}/followup-suggestions?id=${websiteId}`);
     return response.data;
   },
   
@@ -261,8 +260,8 @@ export default {
    * @param {Array} missingFields - Array of field names to suggest
    * @returns {Promise} - The response data
    */
-  generateMissingFieldSuggestions(websiteId, customerId, missingFields) {
-    const response =  axios.post(`/customers/${customerId}/suggest-missing-fields?id=${websiteId}`, {
+  async generateMissingFieldSuggestions(websiteId, customerId, missingFields) {
+    const response = await axios.post(`/customers/${customerId}/suggest-missing-fields?id=${websiteId}`, {
       missingFields
     });
 
@@ -275,8 +274,8 @@ export default {
    * @param {Object} messageData - The message data
    * @returns {Promise} - The response data
    */
-  scheduleMessage(websiteId, messageData) {
-    const response =  axios.post(`/scheduled-messages?id=${websiteId}`, messageData);
+  async scheduleMessage(websiteId, messageData) {
+    const response = await axios.post(`/scheduled-messages?id=${websiteId}`, messageData);
     return response.data;
   },
   
@@ -286,8 +285,8 @@ export default {
    * @param {string} customerId - The customer ID
    * @returns {Promise} - The response data
    */
-  fetchScheduledMessages(websiteId, customerId) {
-    const response =  axios.get(`/scheduled-messages?id=${websiteId}&customerId=${customerId}`);
+  async fetchScheduledMessages(websiteId, customerId) {
+    const response = await axios.get(`/scheduled-messages?id=${websiteId}&customerId=${customerId}`);
     return response.data;
   },
   
@@ -297,8 +296,8 @@ export default {
    * @param {string} messageId - The message ID
    * @returns {Promise} - The response data
    */
-  cancelScheduledMessage(websiteId, messageId) {
-    const response =  axios.delete(`/scheduled-messages/${messageId}?id=${websiteId}`);
+  async cancelScheduledMessage(websiteId, messageId) {
+    const response = await axios.delete(`/scheduled-messages/${messageId}?id=${websiteId}`);
     return response.data;
   },
 

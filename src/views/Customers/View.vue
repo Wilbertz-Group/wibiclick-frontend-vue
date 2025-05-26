@@ -223,23 +223,25 @@ function resetEditableCustomer() {
 
 // Generate AI field suggestions
 async function generateAIFieldSuggestions() {
-  if (!customerStore.customer?.id) return;
-  
+  if (!customerStore.customer?.id) {
+    return;
+  }
+
   isGeneratingAISuggestions.value = true;
   showAISuggestions.value = true;
   aiSuggestedFields.value = {};
-  
+
   try {
     // Create a payload of what fields are missing or empty
     const missingFields = [];
     const fieldsToCheck = ['address', 'phone', 'email', 'channel', 'message'];
-    
+
     fieldsToCheck.forEach(field => {
       if (!customerStore.editableCustomer[field] || customerStore.editableCustomer[field].trim() === '') {
         missingFields.push(field);
       }
     });
-    
+
     // Only proceed if we actually have missing fields
     if (missingFields.length > 0) {
       const response = await customerService.generateMissingFieldSuggestions(
@@ -247,16 +249,17 @@ async function generateAIFieldSuggestions() {
         customerStore.customer.id,
         missingFields
       );
-      
+
       if (response && response.suggestions) {
         aiSuggestedFields.value = response.suggestions;
+      } else {
+        toast.info("No AI suggestions available for the missing fields.");
       }
     } else {
       showAISuggestions.value = false;
       toast.info("All fields are already filled. No AI suggestions needed.");
     }
   } catch (error) {
-    console.error('Error generating AI field suggestions:', error);
     toast.error("Could not generate AI suggestions: " + (error.response?.data?.message || error.message));
   } finally {
     isGeneratingAISuggestions.value = false;
