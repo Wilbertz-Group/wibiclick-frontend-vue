@@ -102,7 +102,7 @@ const prefillForm = (customer) => {
   if (props.jobData) {
     Object.assign(jobForm, {
       id: props.jobData.id,
-      customerId: props.jobData.customer.id,
+      customerId: props.jobData.customerId,
       // Remove name from here to ensure we always use customer name
       jobStatus: props.jobData.jobStatus || 'scheduled',
       callout: props.jobData.callout || 'R350',
