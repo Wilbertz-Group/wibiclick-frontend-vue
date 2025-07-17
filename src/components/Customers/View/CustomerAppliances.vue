@@ -235,16 +235,6 @@ function formatApplianceDetails(appliance) {
   // Removed location since it doesn't exist in your schema
   return details.join(' • ') || 'No additional details';
 }
-
-// Auto-detect appliances on mount if very few are recorded
-onMounted(() => {
-  if (applianceCount.value === 0) {
-    // Auto-detect if no appliances at all
-    setTimeout(() => {
-      generateAIAppliances();
-    }, 1500); // Slightly longer delay to let component settle
-  }
-});
 </script>
 
 <template>
