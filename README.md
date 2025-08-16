@@ -417,3 +417,35 @@ While the current system implements significant AI features and automation, achi
 *   **Simplified Local Development:** Create a `docker-compose.yml` setup to allow developers to easily spin up the entire development environment (frontend, backend, database) with a single command.
 
 By pursuing these enhancements, WibiClick can move significantly closer to the vision of a highly automated, AI-driven platform that delivers exceptional, proactive customer service with minimal manual intervention.
+
+## 8. License
+
+This project is licensed under the WibiClick Commercial License. See the [LICENSE](LICENSE) file for details.
+
+### Commercial Use
+
+**⚠️ IMPORTANT: Commercial use of this software requires a paid license.**
+
+- **Individual Commercial License**: $500 USD per deployment/instance
+- **Enterprise License**: $2,500 USD annually (unlimited deployments)
+- **SaaS/Hosting Provider License**: 5% of gross revenue from services using this software
+
+For licensing inquiries and payments, contact: mrwilbertmuza@gmail.com
+
+### Free Use
+
+This software may be used for:
+- Personal learning and education
+- Non-commercial research and development
+- Academic purposes
+
+Any commercial deployment, including but not limited to providing services to customers, incorporating into commercial products, or business operations, requires a paid commercial license.
+
+### Getting a Commercial License
+
+1. Contact mrwilbertmuza@gmail.com with your use case
+2. Receive license agreement and payment instructions
+3. Upon payment, receive license key and commercial use authorization
+4. Deploy with confidence knowing you're fully licensed
+
+**Unauthorized commercial use will result in legal action and damages equal to 10x the applicable licensing fee plus legal costs.**
