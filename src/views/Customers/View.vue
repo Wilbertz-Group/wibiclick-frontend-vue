@@ -197,8 +197,8 @@ async function fetchCustomerData() {
     // Fetch additional data
     await fetchAdditionalData();
 
-    // Fetch recent suggestions (without generating new ones)
-    await fetchRecentSuggestions();
+    // Fetch recent suggestions (without generating new ones) - REMOVED AUTO-CALL
+    // await fetchRecentSuggestions();
 
     // Update PropertyHistory key after data is fetched
     if (customerStore.customer?.id) {
@@ -353,8 +353,8 @@ async function fetchAdditionalData() {
   // Fetch visitor activity
   fetchVisitorActivity();
   
-  // Fetch predictive maintenance alerts
-  fetchPredictiveMaintenance();
+  // Fetch predictive maintenance alerts - REMOVED AUTO-CALL
+  // fetchPredictiveMaintenance();
   
   // Fetch service follow-ups
   fetchServiceFollowUps();
