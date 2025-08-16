@@ -24,7 +24,7 @@
     
     const WIBI_CONFIG = {
         // API Configuration (configurable via data attributes)
-        apiBaseUrl: window.WIBI_API_BASE || 'https://wibi.wilbertzgroup.com',
+        apiBaseUrl: window.WIBI_API_BASE || 'http://localhost:8080' || 'https://wibi.wilbertzgroup.com',
         endpoints: {
             options: '/wibi-options',
             track: '/api/track/page-view',
@@ -2115,6 +2115,1614 @@
         }
     }
 
+    // WibiBookingSystem class integration
+    class WibiBookingSystem {
+        constructor(widget) {
+            this.widget = widget;
+            this.logger = new Logger('WibiBookingSystem');
+            this.isBookingOpen = false;
+            this.currentStep = 1;
+            this.maxSteps = 4;
+            
+            // Booking form data
+            this.bookingData = {
+                // Customer info
+                name: '',
+                phone: '',
+                email: '',
+                address: '',
+                
+                // Service details
+                applianceCategory: '',
+                applianceType: '',
+                fuelType: '',
+                fittingType: '',
+                issue: '',
+                
+                // Scheduling
+                selectedSlot: null,
+                preferredDate: null,
+                
+                // Verification
+                contactMethod: 'whatsapp', // or 'email'
+                verificationCode: '',
+                verificationToken: '',
+                
+                // Security
+                sessionToken: this.generateSessionToken(),
+                startTime: Date.now()
+            };
+            
+            // Available slots cache
+            this.availableSlots = [];
+            this.isLoadingSlots = false;
+            
+            // Rate limiting
+            this.lastBookingAttempt = 0;
+            this.bookingAttempts = 0;
+            this.maxBookingAttempts = 3;
+            this.cooldownPeriod = 5 * 60 * 1000; // 5 minutes
+            
+            this.setupBookingUI();
+        }
+
+        generateSessionToken() {
+            return Date.now().toString(36) + Math.random().toString(36).substr(2);
+        }
+
+        // Rate limiting check
+        canMakeBookingAttempt() {
+            const now = Date.now();
+            
+            // Reset attempts if cooldown period has passed
+            if (now - this.lastBookingAttempt > this.cooldownPeriod) {
+                this.bookingAttempts = 0;
+            }
+            
+            return this.bookingAttempts < this.maxBookingAttempts;
+        }
+
+        // Setup booking UI and inject styles
+        setupBookingUI() {
+            this.injectBookingStyles();
+        }
+
+        injectBookingStyles() {
+            if (document.getElementById('wibi-booking-styles')) return;
+
+            const style = document.createElement('style');
+            style.id = 'wibi-booking-styles';
+            style.textContent = `
+                /* Booking Modal Styles */
+                .wibi-booking-overlay {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: rgba(0, 0, 0, 0.7);
+                    backdrop-filter: blur(4px);
+                    z-index: 1000000;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    opacity: 0;
+                    visibility: hidden;
+                    transition: all 0.3s ease;
+                }
+
+                .wibi-booking-overlay.active {
+                    opacity: 1;
+                    visibility: visible;
+                }
+
+                .wibi-booking-modal {
+                    background: white;
+                    border-radius: 16px;
+                    max-width: 500px;
+                    width: 90%;
+                    max-height: 90vh;
+                    overflow-y: auto;
+                    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+                    transform: scale(0.9) translateY(20px);
+                    transition: transform 0.3s ease;
+                    position: relative;
+                }
+
+                .wibi-booking-overlay.active .wibi-booking-modal {
+                    transform: scale(1) translateY(0);
+                }
+
+                .wibi-booking-header {
+                    padding: 24px 24px 0 24px;
+                    border-bottom: 1px solid #e5e7eb;
+                    margin-bottom: 24px;
+                }
+
+                .wibi-booking-header h3 {
+                    margin: 0 0 8px 0;
+                    font-size: 20px;
+                    font-weight: 600;
+                    color: #1f2937;
+                }
+
+                .wibi-booking-subtitle {
+                    margin: 0;
+                    font-size: 14px;
+                    color: #6b7280;
+                }
+
+                .wibi-booking-close {
+                    position: absolute;
+                    top: 16px;
+                    right: 16px;
+                    background: none;
+                    border: none;
+                    font-size: 24px;
+                    cursor: pointer;
+                    color: #6b7280;
+                    width: 32px;
+                    height: 32px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    border-radius: 8px;
+                    transition: all 0.2s ease;
+                }
+
+                .wibi-booking-close:hover {
+                    background: #f3f4f6;
+                    color: #374151;
+                }
+
+                .wibi-booking-content {
+                    padding: 0 24px 24px 24px;
+                }
+
+                .wibi-booking-step {
+                    display: none;
+                }
+
+                .wibi-booking-step.active {
+                    display: block;
+                }
+
+                .wibi-booking-progress {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    margin-bottom: 32px;
+                    position: relative;
+                }
+
+                .wibi-booking-progress::before {
+                    content: '';
+                    position: absolute;
+                    top: 50%;
+                    left: 0;
+                    right: 0;
+                    height: 2px;
+                    background: #e5e7eb;
+                    z-index: 1;
+                }
+
+                .wibi-booking-progress-fill {
+                    position: absolute;
+                    top: 50%;
+                    left: 0;
+                    height: 2px;
+                    background: #4f46e5;
+                    z-index: 2;
+                    transition: width 0.3s ease;
+                    transform: translateY(-50%);
+                }
+
+                .wibi-booking-progress-step {
+                    width: 32px;
+                    height: 32px;
+                    border-radius: 50%;
+                    background: #e5e7eb;
+                    color: #6b7280;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 14px;
+                    font-weight: 600;
+                    position: relative;
+                    z-index: 3;
+                    transition: all 0.3s ease;
+                }
+
+                .wibi-booking-progress-step.active {
+                    background: #4f46e5;
+                    color: white;
+                }
+
+                .wibi-booking-progress-step.completed {
+                    background: #10b981;
+                    color: white;
+                }
+
+                .wibi-booking-form-group {
+                    margin-bottom: 20px;
+                }
+
+                .wibi-booking-label {
+                    display: block;
+                    margin-bottom: 6px;
+                    font-size: 14px;
+                    font-weight: 500;
+                    color: #374151;
+                }
+
+                .wibi-booking-input {
+                    width: 100%;
+                    padding: 12px 16px;
+                    border: 1px solid #d1d5db;
+                    border-radius: 8px;
+                    font-size: 14px;
+                    transition: border-color 0.2s ease;
+                    box-sizing: border-box;
+                }
+
+                .wibi-booking-input:focus {
+                    outline: none;
+                    border-color: #4f46e5;
+                    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+                }
+
+                .wibi-booking-textarea {
+                    min-height: 80px;
+                    resize: vertical;
+                }
+
+                .wibi-booking-grid {
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    gap: 16px;
+                }
+
+                .wibi-booking-options {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+                    gap: 12px;
+                    margin-top: 8px;
+                }
+
+                .wibi-booking-option {
+                    padding: 12px;
+                    border: 2px solid #e5e7eb;
+                    border-radius: 8px;
+                    text-align: center;
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+                    background: white;
+                }
+
+                .wibi-booking-option:hover {
+                    border-color: #4f46e5;
+                    background: #f8faff;
+                }
+
+                .wibi-booking-option.selected {
+                    border-color: #4f46e5;
+                    background: #4f46e5;
+                    color: white;
+                }
+
+                .wibi-booking-option-icon {
+                    font-size: 24px;
+                    margin-bottom: 4px;
+                }
+
+                .wibi-booking-option-label {
+                    font-size: 12px;
+                    font-weight: 500;
+                }
+
+                .wibi-booking-slots {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+                    gap: 8px;
+                    margin-top: 16px;
+                    max-height: 200px;
+                    overflow-y: auto;
+                }
+
+                .wibi-booking-slot {
+                    padding: 12px 8px;
+                    border: 1px solid #d1d5db;
+                    border-radius: 6px;
+                    text-align: center;
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+                    font-size: 13px;
+                }
+
+                .wibi-booking-slot:hover {
+                    border-color: #4f46e5;
+                    background: #f8faff;
+                }
+
+                .wibi-booking-slot.selected {
+                    border-color: #4f46e5;
+                    background: #4f46e5;
+                    color: white;
+                }
+
+                .wibi-booking-slot.unavailable {
+                    background: #f3f4f6;
+                    color: #9ca3af;
+                    cursor: not-allowed;
+                    opacity: 0.5;
+                }
+
+                .wibi-booking-verification {
+                    background: #f8faff;
+                    border: 1px solid #e0e7ff;
+                    border-radius: 8px;
+                    padding: 16px;
+                    margin: 16px 0;
+                }
+
+                .wibi-booking-verification-method {
+                    display: flex;
+                    gap: 12px;
+                    margin-bottom: 16px;
+                }
+
+                .wibi-booking-verification-btn {
+                    flex: 1;
+                    padding: 8px 12px;
+                    border: 1px solid #d1d5db;
+                    border-radius: 6px;
+                    background: white;
+                    cursor: pointer;
+                    text-align: center;
+                    font-size: 13px;
+                    transition: all 0.2s ease;
+                }
+
+                .wibi-booking-verification-btn.active {
+                    border-color: #4f46e5;
+                    background: #4f46e5;
+                    color: white;
+                }
+
+                .wibi-booking-code-input {
+                    text-align: center;
+                    font-size: 18px;
+                    letter-spacing: 2px;
+                    font-weight: 600;
+                }
+
+                .wibi-booking-buttons {
+                    display: flex;
+                    gap: 12px;
+                    margin-top: 24px;
+                    padding-top: 24px;
+                    border-top: 1px solid #e5e7eb;
+                }
+
+                .wibi-booking-btn {
+                    flex: 1;
+                    padding: 12px 24px;
+                    border: none;
+                    border-radius: 8px;
+                    font-size: 14px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+                    position: relative;
+                    overflow: hidden;
+                }
+
+                .wibi-booking-btn:disabled {
+                    opacity: 0.5;
+                    cursor: not-allowed;
+                }
+
+                .wibi-booking-btn-secondary {
+                    background: #f3f4f6;
+                    color: #374151;
+                }
+
+                .wibi-booking-btn-secondary:hover:not(:disabled) {
+                    background: #e5e7eb;
+                }
+
+                .wibi-booking-btn-primary {
+                    background: #4f46e5;
+                    color: white;
+                }
+
+                .wibi-booking-btn-primary:hover:not(:disabled) {
+                    background: #4338ca;
+                }
+
+                .wibi-booking-loading {
+                    display: inline-block;
+                    width: 16px;
+                    height: 16px;
+                    border: 2px solid transparent;
+                    border-top: 2px solid currentColor;
+                    border-radius: 50%;
+                    animation: wibi-spin 1s linear infinite;
+                    margin-right: 8px;
+                }
+
+                @keyframes wibi-spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                }
+
+                .wibi-booking-error {
+                    background: #fef2f2;
+                    border: 1px solid #fecaca;
+                    border-radius: 6px;
+                    padding: 12px;
+                    margin: 12px 0;
+                    color: #dc2626;
+                    font-size: 13px;
+                }
+
+                .wibi-booking-success {
+                    background: #f0fdf4;
+                    border: 1px solid #bbf7d0;
+                    border-radius: 6px;
+                    padding: 12px;
+                    margin: 12px 0;
+                    color: #16a34a;
+                    font-size: 13px;
+                }
+
+                /* Date picker styles */
+                .wibi-booking-date-picker {
+                    position: relative;
+                }
+
+                .wibi-booking-calendar {
+                    position: absolute;
+                    top: 100%;
+                    left: 0;
+                    right: 0;
+                    background: white;
+                    border: 1px solid #d1d5db;
+                    border-radius: 8px;
+                    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+                    z-index: 1000;
+                    display: none;
+                    padding: 16px;
+                }
+
+                .wibi-booking-calendar.active {
+                    display: block;
+                }
+
+                /* Mobile responsive */
+                @media (max-width: 480px) {
+                    .wibi-booking-modal {
+                        width: 95%;
+                        margin: 20px;
+                    }
+
+                    .wibi-booking-grid {
+                        grid-template-columns: 1fr;
+                    }
+
+                    .wibi-booking-options {
+                        grid-template-columns: repeat(2, 1fr);
+                    }
+
+                    .wibi-booking-slots {
+                        grid-template-columns: 1fr;
+                    }
+
+                    .wibi-booking-buttons {
+                        flex-direction: column;
+                    }
+                }
+
+                /* Dark mode support */
+                @media (prefers-color-scheme: dark) {
+                    .wibi-booking-modal {
+                        background: #1f2937;
+                        color: #f3f4f6;
+                    }
+
+                    .wibi-booking-header {
+                        border-color: #374151;
+                    }
+
+                    .wibi-booking-header h3 {
+                        color: #f3f4f6;
+                    }
+
+                    .wibi-booking-input {
+                        background: #374151;
+                        border-color: #4b5563;
+                        color: #f3f4f6;
+                    }
+
+                    .wibi-booking-input:focus {
+                        border-color: #6366f1;
+                    }
+
+                    .wibi-booking-option {
+                        background: #374151;
+                        border-color: #4b5563;
+                        color: #f3f4f6;
+                    }
+
+                    .wibi-booking-option:hover {
+                        border-color: #6366f1;
+                        background: #4338ca;
+                    }
+                }
+            `;
+
+            document.head.appendChild(style);
+        }
+
+        // Main method to open booking modal
+        async openBookingModal() {
+            if (!this.canMakeBookingAttempt()) {
+                this.showError('Too many booking attempts. Please wait before trying again.');
+                return;
+            }
+
+            if (this.isBookingOpen) return;
+
+            // Track booking modal open
+            this.widget.trackInteraction('booking_modal_opened');
+
+            this.isBookingOpen = true;
+            this.currentStep = 1;
+            this.resetBookingData();
+
+            this.createBookingModal();
+            this.updateBookingStep();
+        }
+
+        // Reset booking data
+        resetBookingData() {
+            const sessionToken = this.bookingData.sessionToken;
+            this.bookingData = {
+                name: '',
+                phone: '',
+                email: '',
+                address: '',
+                applianceCategory: '',
+                applianceType: '',
+                fuelType: '',
+                fittingType: '',
+                issue: '',
+                selectedSlot: null,
+                preferredDate: null,
+                contactMethod: 'whatsapp',
+                verificationCode: '',
+                verificationToken: '',
+                sessionToken: sessionToken,
+                startTime: Date.now()
+            };
+        }
+
+        // Create booking modal HTML
+        createBookingModal() {
+            const existingModal = document.getElementById('wibi-booking-modal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+
+            const modalHTML = `
+                <div id="wibi-booking-overlay" class="wibi-booking-overlay">
+                    <div class="wibi-booking-modal">
+                        <div class="wibi-booking-header">
+                            <h3>Book a Repair</h3>
+                            <p class="wibi-booking-subtitle">Quick and easy appointment booking</p>
+                            <button type="button" class="wibi-booking-close" onclick="window.WibiWidget.bookingSystem.closeBookingModal()">&times;</button>
+                        </div>
+                        
+                        <div class="wibi-booking-content">
+                            <!-- Progress indicator -->
+                            <div class="wibi-booking-progress">
+                                <div class="wibi-booking-progress-fill" style="width: 25%"></div>
+                                <div class="wibi-booking-progress-step active">1</div>
+                                <div class="wibi-booking-progress-step">2</div>
+                                <div class="wibi-booking-progress-step">3</div>
+                                <div class="wibi-booking-progress-step">4</div>
+                            </div>
+
+                            <div id="wibi-booking-error" class="wibi-booking-error" style="display: none;"></div>
+                            <div id="wibi-booking-success" class="wibi-booking-success" style="display: none;"></div>
+
+                            <!-- Step 1: Contact Information -->
+                            <div id="wibi-booking-step-1" class="wibi-booking-step active">
+                                <div class="wibi-booking-form-group">
+                                    <label class="wibi-booking-label">Your Name *</label>
+                                    <input type="text" id="wibi-booking-name" class="wibi-booking-input" placeholder="Enter your full name" required>
+                                </div>
+                                
+                                <div class="wibi-booking-grid">
+                                    <div class="wibi-booking-form-group">
+                                        <label class="wibi-booking-label">Phone Number *</label>
+                                        <input type="tel" id="wibi-booking-phone" class="wibi-booking-input" placeholder="e.g., 072 123 4567" required>
+                                    </div>
+                                    <div class="wibi-booking-form-group">
+                                        <label class="wibi-booking-label">Email Address *</label>
+                                        <input type="email" id="wibi-booking-email" class="wibi-booking-input" placeholder="your@email.com" required>
+                                    </div>
+                                </div>
+                                
+                                <div class="wibi-booking-form-group">
+                                    <label class="wibi-booking-label">Address *</label>
+                                    <input type="text" id="wibi-booking-address" class="wibi-booking-input" placeholder="Your service address" required>
+                                </div>
+                            </div>
+
+                            <!-- Step 2: Appliance Details -->
+                            <div id="wibi-booking-step-2" class="wibi-booking-step">
+                                <div class="wibi-booking-form-group">
+                                    <label class="wibi-booking-label">What type of appliance needs repair? *</label>
+                                    <div class="wibi-booking-options" id="wibi-appliance-categories">
+                                        <div class="wibi-booking-option" data-value="Cooking">
+                                            <div class="wibi-booking-option-icon">🔥</div>
+                                            <div class="wibi-booking-option-label">Cooking</div>
+                                        </div>
+                                        <div class="wibi-booking-option" data-value="Fridges">
+                                            <div class="wibi-booking-option-icon">❄️</div>
+                                            <div class="wibi-booking-option-label">Fridges</div>
+                                        </div>
+                                        <div class="wibi-booking-option" data-value="Laundry">
+                                            <div class="wibi-booking-option-icon">👕</div>
+                                            <div class="wibi-booking-option-label">Laundry</div>
+                                        </div>
+                                        <div class="wibi-booking-option" data-value="Dishwasher">
+                                            <div class="wibi-booking-option-icon">🍽️</div>
+                                            <div class="wibi-booking-option-label">Dishwasher</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="wibi-booking-form-group" id="wibi-appliance-types" style="display: none;">
+                                    <label class="wibi-booking-label">Select Appliance Type *</label>
+                                    <div class="wibi-booking-options" id="wibi-appliance-type-options"></div>
+                                </div>
+
+                                <div class="wibi-booking-form-group">
+                                    <label class="wibi-booking-label">Describe the issue *</label>
+                                    <textarea id="wibi-booking-issue" class="wibi-booking-input wibi-booking-textarea" placeholder="What's wrong with your appliance?" required></textarea>
+                                </div>
+                            </div>
+
+                            <!-- Step 3: Schedule Appointment -->
+                            <div id="wibi-booking-step-3" class="wibi-booking-step">
+                                <div class="wibi-booking-form-group">
+                                    <label class="wibi-booking-label">Preferred Date *</label>
+                                    <input type="date" id="wibi-booking-date" class="wibi-booking-input" required>
+                                </div>
+
+                                <div class="wibi-booking-form-group">
+                                    <label class="wibi-booking-label">Available Time Slots *</label>
+                                    <div id="wibi-booking-slots-container" class="wibi-booking-slots">
+                                        <div style="text-align: center; color: #6b7280; grid-column: 1 / -1;">
+                                            Select a date to see available slots
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Step 4: Verification -->
+                            <div id="wibi-booking-step-4" class="wibi-booking-step">
+                                <div class="wibi-booking-verification">
+                                    <h4 style="margin: 0 0 12px 0; font-size: 16px;">Verify Your Contact</h4>
+                                    <p style="margin: 0 0 16px 0; font-size: 13px; color: #6b7280;">
+                                        We'll send you a verification code to confirm your booking
+                                    </p>
+                                    
+                                    <div class="wibi-booking-verification-method">
+                                        <div class="wibi-booking-verification-btn active" data-method="whatsapp">
+                                            📱 WhatsApp
+                                        </div>
+                                        <div class="wibi-booking-verification-btn" data-method="email">
+                                            📧 Email
+                                        </div>
+                                    </div>
+
+                                    <div class="wibi-booking-form-group">
+                                        <label class="wibi-booking-label">Enter Verification Code</label>
+                                        <input type="text" id="wibi-booking-verification-code" class="wibi-booking-input wibi-booking-code-input" placeholder="000000" maxlength="6" disabled>
+                                    </div>
+
+                                    <button type="button" id="wibi-send-verification" class="wibi-booking-btn wibi-booking-btn-primary" style="width: 100%; margin-bottom: 16px;">
+                                        Send Verification Code
+                                    </button>
+                                </div>
+
+                                <div class="wibi-booking-form-group">
+                                    <h4 style="margin: 0 0 12px 0; font-size: 16px;">Booking Summary</h4>
+                                    <div id="wibi-booking-summary" style="font-size: 13px; color: #6b7280;"></div>
+                                </div>
+                            </div>
+
+                            <!-- Navigation buttons -->
+                            <div class="wibi-booking-buttons">
+                                <button type="button" id="wibi-booking-back" class="wibi-booking-btn wibi-booking-btn-secondary" style="display: none;">
+                                    Back
+                                </button>
+                                <button type="button" id="wibi-booking-next" class="wibi-booking-btn wibi-booking-btn-primary">
+                                    Next
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+            this.attachBookingEventListeners();
+            this.showBookingModal();
+        }
+
+        // Show booking modal
+        showBookingModal() {
+            const overlay = document.getElementById('wibi-booking-overlay');
+            if (overlay) {
+                setTimeout(() => {
+                    overlay.classList.add('active');
+                }, 10);
+            }
+        }
+
+        // Close booking modal
+        closeBookingModal() {
+            const overlay = document.getElementById('wibi-booking-overlay');
+            if (overlay) {
+                overlay.classList.remove('active');
+                setTimeout(() => {
+                    overlay.remove();
+                    this.isBookingOpen = false;
+                }, 300);
+            }
+
+            // Track booking modal closed
+            this.widget.trackInteraction('booking_modal_closed', {
+                step: this.currentStep,
+                completed: this.currentStep >= this.maxSteps
+            });
+        }
+
+        // Attach event listeners
+        attachBookingEventListeners() {
+            // Navigation buttons
+            document.getElementById('wibi-booking-next').addEventListener('click', () => this.nextStep());
+            document.getElementById('wibi-booking-back').addEventListener('click', () => this.prevStep());
+
+            // Appliance category selection
+            document.querySelectorAll('#wibi-appliance-categories .wibi-booking-option').forEach(option => {
+                option.addEventListener('click', (e) => this.selectApplianceCategory(e.target.closest('.wibi-booking-option')));
+            });
+
+            // Date picker
+            document.getElementById('wibi-booking-date').addEventListener('change', (e) => this.loadAvailableSlots(e.target.value));
+
+            // Verification method selection
+            document.querySelectorAll('.wibi-booking-verification-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => this.selectVerificationMethod(e.target.dataset.method));
+            });
+
+            // Send verification code
+            document.getElementById('wibi-send-verification').addEventListener('click', () => this.sendVerificationCode());
+
+            // Auto-format phone number
+            document.getElementById('wibi-booking-phone').addEventListener('input', (e) => this.formatPhoneNumber(e.target));
+
+            // Enable verification code input when code is sent
+            document.getElementById('wibi-booking-verification-code').addEventListener('input', (e) => {
+                if (e.target.value.length === 6) {
+                    this.validateVerificationCode(e.target.value);
+                }
+            });
+
+            // Close on overlay click
+            document.getElementById('wibi-booking-overlay').addEventListener('click', (e) => {
+                if (e.target.id === 'wibi-booking-overlay') {
+                    this.closeBookingModal();
+                }
+            });
+
+            // Set minimum date to today
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('wibi-booking-date').min = today;
+        }
+
+        // Format phone number as user types
+        formatPhoneNumber(input) {
+            let value = input.value.replace(/\D/g, '');
+            
+            // South African format: 072 123 4567
+            if (value.length >= 3) {
+                value = value.substring(0, 3) + ' ' + value.substring(3);
+            }
+            if (value.length >= 7) {
+                value = value.substring(0, 7) + ' ' + value.substring(7, 11);
+            }
+            
+            input.value = value;
+        }
+
+        // Update booking step
+        updateBookingStep() {
+            // Hide all steps
+            document.querySelectorAll('.wibi-booking-step').forEach(step => {
+                step.classList.remove('active');
+            });
+
+            // Show current step
+            const currentStepEl = document.getElementById(`wibi-booking-step-${this.currentStep}`);
+            if (currentStepEl) {
+                currentStepEl.classList.add('active');
+            }
+
+            // Update progress
+            this.updateProgress();
+
+            // Update navigation buttons
+            this.updateNavigationButtons();
+
+            // Track step view
+            this.widget.trackInteraction('booking_step_viewed', {
+                step: this.currentStep,
+                stepName: this.getStepName()
+            });
+        }
+
+        getStepName() {
+            const stepNames = {
+                1: 'contact_info',
+                2: 'appliance_details',
+                3: 'schedule',
+                4: 'verification'
+            };
+            return stepNames[this.currentStep] || 'unknown';
+        }
+
+        // Update progress indicator
+        updateProgress() {
+            const progressFill = document.querySelector('.wibi-booking-progress-fill');
+            const progressSteps = document.querySelectorAll('.wibi-booking-progress-step');
+            
+            if (progressFill) {
+                const progressWidth = (this.currentStep / this.maxSteps) * 100;
+                progressFill.style.width = `${progressWidth}%`;
+            }
+
+            progressSteps.forEach((step, index) => {
+                const stepNumber = index + 1;
+                step.classList.remove('active', 'completed');
+                
+                if (stepNumber < this.currentStep) {
+                    step.classList.add('completed');
+                } else if (stepNumber === this.currentStep) {
+                    step.classList.add('active');
+                }
+            });
+        }
+
+        // Update navigation buttons
+        updateNavigationButtons() {
+            const backBtn = document.getElementById('wibi-booking-back');
+            const nextBtn = document.getElementById('wibi-booking-next');
+
+            if (backBtn) {
+                backBtn.style.display = this.currentStep > 1 ? 'block' : 'none';
+            }
+
+            if (nextBtn) {
+                if (this.currentStep === this.maxSteps) {
+                    nextBtn.textContent = 'Complete Booking';
+                    nextBtn.disabled = !this.isVerificationComplete();
+                } else {
+                    nextBtn.textContent = 'Next';
+                    nextBtn.disabled = false;
+                }
+            }
+        }
+
+        // Check if verification is complete
+        isVerificationComplete() {
+            return this.bookingData.verificationToken && 
+                document.getElementById('wibi-booking-verification-code').value.length === 6;
+        }
+
+        // Navigate to next step
+        async nextStep() {
+            if (!await this.validateCurrentStep()) {
+                return;
+            }
+
+            this.saveCurrentStepData();
+
+            if (this.currentStep === this.maxSteps) {
+                await this.submitBooking();
+            } else {
+                this.currentStep++;
+                this.updateBookingStep();
+
+                // Special handling for step 3 (scheduling)
+                if (this.currentStep === 3) {
+                    this.initializeDatePicker();
+                }
+
+                // Special handling for step 4 (verification summary)
+                if (this.currentStep === 4) {
+                    this.updateBookingSummary();
+                }
+            }
+        }
+
+        // Navigate to previous step
+        prevStep() {
+            if (this.currentStep > 1) {
+                this.currentStep--;
+                this.updateBookingStep();
+            }
+        }
+
+        // Validate current step
+        async validateCurrentStep() {
+            this.clearError();
+
+            switch (this.currentStep) {
+                case 1:
+                    return this.validateContactInfo();
+                case 2:
+                    return this.validateApplianceDetails();
+                case 3:
+                    return this.validateScheduling();
+                case 4:
+                    return this.validateVerification();
+                default:
+                    return true;
+            }
+        }
+
+        // Validate contact information
+        validateContactInfo() {
+            const name = document.getElementById('wibi-booking-name').value.trim();
+            const phone = document.getElementById('wibi-booking-phone').value.trim();
+            const email = document.getElementById('wibi-booking-email').value.trim();
+            const address = document.getElementById('wibi-booking-address').value.trim();
+
+            if (!name) {
+                this.showError('Please enter your name');
+                return false;
+            }
+
+            if (!phone || phone.length < 10) {
+                this.showError('Please enter a valid phone number');
+                return false;
+            }
+
+            if (!email || !this.isValidEmail(email)) {
+                this.showError('Please enter a valid email address');
+                return false;
+            }
+
+            if (!address) {
+                this.showError('Please enter your address');
+                return false;
+            }
+
+            return true;
+        }
+
+        // Validate appliance details
+        validateApplianceDetails() {
+            if (!this.bookingData.applianceCategory) {
+                this.showError('Please select an appliance category');
+                return false;
+            }
+
+            if (!this.bookingData.applianceType) {
+                this.showError('Please select an appliance type');
+                return false;
+            }
+
+            const issue = document.getElementById('wibi-booking-issue').value.trim();
+            if (!issue) {
+                this.showError('Please describe the issue');
+                return false;
+            }
+
+            return true;
+        }
+
+        // Validate scheduling
+        validateScheduling() {
+            const date = document.getElementById('wibi-booking-date').value;
+            if (!date) {
+                this.showError('Please select a date');
+                return false;
+            }
+
+            if (!this.bookingData.selectedSlot) {
+                this.showError('Please select a time slot');
+                return false;
+            }
+
+            return true;
+        }
+
+        // Validate verification
+        validateVerification() {
+            if (!this.bookingData.verificationToken) {
+                this.showError('Please send and enter the verification code');
+                return false;
+            }
+
+            const code = document.getElementById('wibi-booking-verification-code').value;
+            if (!code || code.length !== 6) {
+                this.showError('Please enter the 6-digit verification code');
+                return false;
+            }
+
+            return true;
+        }
+
+        // Save current step data
+        saveCurrentStepData() {
+            switch (this.currentStep) {
+                case 1:
+                    this.bookingData.name = document.getElementById('wibi-booking-name').value.trim();
+                    this.bookingData.phone = document.getElementById('wibi-booking-phone').value.trim();
+                    this.bookingData.email = document.getElementById('wibi-booking-email').value.trim();
+                    this.bookingData.address = document.getElementById('wibi-booking-address').value.trim();
+                    break;
+
+                case 2:
+                    this.bookingData.issue = document.getElementById('wibi-booking-issue').value.trim();
+                    break;
+
+                case 3:
+                    this.bookingData.preferredDate = document.getElementById('wibi-booking-date').value;
+                    break;
+
+                case 4:
+                    this.bookingData.verificationCode = document.getElementById('wibi-booking-verification-code').value;
+                    break;
+            }
+        }
+
+        // Select appliance category
+        selectApplianceCategory(option) {
+            // Remove previous selection
+            document.querySelectorAll('#wibi-appliance-categories .wibi-booking-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+
+            // Select new option
+            option.classList.add('selected');
+            this.bookingData.applianceCategory = option.dataset.value;
+
+            // Show appliance types
+            this.showApplianceTypes(option.dataset.value);
+
+            // Track selection
+            this.widget.trackInteraction('booking_appliance_category_selected', {
+                category: this.bookingData.applianceCategory
+            });
+        }
+
+        // Show appliance types based on category
+        showApplianceTypes(category) {
+            const typesContainer = document.getElementById('wibi-appliance-types');
+            const optionsContainer = document.getElementById('wibi-appliance-type-options');
+
+            const applianceTypes = {
+                'Cooking': [
+                    { value: 'Oven', label: 'Oven', icon: '🔥' },
+                    { value: 'Cooker', label: 'Cooker', icon: '🍳' },
+                    { value: 'Hob', label: 'Hob', icon: '🔥' },
+                    { value: 'CookerHood', label: 'Cooker Hood', icon: '💨' },
+                    { value: 'Microwave', label: 'Microwave', icon: '📱' }
+                ],
+                'Fridges': [
+                    { value: 'Fridge/Freezer', label: 'Fridge/Freezer', icon: '❄️' },
+                    { value: 'American Style', label: 'American Style', icon: '🏠' },
+                    { value: 'Wine Cooler', label: 'Wine Cooler', icon: '🍷' }
+                ],
+                'Laundry': [
+                    { value: 'Washing Machine', label: 'Washing Machine', icon: '👕' },
+                    { value: 'Tumble Dryer', label: 'Tumble Dryer', icon: '🌪️' }
+                ],
+                'Dishwasher': [
+                    { value: 'Full-Size', label: 'Full-Size', icon: '🍽️' },
+                    { value: 'Slim-Line', label: 'Slim-Line', icon: '🍽️' },
+                    { value: 'Tabletop', label: 'Tabletop', icon: '🍽️' }
+                ]
+            };
+
+            const types = applianceTypes[category] || [];
+            
+            optionsContainer.innerHTML = types.map(type => `
+                <div class="wibi-booking-option" data-value="${type.value}">
+                    <div class="wibi-booking-option-icon">${type.icon}</div>
+                    <div class="wibi-booking-option-label">${type.label}</div>
+                </div>
+            `).join('');
+
+            // Add event listeners to new options
+            optionsContainer.querySelectorAll('.wibi-booking-option').forEach(option => {
+                option.addEventListener('click', (e) => this.selectApplianceType(e.target.closest('.wibi-booking-option')));
+            });
+
+            typesContainer.style.display = 'block';
+        }
+
+        // Select appliance type
+        selectApplianceType(option) {
+            // Remove previous selection
+            document.querySelectorAll('#wibi-appliance-type-options .wibi-booking-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+
+            // Select new option
+            option.classList.add('selected');
+            this.bookingData.applianceType = option.dataset.value;
+
+            // Track selection
+            this.widget.trackInteraction('booking_appliance_type_selected', {
+                type: this.bookingData.applianceType
+            });
+        }
+
+        // Initialize date picker with business days only
+        initializeDatePicker() {
+            const dateInput = document.getElementById('wibi-booking-date');
+            
+            // Set minimum date to tomorrow (to allow for scheduling)
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            dateInput.min = tomorrow.toISOString().split('T')[0];
+
+            // Set maximum date to 30 days from now
+            const maxDate = new Date();
+            maxDate.setDate(maxDate.getDate() + 30);
+            dateInput.max = maxDate.toISOString().split('T')[0];
+        }
+
+        // Load available slots for selected date
+        async loadAvailableSlots(selectedDate) {
+            if (!selectedDate) return;
+
+            this.isLoadingSlots = true;
+            const slotsContainer = document.getElementById('wibi-booking-slots-container');
+            
+            // Show loading state
+            slotsContainer.innerHTML = `
+                <div style="text-align: center; color: #6b7280; grid-column: 1 / -1;">
+                    <div class="wibi-booking-loading"></div>
+                    Loading available slots...
+                </div>
+            `;
+
+            try {
+                // Make API call to get available slots
+                const response = await fetch(`${WIBI_CONFIG.apiBaseUrl}/check_technician_availability?employeeId=all&websiteId=${this.widget.websiteId}&date=${selectedDate}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to load availability');
+                }
+
+                const data = await response.json();
+                // Only show slots for the selected date
+                const filteredSlots = (data.availableSlots || []).filter(slot => {
+                    // slot.start is ISO string, selectedDate is yyyy-mm-dd
+                    const slotDate = new Date(slot.start).toISOString().slice(0, 10);
+                    return slotDate === selectedDate;
+                });
+                this.displayAvailableSlots(filteredSlots);
+
+            } catch (error) {
+                this.logger.error('Failed to load available slots', error);
+                slotsContainer.innerHTML = `
+                    <div style="text-align: center; color: #dc2626; grid-column: 1 / -1;">
+                        Unable to load slots. Please try again.
+                    </div>
+                `;
+            } finally {
+                this.isLoadingSlots = false;
+            }
+        }
+
+        // Display available slots
+        displayAvailableSlots(slots) {
+            const slotsContainer = document.getElementById('wibi-booking-slots-container');
+            
+            if (!slots || slots.length === 0) {
+                slotsContainer.innerHTML = `
+                    <div style="text-align: center; color: #6b7280; grid-column: 1 / -1;">
+                        No slots available for this date. Please choose another date.
+                    </div>
+                `;
+                return;
+            }
+
+            slotsContainer.innerHTML = slots.map(slot => {
+                const startTime = new Date(slot.start);
+                const endTime = new Date(slot.end);
+                const timeString = `${this.formatTime(startTime)} - ${this.formatTime(endTime)}`;
+                
+                return `
+                    <div class="wibi-booking-slot" data-slot='${JSON.stringify(slot)}'>
+                        <div style="font-weight: 600;">${timeString}</div>
+                        <div style="font-size: 11px; color: #6b7280;">Available</div>
+                    </div>
+                `;
+            }).join('');
+
+            // Add event listeners to slots
+            slotsContainer.querySelectorAll('.wibi-booking-slot').forEach(slot => {
+                slot.addEventListener('click', (e) => this.selectTimeSlot(e.target.closest('.wibi-booking-slot')));
+            });
+        }
+
+        // Select time slot
+        selectTimeSlot(slotElement) {
+            // Remove previous selection
+            document.querySelectorAll('.wibi-booking-slot').forEach(slot => {
+                slot.classList.remove('selected');
+            });
+
+            // Select new slot
+            slotElement.classList.add('selected');
+            this.bookingData.selectedSlot = JSON.parse(slotElement.dataset.slot);
+
+            // Track selection
+            this.widget.trackInteraction('booking_slot_selected', {
+                slot: this.bookingData.selectedSlot
+            });
+        }
+
+        // Format time for display
+        formatTime(date) {
+            return date.toLocaleTimeString('en-ZA', {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+            });
+        }
+
+        // Select verification method
+        selectVerificationMethod(method) {
+            // Update UI
+            document.querySelectorAll('.wibi-booking-verification-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            document.querySelector(`[data-method="${method}"]`).classList.add('active');
+            this.bookingData.contactMethod = method;
+
+            // Enable send button
+            document.getElementById('wibi-send-verification').disabled = false;
+
+            // Track selection
+            this.widget.trackInteraction('booking_verification_method_selected', {
+                method: method
+            });
+        }
+
+        // Send verification code
+        async sendVerificationCode() {
+            const sendBtn = document.getElementById('wibi-send-verification');
+            const codeInput = document.getElementById('wibi-booking-verification-code');
+
+            sendBtn.disabled = true;
+            sendBtn.innerHTML = '<div class="wibi-booking-loading"></div>Sending...';
+
+            try {
+                // Prepare contact details
+                const contactDetail = this.bookingData.contactMethod === 'whatsapp' 
+                    ? this.bookingData.phone 
+                    : this.bookingData.email;
+
+                // Make API call to send verification code
+                const response = await fetch(`${WIBI_CONFIG.apiBaseUrl}/api/send-verification-code`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        websiteId: this.widget.websiteId,
+                        contactMethod: this.bookingData.contactMethod,
+                        contactDetail: contactDetail,
+                        sessionToken: this.bookingData.sessionToken,
+                        customerName: this.bookingData.name
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Failed to send verification code');
+                }
+
+                const data = await response.json();
+                this.bookingData.verificationToken = data.verificationToken;
+
+                // Enable code input
+                codeInput.disabled = false;
+                codeInput.focus();
+
+                // Update button
+                sendBtn.innerHTML = 'Code Sent! ✓';
+                sendBtn.style.background = '#10b981';
+
+                this.showSuccess(`Verification code sent via ${this.bookingData.contactMethod}`);
+
+                // Track verification sent
+                this.widget.trackInteraction('booking_verification_sent', {
+                    method: this.bookingData.contactMethod
+                });
+
+            } catch (error) {
+                this.logger.error('Failed to send verification code', error);
+                this.showError(error.message || 'Failed to send verification code. Please try again.');
+                
+                sendBtn.disabled = false;
+                sendBtn.innerHTML = 'Send Verification Code';
+            }
+        }
+
+        // Validate verification code
+        async validateVerificationCode(code) {
+            try {
+                const response = await fetch(`${WIBI_CONFIG.apiBaseUrl}/api/verify-code`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        verificationToken: this.bookingData.verificationToken,
+                        code: code,
+                        sessionToken: this.bookingData.sessionToken
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Invalid verification code');
+                }
+
+                const data = await response.json();
+                
+                if (data.verified) {
+                    // Show success
+                    const codeInput = document.getElementById('wibi-booking-verification-code');
+                    codeInput.style.borderColor = '#10b981';
+                    codeInput.style.background = '#f0fdf4';
+                    
+                    this.showSuccess('Verification successful! ✓');
+                    this.updateNavigationButtons();
+
+                    // Track verification success
+                    this.widget.trackInteraction('booking_verification_success');
+                } else {
+                    throw new Error('Invalid verification code');
+                }
+
+            } catch (error) {
+                this.logger.error('Verification failed', error);
+                this.showError('Invalid verification code. Please try again.');
+                
+                // Reset code input
+                const codeInput = document.getElementById('wibi-booking-verification-code');
+                codeInput.value = '';
+                codeInput.style.borderColor = '#dc2626';
+                codeInput.focus();
+            }
+        }
+
+        // Update booking summary
+        updateBookingSummary() {
+            const summaryContainer = document.getElementById('wibi-booking-summary');
+            const slot = this.bookingData.selectedSlot;
+            const startTime = new Date(slot.start);
+            const endTime = new Date(slot.end);
+
+            const summaryHTML = `
+                <div style="margin-bottom: 8px;"><strong>Service:</strong> ${this.bookingData.applianceCategory} - ${this.bookingData.applianceType}</div>
+                <div style="margin-bottom: 8px;"><strong>Date:</strong> ${new Date(this.bookingData.preferredDate).toLocaleDateString('en-ZA')}</div>
+                <div style="margin-bottom: 8px;"><strong>Time:</strong> ${this.formatTime(startTime)} - ${this.formatTime(endTime)}</div>
+                <div style="margin-bottom: 8px;"><strong>Address:</strong> ${this.bookingData.address}</div>
+                <div style="margin-bottom: 8px;"><strong>Contact:</strong> ${this.bookingData.phone}</div>
+                <div><strong>Issue:</strong> ${this.bookingData.issue}</div>
+            `;
+
+            summaryContainer.innerHTML = summaryHTML;
+        }
+
+        // Submit booking
+        async submitBooking() {
+            const nextBtn = document.getElementById('wibi-booking-next');
+            nextBtn.disabled = true;
+            nextBtn.innerHTML = '<div class="wibi-booking-loading"></div>Booking...';
+
+            this.lastBookingAttempt = Date.now();
+            this.bookingAttempts++;
+
+            try {
+                // Prepare consolidated booking data
+                const bookingPayload = {
+                    // Customer info
+                    name: this.bookingData.name,
+                    phone: this.bookingData.phone,
+                    email: this.bookingData.email,
+                    address: this.bookingData.address,
+                    contactMethod: this.bookingData.contactMethod,
+                    verificationCode: this.bookingData.verificationCode,
+                    verificationToken: this.bookingData.verificationToken,
+                    sessionToken: this.bookingData.sessionToken,
+                    // Service details
+                    applianceCategory: this.bookingData.applianceCategory,
+                    applianceType: this.bookingData.applianceType,
+                    fuelType: this.bookingData.fuelType,
+                    fittingType: this.bookingData.fittingType,
+                    issue: this.bookingData.issue,
+                    // Scheduling
+                    selectedSlot: this.bookingData.selectedSlot,
+                    preferredDate: this.bookingData.preferredDate,
+                    // Security
+                    startTime: this.bookingData.startTime
+                };
+
+                // Call new secure backend endpoint
+                const response = await fetch(`${WIBI_CONFIG.apiBaseUrl}/api/booking/create-customer-and-job?id=${this.widget.websiteId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(bookingPayload)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Failed to complete booking');
+                }
+
+                const result = await response.json();
+
+                if (!result.job || !result.customer) {
+                    throw new Error('Failed to complete booking');
+                }
+
+                // Success!
+                this.showBookingSuccess(result.job);
+
+                // Track successful booking
+                this.widget.trackInteraction('booking_completed', {
+                    jobId: result.job.id,
+                    customerId: result.customer.id,
+                    applianceType: this.bookingData.applianceType,
+                    timeSlot: this.bookingData.selectedSlot
+                });
+
+                // Close modal after delay
+                setTimeout(() => {
+                    this.closeBookingModal();
+                }, 3000);
+
+            } catch (error) {
+                this.logger.error('Booking submission failed', error);
+                this.showError(error.message || 'Failed to complete booking. Please try again.');
+                
+                nextBtn.disabled = false;
+                nextBtn.innerHTML = 'Complete Booking';
+
+                // Track booking failure
+                this.widget.trackInteraction('booking_failed', {
+                    error: error.message,
+                    step: this.currentStep
+                });
+            }
+        }
+
+        // Create or update customer
+        async createOrUpdateCustomer() {
+            const customerData = {
+                name: this.bookingData.name,
+                Phone: this.bookingData.phone,
+                Email: this.bookingData.email,
+                address: this.bookingData.address,
+                Reply: this.bookingData.contactMethod === 'whatsapp' ? 'Send me a message on Whatsapp' : 'Reply me by Email',
+                Message: `Booking request for ${this.bookingData.applianceCategory} - ${this.bookingData.applianceType}: ${this.bookingData.issue}`,
+                portal: 'wibi_booking',
+                foreignID: this.bookingData.sessionToken
+            };
+
+            const response = await fetch(`${WIBI_CONFIG.apiBaseUrl}/add-customer-booking?id=${this.widget.websiteId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(customerData)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to process customer information');
+            }
+
+            return await response.json();
+        }
+
+        // Create job
+        // createJob is now deprecated and no longer used for direct API calls.
+        // Job creation is handled securely by the backend after customer creation.
+
+        // Show booking success
+        showBookingSuccess(job) {
+            const successHTML = `
+                <div style="text-align: center; padding: 20px;">
+                    <div style="font-size: 48px; margin-bottom: 16px;">✅</div>
+                    <h3 style="margin: 0 0 12px 0; color: #10b981;">Booking Confirmed!</h3>
+                    <p style="margin: 0 0 16px 0; color: #6b7280;">
+                        Your repair appointment has been successfully booked.
+                    </p>
+                    <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 16px; margin: 16px 0;">
+                        <div style="font-weight: 600; margin-bottom: 8px;">Booking Reference: ${job.id}</div>
+                        <div style="font-size: 13px; color: #16a34a;">
+                            You'll receive a confirmation message shortly with technician details.
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Replace step content with success message
+            document.querySelector('.wibi-booking-content').innerHTML = successHTML;
+        }
+
+        // Utility functions
+        isValidEmail(email) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return emailRegex.test(email);
+        }
+
+        showError(message) {
+            const errorEl = document.getElementById('wibi-booking-error');
+            if (errorEl) {
+                errorEl.textContent = message;
+                errorEl.style.display = 'block';
+                setTimeout(() => {
+                    errorEl.style.display = 'none';
+                }, 5000);
+            }
+        }
+
+        showSuccess(message) {
+            const successEl = document.getElementById('wibi-booking-success');
+            if (successEl) {
+                successEl.textContent = message;
+                successEl.style.display = 'block';
+                setTimeout(() => {
+                    successEl.style.display = 'none';
+                }, 3000);
+            }
+        }
+
+        clearError() {
+            const errorEl = document.getElementById('wibi-booking-error');
+            const successEl = document.getElementById('wibi-booking-success');
+            
+            if (errorEl) errorEl.style.display = 'none';
+            if (successEl) successEl.style.display = 'none';
+        }
+    }
+
     // =============================================================================
     // MAIN WIDGET CLASS
     // =============================================================================
@@ -2160,6 +3768,7 @@
             this.isOpen = false;
             this.idleTimer = null;
             this.hoverTimers = new Map();
+            this.bookingSystem = new WibiBookingSystem(this);
         }
 
         async initialize() {
@@ -2382,12 +3991,21 @@
                     color: '#00c300'
                 },
                 {
-                    show: config.book_a_technician_show,
+                    show: config.book_a_technician_show && config.booking_form_url,
                     className: 'wibi-booking-btn',
                     href: config.booking_form_url || '#',
                     icon: this.getIconSVG('calendar'),
                     text: 'Book a Technician',
                     action: 'book_technician',
+                    color: '#6f42c1'
+                },
+                {
+                    show: config.book_a_technician_show,
+                    className: 'wibi-booking-btn',
+                    href: '#',
+                    icon: this.getIconSVG('calendar'),
+                    text: 'Book a Repair',
+                    action: 'book_repair',
                     color: '#6f42c1'
                 }
             ];
@@ -2679,6 +4297,15 @@
                     if (this.widgetConfig.gads_track && this.widgetConfig.gads_id && this.widgetConfig.gads_label) {
                         this.trackGoogleAdsConversion(this.widgetConfig.gads_id, this.widgetConfig.gads_label);
                     }
+                });
+            });
+
+            // Handle booking button click
+            const bookingButtons = widget.querySelectorAll('.wibi-booking-btn');
+            bookingButtons.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    this.bookingSystem.openBookingModal();
                 });
             });
         }

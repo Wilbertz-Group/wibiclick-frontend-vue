@@ -182,16 +182,6 @@ function formatSuggestionValue(field, value) {
   }
   return value;
 }
-
-// Auto-generate suggestions on mount if preferences are mostly empty
-onMounted(() => {
-  if (missingPreferences.value.length >= 3) {
-    // Auto-generate if most preferences are missing
-    setTimeout(() => {
-      generateAIPreferences();
-    }, 1000); // Small delay to let the component settle
-  }
-});
 </script>
 
 <template>
