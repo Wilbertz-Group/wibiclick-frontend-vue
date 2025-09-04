@@ -24,7 +24,7 @@
     
     const WIBI_CONFIG = {
         // API Configuration (configurable via data attributes)
-        apiBaseUrl: window.WIBI_API_BASE || 'http://localhost:8080' || 'https://wibi.wilbertzgroup.com',
+        apiBaseUrl: window.WIBI_API_BASE || 'https://wibi.wilbertzgroup.com',
         endpoints: {
             options: '/wibi-options',
             track: '/api/track/page-view',

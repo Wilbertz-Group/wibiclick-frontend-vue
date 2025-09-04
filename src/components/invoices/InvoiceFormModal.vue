@@ -14,9 +14,9 @@ import JobFormModal from '@/components/jobs/JobFormModal.vue'; // Import Job Mod
 import RecipientProfileFormModal from '@/components/Customers/RecipientProfileFormModal.vue'; // Import Recipient Profile Modal
 import LineItemParserModal from '@/components/estimates/LineItemParserModal.vue';
 import { library } from '@fortawesome/fontawesome-svg-core';
-import { faMagic } from '@fortawesome/free-solid-svg-icons';
+import { faMagic, faEdit, faPlus } from '@fortawesome/free-solid-svg-icons';
 
-library.add(faMagic); // Add this icon to your library
+library.add(faMagic, faEdit, faPlus); // Add these icons to your library
 
 const props = defineProps({
   modelValue: { // Controls modal visibility (v-model)
@@ -132,6 +132,11 @@ const isEditing = computed(() => !!invoiceForm.id);
 const lineItemTotal = computed(() => (Number(lineItem.amount) * Number(lineItem.quantity)).toFixed(2));
 
 // Computed property for Job Dropdown Options
+const selectedRecipientProfile = computed(() => {
+  if (!selectedRecipientProfileId.value) return null;
+  return recipientProfiles.value.find(p => p.id === selectedRecipientProfileId.value);
+});
+
 const jobOptions = computed(() => {
   if (!props.customerJobs || props.customerJobs.length === 0) {
     return [{ value: null, label: 'No jobs found for customer' }];
@@ -1140,14 +1145,23 @@ onMounted(() => {
                    <p v-if="!isFetchingProfiles && recipientProfiles.length === 0" class="text-xs text-gray-500 dark:text-gray-400 mt-1">
                      No recipient profiles found for this customer.
                    </p>
-                    <button
-                     type="button"
-                     @click="openAddEditRecipientProfileModal()"
-                     class="btn-secondary-modern text-xs mt-2"
-                   >
-                     <font-awesome-icon icon="plus" class="mr-1" /> Add New Profile
-                   </button>
-                   <!-- TODO: Add button to edit selected profile -->
+                   <div class="flex gap-2 mt-2">
+                     <button
+                       type="button"
+                       @click="openAddEditRecipientProfileModal()"
+                       class="btn-secondary-modern text-xs"
+                     >
+                       <font-awesome-icon icon="plus" class="mr-1" /> Add New Profile
+                     </button>
+                     <button
+                       v-if="selectedRecipientProfileId && selectedRecipientProfile"
+                       type="button"
+                       @click="openAddEditRecipientProfileModal(selectedRecipientProfile)"
+                       class="btn-secondary-modern text-xs"
+                     >
+                       <font-awesome-icon icon="edit" class="mr-1" /> Edit Selected Profile
+                     </button>
+                   </div>
                  </div>
               </div>
 
