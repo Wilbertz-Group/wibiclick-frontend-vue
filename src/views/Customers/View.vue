@@ -1139,6 +1139,19 @@ watchEffect(() => {
             @fetch-financials="fetchCustomerFinancials"
           />
 
+          <!-- Related Records - Moved here from below -->
+          <CustomerRelatedRecords 
+            :relatedItems="relatedItems"
+            @add-related-item="handleAddRelatedItem"
+            @reload-timeline="reloadTimeline"
+            @view-estimate="openAddEstimateModal"
+            @view-invoice="openAddInvoiceModal"
+            @view-payment="openAddPaymentModal"
+            @view-expense="openAddExpenseModal"
+            @view-insurance="openAddInsuranceModal"
+            @view-job="handleViewJob"
+          />
+
           <!-- Customer Information Card -->
           <CustomerDetailsCard
             :customer="customerStore.customer"
@@ -1192,18 +1205,6 @@ watchEffect(() => {
             @dismiss-alert="handleDismissAlert"
             @fetch-predictive-maintenance="fetchPredictiveMaintenance"
             @appliances-updated="handleAppliancesUpdated"
-          />
-
-          <CustomerRelatedRecords 
-            :relatedItems="relatedItems"
-            @add-related-item="handleAddRelatedItem"
-            @reload-timeline="reloadTimeline"
-            @view-estimate="openAddEstimateModal"
-            @view-invoice="openAddInvoiceModal"
-            @view-payment="openAddPaymentModal"
-            @view-expense="openAddExpenseModal"
-            @view-insurance="openAddInsuranceModal"
-            @view-job="handleViewJob"
           />
 
           <!-- Visitor Details (from Visitors.vue modal, adapted for customer context) -->
